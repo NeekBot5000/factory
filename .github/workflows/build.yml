@@ -1,0 +1,98 @@
+name: Test & build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.4.1
+  GODOT_BIN: ./godot/Godot_v4.4.1-stable_linux.x86_64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot + export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-web-win-linux
+
+      - name: Download Godot + export templates
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p godot
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O godot/godot.zip
+          unzip -q godot/godot.zip -d godot && rm godot/godot.zip
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O templates.tpz
+          T=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$T"
+          unzip -qj templates.tpz templates/version.txt templates/web_nothreads_release.zip templates/windows_release_x86_64.exe templates/linux_release.x86_64 -d "$T"
+          rm templates.tpz
+
+      - name: Import project
+        run: ${GODOT_BIN} --headless --import --path . || true
+
+      - name: Logic tests
+        run: ${GODOT_BIN} --headless --path . res://tests/LogicTest.tscn 2>&1 | tee logic.log; grep -q "LOGIC RESULT: PASS" logic.log
+
+      - name: Physics simulation tests
+        run: ${GODOT_BIN} --headless --path . res://tests/SimTest.tscn --fixed-fps 60 2>&1 | tee sim.log; grep -q "TEST RESULT: PASS" sim.log
+
+      - name: Export Web, Windows and Linux
+        run: |
+          mkdir -p build/web build/windows build/linux
+          ${GODOT_BIN} --headless --path . --export-release "Web" build/web/index.html
+          ${GODOT_BIN} --headless --path . --export-release "Windows" build/windows/FactoryIslands.exe
+          ${GODOT_BIN} --headless --path . --export-release "Linux" build/linux/FactoryIslands.x86_64
+          ls -la build/*
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: FactoryIslands-web
+          path: build/web
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: FactoryIslands-windows
+          path: build/windows
+
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: FactoryIslands-linux
+          path: build/linux
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy-pages:
+    # Publishes the browser build to GitHub Pages (enable Pages with "GitHub Actions" as the source).
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

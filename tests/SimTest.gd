@@ -34,6 +34,7 @@ func _ready() -> void:
 	_row_teleport(10)
 	_row_sorter(13)
 	_row_packer(17)
+	_farm_field()
 	print("TEST: built %d parts, %d links" % [world.parts.size(), world.links.size()])
 
 
@@ -162,6 +163,19 @@ func _row_packer(z: int) -> void:
 	seller("crates", -11, z)
 
 
+func _farm_field() -> void:
+	# three farms drop logs crosswise onto a collector belt; a 90 degree turn aligns them for a rip saw
+	for x in [2, 4, 6]:
+		P("treefarm_oak", x, 0, -17, 2)
+	for x in range(2, 8):
+		P("conveyor", x, 0, -16, 1)
+	P("conveyor", 8, 0, -16, 0)
+	P("conveyor", 8, 0, -17, 0)
+	P("conveyor", 8, 0, -18, 0)
+	P("rip_saw", 8, 0, -19, 0)
+	sellers["field"] = P("seller", 8, 0, -20, 0)
+
+
 func _physics_process(_delta: float) -> void:
 	frames += 1
 	if OS.get_environment("DBG") != "" and frames % 60 == 0 and frames < 60 * 30:
@@ -205,5 +219,6 @@ func _report() -> void:
 	_check(sellers.teleport.sold >= 3, "teleporter delivers")
 	_check(sellers.sorted.sold >= 2, "sensor+piston sorts (%d)" % sellers.sorted.sold)
 	_check(int(f.get("crate", 0)) >= 1, "packer makes crates")
+	_check(sellers.field.sold >= 6, "farm field -> collector -> turn -> rip saw works (%d)" % sellers.field.sold)
 	print("TEST RESULT: %s" % ("FAIL" if failed else "PASS"))
 	get_tree().quit(1 if failed else 0)

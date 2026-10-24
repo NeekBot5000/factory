@@ -28,6 +28,7 @@ func _ready() -> void:
 	Game.unlocks_changed.emit()
 	_build_demo()
 	world.hud.close_panel()
+	Input.warp_mouse(Vector2(2, 2))
 	var rig: CameraRig = world.rig
 	rig._t_focus = Vector3(-2, 0, -2)
 	rig._t_dist = 26.0

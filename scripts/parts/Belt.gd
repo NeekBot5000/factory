@@ -42,7 +42,7 @@ func refresh_rails() -> void:
 	for side in 2:
 		var d: Vector3i = Defs.DIRS[posmod(rot + (-1 if side == 0 else 1), 4)]
 		var n: Part = world.cells.get(cell + d)
-		if n != null and n.kind() == "piston" and n.cell + Defs.DIRS[n.rot] == cell:
+		if n != null and (n.kind() == "piston" or (n.kind() == "source" and Defs.is_directional(n.type_id))) and n.cell + Defs.DIRS[n.rot] == cell:
 			piston_near = true
 	for side in 2:
 		var d: Vector3i = Defs.DIRS[posmod(rot + (-1 if side == 0 else 1), 4)]

@@ -369,7 +369,7 @@ func demand(key: String) -> float:
 
 
 func _saturation_per_sale() -> float:
-	return 0.01 / (1.0 + float(Defs.UPGRADES.marketing.per) * upg("marketing"))
+	return 0.002 / (1.0 + float(Defs.UPGRADES.marketing.per) * upg("marketing"))
 
 
 func _recovery_rate() -> float:
@@ -379,7 +379,7 @@ func _recovery_rate() -> float:
 func on_sold(it: Item, amount: float) -> void:
 	stats.sold += 1
 	var key := it.product_key()
-	demand_map[key] = maxf(0.3, demand(key) - _saturation_per_sale())
+	demand_map[key] = maxf(0.35, demand(key) - _saturation_per_sale())
 	forms_sold[it.form] = int(forms_sold.get(it.form, 0)) + 1
 	for o in orders:
 		if String(o.key) == key and int(o.done) < int(o.qty):

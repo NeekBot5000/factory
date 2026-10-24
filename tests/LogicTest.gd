@@ -152,4 +152,27 @@ func _geometry_tests() -> void:
 	world.crush_item(geo, 0.25, Vector3(-3, 6, 0), Vector3.ZERO)
 	check(world.active_items.size() > before, "crusher made fragments (+%d)" % (world.active_items.size() - before))
 	check(geo.refined and geo.form == "shard", "geode fragments are pure shards (%s)" % geo.form)
+	# save/load roundtrip of parts, configs, levels and wires
+	world.clear_all(false)
+	Game.plots[Vector2i(0, 0)] = true
+	var lv: Part = world.place("lever", Vector3i(0, 0, 0), 0, false, 10.0, {"on": true})
+	var rs: Part = world.place("rip_saw", Vector3i(1, 0, 0), 1, false, 150.0, {"offset": 0.075})
+	world.place("conveyor", Vector3i(2, 0, 0), 1, false)
+	world.add_link(Vector3i(0, 0, 0), Vector3i(1, 0, 0))
+	world.upgrade_part(rs)
+	var d: Dictionary = Game.to_dict()
+	var json := JSON.stringify(d)
+	world.clear_all(false)
+	check(world.parts.size() == 0, "cleared")
+	var back: Dictionary = JSON.parse_string(json)
+	Game.saved_buildings = back.buildings
+	Game.saved_links = back.links
+	world._load_buildings()
+	check(world.parts.size() == 3, "parts restored (%d)" % world.parts.size())
+	check(world.links.size() == 1, "wire restored")
+	var rs2: Part = world.cells.get(Vector3i(1, 0, 0))
+	check(rs2 != null and absf(float(rs2.config.offset) - 0.075) < 0.0001, "rip saw offset restored")
+	check(rs2 != null and rs2.level == 1, "part level restored")
+	var lv2: Part = world.cells.get(Vector3i(0, 0, 0))
+	check(lv2 != null and bool(lv2.config.on), "lever state restored")
 	world.queue_free()
