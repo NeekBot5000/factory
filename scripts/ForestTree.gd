@@ -176,20 +176,64 @@ func panel_at(world_point: Vector3) -> Vector2i:
 	return Vector2i(i, j)
 
 
-## Removes the outermost remaining layer at the hit point.
-## Returns {layer, i, j} for the piece that came off, or {} if the spot was already bare wood.
-func strip_at(world_point: Vector3) -> Dictionary:
-	var pj := panel_at(world_point)
-	if pj.x < 0:
+## Strips every panel inside a circle (radius in metres) around the hit point - but only from the layer that
+## is outermost at the hit point, never digging through to the layer below in the same hit.
+## Returns {layer, panels: Array[Vector2i]} or {} if the spot is bare wood.
+func strip_circle(world_point: Vector3, circle_r: float) -> Dictionary:
+	var c := panel_at(world_point)
+	if c.x < 0:
 		return {}
-	for l in [OUTER, INNER]:
-		if has_panel(l, pj.x, pj.y):
-			layers[l][_idx(pj.x, pj.y)] = 0
-			_rebuild(l)
-			if l == OUTER:
-				_rebuild(INNER)   # the inner bark under it is now exposed
-			return {"layer": l, "i": pj.x, "j": pj.y}
-	return {}
+	var l := -1
+	if has_panel(OUTER, c.x, c.y):
+		l = OUTER
+	elif has_panel(INNER, c.x, c.y):
+		l = INNER
+	if l < 0:
+		return {}
+	var hit_local := to_local(world_point)
+	var ro := layer_radii(l).y
+	var panels: Array[Vector2i] = [c]
+	var reach_j := int(ceil(circle_r / BAND_H)) + 1
+	var reach_i := int(ceil(circle_r / (TAU * ro / SECTORS))) + 1
+	for dj in range(-reach_j, reach_j + 1):
+		for di in range(-reach_i, reach_i + 1):
+			if di == 0 and dj == 0:
+				continue
+			var i := posmod(c.x + di, SECTORS)
+			var j := c.y + dj
+			if j < 0 or j >= bands:
+				continue
+			if not _strippable(l, i, j):
+				continue
+			if _panel_center(l, i, j).distance_to(hit_local) <= circle_r:
+				panels.append(Vector2i(i, j))
+	for p in panels:
+		layers[l][_idx(p.x, p.y)] = 0
+	_rebuild(l)
+	if l == OUTER:
+		_rebuild(INNER)
+	return {"layer": l, "panels": panels}
+
+
+func _strippable(l: int, i: int, j: int) -> bool:
+	if l == OUTER:
+		return has_panel(OUTER, i, j)
+	return has_panel(INNER, i, j) and not has_panel(OUTER, i, j)
+
+
+func _panel_center(l: int, i: int, j: int) -> Vector3:
+	var ro := layer_radii(l).y
+	var a := TAU * (i + 0.5) / SECTORS
+	return Vector3(cos(a) * ro, (j + 0.5) * BAND_H, sin(a) * ro)
+
+
+## Old single-panel API (kept for tests): strips one panel at the hit point.
+func strip_at(world_point: Vector3) -> Dictionary:
+	var r := strip_circle(world_point, 0.0)
+	if r.is_empty():
+		return {}
+	var p: Vector2i = r.panels[0]
+	return {"layer": r.layer, "i": p.x, "j": p.y}
 
 
 func bare_fraction() -> float:
@@ -201,42 +245,67 @@ func bare_fraction() -> float:
 	return float(bare) / float(total)
 
 
-## Mesh + local transform for the piece (layer l, panel i, j) as a free-standing chip.
-## The chip's local frame: +Z = outward (radial), +Y = up, X = along the bark.
 func chip_data(l: int, i: int, j: int) -> Dictionary:
+	return piece_data(l, [Vector2i(i, j)])
+
+
+## Mesh + transform for a bark piece made of several panels of one layer (one curved sheet).
+## The piece frame is centred on the first panel: +Z = outward, +Y = up.
+func piece_data(l: int, panels: Array) -> Dictionary:
 	var rr := layer_radii(l)
 	var ri := rr.x
 	var ro := rr.y
-	var y0 := j * BAND_H
-	var y1 := y0 + BAND_H
-	var mid_a := TAU * (i + 0.5) / SECTORS
-	var center := Vector3(cos(mid_a) * (ri + ro) * 0.5, (y0 + y1) * 0.5, sin(mid_a) * (ri + ro) * 0.5)
+	var c0: Vector2i = panels[0]
+	var mid_a := TAU * (c0.x + 0.5) / SECTORS
+	var center := Vector3(cos(mid_a) * (ri + ro) * 0.5, (c0.y + 0.5) * BAND_H, sin(mid_a) * (ri + ro) * 0.5)
 	var basis := Basis(Vector3.UP, PI * 0.5 - mid_a)
 	var inv := basis.inverse()
-	var pts := [
-		_corner(ri, i, y0), _corner(ri, i + 1, y0), _corner(ro, i + 1, y0), _corner(ro, i, y0),
-		_corner(ri, i, y1), _corner(ri, i + 1, y1), _corner(ro, i + 1, y1), _corner(ro, i, y1),
-	]
-	var lp: Array[Vector3] = []
-	for p in pts:
-		lp.append(inv * ((p as Vector3) - center))
-	var col := _panel_color(l, i, j)
-	var under := inner_color if l == OUTER else wood_color.darkened(0.05)
+	var set := {}
+	for p in panels:
+		set[p] = true
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	LowPoly.quad(st, lp[3], lp[2], lp[6], lp[7], Vector3(0, 0, 1), col)            # outer face
-	LowPoly.quad(st, lp[0], lp[1], lp[5], lp[4], Vector3(0, 0, -1), under)          # inner face (fibres)
-	LowPoly.quad(st, lp[4], lp[5], lp[6], lp[7], Vector3.UP, col.darkened(0.2))
-	LowPoly.quad(st, lp[0], lp[1], lp[2], lp[3], Vector3.DOWN, col.darkened(0.2))
-	var nl := (lp[0] + lp[3] + lp[4] + lp[7]) * 0.25
-	var nr := (lp[1] + lp[2] + lp[5] + lp[6]) * 0.25
-	LowPoly.quad(st, lp[0], lp[3], lp[7], lp[4], nl - nr, col.darkened(0.2))
-	LowPoly.quad(st, lp[1], lp[2], lp[6], lp[5], nr - nl, col.darkened(0.2))
-	var width := lp[2].distance_to(lp[3])
+	var lo := Vector3(1e9, 1e9, 1e9)
+	var hi := -lo
+	for p in panels:
+		var i: int = p.x
+		var j: int = p.y
+		var y0 := j * BAND_H
+		var y1 := y0 + BAND_H
+		var pts := [
+			_corner(ri, i, y0), _corner(ri, i + 1, y0), _corner(ro, i + 1, y0), _corner(ro, i, y0),
+			_corner(ri, i, y1), _corner(ri, i + 1, y1), _corner(ro, i + 1, y1), _corner(ro, i, y1),
+		]
+		var lp: Array[Vector3] = []
+		for q in pts:
+			var v := inv * ((q as Vector3) - center)
+			lp.append(v)
+			lo = lo.min(v)
+			hi = hi.max(v)
+		var col := _panel_color(l, i, j)
+		var under := inner_color if l == OUTER else wood_color.darkened(0.05)
+		var pa := TAU * (i + 0.5) / SECTORS
+		var out := inv * Vector3(cos(pa), 0, sin(pa))
+		LowPoly.quad(st, lp[3], lp[2], lp[6], lp[7], out, col)
+		LowPoly.quad(st, lp[0], lp[1], lp[5], lp[4], -out, under)
+		var edge := col.darkened(0.2)
+		if not set.has(Vector2i(i, j + 1)):
+			LowPoly.quad(st, lp[4], lp[5], lp[6], lp[7], Vector3.UP, edge)
+		if not set.has(Vector2i(i, j - 1)):
+			LowPoly.quad(st, lp[0], lp[1], lp[2], lp[3], Vector3.DOWN, edge)
+		var nl := (lp[0] + lp[3] + lp[4] + lp[7]) * 0.25
+		var nr := (lp[1] + lp[2] + lp[5] + lp[6]) * 0.25
+		if not set.has(Vector2i(posmod(i - 1, SECTORS), j)):
+			LowPoly.quad(st, lp[0], lp[3], lp[7], lp[4], nl - nr, edge)
+		if not set.has(Vector2i(posmod(i + 1, SECTORS), j)):
+			LowPoly.quad(st, lp[1], lp[2], lp[6], lp[5], nr - nl, edge)
+	var size := (hi - lo).max(Vector3(0.03, 0.03, 0.03))
 	return {
 		"mesh": st.commit(),
 		"xform": global_transform * Transform3D(basis, center),
-		"size": Vector3(width, BAND_H, ro - ri),
+		"size": size,
+		"box_center": (hi + lo) * 0.5,
 		"layer": l,
+		"panels": panels.size(),
 		"outward": (global_transform.basis * Vector3(cos(mid_a), 0, sin(mid_a))).normalized(),
 	}

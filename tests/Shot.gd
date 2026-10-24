@@ -1,19 +1,26 @@
 extends Node
-## First-person screenshots. Run: xvfb-run -a godot --path . res://tests/Shot.tscn --rendering-driver opengl3
+## Screenshots of every feature. Run: xvfb-run -a godot --path . res://tests/Shot.tscn --rendering-driver opengl3
 var main: Node3D
 var player: Player
 var t := 0.0
 var step := 0
 var tree: ForestTree
 var plan: Array = []
+var box: DeliveryBox
 
 
 func _ready() -> void:
+	Game.save_enabled = false
+	Game.reset()
+	Game.money = 5000.0
+	for id in ["hatchet", "double_bit", "labrys", "drill"]:
+		Game.owned[id] = true
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://tests/shots"))
 	main = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
 	await get_tree().physics_frame
 	player = main.player
+	main.hud.hide_start = true
 	var best := 1e9
 	for tr in main.trees:
 		var d: float = tr.global_position.distance_to(Vector3(0, 0, 12))
@@ -21,62 +28,84 @@ func _ready() -> void:
 			best = d
 			tree = tr
 	plan = [
-		[2.0, "01_start", func(): pass],
-		[3.5, "02_porch", func(): main.hud.hide_start = true],
-		[5.0, "03_cabin", func(): _stand(Vector3(0, 0, 13), Vector3(0, 1.5, 0), -5)],
-		[6.5, "04_tree", func(): _face_tree()],
-		[10.0, "05_stripped", func(): _chop_lots()],
-		[11.0, "06_chips_ground", func(): _look_down()],
-		[11.12, "07_swing", func():
-			_face_tree()
-			player.start_chop()],
-		[12.5, "08_holding", func():
-			player.set("_yaw", player.get("_yaw") + PI * 0.6)
-			player.rotation.y = player.get("_yaw")
-			player.head.rotation.x = 0.0
-			player.set("_pitch", 0.0)
-			var c: Chip = main.chips[0]
-			c.global_position = player.cam.global_position - player.cam.global_transform.basis.z * 1.0
-			c.linear_velocity = Vector3.ZERO
-			player.interact()],
-		[14.0, "09_inside", func():
-			player.drop_held()
-			_stand(Vector3(1.2, Cabin.FLOOR_Y, 1.4), Vector3(-2, 1.3, -2.4), 0)],
+		[3.0, "01_hatchet_ring", func():
+			_face_tree(-5)
+			player.equip("hatchet")],
+		[4.5, "02_hatchet_stripped", func():
+			for k in 6:
+				_aim_rand()
+				player.call("_do_impact")],
+		[5.6, "03_double_bit", func():
+			_face_tree(-5)
+			player.equip("double_bit")],
+		[6.2, "04_double_bit_swing", func(): player.start_swing()],
+		[7.4, "05_labrys", func(): player.equip("labrys")],
+		[8.0, "06_labrys_slam", func(): player.start_swing()],
+		[9.4, "07_drill", func(): player.equip("drill")],
+		[10.6, "08_log_truck", func():
+			player.equip("hatchet")
+			_load_truck()
+			_stand(Vector3(2.5, 0, 12.5), main.ship_truck.global_position + Vector3(0, 1.2, 0), -10)],
+		[12.5, "09_store", func(): main.open_computer()],
+		[13.5, "10_product", func(): main.shop_ui.call("_open", "labrys")],
+		[14.5, "11_orders", func():
+			Game.buy("labrys") if not Game.is_owned("labrys") else null
+			Game.owned.erase("drill")
+			Game.buy("drill")
+			Game.buy("phone")
+			main.on_order_placed()
+			main.shop_ui.page = "orders"
+			main.shop_ui.call("_render")],
+		[16.0, "12_phone", func():
+			main.close_ui()
+			Game.has_phone = true
+			main.open_phone()],
+		[29.0, "13_van_unloading", func():
+			main.close_ui()
+			_stand(Vector3(-4.0, 0, 7.0), Terrain.road_x(14) * Vector3(1, 0, 0) + Vector3(0, 1.5, 14), -6)],
+		[40.0, "13b_van_leaving", func(): pass],
+		[42.0, "14_boxes", func():
+			var bs := main.get_children().filter(func(n): return n is DeliveryBox)
+			if bs.size() > 0:
+				box = bs[0]
+				_stand(box.global_position + Vector3(0.9, 0, -1.1), box.global_position, -38)],
+		[42.45, "15_box_opening", func():
+			if box:
+				box.open()],
+		[43.0, "16_item_revealed", func(): pass],
+		[44.5, "17_cabin_computer", func(): _stand(Vector3(0.4, Cabin.FLOOR_Y, 0.4), main.computer.global_position + Vector3(0, 1.0, 0), -15)],
 	]
 	(plan[0][2] as Callable).call()
 
 
-func _stand(pos: Vector3, look_at: Vector3, pitch_deg: float) -> void:
+func _stand(pos: Vector3, look: Vector3, pitch_deg: float) -> void:
 	pos.y = maxf(pos.y, main.terrain.height_at(pos.x, pos.z)) + 0.05
 	player.global_position = pos
 	player.velocity = Vector3.ZERO
-	var to := look_at - pos
+	var to := look - pos
 	player.set("_yaw", atan2(-to.x, -to.z))
 	player.set("_pitch", deg_to_rad(pitch_deg))
 
 
-func _face_tree() -> void:
+func _face_tree(pitch: float) -> void:
 	var tp := tree.global_position
 	var away := Vector3(0, 0, 12) - tp
 	away.y = 0
 	away = away.normalized()
-	_stand(tp + away * (tree.radius + 1.1), tp, -8)
+	_stand(tp + away * (tree.radius + 1.0), tp + Vector3(0, 1.4, 0), pitch)
 
 
-func _chop_lots() -> void:
-	player.max_health = 10000.0
-	player.health = 10000.0
-	for k in 40:
-		var yaw0: float = player.get("_yaw")
-		player.head.rotation.x = deg_to_rad(randf_range(-35.0, 15.0))
-		player.rotation.y = yaw0 + deg_to_rad(randf_range(-20.0, 20.0))
-		player.call("_do_impact")
-	player.max_health = 100.0
-	player.health = 100.0
+func _aim_rand() -> void:
+	player.head.rotation.x = deg_to_rad(randf_range(-25.0, 10.0))
+	player.rotation.y = float(player.get("_yaw")) + deg_to_rad(randf_range(-12.0, 12.0))
 
 
-func _look_down() -> void:
-	player.set("_pitch", deg_to_rad(-45.0))
+func _load_truck() -> void:
+	var tr: Truck = main.ship_truck
+	var k := 0
+	for c in main.chips:
+		c.global_position = tr.global_transform * Vector3(randf_range(-0.6, 0.6), 1.5 + k * 0.08, randf_range(0.2, 2.0))
+		k += 1
 
 
 func _process(delta: float) -> void:
@@ -88,6 +117,5 @@ func _process(delta: float) -> void:
 		step += 1
 		if step < plan.size():
 			(plan[step][2] as Callable).call()
-		# (actions are listed with the shot they lead up to)
 		else:
 			get_tree().quit()

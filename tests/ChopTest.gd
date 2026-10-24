@@ -17,6 +17,8 @@ func check(c: bool, msg: String) -> void:
 
 
 func _ready() -> void:
+	Game.save_enabled = false
+	Game.reset()
 	main = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
 	await get_tree().physics_frame

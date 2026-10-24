@@ -53,6 +53,11 @@ jobs:
           ${GODOT_BIN} --headless --path . res://tests/ChopTest.tscn --fixed-fps 60 2>&1 | tee chop.log
           grep -q "CHOP RESULT: PASS" chop.log
 
+      - name: Gameplay test (tools, shipping truck, shop, delivery boxes)
+        run: |
+          ${GODOT_BIN} --headless --path . res://tests/LoopTest.tscn --fixed-fps 60 2>&1 | tee loop.log
+          grep -q "LOOP RESULT: PASS" loop.log
+
       - name: Export Web, Windows and Linux
         run: |
           mkdir -p build/web build/windows build/linux

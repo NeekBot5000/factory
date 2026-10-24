@@ -1,26 +1,35 @@
 class_name Hud
 extends CanvasLayer
-## Minimal first-person HUD: crosshair, health, context hint, damage flash, faint fade, start screen.
+## First-person HUD: crosshair ring sized to the tool's stripping circle, health, money, tool bar, hints,
+## toasts, damage flash, faint fade and the start screen.
 
 var player: Player
+var main: Node
 var root: Control
 var health_bar: ProgressBar
 var health_lbl: Label
+var money_lbl: Label
 var hint: Label
 var crosshair: Control
 var flash: ColorRect
 var fade: ColorRect
 var start_panel: PanelContainer
+var toast_box: VBoxContainer
+var toolbar: HBoxContainer
 var font_body: FontVariation
+var font_bold: FontVariation
 var font_title: FontVariation
-var _flash_a := 0.0
 var hide_start := false
+var _flash_a := 0.0
+var _ring_px := 10.0
 
 
-func setup(p: Player) -> void:
+func setup(p: Player, p_main: Node) -> void:
 	player = p
+	main = p_main
 	layer = 5
 	font_body = _font("res://assets/fonts/Nunito.ttf", 700)
+	font_bold = _font("res://assets/fonts/Nunito.ttf", 850)
 	font_title = _font("res://assets/fonts/Fredoka.ttf", 600)
 	root = Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -47,7 +56,7 @@ void fragment() {
 	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	crosshair.draw.connect(_draw_crosshair)
 	root.add_child(crosshair)
-	# health
+	# health (bottom left)
 	var hp := PanelContainer.new()
 	hp.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.65), 12, 12))
 	hp.anchor_top = 1.0
@@ -68,18 +77,50 @@ void fragment() {
 	health_bar.add_theme_stylebox_override("background", _flat(Color(0, 0, 0, 0.5), 7, 0))
 	health_bar.add_theme_stylebox_override("fill", _flat(Color("e04848"), 7, 0))
 	hv.add_child(health_bar)
+	# money (top right)
+	var mp := PanelContainer.new()
+	mp.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.65), 12, 14))
+	mp.anchor_left = 1.0
+	mp.anchor_right = 1.0
+	mp.offset_right = -20
+	mp.offset_top = 18
+	mp.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	root.add_child(mp)
+	money_lbl = _label("$0.00", 28, Color("7aff9a"), font_title)
+	mp.add_child(money_lbl)
+	# tool bar (bottom centre)
+	toolbar = HBoxContainer.new()
+	toolbar.anchor_left = 0.5
+	toolbar.anchor_right = 0.5
+	toolbar.anchor_top = 1.0
+	toolbar.anchor_bottom = 1.0
+	toolbar.offset_top = -86
+	toolbar.offset_bottom = -16
+	toolbar.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	toolbar.add_theme_constant_override("separation", 6)
+	toolbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(toolbar)
 	# hint
 	hint = _label("", 17, Color.WHITE)
 	hint.anchor_left = 0.5
 	hint.anchor_right = 0.5
 	hint.anchor_top = 1.0
 	hint.anchor_bottom = 1.0
-	hint.offset_top = -120
+	hint.offset_top = -130
 	hint.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_constant_override("outline_size", 6)
 	hint.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
 	root.add_child(hint)
+	# toasts
+	toast_box = VBoxContainer.new()
+	toast_box.anchor_left = 0.5
+	toast_box.anchor_right = 0.5
+	toast_box.offset_top = 18
+	toast_box.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	toast_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast_box.add_theme_constant_override("separation", 6)
+	root.add_child(toast_box)
 	fade = ColorRect.new()
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fade.color = Color(0, 0, 0, 0)
@@ -90,6 +131,14 @@ void fragment() {
 	player.hurt.connect(func(_a): _flash_a = 0.85)
 	player.fainted.connect(_on_faint)
 	player.revived.connect(_on_revive)
+	player.tool_changed.connect(func(_t): _rebuild_toolbar())
+	Game.money_changed.connect(func(m): money_lbl.text = "$%.2f" % m)
+	Game.tools_changed.connect(_rebuild_toolbar)
+	Game.toast.connect(show_toast)
+	if main.icons != null:
+		main.icons.icon_ready.connect(func(_id): _rebuild_toolbar())
+	money_lbl.text = "$%.2f" % Game.money
+	_rebuild_toolbar()
 
 
 func _font(path: String, weight: int) -> FontVariation:
@@ -99,7 +148,7 @@ func _font(path: String, weight: int) -> FontVariation:
 	return f
 
 
-func _flat(c: Color, radius: int, pad: int) -> StyleBoxFlat:
+func _flat(c: Color, radius: int, pad: int, border: Color = Color(0, 0, 0, 0), bw: int = 0) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = c
 	s.set_corner_radius_all(radius)
@@ -107,6 +156,9 @@ func _flat(c: Color, radius: int, pad: int) -> StyleBoxFlat:
 	s.content_margin_right = pad
 	s.content_margin_top = pad * 0.6
 	s.content_margin_bottom = pad * 0.6
+	if bw > 0:
+		s.border_color = border
+		s.set_border_width_all(bw)
 	return s
 
 
@@ -134,10 +186,10 @@ func _build_start() -> void:
 	var t := _label("TIMBER", 52, Color("ffcf6a"), font_title)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	var s := _label("You're a lumberjack with no tools. Karate-chop the bark off the trees.\nEvery chop hurts. No inventory: carry what you strip with your own hands.", 16, Color(1, 1, 1, 0.85))
+	var s := _label("Strip bark off the trees, carry it to the log truck by the cabin and ship it for cash.\nBuy better tools on the cabin computer - the delivery van brings them in boxes.", 16, Color(1, 1, 1, 0.85))
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(s)
-	var c := _label("WASD move    Mouse look    Shift sprint    Space jump\nLeft click  karate chop    E / Right click  pick up / drop    Left click while holding  throw\nEsc  release mouse", 15, Color("8fd0ff"))
+	var c := _label("WASD move    Mouse look    Shift sprint    Space jump\nLeft click  chop / open boxes / throw    E  use / pick up / drop\n1-5 or mouse wheel  switch tools    Tab  phone    Esc  release mouse", 15, Color("8fd0ff"))
 	c.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(c)
 	var go := _label("Click to play", 22, Color.WHITE, font_title)
@@ -145,10 +197,62 @@ func _build_start() -> void:
 	v.add_child(go)
 
 
+func _rebuild_toolbar() -> void:
+	for c in toolbar.get_children():
+		toolbar.remove_child(c)
+		c.queue_free()
+	for i in Tools.TOOL_ORDER.size():
+		var id: String = Tools.TOOL_ORDER[i]
+		if not Game.is_owned(id):
+			continue
+		var sel := player.tool == id
+		var pc := PanelContainer.new()
+		pc.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.75 if sel else 0.5), 10, 6, Color("ffcf6a") if sel else Color(1, 1, 1, 0.15), 2 if sel else 1))
+		pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var v := VBoxContainer.new()
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pc.add_child(v)
+		var tex: Texture2D = main.icons.get_icon(id) if main.icons != null and id != "hands" else null
+		if tex != null:
+			var tr := TextureRect.new()
+			tr.texture = tex
+			tr.custom_minimum_size = Vector2(44, 44)
+			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			v.add_child(tr)
+		else:
+			var l0 := _label("✋" if id == "hands" else "", 26, Color.WHITE)
+			l0.custom_minimum_size = Vector2(44, 44)
+			l0.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			l0.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			v.add_child(l0)
+		var l := _label("%d  %s" % [i + 1, Tools.TOOLS[id].name], 11, Color("ffcf6a") if sel else Color(1, 1, 1, 0.8), font_bold)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(l)
+		toolbar.add_child(pc)
+
+
+func show_toast(text: String, color: Color = Color.WHITE) -> void:
+	var l := _label(text, 16, color, font_bold)
+	l.add_theme_stylebox_override("normal", _flat(Color(0.05, 0.06, 0.1, 0.85), 10, 14))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast_box.add_child(l)
+	while toast_box.get_child_count() > 4:
+		var old := toast_box.get_child(0)
+		toast_box.remove_child(old)
+		old.queue_free()
+	var tw := l.create_tween()
+	tw.tween_interval(3.5)
+	tw.tween_property(l, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(l.queue_free)
+
+
 func _draw_crosshair() -> void:
-	var col := Color(1, 1, 1, 0.85)
-	crosshair.draw_circle(Vector2.ZERO, 2.5, col)
-	crosshair.draw_arc(Vector2.ZERO, 9.0, 0, TAU, 24, Color(1, 1, 1, 0.35), 1.5)
+	crosshair.draw_circle(Vector2.ZERO, 2.5, Color(1, 1, 1, 0.9))
+	var on_tree := player.aiming_at_tree()
+	var col := Color(1, 0.85, 0.4, 0.8) if on_tree else Color(1, 1, 1, 0.35)
+	crosshair.draw_arc(Vector2.ZERO, _ring_px, 0, TAU, 40, col, 1.6, true)
 
 
 func _on_health(h: float, m: float) -> void:
@@ -172,7 +276,15 @@ func _process(delta: float) -> void:
 	_flash_a = maxf(0.0, _flash_a - delta * 2.5)
 	var low := clampf(1.0 - player.health / 40.0, 0.0, 1.0) * 0.45
 	(flash.material as ShaderMaterial).set_shader_parameter("strength", maxf(_flash_a, low))
-	start_panel.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and player.controls_enabled and not hide_start
-	crosshair.visible = not start_panel.visible
-	if player.controls_enabled:
+	var ui_open: bool = main.shop_ui != null
+	start_panel.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and player.controls_enabled and not hide_start and not ui_open
+	crosshair.visible = not start_panel.visible and not ui_open
+	toolbar.visible = not ui_open
+	money_lbl.get_parent().visible = not ui_open
+	if crosshair.visible:
+		_ring_px = lerpf(_ring_px, player.aim_ring_px(root.get_viewport_rect().size.y), 0.35)
+		crosshair.queue_redraw()
+	if player.controls_enabled and not ui_open:
 		hint.text = player.look_target_text() if not start_panel.visible else ""
+	else:
+		hint.text = ""

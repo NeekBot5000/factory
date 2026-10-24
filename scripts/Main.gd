@@ -10,6 +10,13 @@ var hud: Hud
 var trees: Array[ForestTree] = []
 var chips: Array[Chip] = []
 var rng := RandomNumberGenerator.new()
+var icons: Icons
+var ship_truck: Truck
+var van: Truck
+var computer: Computer
+var ui_layer: CanvasLayer
+var shop_ui: ShopUI
+var _dispatch_timer := -1.0
 
 
 func _ready() -> void:
@@ -21,6 +28,13 @@ func _ready() -> void:
 	cabin = Cabin.new()
 	add_child(cabin)
 	cabin.build()
+	icons = Icons.new()
+	add_child(icons)
+	computer = Computer.new()
+	add_child(computer)
+	computer.build(self)
+	computer.position = Vector3(0.4, Cabin.FLOOR_Y, -1.98)
+	_trucks()
 	_forest()
 	_decor()
 	player = Player.new()
@@ -31,7 +45,12 @@ func _ready() -> void:
 	player.set("_yaw", PI)
 	hud = Hud.new()
 	add_child(hud)
-	hud.setup(player)
+	hud.setup(player, self)
+	ui_layer = CanvasLayer.new()
+	ui_layer.layer = 20
+	add_child(ui_layer)
+	if not Game.pending_orders().is_empty():
+		_dispatch_timer = 4.0
 
 
 func _environment() -> void:
@@ -82,8 +101,10 @@ func _forest() -> void:
 			var a := rng.randf() * TAU
 			var r := sqrt(rng.randf_range(rmin * rmin, rmax * rmax))
 			var p := Vector2(cos(a), sin(a)) * r
-			# keep the porch path open
-			if p.y > 2.0 and absf(p.x) < 2.5 and p.y < 40.0:
+			# keep the road and the truck parking spot clear
+			if p.y > 1.0 and p.y < 118.0 and absf(p.x - Terrain.road_x(p.y)) < 4.6:
+				continue
+			if p.x > 2.5 and p.x < 10.0 and p.y > 3.0 and p.y < 20.0:
 				continue
 			var ok := true
 			for q in points:
@@ -149,6 +170,99 @@ func _decor() -> void:
 		var d := rng.randf_range(115.0, 140.0)
 		var h := rng.randf_range(14.0, 28.0)
 		LowPoly.mesh_instance(self, LowPoly.cyl(0.0, h * 1.6, h, 6), LowPoly.mat(Color("5d7d5a").lerp(Color("8fa6a8"), 0.4)), Vector3(cos(a) * d, h * 0.5 - 2.0, sin(a) * d), Vector3(0, rng.randf() * 60.0, 0))
+
+
+func _road_point(z: float) -> Vector3:
+	var x := Terrain.road_x(z)
+	return Vector3(x, terrain.height_at(x, z), z)
+
+
+func _trucks() -> void:
+	# green log truck parked beside the cabin, bed facing the porch
+	var park := Vector3(6.0, 0.0, 8.5)
+	park.y = terrain.height_at(park.x, park.z)
+	var out: Array[Vector3] = [Vector3(6.0, terrain.height_at(6.0, 12.5), 12.5), _road_point(17.0)]
+	var z := 22.0
+	while z <= 110.0:
+		out.append(_road_point(z))
+		z += 4.0
+	ship_truck = Truck.new()
+	add_child(ship_truck)
+	ship_truck.build("ship", self, Transform3D(Basis.looking_at(Vector3(0, 0, 1), Vector3.UP), park), out)
+	# orange TimberMart van: stops on the road in front of the cabin
+	var vout: Array[Vector3] = []
+	z = 15.0
+	while z <= 110.0:
+		vout.append(_road_point(z))
+		z += 4.0
+	van = Truck.new()
+	add_child(van)
+	van.build("deliver", self, Transform3D.IDENTITY, vout)
+
+
+func on_order_placed() -> void:
+	if _dispatch_timer < 0.0:
+		_dispatch_timer = 3.0
+
+
+func unload_boxes(truck: Truck) -> void:
+	var k := 0
+	for o in Game.orders:
+		if o.status != "shipping":
+			continue
+		var b := DeliveryBox.new()
+		add_child(b)
+		b.setup(String(o.item), self, icons.get_box_art(String(o.item)))
+		var back := truck.global_transform.basis.z
+		var side := truck.global_transform.basis.x
+		b.global_position = truck.rear_point() + side * (k - 0.5) * 0.6 + Vector3(0, k * 0.1, 0)
+		b.rotation.y = randf() * TAU
+		b.linear_velocity = back * 2.2 + Vector3.UP * 1.0
+		k += 1
+
+
+func _process(delta: float) -> void:
+	if _dispatch_timer >= 0.0:
+		_dispatch_timer -= delta
+		if _dispatch_timer < 0.0:
+			if van.state == "away" and not Game.pending_orders().is_empty():
+				for o in Game.orders:
+					if o.status == "processing":
+						o.status = "shipping"
+				Game.orders_changed.emit()
+				van.deliver()
+			elif not Game.pending_orders().is_empty():
+				_dispatch_timer = 2.0
+
+
+func open_computer() -> void:
+	_open_ui(false)
+
+
+func open_phone() -> void:
+	_open_ui(true)
+
+
+func _open_ui(compact: bool) -> void:
+	if shop_ui != null:
+		return
+	player.drop_held()
+	player.controls_enabled = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	shop_ui = ShopUI.new()
+	ui_layer.add_child(shop_ui)
+	shop_ui.setup(self, compact)
+	shop_ui.closed.connect(close_ui)
+	Sfx.play("boot" if not compact else "click")
+
+
+func close_ui() -> void:
+	if shop_ui == null:
+		return
+	shop_ui.queue_free()
+	shop_ui = null
+	player.controls_enabled = true
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 ## Called by the player when a piece of bark comes off a tree.

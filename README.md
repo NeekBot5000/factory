@@ -3,10 +3,23 @@
 A low-poly, first-person lumberjack game (prototype), built in **Godot 4.4**.
 
 You start with nothing but your bare hands: a log cabin in a clearing, surrounded by forest.
-**Karate-chop trees to strip their bark**, and every chop hurts. Each hit knocks off a small piece exactly
-where your hand lands, and you can see the layers come away: the dark **outer bark** first, then the
-orange **inner bark**, then the pale **wood** underneath. There is no inventory: every piece is a physics
-object you pick up and carry in your hands.
+**Karate-chop trees to strip their bark**, and every chop hurts. You can see the layers come away: the dark
+**outer bark** first, then the orange **inner bark**, then the pale **wood** underneath. Everything inside your
+aim circle comes off in one sheet, but only one layer at a time. There is no inventory: every piece is a
+physics object you pick up and carry.
+
+Carry bark to the green **log truck** by the cabin and ship it to town for money. Then use the **computer in the
+cabin** to order better tools from TimberMart. An orange delivery van backs up to your cabin and drops off a
+box with a drawing of what's inside. Click the box to unpack it, then pick up your new tool.
+
+| Tool | Price | What it does |
+|---|---|---|
+| Bare hands | free | small chips, hurts you |
+| Trusty Hatchet | $30 | no more damage, bigger circle |
+| Double-Bit Axe | $160 | two heads, sweeping side swing |
+| Crescent Labrys | $650 | spinning overhead slam, huge patch |
+| Bark Drill | $2400 | hold the mouse button and it eats bark continuously |
+| TimberPhone | $350 | the store and the truck, from anywhere (Tab) |
 
 ## Play
 
@@ -19,30 +32,36 @@ object you pick up and carry in your hands.
 | WASD / arrows | move |
 | Mouse | look (click the window to capture the mouse, Esc to release) |
 | Shift / Space | sprint / jump |
-| Left click | karate chop (costs health) |
-| E or right click | pick up / drop the piece you're looking at |
+| Left click | swing your tool (hold for the drill) / open a box / use the computer |
+| E or right click | pick up / drop, ship the truck, take an unboxed item |
 | Left click while holding | throw it |
+| 1-5 / mouse wheel | switch tools |
+| Tab | phone (once you own it) |
 
-Health regenerates slowly when you stop hurting yourself. Hit zero and you black out and wake up at the cabin.
+Progress saves automatically.
 
-## Prototype scope / roadmap
+## Roadmap
 
-Done: first-person movement, cabin + forest, layered bark trees that strip where you hit, damage and fainting,
-physically carrying pieces.
-
-Next, per the plan: axes (no more damage, bigger pieces), selling bark, saws that strip whole logs (sell the
-bark and the log separately, or the whole log), better axes, chainsaws, a long axe that slices straight through,
-and realistic robots and drones that start slow and help haul bark and logs back to base.
+Saws that strip whole logs, chainsaws, a long axe that slices straight through, and drones that haul bark back
+to base.
 
 ## Code
 
 ```
-scripts/Main.gd        scene: sky, terrain, cabin, forest, spawning chips
-scripts/Player.gd      first-person controller, karate chop, health, carrying
-scripts/ForestTree.gd  trunk built from outer-bark / inner-bark panel grids over a wood core
-scripts/Chip.gd        a physical piece of bark
-scripts/Cabin.gd       procedural log cabin       scripts/Terrain.gd  rolling forest floor
-scripts/Hud.gd         crosshair, health, hints   scripts/Sfx.gd      procedural sounds
-tests/ChopTest.tscn    headless gameplay test     tests/Shot.tscn     screenshots (xvfb)
+scripts/Main.gd        scene setup, chip spawning, order dispatch, UI
+scripts/Game.gd        money, owned tools, orders, save/load (autoload)
+scripts/Tools.gd       tool stats, shop catalogue, procedural tool models
+scripts/Player.gd      first-person controller, tools + swing animations, health, carrying
+scripts/ForestTree.gd  trunk built from outer-bark / inner-bark panel grids, circle stripping
+scripts/Chip.gd        a physical sheet of bark
+scripts/Truck.gd       log truck (ship for cash) and delivery van
+scripts/DeliveryBox.gd box with printed art and an unboxing animation
+scripts/ItemPickup.gd  the revealed item          scripts/Computer.gd  cabin PC
+scripts/ShopUI.gd      TimberMart store (computer and phone)
+scripts/Icons.gd       renders item thumbnails and the box line art
+scripts/Cabin.gd       procedural log cabin       scripts/Terrain.gd  forest floor and road
+scripts/Hud.gd         crosshair, health, money, toolbar   scripts/Sfx.gd  procedural sounds
+tests/ChopTest.tscn, tests/LoopTest.tscn  headless gameplay tests
+tests/Shot.tscn        screenshots (xvfb)
 ```
 All models and sounds are generated in code. The only external assets are two SIL OFL fonts.

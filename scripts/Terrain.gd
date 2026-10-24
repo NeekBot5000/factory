@@ -45,6 +45,10 @@ func build() -> void:
 	add_child(cs)
 
 
+static func road_x(z: float) -> float:
+	return -sin(z * 0.15) * 1.5
+
+
 func height_at(x: float, z: float) -> float:
 	var d := Vector2(x, z).length()
 	var fall := smoothstep(CLEARING, CLEARING + 14.0, d)
@@ -60,9 +64,12 @@ func _color(p: Vector3, n: Vector3) -> Color:
 	var g := Color("5c9c3e").lerp(Color("4a8a35"), clampf(detail.get_noise_2d(p.x * 2.0, p.z * 2.0) * 0.5 + 0.5, 0.0, 1.0))
 	if n.y < 0.85:
 		g = g.lerp(Color("7a6a4a"), 0.5)
-	# dirt path from the cabin porch towards the forest
-	if p.z > 3.0 and absf(p.x + sin(p.z * 0.15) * 1.5) < 1.3 and p.z < 40.0:
+	# dirt road from the cabin porch out through the forest (the trucks drive on it)
+	if p.z > 3.0 and absf(p.x - road_x(p.z)) < 2.3 and p.z < 112.0:
 		g = Color("8a6a45")
+	# truck parking spot beside the cabin
+	if p.x > 3.5 and p.x < 8.5 and p.z > 4.0 and p.z < 16.0:
+		g = Color("8a6a45").lerp(g, 0.35)
 	# worn ground around the cabin
 	var d := Vector2(p.x, p.z).length()
 	if d < 6.5:
