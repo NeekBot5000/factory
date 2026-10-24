@@ -48,40 +48,35 @@ jobs:
       - name: Import project
         run: ${GODOT_BIN} --headless --import --path . || true
 
-      - name: Logic tests
+      - name: Gameplay test (chopping, damage, carrying, fainting)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/LogicTest.tscn 2>&1 | tee logic.log
-          grep -q "LOGIC RESULT: PASS" logic.log
-
-      - name: Physics simulation tests
-        run: |
-          ${GODOT_BIN} --headless --path . res://tests/SimTest.tscn --fixed-fps 60 2>&1 | tee sim.log
-          grep -q "TEST RESULT: PASS" sim.log
+          ${GODOT_BIN} --headless --path . res://tests/ChopTest.tscn --fixed-fps 60 2>&1 | tee chop.log
+          grep -q "CHOP RESULT: PASS" chop.log
 
       - name: Export Web, Windows and Linux
         run: |
           mkdir -p build/web build/windows build/linux
           ${GODOT_BIN} --headless --path . --export-release "Web" build/web/index.html
-          ${GODOT_BIN} --headless --path . --export-release "Windows" build/windows/FactoryIslands.exe
-          ${GODOT_BIN} --headless --path . --export-release "Linux" build/linux/FactoryIslands.x86_64
+          ${GODOT_BIN} --headless --path . --export-release "Windows" build/windows/Timber.exe
+          ${GODOT_BIN} --headless --path . --export-release "Linux" build/linux/Timber.x86_64
           ls -la build/*
 
       - name: Upload web build
         uses: actions/upload-artifact@v4
         with:
-          name: FactoryIslands-web
+          name: Timber-web
           path: build/web
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: FactoryIslands-windows
+          name: Timber-windows
           path: build/windows
 
       - name: Upload Linux build
         uses: actions/upload-artifact@v4
         with:
-          name: FactoryIslands-linux
+          name: Timber-linux
           path: build/linux
 
       - name: Upload Pages artifact
