@@ -178,6 +178,18 @@ func place(type_id: String, c: Vector3i, rot: int, charge: bool = true, paid: fl
 	return p
 
 
+func upgrade_part(p: Part) -> bool:
+	if not p.can_upgrade():
+		return false
+	var c := p.upgrade_cost()
+	if not Game.spend(c):
+		return false
+	p.paid += c
+	p.set_level(p.level + 1)
+	Game.stats.part_upgrades += 1
+	return true
+
+
 func remove(p: Part, refund: bool = true) -> void:
 	if not is_instance_valid(p):
 		return
@@ -202,7 +214,7 @@ func clear_all(refund: bool) -> void:
 func serialize() -> Array:
 	var out := []
 	for p in parts:
-		out.append({"t": p.type_id, "x": p.cell.x, "y": p.cell.y, "z": p.cell.z, "r": p.rot, "p": p.paid})
+		out.append({"t": p.type_id, "x": p.cell.x, "y": p.cell.y, "z": p.cell.z, "r": p.rot, "p": p.paid, "l": p.level})
 	return out
 
 
@@ -211,7 +223,9 @@ func _load_buildings() -> void:
 		var id := String(b.get("t", ""))
 		if not Defs.PARTS.has(id):
 			continue
-		place(id, Vector3i(int(b.x), int(b.y), int(b.z)), int(b.r), false, float(b.get("p", 0.0)))
+		var np := place(id, Vector3i(int(b.x), int(b.y), int(b.z)), int(b.r), false, float(b.get("p", 0.0)))
+		if np != null and int(b.get("l", 0)) > 0:
+			np.set_level(int(b.l))
 	Game.saved_buildings = []
 
 
@@ -234,7 +248,7 @@ func spawn_item(kind: String, pos: Vector3, value: float) -> Item:
 func sell(it: Item, seller: Part) -> void:
 	if not it.active:
 		return
-	var amount := it.value * float(seller.def.mult) * Game.sell_mult()
+	var amount := it.value * float(seller.def.mult) * seller.level_mult() * Game.sell_mult()
 	Game.add_money(amount)
 	Game.stats.sold += 1
 	seller.sold += 1
@@ -262,7 +276,7 @@ func _physics_process(delta: float) -> void:
 	var lucky := Game.lucky_chance()
 	for d in droppers:
 		var r: Dictionary = Defs.RESOURCES[d.def.res]
-		d.drop_accum += delta * float(r.rate) * rate_mult
+		d.drop_accum += delta * float(r.rate) * rate_mult * d.level_mult()
 		while d.drop_accum >= 1.0:
 			d.drop_accum -= 1.0
 			var v: float = r.value

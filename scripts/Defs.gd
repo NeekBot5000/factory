@@ -48,6 +48,7 @@ const PARTS := {
 	"conveyor": {"name": "Conveyor", "kind": "belt", "cat": "belts", "speed": 2.0, "tint": Color("ffcf4a"), "cost": 2.0, "unlock": 0.0, "level": 0},
 	"conveyor2": {"name": "Fast Conveyor", "kind": "belt", "cat": "belts", "speed": 4.5, "tint": Color("ff8a3d"), "cost": 6.0, "unlock": 250.0, "level": 3},
 	"conveyor3": {"name": "Turbo Conveyor", "kind": "belt", "cat": "belts", "speed": 8.0, "tint": Color("ff4f7a"), "cost": 20.0, "unlock": 8000.0, "level": 8},
+	"splitter": {"name": "Splitter", "kind": "splitter", "cat": "belts", "speed": 2.4, "tint": Color("c07bff"), "cost": 40.0, "unlock": 600.0, "level": 4},
 	"ramp": {"name": "Lift Ramp", "kind": "ramp", "cat": "belts", "speed": 2.6, "tint": Color("ffcf4a"), "cost": 6.0, "unlock": 60.0, "level": 1},
 	"ramp2": {"name": "Fast Lift", "kind": "ramp", "cat": "belts", "speed": 5.0, "tint": Color("ff8a3d"), "cost": 25.0, "unlock": 2000.0, "level": 5},
 
@@ -66,6 +67,10 @@ const PARTS := {
 
 	"platform": {"name": "Platform", "kind": "block", "cat": "misc", "cost": 1.0, "unlock": 0.0, "level": 0},
 }
+
+const LEVEL_MAX := 10
+# per-level bonus for upgradeable parts (see Part.level_mult)
+const LEVEL_BONUS := {"dropper": 0.25, "seller": 0.15, "processor": 0.12, "belt": 0.15, "ramp": 0.15, "splitter": 0.15}
 
 const UPGRADES := {
 	"drop_speed": {"name": "Dropper Speed", "desc": "+15% drop rate per level", "base": 100.0, "growth": 1.75, "max": 60, "per": 0.15},
@@ -87,12 +92,14 @@ const QUESTS := [
 	{"desc": "Own 15 parts", "stat": "parts", "target": 15, "reward": 120.0},
 	{"desc": "Reach factory level 2", "stat": "level", "target": 2, "reward": 200.0},
 	{"desc": "Place a processor", "stat": "processors", "target": 1, "reward": 300.0},
-	{"desc": "Buy an upgrade", "stat": "upgrades", "target": 1, "reward": 400.0},
+	{"desc": "Upgrade a part with the Upgrade tool (G)", "stat": "part_upgrades", "target": 1, "reward": 350.0},
+	{"desc": "Buy a global upgrade (U)", "stat": "upgrades", "target": 1, "reward": 400.0},
 	{"desc": "Own 6 droppers", "stat": "droppers", "target": 6, "reward": 600.0},
 	{"desc": "Buy your second plot of land", "stat": "plots", "target": 2, "reward": 900.0},
 	{"desc": "Earn $10K in total", "stat": "earned", "target": 10000, "reward": 2000.0},
 	{"desc": "Reach factory level 5", "stat": "level", "target": 5, "reward": 4000.0},
 	{"desc": "Own 25 droppers", "stat": "droppers", "target": 25, "reward": 12000.0},
+	{"desc": "Upgrade 50 parts (tip: select + G)", "stat": "part_upgrades", "target": 50, "reward": 20000.0},
 	{"desc": "Earn $100 per second", "stat": "income", "target": 100, "reward": 30000.0},
 	{"desc": "Own 5 plots of land", "stat": "plots", "target": 5, "reward": 60000.0},
 	{"desc": "Reach factory level 8", "stat": "level", "target": 8, "reward": 200000.0},
@@ -109,7 +116,7 @@ const QUESTS := [
 
 static func is_directional(id: String) -> bool:
 	var k: String = PARTS[id].kind
-	return k == "belt" or k == "ramp" or k == "processor"
+	return k == "belt" or k == "ramp" or k == "processor" or k == "splitter"
 
 
 static func plot_of_cell(c: Vector3i) -> Vector2i:

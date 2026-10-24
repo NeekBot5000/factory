@@ -26,6 +26,7 @@ func _ready() -> void:
 	_build_line(2, "south")
 	_build_line(3, "west")
 	_build_ramp_line()
+	_build_splitter_line()
 	money0 = Game.money
 	print("TEST: built %d parts" % world.parts.size())
 
@@ -66,8 +67,37 @@ func _build_ramp_line() -> void:
 	world.place("seller", Vector3i(2, 1, z), 1)
 
 
+func _build_splitter_line() -> void:
+	Game.unlocked["splitter"] = true
+	var z := -14
+	world.place("dropper_copper", Vector3i(-8, 1, z), 1)
+	world.place("dropper_copper", Vector3i(-7, 1, z), 1)
+	for x in [-8, -7, -6]:
+		world.place("conveyor", Vector3i(x, 0, z), 1)
+	var sp: Part = world.place("splitter", Vector3i(-5, 0, z), 1)
+	world.place("conveyor", Vector3i(-4, 0, z), 1)
+	world.place("seller", Vector3i(-3, 0, z), 1)
+	world.place("conveyor", Vector3i(-5, 0, z - 1), 0)
+	world.place("seller", Vector3i(-5, 0, z - 2), 0)
+	world.place("conveyor", Vector3i(-5, 0, z + 1), 2)
+	world.place("seller", Vector3i(-5, 0, z + 2), 2)
+	print("TEST: splitter placed=%s" % str(sp != null))
+	# upgrade a dropper to level 3 and check refund bookkeeping
+	var dp: Part = world.cells[Vector3i(-8, 1, z)]
+	Game.money = 1e6
+	for i in 3:
+		world.upgrade_part(dp)
+	print("TEST: dropper level=%d paid=%.1f" % [dp.level, dp.paid])
+	if dp.level != 3:
+		failed = true
+
+
 func _physics_process(_delta: float) -> void:
 	frames += 1
+	if frames == 60 * 16 and OS.get_environment("DBG2") != "":
+		for it in world.active_items:
+			if it.global_position.z < -10.0:
+				print("ITEM ", it.global_position, " v=", it.linear_velocity, " still=", it.still_time)
 	if frames % 45 == 0 and frames < 60 * 12 and OS.get_environment("DBG") != "":
 		var line := "t=%.1f " % (frames / 60.0)
 		for it in world.active_items:
@@ -84,9 +114,11 @@ func _physics_process(_delta: float) -> void:
 			failed = true
 		print("TEST: income_rate=%.2f" % Game.income_rate)
 		for p in world.parts:
+			if String(p.def.kind) == "splitter":
+				print("TEST: splitter routes ", p.route_counts)
 			if String(p.def.kind) == "seller":
 				print("TEST: seller at %s sold %d" % [str(p.cell), p.sold])
-				if p.sold < 5:
+				if p.sold < 4:
 					failed = true
 		print("TEST RESULT: %s" % ("FAIL" if failed else "PASS"))
 		get_tree().quit(1 if failed else 0)

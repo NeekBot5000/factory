@@ -40,6 +40,8 @@ var _ov_bad: StandardMaterial3D
 var _ov_poor: StandardMaterial3D
 var _marker_red: StandardMaterial3D
 var _marker_blue: StandardMaterial3D
+var _marker_green: StandardMaterial3D
+var _last_upgraded: Part = null
 var _plan_cost := 0.0
 var _plan_count := 0
 var _plan_invalid := 0
@@ -55,6 +57,7 @@ func setup(p_world: Node, p_rig: CameraRig) -> void:
 	_ov_poor = _overlay(_ghost_poor)
 	_marker_red = _overlay(Color(1, 0.2, 0.2, 0.45))
 	_marker_blue = _overlay(Color(0.3, 0.6, 1.0, 0.4))
+	_marker_green = _overlay(Color(0.4, 1.0, 0.4, 0.4))
 
 
 func _overlay(c: Color) -> StandardMaterial3D:
@@ -83,7 +86,7 @@ func select_part(id: String) -> void:
 
 func set_mode(m: String) -> void:
 	mode = m
-	if m == "demolish" or m == "select":
+	if m == "demolish" or m == "select" or m == "upgrade":
 		part_id = ""
 	_reset_drag()
 	if m != "select":
@@ -273,6 +276,8 @@ func _process(_delta: float) -> void:
 	_update_hover()
 	if _dragging and mode == "demolish" and not Input.is_key_pressed(KEY_SHIFT) and hover_part != null:
 		_demolish(hover_part)
+	if _dragging and mode == "upgrade" and not Input.is_key_pressed(KEY_SHIFT) and hover_part != null and hover_part != _last_upgraded:
+		_upgrade_one(hover_part)
 	if _dragging and mode == "build" and not Input.is_key_pressed(KEY_SHIFT) and hover_ok:
 		_paint_step()
 	_refresh_visuals()
@@ -315,7 +320,7 @@ func _try_place(c: Vector3i, id: String = "", r: int = -1) -> Part:
 func _refresh_visuals() -> void:
 	var sig := "%s|%s|%d|%s|%s|%s|%s|%d" % [mode, part_id, rot, str(hover_cell), hover_ok, _dragging, Input.is_key_pressed(KEY_SHIFT), clipboard.size()]
 	var poor_sig := "%d" % int(Game.money)
-	if sig + poor_sig == _sig and mode not in ["demolish", "select"]:
+	if sig + poor_sig == _sig and mode not in ["demolish", "select", "upgrade"]:
 		return
 	_sig = sig + poor_sig
 	_clear_ghosts()
@@ -358,6 +363,12 @@ func _refresh_visuals() -> void:
 					marks.append([p.cell, _marker_red])
 			elif hover_part != null:
 				marks.append([hover_part.cell, _marker_red])
+		"upgrade":
+			if hover_ok and _dragging and Input.is_key_pressed(KEY_SHIFT):
+				for p in _rect_parts():
+					marks.append([p.cell, _marker_green])
+			elif hover_part != null:
+				marks.append([hover_part.cell, _marker_green])
 		"select":
 			if hover_ok and _dragging:
 				for p in _rect_parts():
@@ -422,7 +433,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_left_down() -> void:
-	if not hover_ok and mode != "demolish":
+	if not hover_ok and mode != "demolish" and mode != "upgrade":
 		return
 	match mode:
 		"build":
@@ -440,6 +451,14 @@ func _on_left_down() -> void:
 			_drag_start = hover_cell
 			if not Input.is_key_pressed(KEY_SHIFT) and hover_part != null:
 				_demolish(hover_part)
+		"upgrade":
+			if not hover_ok:
+				return
+			_dragging = true
+			_drag_start = hover_cell
+			_last_upgraded = null
+			if not Input.is_key_pressed(KEY_SHIFT) and hover_part != null:
+				_upgrade_one(hover_part)
 		"select":
 			if not hover_ok:
 				return
@@ -463,6 +482,9 @@ func _on_left_up() -> void:
 				if list.size() > 0:
 					FX.play("remove")
 					Game.toast.emit("Demolished %d parts (refunded)" % list.size(), Color("ffd27a"))
+		"upgrade":
+			if Input.is_key_pressed(KEY_SHIFT) and hover_ok:
+				_upgrade_many(_rect_parts())
 		"select":
 			if hover_ok:
 				selection = _rect_parts()
@@ -503,6 +525,57 @@ func _do_paste() -> void:
 		placed += 1
 	if placed > 0:
 		FX.play("buy")
+
+
+func _upgrade_one(p: Part) -> void:
+	_last_upgraded = p
+	if not p.can_upgrade():
+		Game.toast.emit("%s is already max level" % p.def.name if p.level >= Defs.LEVEL_MAX else "This part can't be upgraded", Color("ffd27a"))
+		return
+	var n := 0
+	var repeat := Input.is_key_pressed(KEY_CTRL)
+	while world.upgrade_part(p):
+		n += 1
+		if not repeat:
+			break
+	if n > 0:
+		FX.play("buy", 1.0 + 0.04 * p.level, 0.05)
+		FX.popup(p.global_position + Vector3(0, 1.3, 0), "Lv %d" % p.level, Color("ffd23f"))
+	else:
+		Game.toast.emit("Need %s to upgrade" % Util.money(p.upgrade_cost()), Color("ff7a7a"))
+		FX.play("error", 1.0, 0.25)
+
+
+func _upgrade_many(list: Array[Part]) -> void:
+	var total := 0
+	var broke := false
+	var repeat := Input.is_key_pressed(KEY_CTRL)
+	for p in list:
+		if not p.can_upgrade():
+			continue
+		while world.upgrade_part(p):
+			total += 1
+			if not repeat:
+				break
+		if p.can_upgrade() and not Game.can_afford(p.upgrade_cost()):
+			broke = true
+	if total > 0:
+		FX.play("buy")
+		Game.toast.emit("Upgraded %d levels across %d parts%s" % [total, list.size(), " (out of money)" if broke else ""], Color("7aff9a"))
+	elif list.size() > 0:
+		Game.toast.emit("Nothing upgraded (max level or not enough money)", Color("ffd27a"))
+		FX.play("error", 1.0, 0.25)
+
+
+func upgrade_selection() -> void:
+	var list: Array[Part] = []
+	for p in selection:
+		if is_instance_valid(p):
+			list.append(p)
+	if list.is_empty():
+		set_mode("upgrade")
+		return
+	_upgrade_many(list)
 
 
 func _demolish(p: Part) -> void:
@@ -550,6 +623,11 @@ func _on_key(e: InputEventKey) -> void:
 				Game.toast.emit("Removed %d parts (refunded)" % n, Color("ffd27a"))
 			else:
 				set_mode("demolish")
+		KEY_G:
+			if mode == "select" and not selection.is_empty():
+				upgrade_selection()
+			else:
+				set_mode("upgrade")
 		KEY_U:
 			hud.toggle_panel("upgrades")
 		KEY_L:

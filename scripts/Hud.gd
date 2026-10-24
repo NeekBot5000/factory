@@ -332,8 +332,10 @@ func _update_info_line() -> void:
 			info_lbl.text = "%s  -  %s   |  R rotate, drag to paint, Shift+drag to fill, Z/X layer, RMB cancel" % [d.name, _part_blurb(builder.part_id)]
 		"demolish":
 			info_lbl.text = "DEMOLISH  -  click/drag to remove (full refund), Shift+drag for an area, RMB cancel"
+		"upgrade":
+			info_lbl.text = "UPGRADE  -  click a part (Ctrl = max out), Shift+drag to upgrade an area, RMB cancel"
 		"select":
-			info_lbl.text = "SELECT  -  drag a rectangle (all layers), then C to copy / Delete to remove"
+			info_lbl.text = "SELECT  -  drag a rectangle (all layers), then C to copy / G to upgrade / Delete to remove"
 		"paste":
 			info_lbl.text = "PASTE  -  click to place the blueprint, R rotates, RMB cancel"
 		_:
@@ -347,6 +349,7 @@ func _part_blurb(id: String) -> String:
 			var r: Dictionary = Defs.RESOURCES[d.res]
 			return "drops %s worth %s" % [r.name, Util.money(float(r.value))]
 		"belt": return "moves items at %.1f u/s" % float(d.speed)
+		"splitter": return "alternates items between left, forward and right outputs"
 		"ramp": return "lifts items up one layer"
 		"processor": return "multiplies item value x%.1f" % float(d.mult)
 		"seller": return "sells items at x%.1f" % float(d.mult)
@@ -368,6 +371,7 @@ func refresh_hotbar() -> void:
 	cat_row.add_child(_spacer(16))
 	var tools := [
 		["Demolish [T]", func(): builder.set_mode("demolish")],
+		["Upgrade [G]", func(): builder.set_mode("upgrade")],
 		["Select [B]", func(): builder.set_mode("select")],
 		["Copy [C]", func(): builder.copy_selection()],
 		["Paste [V]", func(): builder.paste_mode()],
@@ -441,7 +445,7 @@ func _card_color(id: String) -> Color:
 	var d: Dictionary = Defs.PARTS[id]
 	match String(d.kind):
 		"dropper": return (Defs.RESOURCES[d.res].color as Color)
-		"belt", "ramp", "processor", "seller": return d.tint
+		"belt", "ramp", "processor", "seller", "splitter": return d.tint
 	return Color("8a93a8")
 
 

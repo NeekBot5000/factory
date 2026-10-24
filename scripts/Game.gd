@@ -27,7 +27,7 @@ var unlocked := {}
 var upgrades := {}
 var plots := {Vector2i(0, 0): true}
 var part_counts := {}
-var stats := {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0}
+var stats := {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgrades": 0}
 var quest_index := 0
 var play_time := 0.0
 var income_rate := 0.0
@@ -291,6 +291,10 @@ func count_cat(cat: String) -> int:
 	return n
 
 
+func part_upgrade_cost(id: String, level: int) -> float:
+	return float(Defs.PARTS[id].cost) * 1.5 * pow(1.9, level)
+
+
 # ---------------------------------------------------------------- land
 
 func plot_cost() -> float:
@@ -371,6 +375,7 @@ func stat_value(stat: String) -> float:
 		"level": return level
 		"plots": return plots.size()
 		"upgrades": return stats.upgrades
+		"part_upgrades": return stats.part_upgrades
 		"stars": return stars
 		"income": return income_rate
 	return 0.0
@@ -496,7 +501,7 @@ func new_game() -> void:
 	level = 0
 	stars = 0
 	unlocked = {}
-	stats = {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0}
+	stats = {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgrades": 0}
 	quest_index = 0
 	income_rate = 0.0
 	saved_buildings = []
