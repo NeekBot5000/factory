@@ -1,5 +1,5 @@
-.godot/
 *.import
+.godot/
+/tests/shots/
 build/
 export_presets.cfg.bak
-/tests/shots/
