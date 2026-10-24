@@ -1098,17 +1098,21 @@ func _p_menu() -> void:
 		cb.focus_mode = Control.FOCUS_NONE
 		cb.toggled.connect(func(v): Game.set_setting(key, v))
 		modal_body.add_child(cb)
-	var vr := HBoxContainer.new()
-	vr.add_child(_label("Volume  ", 15))
-	var sl := HSlider.new()
-	sl.min_value = 0.0
-	sl.max_value = 1.0
-	sl.step = 0.05
-	sl.value = float(Game.settings.volume)
-	sl.custom_minimum_size.x = 240
-	sl.value_changed.connect(func(v): Game.set_setting("volume", v))
-	vr.add_child(sl)
-	modal_body.add_child(vr)
+	for e in [["volume", "Sound volume"], ["music", "Music volume"]]:
+		var key: String = e[0]
+		var vr := HBoxContainer.new()
+		var lab := _label(String(e[1]), 15)
+		lab.custom_minimum_size.x = 130
+		vr.add_child(lab)
+		var sl := HSlider.new()
+		sl.min_value = 0.0
+		sl.max_value = 1.0
+		sl.step = 0.05
+		sl.value = float(Game.settings.get(key, 0.5))
+		sl.custom_minimum_size.x = 240
+		sl.value_changed.connect(func(v): Game.set_setting(key, v))
+		vr.add_child(sl)
+		modal_body.add_child(vr)
 	modal_body.add_child(_button("How to play [H]", func(): open_panel("help"), 260))
 	modal_body.add_child(HSeparator.new())
 	modal_body.add_child(_button("Clear all parts (refund)", func():

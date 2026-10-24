@@ -154,6 +154,7 @@ func _cast(m: String) -> void:
 	if it != null:
 		ingots_made += 1
 		Game.stats.ingots = int(Game.stats.get("ingots", 0)) + 1
+		FX.burst("sparks", local_to_world(Vector3(0, 0.4, -0.55)), dir_vec())
 		FX.play("cast", randf_range(0.95, 1.05), 0.1)
 
 

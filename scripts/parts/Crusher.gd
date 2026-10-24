@@ -48,6 +48,7 @@ func _on_enter(b: Node3D) -> void:
 		return
 	world.queue_job(func():
 		if is_instance_valid(it) and it.active and is_instance_valid(self):
+			FX.burst("chips" if it.cat() == "wood" else "dust", local_to_world(Vector3(0, 0.9, 0)))
 			world.crush_item(it, MAX_PIECE, local_to_world(Vector3(0, 0.35, -0.3)), dir_vec() * 1.2)
 			FX.play("crush", randf_range(0.85, 1.1), 0.06))
 

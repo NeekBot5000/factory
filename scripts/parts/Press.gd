@@ -69,6 +69,8 @@ func tick(delta: float) -> void:
 		for it in _items_in(_area):
 			if world.press_item(it):
 				n += 1
+		if n > 0:
+			FX.burst("sparks", local_to_world(Vector3(0, 0.3, 0)))
 		FX.play("press", randf_range(0.9, 1.05), 0.05)
 	if _phase >= 1.0:
 		_phase = -1.0

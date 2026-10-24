@@ -70,8 +70,10 @@ func tick(delta: float) -> void:
 		_cut_done = true
 		var n := 0
 		for it in _items_in(_area):
+			var kind_fx := "sawdust" if it.cat() == "wood" else "sparks"
 			if world.cut_item(it, local_to_world(Vector3(0, 0.4, 0)), dir_vec()).size() > 1:
 				n += 1
+				FX.burst(kind_fx, local_to_world(Vector3(0, 0.35, 0)), dir_vec())
 		if n > 0:
 			FX.play("saw", randf_range(0.9, 1.1), 0.05)
 	if _phase >= 1.0:

@@ -4,6 +4,9 @@ var world: Node
 var step := 0
 var t := 0.0
 var ok := true
+var lever: Part
+var before_demolish := 0
+var target: Part
 
 
 func _ready() -> void:
@@ -16,6 +19,7 @@ func _ready() -> void:
 
 
 func _mouse(pos: Vector2) -> void:
+	Input.warp_mouse(pos)
 	var e := InputEventMouseMotion.new()
 	e.position = pos
 	e.global_position = pos
@@ -98,13 +102,13 @@ func _process(delta: float) -> void:
 				step = 9
 		9:
 			if t > 3.6:
-				var before: int = world.parts.size()
+				before_demolish = world.parts.size()
 				_click(center, true)
 				_click(center, false)
 				step = 10
 		10:
 			if t > 3.9:
-				_check(world.parts.size() < 5, "demolish removed a part (parts=%d)" % world.parts.size())
+				_check(world.parts.size() < before_demolish, "demolish removed a part (%d -> %d)" % [before_demolish, world.parts.size()])
 				_key(KEY_ESCAPE)
 				step = 11
 		11:
@@ -115,5 +119,55 @@ func _process(delta: float) -> void:
 		12:
 			if t > 4.5:
 				_check(world.hud.modal.visible and world.hud.panel_name == "upgrades", "U opens upgrades")
+				world.hud.close_panel()
+				world.clear_all(false)
+				Game.unlocked["lever"] = true
+				lever = world.place("lever", Vector3i(2, 0, 2), 0)
+				target = world.place("conveyor", Vector3i(-2, 0, 2), 1)
+				_key(KEY_N)
+				step = 13
+		13:
+			if t > 4.8:
+				_check(world.builder.mode == "wire", "N enters wire mode")
+				var sp: Vector2 = world.rig.camera.unproject_position(lever.global_position + Vector3(0, 0.2, 0))
+				_mouse(sp)
+				step = 14
+		14:
+			if t > 5.0:
+				var sp: Vector2 = world.rig.camera.unproject_position(lever.global_position + Vector3(0, 0.2, 0))
+				_click(sp, true)
+				_click(sp, false)
+				step = 15
+		15:
+			if t > 5.2:
+				var tp: Vector2 = world.rig.camera.unproject_position(target.global_position + Vector3(0, 0.15, 0))
+				_mouse(tp)
+				step = 16
+		16:
+			if t > 5.4:
+				var tp: Vector2 = world.rig.camera.unproject_position(target.global_position + Vector3(0, 0.15, 0))
+				_click(tp, true)
+				_click(tp, false)
+				step = 17
+		17:
+			if t > 5.6:
+				_check(world.links.size() == 1, "wire tool linked lever -> conveyor (links=%d)" % world.links.size())
+				_key(KEY_ESCAPE)
+				step = 18
+		18:
+			if t > 5.8:
+				var sp: Vector2 = world.rig.camera.unproject_position(lever.global_position + Vector3(0, 0.2, 0))
+				_mouse(sp)
+				step = 19
+		19:
+			if t > 6.0:
+				var sp: Vector2 = world.rig.camera.unproject_position(lever.global_position + Vector3(0, 0.2, 0))
+				_click(sp, true)
+				_click(sp, false)
+				step = 20
+		20:
+			if t > 6.3:
+				_check(bool(lever.config.on), "clicking the lever toggles it on")
+				_check(target.sig_in, "powered lever drives the wired belt input")
 				print("INTERACT RESULT: ", "PASS" if ok else "FAIL")
 				get_tree().quit(0 if ok else 1)

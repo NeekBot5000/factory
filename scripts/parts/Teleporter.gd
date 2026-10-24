@@ -91,6 +91,8 @@ func tick(_delta: float) -> void:
 		it.angular_velocity = Vector3.ZERO
 		_flash = 1.0
 		r.set("_flash", 1.0)
+		FX.burst("magic", global_position + Vector3(0, 0.4, 0))
+		FX.burst("magic", r.global_position + Vector3(0, 0.4, 0))
 		FX.play("teleport", randf_range(0.95, 1.1), 0.08)
 	_queue.clear()
 

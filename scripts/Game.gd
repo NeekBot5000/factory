@@ -32,7 +32,7 @@ var stats := {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgr
 var quest_index := 0
 var play_time := 0.0
 var income_rate := 0.0
-var settings := {"shadows": true, "volume": 0.7, "seen_help": false, "show_fps": false}
+var settings := {"shadows": true, "volume": 0.7, "music": 0.45, "seen_help": false, "show_fps": false}
 var saved_buildings: Array = []
 var saved_links: Array = []
 var demand_map := {}
@@ -521,6 +521,8 @@ func set_setting(key: String, v: Variant) -> void:
 	settings[key] = v
 	if key == "volume":
 		_apply_volume()
+	if key == "music":
+		FX.apply_music_volume()
 	settings_changed.emit()
 
 

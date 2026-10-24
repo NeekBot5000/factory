@@ -426,6 +426,8 @@ func sell(it: Item, seller: Part) -> void:
 	var col := Color("7aff9a") if demand > 0.8 else (Color("ffe07a") if demand > 0.5 else Color("ff9a7a"))
 	FX.popup(seller.global_position + Vector3(0, 1.0, 0), "+" + Util.money(amount), col)
 	FX.play("sell", 0.9 + minf(it.quality, 4.0) * 0.08, 0.06)
+	if randf() < 0.35:
+		FX.burst("coins", seller.global_position + Vector3(0, 0.5, 0))
 
 
 func _retire_now(it: Item) -> void:

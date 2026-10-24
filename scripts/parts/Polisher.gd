@@ -46,7 +46,8 @@ func _on_enter(b: Node3D) -> void:
 					it.quality *= 1.3
 					it.form = it.classify()
 					it.refresh_look()
-				FX.play("polish", randf_range(1.0, 1.2), 0.08))
+				FX.play("polish", randf_range(1.0, 1.2), 0.08)
+				FX.burst("shine", it.global_position + Vector3(0, 0.15, 0)))
 
 
 func animate(delta: float) -> void:

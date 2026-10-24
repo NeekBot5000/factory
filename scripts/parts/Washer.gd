@@ -41,6 +41,7 @@ func _on_enter(b: Node3D) -> void:
 		world.queue_job(func():
 			if is_instance_valid(it) and it.active:
 				it.washed = true
+				FX.burst("splash", it.global_position)
 				it.purity = minf(0.98, it.purity + 0.15)
 				it.refresh_look())
 

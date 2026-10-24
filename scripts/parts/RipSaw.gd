@@ -99,8 +99,10 @@ func _on_enter(b: Node3D, key: int) -> void:
 	var mk := uid * 8 + key
 	world.queue_job(func():
 		if is_instance_valid(it) and it.active and is_instance_valid(self) and it.mark(mk):
+			var fxk := "sawdust" if it.cat() == "wood" else "sparks"
 			if world.cut_item(it, point, normal).size() > 1:
-				FX.play("saw", randf_range(1.0, 1.2), 0.05))
+				FX.play("saw", randf_range(1.0, 1.2), 0.05)
+				FX.burst(fxk, point + Vector3(0, 0.1, 0), -dir_vec()))
 
 
 func animate(delta: float) -> void:
