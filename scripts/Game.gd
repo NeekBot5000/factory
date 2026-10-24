@@ -9,11 +9,12 @@ signal unlocks_changed
 signal quests_changed
 signal stars_changed
 signal settings_changed
+signal orders_changed
 
 const SAVE_PATH := "user://factory_save.json"
 const SAVE_VERSION := 1
 const COST_GROWTH := 1.012
-const START_MONEY := 60.0
+const START_MONEY := 100.0
 const MAX_OFFLINE_SECONDS := 8.0 * 3600.0
 const AUTOSAVE_EVERY := 20.0
 
@@ -27,12 +28,17 @@ var unlocked := {}
 var upgrades := {}
 var plots := {Vector2i(0, 0): true}
 var part_counts := {}
-var stats := {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgrades": 0}
+var stats := {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgrades": 0, "ingots": 0, "orders": 0}
 var quest_index := 0
 var play_time := 0.0
 var income_rate := 0.0
 var settings := {"shadows": true, "volume": 0.7, "seen_help": false, "show_fps": false}
 var saved_buildings: Array = []
+var saved_links: Array = []
+var demand_map := {}
+var forms_sold := {}
+var orders: Array = []
+var _order_timer := 5.0
 var blueprints := {}
 var offline_report := {}
 var save_enabled := true
@@ -74,6 +80,7 @@ func _process(delta: float) -> void:
 		_sales_acc = 0.0
 		_rate_timer = 0.0
 		check_quests()
+	_tick_market(delta)
 	_autosave += delta
 	if _autosave >= AUTOSAVE_EVERY:
 		_autosave = 0.0
@@ -135,24 +142,20 @@ func sell_mult() -> float:
 	return (1.0 + float(Defs.UPGRADES.sell_value.per) * upg("sell_value")) * star_mult()
 
 
-func drop_rate_mult() -> float:
-	return 1.0 + float(Defs.UPGRADES.drop_speed.per) * upg("drop_speed")
+func src_mult() -> float:
+	return 1.0 + float(Defs.UPGRADES.src_speed.per) * upg("src_speed")
 
 
 func belt_mult() -> float:
 	return 1.0 + float(Defs.UPGRADES.belt_speed.per) * upg("belt_speed")
 
 
-func proc_mult(base: float) -> float:
-	return base * (1.0 + float(Defs.UPGRADES.proc_power.per) * upg("proc_power"))
+func machine_mult() -> float:
+	return 1.0 + float(Defs.UPGRADES.machine_speed.per) * upg("machine_speed")
 
 
 func item_cap() -> int:
 	return 250 + int(float(Defs.UPGRADES.item_cap.per) * upg("item_cap"))
-
-
-func lucky_chance() -> float:
-	return float(Defs.UPGRADES.lucky.per) * upg("lucky")
 
 
 func offline_eff() -> float:
@@ -232,9 +235,9 @@ func part_unlocked(id: String) -> bool:
 
 func part_biome_ok(id: String) -> bool:
 	var d: Dictionary = Defs.PARTS[id]
-	if d.kind != "dropper":
+	if not d.has("mat"):
 		return true
-	return owns_biome(Defs.RESOURCES[d.res].biome)
+	return owns_biome(Defs.MATERIALS[d.mat].biome)
 
 
 func owns_biome(b: String) -> bool:
@@ -249,7 +252,7 @@ func unlock_block_reason(id: String) -> String:
 	if level < int(d.level):
 		return "Reach factory level %d" % int(d.level)
 	if not part_biome_ok(id):
-		var b: String = Defs.RESOURCES[d.res].biome
+		var b: String = Defs.MATERIALS[d.mat].biome
 		return "Buy a %s plot first" % Defs.BIOMES[b].name
 	return ""
 
@@ -346,6 +349,7 @@ func ascend() -> bool:
 	_reset_state()
 	money = START_MONEY + 250.0 * stars
 	saved_buildings = []
+	saved_links = []
 	if world:
 		world.clear_all(false)
 	plots_changed.emit()
@@ -358,10 +362,120 @@ func ascend() -> bool:
 	return true
 
 
+# ---------------------------------------------------------------- market & orders
+
+func demand(key: String) -> float:
+	return float(demand_map.get(key, 1.0))
+
+
+func _saturation_per_sale() -> float:
+	return 0.01 / (1.0 + float(Defs.UPGRADES.marketing.per) * upg("marketing"))
+
+
+func _recovery_rate() -> float:
+	return 0.03 * (1.0 + 2.0 * float(Defs.UPGRADES.marketing.per) * upg("marketing"))
+
+
+func on_sold(it: Item, amount: float) -> void:
+	stats.sold += 1
+	var key := it.product_key()
+	demand_map[key] = maxf(0.3, demand(key) - _saturation_per_sale())
+	forms_sold[it.form] = int(forms_sold.get(it.form, 0)) + 1
+	for o in orders:
+		if String(o.key) == key and int(o.done) < int(o.qty):
+			o.done = int(o.done) + 1
+			if int(o.done) >= int(o.qty):
+				add_bonus(float(o.reward))
+				stats.orders = int(stats.get("orders", 0)) + 1
+				toast.emit("Order complete: %s  +%s" % [o.name, Util.money(float(o.reward))], Color("7aff9a"))
+				FX.play("quest")
+			orders_changed.emit()
+			break
+
+
+func _tick_market(delta: float) -> void:
+	var r := _recovery_rate()
+	for k in demand_map.keys():
+		var d: float = demand_map[k]
+		d += (1.0 - d) * r * delta
+		if d > 0.999:
+			demand_map.erase(k)
+		else:
+			demand_map[k] = d
+	var changed := false
+	for i in range(orders.size() - 1, -1, -1):
+		var o: Dictionary = orders[i]
+		if int(o.done) >= int(o.qty):
+			orders.remove_at(i)
+			changed = true
+			continue
+		o.time = float(o.time) - delta
+		if float(o.time) <= 0.0:
+			orders.remove_at(i)
+			changed = true
+	_order_timer -= delta
+	if _order_timer <= 0.0:
+		_order_timer = 40.0
+		if orders.size() < 3:
+			var o := _make_order()
+			if not o.is_empty():
+				orders.append(o)
+				changed = true
+				toast.emit("New order: %d x %s" % [int(o.qty), o.name], Color("8fd0ff"))
+	if changed:
+		orders_changed.emit()
+
+
+const ORDER_FORMS := {
+	"wood": [["log", 0, 0.12], ["timber", 1, 0.06], ["plank", 1, 0.012]],
+	"ore": [["boulder", 1, 0.02], ["chunk", 2, 0.002], ["ingot", 3, 0.0054], ["plate", 6, 0.0054], ["sheet", 6, 0.0054]],
+	"gem": [["shard", 8, 0.002], ["polished", 8, 0.0018]],
+}
+
+
+func available_materials() -> Array:
+	var out := []
+	for id in Defs.PARTS:
+		var d: Dictionary = Defs.PARTS[id]
+		if d.kind == "source" and part_counts.get(id, 0) > 0:
+			if not out.has(d.mat):
+				out.append(d.mat)
+	return out
+
+
+func _make_order() -> Dictionary:
+	var mats := available_materials()
+	if mats.is_empty():
+		return {}
+	var cands := []
+	for m in mats:
+		var c := Defs.mat_cat(m)
+		for f in ORDER_FORMS.get(c, []):
+			if level >= int(f[1]):
+				cands.append([m, f[0], f[2]])
+	if cands.is_empty():
+		return {}
+	var pick: Array = cands[randi() % cands.size()]
+	var m: String = pick[0]
+	var f: String = pick[1]
+	var est := float(Defs.MATERIALS[m].price) * float(pick[2]) * float(Defs.FORM_MULT[f]) * sell_mult()
+	var qty := randi_range(8, 30) + level * 2
+	var reward := maxf(50.0, est * qty * 3.0)
+	return {"key": m + ":" + f, "name": Defs.product_name(m, f), "qty": qty, "done": 0, "reward": reward, "time": 600.0, "total": 600.0}
+
+
 # ---------------------------------------------------------------- quests
 
 func stat_value(stat: String) -> float:
+	if stat.begins_with("form:"):
+		return float(forms_sold.get(stat.substr(5), 0))
+	if stat.begins_with("part:"):
+		return float(part_counts.get(stat.substr(5), 0))
 	match stat:
+		"sources": return count_cat("production")
+		"links": return world.links.size() if world else 0
+		"ingots": return stats.get("ingots", 0)
+		"orders": return stats.get("orders", 0)
 		"droppers": return count_cat("droppers")
 		"sellers": return count_cat("sellers")
 		"processors": return count_cat("processors")
@@ -429,6 +543,8 @@ func to_dict() -> Dictionary:
 		"play_time": play_time, "income_rate": income_rate, "settings": settings,
 		"saved_at": Time.get_unix_time_from_system(),
 		"blueprints": blueprints,
+		"links": world.serialize_links() if world else saved_links,
+		"forms_sold": forms_sold, "orders": orders,
 		"buildings": world.serialize() if world else saved_buildings,
 	}
 
@@ -484,6 +600,9 @@ func load_game() -> void:
 		settings[k] = se[k]
 	saved_buildings = d.get("buildings", [])
 	blueprints = d.get("blueprints", {})
+	saved_links = d.get("links", [])
+	forms_sold = d.get("forms_sold", {})
+	orders = d.get("orders", [])
 	# offline progress
 	var away := clampf(Time.get_unix_time_from_system() - float(d.get("saved_at", 0.0)), 0.0, MAX_OFFLINE_SECONDS)
 	if away > 60.0 and income_rate > 0.0:
@@ -501,10 +620,14 @@ func new_game() -> void:
 	level = 0
 	stars = 0
 	unlocked = {}
-	stats = {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgrades": 0}
+	stats = {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgrades": 0, "ingots": 0, "orders": 0}
+	forms_sold = {}
+	orders = []
+	demand_map = {}
 	quest_index = 0
 	income_rate = 0.0
 	saved_buildings = []
+	saved_links = []
 	offline_report = {}
 	_reset_state()
 	if world:

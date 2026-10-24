@@ -1,13 +1,13 @@
 extends Node
-## Headless sim test: builds factories programmatically and checks the physics economy works.
+## Headless simulation test of the physical production chains.
 ## Run: godot --headless --path . res://tests/SimTest.tscn --fixed-fps 60
 
 var world: Node
 var frames := 0
-var phase := 0
-var money0 := 0.0
-var results: Array[String] = []
 var failed := false
+var sellers := {}
+var probes := {}
+var SIM_SECONDS := 60
 
 
 func _ready() -> void:
@@ -15,110 +15,195 @@ func _ready() -> void:
 	world = load("res://scripts/World.gd").new()
 	add_child(world)
 	await get_tree().process_frame
-	Game.money = 1e6
+	world.hud.close_panel()
+	Game.money = 1e9
+	Game.level = 20
 	for i in range(-2, 3):
 		for j in range(-2, 3):
 			Game.plots[Vector2i(i, j)] = true
-	Game.unlocked["ramp"] = true
-	Game.unlocked["polisher"] = true
-	_build_line(0, "north")
-	_build_line(1, "east")
-	_build_line(2, "south")
-	_build_line(3, "west")
-	_build_ramp_line()
-	_build_splitter_line()
-	money0 = Game.money
-	print("TEST: built %d parts" % world.parts.size())
+	for id in Defs.PARTS:
+		Game.unlocked[id] = true
+	_row_logs(-18)
+	_row_rip(-15)
+	_row_planks(-12)
+	_row_chop(-9)
+	_row_smelt(-6)
+	_row_press(-2)
+	_row_grate(2)
+	_row_wired(6)
+	_row_teleport(10)
+	_row_sorter(13)
+	_row_packer(17)
+	print("TEST: built %d parts, %d links" % [world.parts.size(), world.links.size()])
 
 
-func _build_line(rot: int, label: String) -> void:
-	# a straight line of 6 belts in direction rot, dropper above the first, polisher mid, seller at end
-	var d: Vector3i = Defs.DIRS[rot]
-	var origin := Vector3i(-3, 0, 3)
-	var off := {0: Vector3i(0, 0, 0), 1: Vector3i(-3, 0, -3), 2: Vector3i(3, 0, 0), 3: Vector3i(3, 0, 3)}
-	origin = Vector3i(0, 0, 0) + off[rot] + Vector3i(rot * 0, 0, 0)
-	if rot == 0:
-		origin = Vector3i(-3, 0, 3)
-	elif rot == 1:
-		origin = Vector3i(-3, 0, -3)
-	elif rot == 2:
-		origin = Vector3i(6, 0, -6)
-	else:
-		origin = Vector3i(3, 0, 6)
-	world.place("dropper_copper", origin + Vector3i(0, 1, 0) + d, rot)
-	for i in 6:
-		var id := "polisher" if i == 3 else "conveyor"
-		world.place(id, origin + d * i, rot)
-	var s: Part = world.place("seller", origin + d * 6, rot)
-	if s == null:
-		print("TEST: seller placement failed at ", origin + d * 6)
-	print("TEST: line %s seller=%s" % [label, str(s != null)])
+func P(id: String, x: int, y: int, z: int, r: int = 1, cfg: Dictionary = {}) -> Part:
+	var p: Part = world.place(id, Vector3i(x, y, z), r, false, 0.0, cfg)
+	if p == null:
+		print("TEST WARN: could not place %s at %d,%d,%d" % [id, x, y, z])
+	return p
 
 
-func _build_ramp_line() -> void:
-	# along z=-1, going east: belts, ramp up, belts at layer 1, seller
-	var z := 10
-	world.place("dropper_iron", Vector3i(-3, 1, z), 1)
-	world.place("conveyor", Vector3i(-3, 0, z), 1)
-	world.place("conveyor", Vector3i(-2, 0, z), 1)
-	world.place("ramp", Vector3i(-1, 0, z), 1)
-	world.place("conveyor", Vector3i(0, 1, z), 1)
-	world.place("conveyor", Vector3i(1, 1, z), 1)
-	world.place("seller", Vector3i(2, 1, z), 1)
+func belt(x0: int, x1: int, z: int, y: int = 0, id: String = "conveyor") -> void:
+	for x in range(x0, x1 + 1):
+		P(id, x, y, z)
 
 
-func _build_splitter_line() -> void:
-	Game.unlocked["splitter"] = true
-	var z := -14
-	world.place("dropper_copper", Vector3i(-8, 1, z), 1)
-	world.place("dropper_copper", Vector3i(-7, 1, z), 1)
-	for x in [-8, -7, -6]:
-		world.place("conveyor", Vector3i(x, 0, z), 1)
-	var sp: Part = world.place("splitter", Vector3i(-5, 0, z), 1)
-	world.place("conveyor", Vector3i(-4, 0, z), 1)
-	world.place("seller", Vector3i(-3, 0, z), 1)
-	world.place("conveyor", Vector3i(-5, 0, z - 1), 0)
-	world.place("seller", Vector3i(-5, 0, z - 2), 0)
-	world.place("conveyor", Vector3i(-5, 0, z + 1), 2)
-	world.place("seller", Vector3i(-5, 0, z + 2), 2)
-	print("TEST: splitter placed=%s" % str(sp != null))
-	# upgrade a dropper to level 3 and check refund bookkeeping
-	var dp: Part = world.cells[Vector3i(-8, 1, z)]
-	Game.money = 1e6
-	for i in 3:
-		world.upgrade_part(dp)
-	print("TEST: dropper level=%d paid=%.1f" % [dp.level, dp.paid])
-	if dp.level != 3:
-		failed = true
+func seller(name: String, x: int, z: int, y: int = 0) -> void:
+	sellers[name] = P("seller", x, y, z)
+
+
+func _row_logs(z: int) -> void:
+	P("treefarm_oak", -19, 0, z, 1)
+	belt(-18, -10, z)
+	seller("logs", -9, z)
+
+
+func _row_rip(z: int) -> void:
+	P("treefarm_oak", -19, 0, z, 1)
+	belt(-18, -16, z)
+	P("rip_saw", -15, 0, z, 1)
+	belt(-14, -10, z)
+	seller("rip", -9, z)
+
+
+func _row_planks(z: int) -> void:
+	P("treefarm_oak", -19, 0, z, 1)
+	belt(-18, -17, z)
+	P("gang_saw", -16, 0, z, 1)
+	belt(-15, -10, z)
+	seller("planks", -9, z)
+
+
+func _row_chop(z: int) -> void:
+	P("treefarm_oak", -19, 0, z, 1)
+	belt(-18, -17, z)
+	P("chop_saw", -16, 0, z, 1)
+	belt(-15, -10, z)
+	seller("chop", -9, z)
+
+
+func _row_smelt(z: int) -> void:
+	P("drill_copper", -19, 1, z)
+	belt(-19, -18, z)
+	P("crusher", -17, 0, z, 1)
+	belt(-16, -15, z)
+	P("furnace", -14, 0, z, 1)
+	belt(-13, -10, z)
+	seller("ingots", -9, z)
+
+
+func _row_press(z: int) -> void:
+	P("drill_iron", -19, 1, z)
+	belt(-19, -18, z)
+	P("crusher", -17, 0, z, 1)
+	belt(-16, -15, z)
+	P("furnace", -14, 0, z, 1)
+	belt(-13, -12, z)
+	P("press", -11, 0, z, 1)
+	belt(-10, -8, z)
+	P("press", -7, 0, z, 1)
+	belt(-6, -4, z)
+	seller("plates", -3, z)
+
+
+func _row_grate(z: int) -> void:
+	# crushed ore on a grate at layer 1; fines fall onto a lower belt to their own seller
+	P("drill_copper", -19, 2, z)
+	P("crusher", -19, 1, z, 1)
+	P("grate", -18, 1, z, 1)
+	P("grate", -17, 1, z, 1)
+	belt(-16, -14, z, 1)
+	seller("coarse", -13, z, 1)
+	P("conveyor", -18, 0, z, 1)
+	P("conveyor", -17, 0, z, 1)
+	belt(-16, -15, z, 0)
+	seller("fines", -14, z)
+
+
+func _row_wired(z: int) -> void:
+	# lever off -> belt stopped (no sales); timer -> chop saw
+	P("treefarm_oak", -19, 0, z, 1)
+	belt(-18, -12, z)
+	seller("lever_off", -11, z)
+	P("lever", -19, 0, z - 1, 0, {"on": false})
+	world.add_link(Vector3i(-19, 0, z - 1), Vector3i(-19, 0, z))
+
+
+func _row_teleport(z: int) -> void:
+	P("treefarm_oak", -19, 0, z, 1)
+	belt(-18, -16, z)
+	P("tele_in", -15, 0, z, 0, {"channel": 2})
+	P("tele_out", 5, 0, z, 1, {"channel": 2})
+	belt(6, 8, z)
+	seller("teleport", 9, z)
+
+
+func _row_sorter(z: int) -> void:
+	# copper ore boulders: a sensor detects them and a piston shoves them off sideways onto a side belt
+	P("drill_copper", -19, 1, z)
+	belt(-19, -17, z)
+	P("sensor", -16, 0, z, 1, {"filter": "boulder"})
+	belt(-15, -12, z)
+	seller("unsorted", -11, z)
+	P("piston", -16, 0, z - 1, 2)
+	world.add_link(Vector3i(-16, 0, z), Vector3i(-16, 0, z - 1))
+	P("conveyor", -16, 0, z + 1, 2)
+	seller("sorted", -16, z + 2)
+
+
+func _row_packer(z: int) -> void:
+	P("treefarm_oak", -19, 0, z, 1, {})
+	P("treefarm_oak", -19, 0, z + 1, 1, {})
+	P("conveyor", -18, 0, z + 1, 0)
+	belt(-18, -16, z)
+	P("packer", -15, 0, z, 1, {"count": 4})
+	belt(-14, -12, z)
+	seller("crates", -11, z)
 
 
 func _physics_process(_delta: float) -> void:
 	frames += 1
-	if frames == 60 * 16 and OS.get_environment("DBG2") != "":
+	if OS.get_environment("DBG") != "" and frames % 60 == 0 and frames < 60 * 30:
+		var tl := "TP t=%d " % (frames / 60)
 		for it in world.active_items:
-			if it.global_position.z < -10.0:
-				print("ITEM ", it.global_position, " v=", it.linear_velocity, " still=", it.still_time)
-	if frames % 45 == 0 and frames < 60 * 12 and OS.get_environment("DBG") != "":
-		var line := "t=%.1f " % (frames / 60.0)
+			if it.shape == "cyl" and absf(it.global_position.z - 10.5) < 1.5:
+				tl += "(%.1f,%.2f,%.1f) " % [it.global_position.x, it.global_position.y, it.global_position.z]
+		print(tl)
+	if false:
+		var line := "t=%d " % (frames / 60)
 		for it in world.active_items:
-			if it.kind == "iron":
-				line += "(%.1f,%.2f,%.1f v=%.1f) " % [it.global_position.x, it.global_position.y, it.global_position.z, it.linear_velocity.length()]
+			if it.shape == "cyl" and absf(it.global_position.z - (-17.5)) < 1.5:
+				line += "(%.1f,%.2f,%.1f v%.1f) " % [it.global_position.x, it.global_position.y, it.global_position.z, it.linear_velocity.length()]
 		print(line)
-	if frames == 60 * 20:
-		var sold: int = Game.stats.sold
-		var gained: float = Game.money - money0
-		print("TEST: after 20s sold=%d gained=%.1f active_items=%d" % [sold, gained, world.active_items.size()])
-		# every line should have produced sales; 5 droppers at ~1/s
-		if sold < 40:
-			print("TEST FAIL: too few sales")
-			failed = true
-		print("TEST: income_rate=%.2f" % Game.income_rate)
-		for p in world.parts:
-			if String(p.def.kind) == "splitter":
-				print("TEST: splitter routes ", p.route_counts)
-			if String(p.def.kind) == "seller":
-				print("TEST: seller at %s sold %d" % [str(p.cell), p.sold])
-				if p.sold < 4:
-					failed = true
-		print("TEST RESULT: %s" % ("FAIL" if failed else "PASS"))
-		get_tree().quit(1 if failed else 0)
+	if frames == 60 * SIM_SECONDS:
+		_report()
+
+
+func _check(cond: bool, msg: String) -> void:
+	print(("PASS " if cond else "FAIL ") + msg)
+	if not cond:
+		failed = true
+
+
+func _report() -> void:
+	for k in sellers:
+		var s: Part = sellers[k]
+		print("TEST: seller %-10s sold %d" % [k, s.sold if s else -1])
+	print("TEST: forms sold ", Game.forms_sold)
+	print("TEST: ingots cast %d" % int(Game.stats.ingots))
+	var f: Dictionary = Game.forms_sold
+	_check(sellers.logs.sold >= 4, "logs line sells logs")
+	_check(int(f.get("timber", 0)) >= 4, "rip saw makes timber")
+	_check(int(f.get("plank", 0)) >= 4, "gang saw makes planks")
+	_check(sellers.chop.sold > sellers.logs.sold, "chop saw multiplies log pieces (%d vs %d)" % [sellers.chop.sold, sellers.logs.sold])
+	_check(int(Game.stats.ingots) >= 2, "furnaces cast ingots")
+	_check(int(f.get("ingot", 0)) >= 1, "ingots sold")
+	_check(int(f.get("plate", 0)) + int(f.get("sheet", 0)) >= 1, "press makes plates/sheets")
+	_check(sellers.fines.sold >= 1, "fines fall through the grate (%d)" % sellers.fines.sold)
+	_check(sellers.lever_off.sold == 0, "lever-off belt is stopped")
+	_check(sellers.teleport.sold >= 3, "teleporter delivers")
+	_check(sellers.sorted.sold >= 2, "sensor+piston sorts (%d)" % sellers.sorted.sold)
+	_check(int(f.get("crate", 0)) >= 1, "packer makes crates")
+	print("TEST RESULT: %s" % ("FAIL" if failed else "PASS"))
+	get_tree().quit(1 if failed else 0)

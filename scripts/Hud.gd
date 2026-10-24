@@ -35,7 +35,7 @@ var modal_body: VBoxContainer
 var modal_scroll: ScrollContainer
 var panel_name := ""
 
-var cur_cat := "droppers"
+var cur_cat := "production"
 var buy_qty := 1
 var _tick := 0.0
 var _confirm_reset := false
@@ -343,18 +343,7 @@ func _update_info_line() -> void:
 
 
 func _part_blurb(id: String) -> String:
-	var d: Dictionary = Defs.PARTS[id]
-	match String(d.kind):
-		"dropper":
-			var r: Dictionary = Defs.RESOURCES[d.res]
-			return "drops %s worth %s" % [r.name, Util.money(float(r.value))]
-		"belt": return "moves items at %.1f u/s" % float(d.speed)
-		"splitter": return "alternates items between left, forward and right outputs"
-		"ramp": return "lifts items up one layer"
-		"processor": return "multiplies item value x%.1f" % float(d.mult)
-		"seller": return "sells items at x%.1f" % float(d.mult)
-		"block": return "solid support block"
-	return ""
+	return String(Defs.PARTS[id].get("desc", ""))
 
 
 # ------------------------------------------------------------ hotbar
@@ -443,9 +432,13 @@ func _make_card(id: String, slot: int) -> Button:
 
 func _card_color(id: String) -> Color:
 	var d: Dictionary = Defs.PARTS[id]
-	match String(d.kind):
-		"dropper": return (Defs.RESOURCES[d.res].color as Color)
-		"belt", "ramp", "processor", "seller", "splitter": return d.tint
+	if d.has("tint"):
+		return d.tint
+	if d.has("mat"):
+		return Defs.MATERIALS[d.mat].color
+	match String(d.cat):
+		"machines": return Color("ff8a3d")
+		"logic": return Color("ff4f4f")
 	return Color("8a93a8")
 
 
@@ -628,12 +621,13 @@ func _p_upgrades() -> void:
 
 func _upgrade_now(id: String) -> String:
 	match id:
-		"drop_speed": return "Now x%.2f" % Game.drop_rate_mult()
+		"src_speed": return "Now x%.2f" % Game.src_mult()
+		"machine_speed": return "Now x%.2f" % Game.machine_mult()
+		"rich_veins": return "Now +%d%%" % (2 * Game.upg("rich_veins"))
+		"marketing": return "Now lvl %d" % Game.upg("marketing")
 		"belt_speed": return "Now x%.2f" % Game.belt_mult()
 		"sell_value": return "Now x%.2f" % Game.sell_mult()
-		"proc_power": return "Now +%d%%" % int(round((Game.proc_mult(1.0) - 1.0) * 100.0))
 		"item_cap": return "Now %d" % Game.item_cap()
-		"lucky": return "Now %d%%" % int(round(Game.lucky_chance() * 100.0))
 		"night_shift": return "Now %d%%" % int(round(Game.offline_eff() * 100.0))
 	return ""
 
@@ -679,8 +673,8 @@ func _p_land() -> void:
 					b.modulate = Color(1, 1, 1, 0.7)
 			grid.add_child(b)
 	var legend := "Biomes -> droppers:  "
-	for rid in Defs.RESOURCES:
-		var r: Dictionary = Defs.RESOURCES[rid]
+	for rid in Defs.MATERIALS:
+		var r: Dictionary = Defs.MATERIALS[rid]
 		legend += "%s (%s)   " % [r.name, Defs.BIOMES[r.biome].name]
 	var l := _label(legend, 13, Color(1, 1, 1, 0.75))
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

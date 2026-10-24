@@ -274,26 +274,231 @@ static func spin_mat(color: Color) -> ShaderMaterial:
 	return m
 
 
-static func item_mesh(kind: String) -> Mesh:
-	var key := "item_" + kind
+static func unit_box() -> BoxMesh:
+	return box_mesh(Vector3.ONE)
+
+
+static func _flat_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, outward: Vector3) -> void:
+	var n := (b - a).cross(c - a)
+	if n.dot(outward) > 0.0:
+		var t := b
+		b = c
+		c = t
+	st.add_vertex(a)
+	st.add_vertex(b)
+	st.add_vertex(c)
+
+
+## Unit log: diameter 1, length 1 along Z. Surface 0 = bark, surface 1 = end grain.
+static func log_mesh() -> ArrayMesh:
+	if _mesh_cache.has("log"):
+		return _mesh_cache["log"]
+	var segs := 8
+	var ring: Array[Vector2] = []
+	for i in segs:
+		var a := i / float(segs) * TAU
+		ring.append(Vector2(cos(a), sin(a)) * 0.5)
+	var mesh := ArrayMesh.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	for i in segs:
+		var p0 := ring[i]
+		var p1 := ring[(i + 1) % segs]
+		var a0 := Vector3(p0.x, p0.y, -0.5)
+		var a1 := Vector3(p1.x, p1.y, -0.5)
+		var b0 := Vector3(p0.x, p0.y, 0.5)
+		var b1 := Vector3(p1.x, p1.y, 0.5)
+		var out := Vector3((p0.x + p1.x) * 0.5, (p0.y + p1.y) * 0.5, 0.0)
+		_flat_tri(st, a0, a1, b1, out)
+		_flat_tri(st, a0, b1, b0, out)
+	st.generate_normals()
+	st.commit(mesh)
+	st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	for zs in [-0.5, 0.5]:
+		for i in segs:
+			var p0 := ring[i]
+			var p1 := ring[(i + 1) % segs]
+			_flat_tri(st, Vector3(0, 0, zs), Vector3(p0.x, p0.y, zs), Vector3(p1.x, p1.y, zs), Vector3(0, 0, zs))
+	st.generate_normals()
+	st.commit(mesh)
+	_mesh_cache["log"] = mesh
+	return mesh
+
+
+static func chunk_mesh(variant: int) -> ArrayMesh:
+	var key := "chunk_%d" % (variant % 4)
 	if _mesh_cache.has(key):
 		return _mesh_cache[key]
-	var shape: String = Defs.RESOURCES[kind].shape
-	var m: Mesh
-	match shape:
-		"chunk": m = icosa(0.16, 0.22, hash(kind))
-		"ingot": m = ingot()
-		"gem": m = octa(0.15, 0.19)
-		"crystal": m = octa(0.1, 0.27)
-		_: m = icosa(0.16, 0.04, 7)
+	var m := icosa(0.5, 0.18, 1000 + variant % 4)
 	_mesh_cache[key] = m
 	return m
 
 
-static func item_mat(kind: String, tier: int) -> StandardMaterial3D:
-	var c: Color = Defs.RESOURCES[kind].color
-	match clampi(tier, 0, 3):
-		0: return mat(c, 0.0, 0.75)
-		1: return mat(c.lightened(0.15), 0.35, 0.45)
-		2: return mat(c.lightened(0.3), 0.8, 0.3)
-		_: return mat(c.lightened(0.5), 1.6, 0.2)
+static func crate_mesh() -> ArrayMesh:
+	if _mesh_cache.has("crate"):
+		return _mesh_cache["crate"]
+	# unit crate: inner box + frame bars on the edges, single surface (material tints it)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	_append_box(st, Vector3.ZERO, Vector3(0.92, 0.92, 0.92))
+	var e := 0.5 - 0.06
+	for a in [-1, 1]:
+		for b in [-1, 1]:
+			_append_box(st, Vector3(a * e, b * e, 0), Vector3(0.12, 0.12, 1.0))
+			_append_box(st, Vector3(a * e, 0, b * e), Vector3(0.12, 1.0, 0.12))
+			_append_box(st, Vector3(0, a * e, b * e), Vector3(1.0, 0.12, 0.12))
+	st.generate_normals()
+	var m := st.commit()
+	_mesh_cache["crate"] = m
+	return m
+
+
+static func _append_box(st: SurfaceTool, c: Vector3, s: Vector3) -> void:
+	var h := s * 0.5
+	var v := [
+		c + Vector3(-h.x, -h.y, -h.z), c + Vector3(h.x, -h.y, -h.z), c + Vector3(h.x, h.y, -h.z), c + Vector3(-h.x, h.y, -h.z),
+		c + Vector3(-h.x, -h.y, h.z), c + Vector3(h.x, -h.y, h.z), c + Vector3(h.x, h.y, h.z), c + Vector3(-h.x, h.y, h.z),
+	]
+	var faces := [[0, 1, 2, 3], [5, 4, 7, 6], [4, 0, 3, 7], [1, 5, 6, 2], [3, 2, 6, 7], [4, 5, 1, 0]]
+	for f in faces:
+		var a: Vector3 = v[f[0]]
+		var b: Vector3 = v[f[1]]
+		var cc: Vector3 = v[f[2]]
+		var d: Vector3 = v[f[3]]
+		var out := (a + b + cc + d) * 0.25 - c
+		_flat_tri(st, a, b, cc, out)
+		_flat_tri(st, a, cc, d, out)
+
+
+static func item_mat(it: Item) -> StandardMaterial3D:
+	var m: Dictionary = Defs.MATERIALS[it.mat]
+	var col: Color = m.color
+	match it.cat():
+		"crate":
+			return mat(Color("b07a45"), 0.0, 0.9)
+		"wood":
+			if it.form == "chips":
+				return mat(col.darkened(0.15), 0.0, 1.0)
+			return mat(col, 0.0, 0.85)
+		"metal":
+			var key := "metal_%s_%s" % [it.mat, it.polished]
+			if _mat_cache.has(key):
+				return _mat_cache[key]
+			var mm := StandardMaterial3D.new()
+			mm.albedo_color = col.lightened(0.1)
+			mm.metallic = 0.75
+			mm.roughness = 0.12 if it.polished else 0.38
+			mm.metallic_specular = 0.8
+			_mat_cache[key] = mm
+			return mm
+		"gem":
+			if not it.refined:
+				var rock: Color = m.rock
+				return mat(rock.lerp(col, 0.25), 0.0, 0.95)
+			if it.polished:
+				return mat(col.lightened(0.25), 0.9, 0.05)
+			return mat(col, 0.35, 0.3)
+	# ore (unrefined): rock tinted by purity
+	var rk: Color = m.rock
+	var p := snappedf(clampf(it.purity, 0.0, 1.0), 0.1)
+	var c2 := rk.lerp(col, p * 0.85)
+	if it.washed:
+		c2 = c2.lightened(0.12)
+	return mat(c2, 0.0, 0.9)
+
+
+static func heat_overlay(lvl: int) -> StandardMaterial3D:
+	var key := "heat_%d" % lvl
+	if _mat_cache.has(key):
+		return _mat_cache[key]
+	var m := StandardMaterial3D.new()
+	var c := Color(1.0, 0.45, 0.1)
+	m.albedo_color = Color(c.r, c.g, c.b, 0.25 * lvl)
+	m.emission_enabled = true
+	m.emission = c
+	m.emission_energy_multiplier = 0.8 * lvl
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_mat_cache[key] = m
+	return m
+
+
+## Circular saw blade in the XY plane (axis Z), radius r, with teeth.
+static func blade_mesh(r: float) -> ArrayMesh:
+	var key := "blade_%f" % r
+	if _mesh_cache.has(key):
+		return _mesh_cache[key]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	var teeth := 16
+	var t := 0.012
+	var pts: Array[Vector2] = []
+	for i in teeth * 2:
+		var a := i / float(teeth * 2) * TAU
+		var rr := r if i % 2 == 0 else r * 0.86
+		pts.append(Vector2(cos(a), sin(a)) * rr)
+	for zs in [-t, t]:
+		for i in pts.size():
+			var p0 := pts[i]
+			var p1 := pts[(i + 1) % pts.size()]
+			_flat_tri(st, Vector3(0, 0, zs), Vector3(p0.x, p0.y, zs), Vector3(p1.x, p1.y, zs), Vector3(0, 0, zs))
+	for i in pts.size():
+		var p0 := pts[i]
+		var p1 := pts[(i + 1) % pts.size()]
+		var out := Vector3(p0.x + p1.x, p0.y + p1.y, 0)
+		_flat_tri(st, Vector3(p0.x, p0.y, -t), Vector3(p1.x, p1.y, -t), Vector3(p1.x, p1.y, t), out)
+		_flat_tri(st, Vector3(p0.x, p0.y, -t), Vector3(p1.x, p1.y, t), Vector3(p0.x, p0.y, t), out)
+	st.generate_normals()
+	var m := st.commit()
+	_mesh_cache[key] = m
+	return m
+
+
+## Gear / roller with ridges along Z, radius r, length l (axis Z).
+static func roller_mesh(r: float, l: float, ridges: int = 10) -> ArrayMesh:
+	var key := "roller_%f_%f_%d" % [r, l, ridges]
+	if _mesh_cache.has(key):
+		return _mesh_cache[key]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	var pts: Array[Vector2] = []
+	for i in ridges * 2:
+		var a := i / float(ridges * 2) * TAU
+		var rr := r if i % 2 == 0 else r * 0.78
+		pts.append(Vector2(cos(a), sin(a)) * rr)
+	var h := l * 0.5
+	for zs in [-h, h]:
+		for i in pts.size():
+			var p0 := pts[i]
+			var p1 := pts[(i + 1) % pts.size()]
+			_flat_tri(st, Vector3(0, 0, zs), Vector3(p0.x, p0.y, zs), Vector3(p1.x, p1.y, zs), Vector3(0, 0, zs))
+	for i in pts.size():
+		var p0 := pts[i]
+		var p1 := pts[(i + 1) % pts.size()]
+		var out := Vector3(p0.x + p1.x, p0.y + p1.y, 0)
+		_flat_tri(st, Vector3(p0.x, p0.y, -h), Vector3(p1.x, p1.y, -h), Vector3(p1.x, p1.y, h), out)
+		_flat_tri(st, Vector3(p0.x, p0.y, -h), Vector3(p1.x, p1.y, h), Vector3(p0.x, p0.y, h), out)
+	st.generate_normals()
+	var m := st.commit()
+	_mesh_cache[key] = m
+	return m
+
+
+static func metal_mat(color: Color, rough: float = 0.35) -> StandardMaterial3D:
+	var key := "metalm_%s_%.2f" % [color.to_html(false), rough]
+	if _mat_cache.has(key):
+		return _mat_cache[key]
+	var m := StandardMaterial3D.new()
+	m.albedo_color = color
+	m.metallic = 0.7
+	m.roughness = rough
+	m.metallic_specular = 0.7
+	_mat_cache[key] = m
+	return m
