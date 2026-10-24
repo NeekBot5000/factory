@@ -196,7 +196,7 @@ func _on_processor_entered(b: Node3D) -> void:
 func _build_dropper() -> void:
 	var r: Dictionary = Defs.RESOURCES[def.res]
 	var c: Color = r.color
-	var body_m := Meshes.mat(Color("3b4256"), 0.0, 0.6)
+	var body_m := Meshes.mat(Color("3b4256").lerp(c, 0.35), 0.0, 0.6)
 	var post_m := Meshes.mat(Color("586079"))
 	for sx in [-1, 1]:
 		for sz in [-1, 1]:

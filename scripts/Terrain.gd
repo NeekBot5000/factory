@@ -66,9 +66,9 @@ func _make_plot(p: Vector2i) -> void:
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = true
 	lbl.fixed_size = true
-	lbl.pixel_size = 0.0016
-	lbl.font_size = 40
-	lbl.outline_size = 14
+	lbl.pixel_size = 0.0007
+	lbl.font_size = 36
+	lbl.outline_size = 12
 	lbl.position = Vector3(0, 2.6, 0)
 	lbl.render_priority = 3
 	root.add_child(lbl)

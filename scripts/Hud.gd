@@ -220,6 +220,7 @@ func _build_bottom() -> void:
 	root.add_child(v)
 	info_lbl = _label("", 14, Color("dfe8ff"))
 	info_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info_lbl.add_theme_stylebox_override("normal", _flat(Color(0.05, 0.07, 0.12, 0.8), 8, 10))
 	v.add_child(info_lbl)
 	var p := PanelContainer.new()
 	v.add_child(p)
@@ -243,7 +244,9 @@ func _build_modal() -> void:
 	modal.anchor_bottom = 0.5
 	modal.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	modal.grow_vertical = Control.GROW_DIRECTION_BOTH
-	modal.custom_minimum_size = Vector2(700, 470)
+	modal.custom_minimum_size = Vector2(700, 440)
+	modal.anchor_top = 0.44
+	modal.anchor_bottom = 0.44
 	modal.add_theme_stylebox_override("panel", _flat(C_BG2, 14, 14, Color(1, 1, 1, 0.12), 1))
 	modal.visible = false
 	root.add_child(modal)
@@ -312,6 +315,7 @@ func update_hover_info(b: Builder) -> void:
 	else:
 		tip.visible = true
 		tip.text = text
+		tip.reset_size()
 		var mp := root.get_local_mouse_position()
 		tip.position = mp + Vector2(18, 18)
 

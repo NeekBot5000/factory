@@ -64,17 +64,17 @@ func _setup_env() -> void:
 	sky.sky_material = sm
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.85
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.ambient_light_energy = 0.5
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	env.fog_enabled = true
 	env.fog_light_color = Color("cfe6ff")
-	env.fog_density = 0.0035
+	env.fog_density = 0.0012
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	_sun = DirectionalLight3D.new()
 	_sun.rotation_degrees = Vector3(-50, -38, 0)
-	_sun.light_energy = 1.2
+	_sun.light_energy = 1.25
 	_sun.shadow_enabled = bool(Game.settings.shadows)
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	_sun.directional_shadow_max_distance = 70.0
