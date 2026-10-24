@@ -32,7 +32,7 @@ source *GitHub Actions*), the browser build is published automatically from the 
 | Build | 1-9 pick part, Tab next category, left-click place, drag to paint lines (belts auto-turn), Shift+drag fill area |
 | | R rotate, Z / X (or Ctrl+wheel) build layer, right-click / Esc cancel |
 | Interact | click a lever/button to use it; click any other part to open the inspector (settings, upgrade, rotate, wire, demolish) |
-| Tools | N wire, G upgrade (Ctrl = max, Shift+drag = area), B select, C copy, V paste, T / Delete demolish |
+| Tools | N wire, G upgrade (Ctrl = max, Shift+drag = area), B select, C copy, V paste, T / Delete demolish, Ctrl+Z undo |
 | Panels | O orders, M market, U upgrades, L land, J quests, F blueprints, P ascension, H help, Esc menu |
 
 ## Gameplay loop
@@ -42,6 +42,7 @@ source *GitHub Actions*), the browser build is published automatically from the 
    * Wood: Log (×1), Rip Saw, Timber (×1.4), offset rips or Gang Saw, **Plank** (×2.6)
    * Ore: Boulder, Crusher, Chunks, (Washer +purity), Furnace, **Ingot** (×3), Press, **Plate** (×4.2), Press, **Sheet** (×5.5)
    * Gems: Geode, Crusher frees pure **Shards** (×1.8), Polisher, **Polished Gem** (×4.5 × quality)
+   * Glass: Silica sand, Furnace, Glass block, then Press *while still hot*: **Glass Pane**. Cold glass shatters into cullet.
    * Crate Packer: N items become one crate worth +30%, counted once by the market.
 3. **Sell** on trade pads. Prices for each product drop as you sell it and recover over time, so diversify.
 4. **Grow**: buy blueprint unlocks (gated by factory level), global upgrades, per-part levels, land plots

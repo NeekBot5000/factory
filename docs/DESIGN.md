@@ -56,7 +56,9 @@ cut produces a better *form*.
   cast each time a pool holds enough. Wood burns as fuel (faster heating). Gems crack. Boulders
   don't fit the intake and have to be crushed first.
 * **Press**: the hammer flattens items under it (height ×0.5, width and length ×sqrt 2). Ingot -> plate -> sheet. Gems shatter.
-* **Polisher**: polishes gem shards (quality up, some volume lost) and metal plates.
+* **Polisher**: polishes gem shards (quality up, some volume lost) and metal or glass plates.
+* **Glass**: silica sand melts into glass blocks. Glass cools quickly, and a press only flattens it into
+  panes while it is still hot. Cold glass shatters into cullet, so presses belong right next to furnaces.
 * **Packer**: puts N items into a physical crate worth more and counted once by the market.
 * **Sellers**: trade pads of increasing bonus.
 * **Belts** have low side guards that open automatically where another belt feeds in from the side.

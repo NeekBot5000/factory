@@ -35,7 +35,7 @@ func _on_enter(b: Node3D) -> void:
 	if it == null or not it.active or it.polished or not enabled():
 		return
 	var c := it.cat()
-	if (c == "gem" and it.refined) or (c == "metal" and (it.form == "plate" or it.form == "sheet")):
+	if (c == "gem" and it.refined) or ((c == "metal" or c == "glass") and (it.form == "plate" or it.form == "sheet")):
 		world.queue_job(func():
 			if is_instance_valid(it) and it.active and not it.polished:
 				it.polished = true

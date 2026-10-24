@@ -127,6 +127,9 @@ func _spawn_log() -> void:
 func _spawn_boulder() -> void:
 	var pur := clampf(randf_range(0.3, 0.5) + 0.02 * Game.upg("rich_veins"), 0.05, 0.95)
 	var s := Vector3(randf_range(0.36, 0.5), randf_range(0.32, 0.46), randf_range(0.36, 0.5))
+	if String(def.mat) == "sand":
+		pur = clampf(0.85 + 0.005 * Game.upg("rich_veins"), 0.0, 0.98)
+		s = Vector3(randf_range(0.17, 0.23), randf_range(0.12, 0.17), randf_range(0.17, 0.23))
 	var y := 0.06
 	if not world.cells.has(cell + Vector3i(0, -1, 0)) and cell.y == 0:
 		y = s.y * 0.5 + 0.03

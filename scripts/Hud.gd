@@ -696,7 +696,7 @@ func _build_inspector_controls() -> void:
 		if is_instance_valid(inspected):
 			var q := inspected
 			inspect(null)
-			world.remove(q, true)
+			builder.remove_recorded(q)
 			FX.play("remove"), 0, Color("ff7a7a")))
 
 
@@ -1136,6 +1136,7 @@ func _p_help() -> void:
   [b]Wood[/b]: Log (x1) -> Rip Saw -> Timber (x1.4) -> rip again with offset blades / Gang Saw -> Plank (x2.6, thinnest side <= 0.09)
   [b]Ore[/b]: Boulder -> Crusher -> Chunks -> (Washer: +purity) -> Furnace -> Ingot (x3) -> Press -> Plate (x4.2) -> Press -> Sheet (x5.5)
   [b]Gems[/b]: Geode -> Crusher frees pure Shards (x1.8) -> Polisher -> Polished Gem (x4.5)
+  [b]Glass[/b]: Silica Sand -> Furnace -> Glass Block -> Press [i]while still glowing hot[/i] -> Glass Pane. Cold glass shatters!
   [b]Crate Packer[/b]: N items -> 1 crate worth +30%, counted once by the market.
 
 [color=#8fd0ff]Building[/color]
@@ -1149,7 +1150,7 @@ func _p_help() -> void:
 
 [color=#8fd0ff]Scaling[/color]  Select (B) + Copy (C) + Paste (V) copies parts, settings and wires. Upgrade (G) levels parts, Shift+drag for whole areas. Teleporters move items across the island. Buy land [L], global upgrades [U], fill orders [O], watch the market [M], and Ascend [P] for permanent stars.
 
-[color=#8fd0ff]Camera[/color]  WASD pan, Q/E rotate, wheel zoom, right-drag orbit, middle-drag pan, Shift = faster. Right-click or Esc cancels."""
+[color=#8fd0ff]Camera[/color]  WASD pan, Q/E rotate, wheel zoom, right-drag orbit, middle-drag pan, Shift = faster. Right-click or Esc cancels. Ctrl+Z undoes building / demolishing."""
 	var r := RichTextLabel.new()
 	r.bbcode_enabled = true
 	r.fit_content = true

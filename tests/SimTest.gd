@@ -35,6 +35,7 @@ func _ready() -> void:
 	_row_sorter(13)
 	_row_packer(17)
 	_farm_field()
+	_glass_rows()
 	print("TEST: built %d parts, %d links" % [world.parts.size(), world.links.size()])
 
 
@@ -176,6 +177,21 @@ func _farm_field() -> void:
 	sellers["field"] = P("seller", 8, 0, -20, 0)
 
 
+func _glass_rows() -> void:
+	# hot: press right after the furnace -> panes.  cold: long belt first -> glass shatters
+	for z in [-10, -8]:
+		P("dredge_sand", 10, 1, z)
+		P("conveyor", 10, 0, z, 1)
+		P("furnace", 11, 0, z, 1)
+	P("press", 12, 0, -10, 1)
+	P("conveyor", 13, 0, -10, 1)
+	seller("glass_hot", 14, -10)
+	for x in range(12, 18):
+		P("conveyor", x, 0, -8, 1)
+	P("press", 18, 0, -8, 1)
+	seller("glass_cold", 19, -8)
+
+
 func _physics_process(_delta: float) -> void:
 	frames += 1
 	if OS.get_environment("DBG") != "" and frames % 60 == 0 and frames < 60 * 30:
@@ -219,6 +235,12 @@ func _report() -> void:
 	_check(sellers.teleport.sold >= 3, "teleporter delivers")
 	_check(sellers.sorted.sold >= 2, "sensor+piston sorts (%d)" % sellers.sorted.sold)
 	_check(int(f.get("crate", 0)) >= 1, "packer makes crates")
+	for zz in [-10, -8]:
+		var fu: Part = world.cells.get(Vector3i(11, 0, zz))
+		print("TEST: glass furnace ", fu.info_lines() if fu else "none", " inside=", fu._inside.size() if fu else -1)
+	print("TEST: glass keys ", Game.demand_map.keys().filter(func(k): return String(k).begins_with("sand")))
+	_check(Game.demand_map.has("sand:plate"), "hot glass pressed into panes")
+	_check(Game.demand_map.has("sand:scrap") or Game.demand_map.has("sand:chunk"), "cold glass shatters into cullet")
 	_check(sellers.field.sold >= 6, "farm field -> collector -> turn -> rip saw works (%d)" % sellers.field.sold)
 	print("TEST RESULT: %s" % ("FAIL" if failed else "PASS"))
 	get_tree().quit(1 if failed else 0)

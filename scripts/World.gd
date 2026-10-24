@@ -536,29 +536,45 @@ func crush_item(it: Item, max_piece: float, out_pos: Vector3, out_vel: Vector3) 
 			spawn_item(props, xf, v, true)
 
 
+func _flatten(it: Item) -> bool:
+	var xf := it.global_transform.orthonormalized()
+	var up_l := xf.basis.inverse() * Vector3.UP
+	var k := 0
+	if absf(up_l.y) > absf(up_l[k]):
+		k = 1
+	if absf(up_l.z) > absf(up_l[k]):
+		k = 2
+	var s := it.size
+	if s[k] <= 0.012:
+		return false
+	for j in 3:
+		if j == k:
+			s[j] *= 0.5
+		else:
+			s[j] = minf(s[j] * sqrt(2.0), 0.95)
+	it.set_geometry("box", s)
+	return true
+
+
 ## Hammer impact. Returns true if the item changed.
 func press_item(it: Item) -> bool:
 	if not it.active:
 		return false
 	match it.cat():
+		"glass":
+			if it.heat < 0.4:
+				# cold glass shatters into cullet
+				it.broken = true
+				var shards := cut_item(it, it.global_position, Vector3(1, 0, 0).rotated(Vector3.UP, randf() * TAU), 0.01)
+				for sh in shards:
+					var more := cut_item(sh, sh.global_position, Vector3(0, 0, 1).rotated(Vector3.UP, randf() * TAU), 0.01)
+					for m in more:
+						(m as Item).set_geometry("chunk", (m as Item).size)
+				FX.burst("shine", it.global_position)
+				return true
+			return _flatten(it)
 		"metal":
-			var xf := it.global_transform.orthonormalized()
-			var up_l := xf.basis.inverse() * Vector3.UP
-			var k := 0
-			if absf(up_l.y) > absf(up_l[k]):
-				k = 1
-			if absf(up_l.z) > absf(up_l[k]):
-				k = 2
-			var s := it.size
-			if s[k] <= 0.012:
-				return false
-			for j in 3:
-				if j == k:
-					s[j] *= 0.5
-				else:
-					s[j] = minf(s[j] * sqrt(2.0), 0.95)
-			it.set_geometry("box", s)
-			return true
+			return _flatten(it)
 		"gem":
 			if it.refined:
 				it.quality *= 0.6
@@ -570,6 +586,10 @@ func press_item(it: Item) -> bool:
 			cut_item(it, it.global_position, Vector3(1, 0, 0).rotated(Vector3.UP, randf() * TAU))
 			return true
 	return false
+
+
+func cool_rate(it: Item) -> float:
+	return 0.2 if it.mat == "sand" else 0.06
 
 
 func _item_resting_on_part(it: Item) -> bool:
@@ -601,7 +621,7 @@ func _physics_process(delta: float) -> void:
 		var it: Item = active_items[i]
 		it.age += delta
 		if it.heat > 0.0:
-			it.set_heat(it.heat - delta * 0.06)
+			it.set_heat(it.heat - delta * cool_rate(it))
 		if it.linear_velocity.length_squared() < 0.01 and not _item_resting_on_part(it):
 			it.still_time += delta
 		else:

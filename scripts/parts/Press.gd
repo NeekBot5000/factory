@@ -46,7 +46,7 @@ func cycle_time() -> float:
 
 
 func info_lines() -> Array:
-	return ["Presses every %.1fs%s" % [cycle_time(), " (on pulse)" if wired_in else ""], "Metal: half height, wider (volume kept)"]
+	return ["Presses %s" % ("on each wire pulse" if wired_in else "when an item is centred (max every %.1fs)" % (cycle_time() * 0.35)), "Metal & hot glass: half height, wider (volume kept)"]
 
 
 func tick(delta: float) -> void:
@@ -55,8 +55,14 @@ func tick(delta: float) -> void:
 		if wired_in:
 			fire = rising_edge()
 		else:
+			# light curtain: slam when something is centred under the hammer (rate-limited by cycle time)
 			_timer += delta / cycle_time()
-			fire = _timer >= 1.0
+			if _timer >= 0.35:
+				for it in _items_in(_area):
+					var lp := to_local(it.global_position)
+					if absf(lp.z) < 0.14 and absf(lp.x) < 0.3:
+						fire = true
+						break
 		if fire:
 			_timer = 0.0
 			_phase = 0.0

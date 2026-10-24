@@ -121,7 +121,7 @@ func tick(delta: float) -> void:
 		busy = true
 		var c := Defs.mat_cat(item.mat)
 		var k := 2.5 if c == "wood" else 1.0
-		item.set_heat(item.heat + delta * rate * k / maxf(0.4, item.volume() * 80.0 + 0.6))
+		item.set_heat(item.heat + delta * (rate * k / maxf(0.4, item.volume() * 80.0 + 0.6) + world.cool_rate(item)))
 		if item.heat >= 1.0:
 			_inside.erase(it)
 			_melt(item)
@@ -140,7 +140,7 @@ func _melt(it: Item) -> void:
 	match c:
 		"wood":
 			fuel += 2.0 + it.volume() * 60.0
-		"ore":
+		"ore", "sand":
 			var metal := it.volume() * (1.0 if it.refined else it.purity)
 			pools[it.mat] = float(pools.get(it.mat, 0.0)) + metal
 		"gem":
@@ -150,7 +150,7 @@ func _melt(it: Item) -> void:
 
 func _cast(m: String) -> void:
 	var xf := Transform3D(Basis.looking_at(dir_vec(), Vector3.UP), local_to_world(Vector3(0, 0.35, -0.68)))
-	var it: Item = world.spawn_item({"mat": m, "shape": "box", "size": Defs.INGOT_SIZE, "refined": true, "purity": 1.0, "heat": 0.95}, xf, dir_vec() * 1.0, true)
+	var it: Item = world.spawn_item({"mat": m, "shape": "box", "size": Defs.INGOT_SIZE, "refined": true, "purity": 1.0, "heat": 1.0}, xf, dir_vec() * 1.0, true)
 	if it != null:
 		ingots_made += 1
 		Game.stats.ingots = int(Game.stats.get("ingots", 0)) + 1

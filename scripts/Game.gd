@@ -430,6 +430,7 @@ const ORDER_FORMS := {
 	"wood": [["log", 0, 0.12], ["timber", 1, 0.06], ["plank", 1, 0.012]],
 	"ore": [["boulder", 1, 0.02], ["chunk", 2, 0.002], ["ingot", 3, 0.0054], ["plate", 6, 0.0054], ["sheet", 6, 0.0054]],
 	"gem": [["shard", 8, 0.002], ["polished", 8, 0.0018]],
+	"sand": [["ingot", 5, 0.0054], ["plate", 6, 0.0054]],
 }
 
 

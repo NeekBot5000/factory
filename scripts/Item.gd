@@ -14,6 +14,7 @@ var quality := 1.0
 var heat := 0.0
 var washed := false
 var polished := false
+var broken := false
 var crate_value := 0.0
 var variant := 0
 var form := ""
@@ -62,6 +63,7 @@ func activate(props: Dictionary, xf: Transform3D, vel: Vector3 = Vector3.ZERO) -
 	heat = props.get("heat", 0.0)
 	washed = props.get("washed", false)
 	polished = props.get("polished", false)
+	broken = props.get("broken", false)
 	crate_value = props.get("crate_value", 0.0)
 	variant = props.get("variant", randi() % 4)
 	form = props.get("form", "")
@@ -85,7 +87,7 @@ func activate(props: Dictionary, xf: Transform3D, vel: Vector3 = Vector3.ZERO) -
 func props() -> Dictionary:
 	return {
 		"mat": mat, "shape": shape, "size": size, "purity": purity, "refined": refined,
-		"quality": quality, "heat": heat, "washed": washed, "polished": polished,
+		"quality": quality, "heat": heat, "washed": washed, "polished": polished, "broken": broken,
 		"crate_value": crate_value, "variant": variant, "form": "crate" if form == "crate" else "",
 		"visited": visited,
 	}
@@ -152,6 +154,8 @@ func cat() -> String:
 	var c := Defs.mat_cat(mat)
 	if c == "ore" and refined:
 		return "metal"
+	if c == "sand":
+		return "glass" if refined else "sand"
 	return c
 
 
@@ -168,9 +172,11 @@ func classify() -> String:
 		if d[0] <= 0.09:
 			return "plank"
 		return "timber"
-	if c == "ore":
+	if c == "ore" or c == "sand":
+		if c == "sand" and not refined:
+			return "sand"
 		if refined:
-			if d[2] < 0.12:
+			if broken or d[2] < 0.12:
 				return "scrap"
 			if d[0] <= 0.035:
 				return "sheet"
@@ -191,6 +197,8 @@ func value() -> float:
 	var v: float = float(m.price) * volume() * float(Defs.FORM_MULT.get(form, 1.0)) * quality
 	if not refined and Defs.mat_cat(mat) != "wood":
 		v *= purity
+	if form == "scrap" and Defs.mat_cat(mat) == "sand":
+		v *= 0.5
 	return v
 
 

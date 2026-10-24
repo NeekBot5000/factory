@@ -109,6 +109,15 @@ func _process(delta: float) -> void:
 		10:
 			if t > 3.9:
 				_check(world.parts.size() < before_demolish, "demolish removed a part (%d -> %d)" % [before_demolish, world.parts.size()])
+				var ev := InputEventKey.new()
+				ev.keycode = KEY_Z
+				ev.ctrl_pressed = true
+				ev.pressed = true
+				Input.parse_input_event(ev)
+				step = 105
+		105:
+			if t > 4.05:
+				_check(world.parts.size() == before_demolish, "Ctrl+Z restores the demolished part (%d)" % world.parts.size())
 				_key(KEY_ESCAPE)
 				step = 11
 		11:

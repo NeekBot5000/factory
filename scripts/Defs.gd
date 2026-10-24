@@ -25,6 +25,7 @@ const MATERIALS := {
 	"copper": {"name": "Copper", "cat": "ore", "color": Color("e8803a"), "rock": Color("6d625a"), "price": 150.0, "biome": "meadow"},
 	"iron": {"name": "Iron", "cat": "ore", "color": Color("b7c3d2"), "rock": Color("595b63"), "price": 400.0, "biome": "meadow"},
 	"gold": {"name": "Gold", "cat": "ore", "color": Color("ffd23f"), "rock": Color("8a7350"), "price": 2500.0, "biome": "desert"},
+	"sand": {"name": "Silica", "cat": "sand", "color": Color("e9d39a"), "rock": Color("c9b27a"), "price": 700.0, "biome": "desert"},
 	"emerald": {"name": "Emerald", "cat": "gem", "color": Color("2fe08a"), "rock": Color("4b5d4f"), "price": 2500.0, "biome": "jungle"},
 	"crystal": {"name": "Crystal", "cat": "gem", "color": Color("5fd8ff"), "rock": Color("6d7f99"), "price": 12000.0, "biome": "snow"},
 	"ruby": {"name": "Ruby", "cat": "gem", "color": Color("ff3b5c"), "rock": Color("3d2a30"), "price": 50000.0, "biome": "volcano"},
@@ -35,16 +36,16 @@ const FORM_MULT := {
 	"log": 1.0, "timber": 1.4, "plank": 2.6, "offcut": 0.5, "chips": 0.3,
 	"boulder": 1.0, "chunk": 1.05,
 	"ingot": 3.0, "plate": 4.2, "sheet": 5.5, "scrap": 1.0,
-	"geode": 1.0, "shard": 1.8, "polished": 4.5,
+	"geode": 1.0, "shard": 1.8, "polished": 4.5, "sand": 1.0,
 	"crate": 1.0,
 }
 const FORM_NAMES := {
 	"log": "Log", "timber": "Timber", "plank": "Plank", "offcut": "Offcut", "chips": "Wood Chips",
 	"boulder": "Ore Boulder", "chunk": "Ore Chunk", "ingot": "Ingot", "plate": "Plate", "sheet": "Sheet",
-	"scrap": "Scrap", "geode": "Geode", "shard": "Gem Shard", "polished": "Polished Gem", "crate": "Crate",
+	"scrap": "Scrap", "geode": "Geode", "shard": "Gem Shard", "polished": "Polished Gem", "crate": "Crate", "sand": "Sand",
 }
 
-const SENSOR_FILTERS := ["any", "wood", "ore", "metal", "gem", "log", "timber", "plank", "offcut", "boulder", "chunk", "ingot", "plate", "sheet", "shard", "polished", "crate", "big", "small", "hot"]
+const SENSOR_FILTERS := ["any", "wood", "ore", "metal", "gem", "sand", "glass", "log", "timber", "plank", "offcut", "boulder", "chunk", "ingot", "plate", "sheet", "shard", "polished", "crate", "big", "small", "hot"]
 const CHANNEL_COLORS := [Color("ff4f4f"), Color("4fa8ff"), Color("57e08a"), Color("ffcf4a"), Color("c07bff"), Color("ff8a3d"), Color("4ff0e0"), Color("ff7ad9")]
 const CHANNEL_NAMES := ["Red", "Blue", "Green", "Yellow", "Purple", "Orange", "Cyan", "Pink"]
 
@@ -92,6 +93,8 @@ const PARTS := {
 		"desc": "Drills iron ore boulders."},
 	"drill_gold": {"name": "Gold Drill", "kind": "source", "src": "drill", "mat": "gold", "interval": 4.0, "cat": "production", "in": true, "cost": 4000.0, "unlock": 9000.0, "level": 5,
 		"desc": "Drills gold ore boulders. Needs Dunes land."},
+	"dredge_sand": {"name": "Sand Dredge", "kind": "source", "src": "drill", "mat": "sand", "interval": 2.5, "cat": "production", "in": true, "cost": 3000.0, "unlock": 7000.0, "level": 5,
+		"desc": "Dredges silica sand. Melt it in a furnace into glass; press glass while it is still hot. Needs Dunes land."},
 	"treefarm_mahogany": {"name": "Mahogany Farm", "kind": "source", "src": "tree", "mat": "mahogany", "interval": 7.0, "cat": "production", "dir": true, "in": true, "cost": 9000.0, "unlock": 20000.0, "level": 6,
 		"desc": "Grows valuable mahogany. Needs Jungle land."},
 	"drill_emerald": {"name": "Emerald Drill", "kind": "source", "src": "drill", "mat": "emerald", "interval": 4.5, "cat": "production", "in": true, "cost": 40000.0, "unlock": 90000.0, "level": 8,
@@ -135,7 +138,7 @@ const PARTS := {
 	"washer": {"name": "Ore Washer", "kind": "washer", "speed": 1.8, "cat": "machines", "dir": true, "in": true, "cost": 2500.0, "unlock": 6000.0, "level": 5,
 		"desc": "Water jets wash ore: +15% purity, once per piece."},
 	"press": {"name": "Hydraulic Press", "kind": "press", "interval": 2.0, "speed": 1.8, "cat": "machines", "dir": true, "in": true, "cost": 6000.0, "unlock": 15000.0, "level": 6,
-		"desc": "Flattens items under the hammer: half the height, wider and longer (volume kept). Ingot -> plate -> sheet. Gems shatter."},
+		"desc": "Flattens items under the hammer: half the height, wider and longer (volume kept). Ingot -> plate -> sheet. Glass must still be hot (glowing) or it shatters. Gems shatter."},
 	"gang_saw": {"name": "Gang Saw", "kind": "rip_saw", "blades": 4, "speed": 1.4, "cat": "machines", "dir": true, "in": true, "cost": 25000.0, "unlock": 80000.0, "level": 8,
 		"desc": "Four rip blades 0.08 apart: timber in, planks out."},
 	"polisher": {"name": "Polisher", "kind": "polisher", "speed": 1.4, "cat": "machines", "dir": true, "in": true, "cost": 40000.0, "unlock": 100000.0, "level": 8,
@@ -264,8 +267,13 @@ static func dir_index(d: Vector3i) -> int:
 	return -1
 
 
+const GLASS_NAMES := {"ingot": "Glass Block", "plate": "Glass Pane", "sheet": "Fine Glass", "scrap": "Cullet", "sand": "Silica Sand", "chunk": "Silica Sand"}
+
+
 static func product_name(mat: String, form: String) -> String:
 	if form == "crate":
 		return "Crate"
+	if mat == "sand":
+		return String(GLASS_NAMES.get(form, "Glass"))
 	var mname: String = MATERIALS[mat].name
 	return "%s %s" % [mname, FORM_NAMES.get(form, form)]

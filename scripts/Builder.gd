@@ -47,6 +47,8 @@ var _marker_yellow: StandardMaterial3D
 var _plan_cost := 0.0
 var _plan_count := 0
 var _plan_invalid := 0
+var _undo: Array = []
+var _op: Dictionary = {}
 
 
 func setup(p_world: Node, p_rig: CameraRig) -> void:
@@ -217,6 +219,73 @@ func start_wire_from(p: Part) -> void:
 	mode_changed.emit()
 
 
+# ------------------------------------------------------------ undo
+
+func _begin_op() -> void:
+	_op = {"placed": [], "removed": [], "links": []}
+
+
+func _end_op() -> void:
+	if _op.is_empty():
+		return
+	if not (_op.placed as Array).is_empty() or not (_op.removed as Array).is_empty():
+		_undo.append(_op)
+		if _undo.size() > 60:
+			_undo.pop_front()
+	_op = {}
+
+
+func _record_placed(p: Part) -> void:
+	if _op.is_empty():
+		_begin_op()
+		(_op.placed as Array).append(p.cell)
+		_end_op()
+	else:
+		(_op.placed as Array).append(p.cell)
+
+
+func remove_recorded(p: Part) -> void:
+	var standalone := _op.is_empty()
+	if standalone:
+		_begin_op()
+	(_op.removed as Array).append({"t": p.type_id, "c": p.cell, "r": p.rot, "l": p.level, "p": p.paid, "cfg": p.config.duplicate()})
+	for l in world.links:
+		if l.a == p.cell or l.b == p.cell:
+			(_op.links as Array).append([l.a, l.b])
+	world.remove(p, true)
+	if standalone:
+		_end_op()
+
+
+func undo() -> void:
+	if _undo.is_empty():
+		Game.toast.emit("Nothing to undo", Color("ffd27a"))
+		return
+	var op: Dictionary = _undo.pop_back()
+	var n := 0
+	for c in op.placed:
+		var p: Part = world.cells.get(c)
+		if p != null:
+			world.remove(p, true)
+			n += 1
+	var short := false
+	for e in op.removed:
+		if not world.can_place(e.c):
+			continue
+		if not Game.spend(float(e.p)):
+			short = true
+			continue
+		var np: Part = world.place(e.t, e.c, int(e.r), false, float(e.p), e.cfg)
+		if np != null:
+			if int(e.l) > 0:
+				np.set_level(int(e.l))
+			n += 1
+	for l in op.links:
+		world.add_link(l[0], l[1])
+	FX.play("remove", 1.3)
+	Game.toast.emit("Undone (%d parts)%s" % [n, " - not enough money for some" if short else ""], Color("8fd0ff"))
+
+
 # ------------------------------------------------------------ picking
 
 func _pointer_blocked() -> bool:
@@ -360,6 +429,7 @@ func _try_place(c: Vector3i, id: String = "", r: int = -1, cfg: Dictionary = {})
 	var p: Part = world.place(pid, c, rr, true, -1.0, cfg)
 	if p == null:
 		return null
+	_record_placed(p)
 	FX.play("place", randf_range(0.95, 1.1), 0.03)
 	return p
 
@@ -487,6 +557,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_left_down() -> void:
+	if mode in ["build", "demolish", "paste"]:
+		_begin_op()
 	match mode:
 		"none":
 			if hover_part != null:
@@ -507,6 +579,7 @@ func _on_left_down() -> void:
 		"paste":
 			if hover_ok:
 				_do_paste()
+			_end_op()
 		"demolish":
 			_dragging = true
 			_drag_start = hover_cell
@@ -532,6 +605,7 @@ func _on_left_down() -> void:
 
 func _on_left_up() -> void:
 	if not _dragging:
+		_end_op()
 		return
 	match mode:
 		"build":
@@ -541,7 +615,7 @@ func _on_left_up() -> void:
 			if Input.is_key_pressed(KEY_SHIFT) and hover_ok:
 				var list := _rect_parts()
 				for p in list:
-					world.remove(p, true)
+					remove_recorded(p)
 				if list.size() > 0:
 					FX.play("remove")
 					Game.toast.emit("Demolished %d parts (refunded)" % list.size(), Color("ffd27a"))
@@ -554,6 +628,7 @@ func _on_left_up() -> void:
 				selection_changed.emit()
 				Game.toast.emit("%d parts selected. C copy, G upgrade, Delete remove." % selection.size(), Color("7ab8ff"))
 	_reset_drag()
+	_end_op()
 	_sig = ""
 
 
@@ -679,7 +754,7 @@ func upgrade_selection() -> void:
 func _demolish(p: Part) -> void:
 	if hud.inspected == p:
 		hud.inspect(null)
-	world.remove(p, true)
+	remove_recorded(p)
 	FX.play("remove", randf_range(0.95, 1.1), 0.03)
 
 
@@ -693,6 +768,9 @@ func _on_key(e: InputEventKey) -> void:
 		return
 	if k >= KEY_1 and k <= KEY_9 and not e.ctrl_pressed:
 		hud.pick_slot(k - KEY_1)
+		return
+	if e.ctrl_pressed and k == KEY_Z:
+		undo()
 		return
 	match k:
 		KEY_R:
@@ -721,10 +799,12 @@ func _on_key(e: InputEventKey) -> void:
 		KEY_T, KEY_DELETE, KEY_BACKSPACE:
 			if mode == "select" and not selection.is_empty():
 				var n := 0
+				_begin_op()
 				for p in selection:
 					if is_instance_valid(p):
-						world.remove(p, true)
+						remove_recorded(p)
 						n += 1
+				_end_op()
 				selection.clear()
 				FX.play("remove")
 				Game.toast.emit("Removed %d parts (refunded)" % n, Color("ffd27a"))

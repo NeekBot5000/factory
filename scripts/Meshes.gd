@@ -378,6 +378,21 @@ static func item_mat(it: Item) -> StandardMaterial3D:
 	var m: Dictionary = Defs.MATERIALS[it.mat]
 	var col: Color = m.color
 	match it.cat():
+		"sand":
+			return mat(col.darkened(0.05), 0.0, 1.0)
+		"glass":
+			var gk := "glass_item_%s" % it.polished
+			if _mat_cache.has(gk):
+				return _mat_cache[gk]
+			var gm := StandardMaterial3D.new()
+			gm.albedo_color = Color(0.75, 0.92, 1.0, 0.55)
+			gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			gm.roughness = 0.02 if it.polished else 0.12
+			gm.metallic_specular = 1.0
+			gm.rim_enabled = true
+			gm.rim = 0.6
+			_mat_cache[gk] = gm
+			return gm
 		"crate":
 			return mat(Color("b07a45"), 0.0, 0.9)
 		"wood":
