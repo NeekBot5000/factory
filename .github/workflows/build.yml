@@ -49,10 +49,14 @@ jobs:
         run: ${GODOT_BIN} --headless --import --path . || true
 
       - name: Logic tests
-        run: ${GODOT_BIN} --headless --path . res://tests/LogicTest.tscn 2>&1 | tee logic.log; grep -q "LOGIC RESULT: PASS" logic.log
+        run: |
+          ${GODOT_BIN} --headless --path . res://tests/LogicTest.tscn 2>&1 | tee logic.log
+          grep -q "LOGIC RESULT: PASS" logic.log
 
       - name: Physics simulation tests
-        run: ${GODOT_BIN} --headless --path . res://tests/SimTest.tscn --fixed-fps 60 2>&1 | tee sim.log; grep -q "TEST RESULT: PASS" sim.log
+        run: |
+          ${GODOT_BIN} --headless --path . res://tests/SimTest.tscn --fixed-fps 60 2>&1 | tee sim.log
+          grep -q "TEST RESULT: PASS" sim.log
 
       - name: Export Web, Windows and Linux
         run: |
