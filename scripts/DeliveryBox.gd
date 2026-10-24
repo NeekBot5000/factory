@@ -123,7 +123,7 @@ func _reveal() -> void:
 	pick.rise_from_box(global_position + Vector3(0, 0.75, 0))
 	var burst := CPUParticles3D.new()
 	burst.one_shot = true
-	burst.explosiveness = 0.9
+	burst.explosiveness = 0.8
 	burst.amount = 30
 	burst.lifetime = 0.9
 	burst.mesh = LowPoly.box(Vector3(0.03, 0.03, 0.005))

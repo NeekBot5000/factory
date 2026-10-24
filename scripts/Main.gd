@@ -17,6 +17,8 @@ var computer: Computer
 var ui_layer: CanvasLayer
 var shop_ui: ShopUI
 var _dispatch_timer := -1.0
+var grass_mat: ShaderMaterial
+var _grass_hits: Array[Vector4] = []    # xyz = where something hit the ground, w = strength (decays)
 
 
 func _ready() -> void:
@@ -126,8 +128,6 @@ func _forest() -> void:
 
 func _decor() -> void:
 	# rocks, bushes, stumps, flowers and grass tufts
-	var rock_m := LowPoly.mat(Color("8a8780"), 1.0)
-	var bush_m := LowPoly.mat(Color("3f7f33"), 1.0)
 	for i in 70:
 		var a := rng.randf() * TAU
 		var r := rng.randf_range(7.0, 80.0)
@@ -135,11 +135,15 @@ func _decor() -> void:
 		var y := terrain.height_at(p.x, p.y)
 		if i % 2 == 0:
 			var s := rng.randf_range(0.3, 0.9)
-			LowPoly.mesh_instance(self, LowPoly.blob(1.0, 0.3, rng.randi() % 40), rock_m, Vector3(p.x, y + s * 0.25, p.y), Vector3(0, rng.randf() * 360.0, 0), Vector3(s * 1.3, s * 0.7, s))
-			var sb := LowPoly.static_box(self, Vector3(s * 2.0, s * 0.9, s * 1.6), Vector3(p.x, y + s * 0.25, p.y))
-			sb.collision_layer = 1
+			var rock := Rock.new()
+			add_child(rock)
+			rock.position = Vector3(p.x, y + s * 0.25, p.y)
+			rock.build(rng, s)
 		else:
-			LowPoly.mesh_instance(self, LowPoly.blob(0.6, 0.3, rng.randi() % 40), bush_m, Vector3(p.x, y + 0.3, p.y), Vector3.ZERO, Vector3(1.2, 0.8, 1.2) * rng.randf_range(0.7, 1.4))
+			var bush := Bush.new()
+			add_child(bush)
+			bush.position = Vector3(p.x, y, p.y)
+			bush.build(rng, rng.randf_range(0.7, 1.4))
 	# grass tufts + flowers via MultiMesh
 	var grass := MultiMeshInstance3D.new()
 	var mm := MultiMesh.new()
@@ -158,10 +162,8 @@ func _decor() -> void:
 			c = [Color("f5e05a"), Color("f2f2f2"), Color("d06ad6")][rng.randi() % 3]
 		mm.set_instance_color(i, c)
 	grass.multimesh = mm
-	var gm := StandardMaterial3D.new()
-	gm.vertex_color_use_as_albedo = true
-	gm.roughness = 1.0
-	grass.material_override = gm
+	grass_mat = Nature.grass_mat()
+	grass.material_override = grass_mat
 	grass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(grass)
 	# distant hills ring for a sense of a valley
@@ -221,7 +223,34 @@ func unload_boxes(truck: Truck) -> void:
 		k += 1
 
 
+## Something hit the ground here: flattens the grass for a moment (visual only).
+func bend_grass(pos: Vector3, strength: float = 1.4) -> void:
+	_grass_hits.append(Vector4(pos.x, pos.y, pos.z, strength))
+	while _grass_hits.size() > Nature.MAX_BENDERS - 1:
+		_grass_hits.pop_front()
+
+
+func _update_grass(delta: float) -> void:
+	if grass_mat == null:
+		return
+	var b: Array[Vector4] = []
+	var pp := player.global_position
+	b.append(Vector4(pp.x, pp.y, pp.z, 1.0))
+	for i in range(_grass_hits.size() - 1, -1, -1):
+		var h := _grass_hits[i]
+		h.w -= delta * 0.9
+		if h.w <= 0.0:
+			_grass_hits.remove_at(i)
+		else:
+			_grass_hits[i] = h
+	b.append_array(_grass_hits)
+	while b.size() < Nature.MAX_BENDERS:
+		b.append(Vector4.ZERO)
+	grass_mat.set_shader_parameter("benders", b)
+
+
 func _process(delta: float) -> void:
+	_update_grass(delta)
 	if _dispatch_timer >= 0.0:
 		_dispatch_timer -= delta
 		if _dispatch_timer < 0.0:
@@ -253,6 +282,8 @@ func _open_ui(compact: bool) -> void:
 	ui_layer.add_child(shop_ui)
 	shop_ui.setup(self, compact)
 	shop_ui.closed.connect(close_ui)
+	if not compact:
+		computer.set_on(true)
 	Sfx.play("boot" if not compact else "click")
 
 
@@ -261,6 +292,7 @@ func close_ui() -> void:
 		return
 	shop_ui.queue_free()
 	shop_ui = null
+	computer.set_on(false)
 	player.controls_enabled = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 

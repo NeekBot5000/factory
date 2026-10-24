@@ -31,6 +31,8 @@ func _ready() -> void:
 	_sounds["rip"] = _make(0.3, func(t): return _noise() * (0.6 + 0.4 * sin(t * 300.0)) * exp(-t * 8.0) * 0.5)
 	_sounds["reveal"] = _make(0.6, func(t): return sin(TAU * (523.0 if t < 0.15 else (659.0 if t < 0.3 else 784.0)) * t) * exp(-fmod(t, 0.15) * 8.0) * 0.3)
 	_sounds["horn"] = _make(0.5, func(t): return (signf(sin(TAU * 220.0 * t)) * 0.5 + sin(TAU * 277.0 * t) * 0.5) * minf(1.0, t * 30.0) * minf(1.0, (0.5 - t) * 20.0) * 0.25)
+	_sounds["rustle"] = _make(0.35, func(t): return _noise() * (0.5 + 0.5 * sin(t * 90.0 + sin(t * 37.0) * 3.0)) * sin(PI * t / 0.35) * 0.35)
+	_sounds["clink"] = _make(0.25, func(t): return (sin(TAU * 2100.0 * t) * 0.5 + sin(TAU * 3170.0 * t) * 0.3) * exp(-t * 22.0) * 0.5 + _noise() * exp(-t * 90.0) * 0.4)
 	_sounds["click"] = _make(0.04, func(t): return sin(TAU * 900.0 * t) * exp(-t * 80.0) * 0.3)
 	_sounds["boot"] = _make(0.5, func(t): return sin(TAU * (300.0 + t * 600.0) * t) * exp(-t * 4.0) * 0.25)
 	for k in 3:

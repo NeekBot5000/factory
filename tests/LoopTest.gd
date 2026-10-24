@@ -122,6 +122,7 @@ func _physics_process(delta: float) -> void:
 		7:
 			if Game.money > money0 + 0.001:
 				check(true, "shipping paid out ($%.2f, after %.0fs)" % [Game.money - money0, t])
+				check(main.ship_truck.state == "returning" and main.ship_truck.route_out.size() > 2, "truck heads back home along its route")
 				step = 8
 				t = 0.0
 			elif t > 60.0:

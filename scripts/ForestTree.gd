@@ -25,6 +25,8 @@ var wood_color := Color("e2c08d")
 
 var _layer_mi: Array[MeshInstance3D] = [null, null]
 var _seed := 0
+var _crown: Node3D
+var _shake_tw: Tween
 
 
 func setup(rng: RandomNumberGenerator, p_kind: String) -> void:
@@ -65,12 +67,36 @@ func setup(rng: RandomNumberGenerator, p_kind: String) -> void:
 		_rebuild(l)
 
 
+## Each chop makes the crown shudder away from the hit and spring back.
+func shake_crown(dir: Vector3, amount: float) -> void:
+	dir.y = 0.0
+	if dir.length() < 0.01 or _crown == null:
+		return
+	var axis := Vector3.UP.cross(dir.normalized())
+	var a := deg_to_rad(2.5) * amount
+	if _shake_tw != null:
+		_shake_tw.kill()
+	_crown.basis = Basis()
+	_shake_tw = create_tween()
+	for k in 4:
+		var amp := a * pow(0.45, k) * (1.0 if k % 2 == 0 else -1.0)
+		_shake_tw.tween_property(_crown, "basis", Basis(axis, amp), 0.07 + k * 0.03).set_trans(Tween.TRANS_SINE)
+	_shake_tw.tween_property(_crown, "basis", Basis(), 0.15).set_trans(Tween.TRANS_SINE)
+	# a few leaves drift down
+	if kind != "pine":
+		var top := global_position + Vector3(0, trunk_h + 0.5, 0)
+		Nature.burst(get_parent(), top, Vector3.DOWN, Color("6aa846"), int(3 + amount * 4), 0.6, 0.06, 1.2, 2.2, 120.0)
+
+
 func _build_static() -> void:
 	# wood core (only visible where bark has been stripped)
 	LowPoly.mesh_instance(self, LowPoly.cyl(r_core * 0.985, r_core * 0.985, trunk_h, SECTORS), LowPoly.mat(wood_color, 0.8), Vector3(0, trunk_h * 0.5, 0))
 	# root flare
 	LowPoly.mesh_instance(self, LowPoly.cyl(radius * 1.02, radius * 1.45, 0.35, SECTORS), LowPoly.mat(bark_color.darkened(0.15)), Vector3(0, 0.1, 0))
-	# canopy
+	# canopy: hangs off a pivot at the base of the trunk so the whole crown can sway / shake
+	_crown = Node3D.new()
+	_crown.name = "Crown"
+	add_child(_crown)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed
 	match kind:
@@ -78,16 +104,16 @@ func _build_static() -> void:
 			var base_y := trunk_h - 1.2
 			for k in 4:
 				var r := 2.0 - k * 0.42
-				LowPoly.mesh_instance(self, LowPoly.cyl(0.0, r, 1.9, 7), LowPoly.mat(Color("2f6b3a").lightened(k * 0.04)), Vector3(0, base_y + k * 1.05 + 0.9, 0), Vector3(0, rng.randf() * 60.0, 0))
+				LowPoly.mesh_instance(_crown, LowPoly.cyl(0.0, r, 1.9, 7), Nature.wind_mat(Color("2f6b3a").lightened(k * 0.04), 0.03 + k * 0.025, 1.9, -0.95), Vector3(0, base_y + k * 1.05 + 0.9, 0), Vector3(0, rng.randf() * 60.0, 0))
 		"birch":
 			for k in 4:
 				var off := Vector3(rng.randf_range(-0.8, 0.8), trunk_h + rng.randf_range(-0.6, 1.2), rng.randf_range(-0.8, 0.8))
-				LowPoly.mesh_instance(self, LowPoly.blob(1.0, 0.25, rng.randi() % 50), LowPoly.mat(Color("7fb34a").lightened(rng.randf() * 0.1)), off, Vector3.ZERO, Vector3.ONE * rng.randf_range(0.9, 1.4))
+				LowPoly.mesh_instance(_crown, LowPoly.blob(1.0, 0.25, rng.randi() % 50), Nature.wind_mat(Color("7fb34a").lightened(snappedf(rng.randf() * 0.1, 0.02)), 0.07), off, Vector3.ZERO, Vector3.ONE * rng.randf_range(0.9, 1.4))
 		_:
-			LowPoly.mesh_instance(self, LowPoly.blob(1.9, 0.22, rng.randi() % 50), LowPoly.mat(Color("4f9a3c")), Vector3(0, trunk_h + 0.9, 0))
+			LowPoly.mesh_instance(_crown, LowPoly.blob(1.9, 0.22, rng.randi() % 50), Nature.wind_mat(Color("4f9a3c"), 0.08, 3.8, -1.9), Vector3(0, trunk_h + 0.9, 0))
 			for k in 3:
 				var off2 := Vector3(rng.randf_range(-1.3, 1.3), trunk_h + rng.randf_range(0.2, 1.6), rng.randf_range(-1.3, 1.3))
-				LowPoly.mesh_instance(self, LowPoly.blob(1.2, 0.25, rng.randi() % 50), LowPoly.mat(Color("5aab44").lightened(rng.randf() * 0.08)), off2)
+				LowPoly.mesh_instance(_crown, LowPoly.blob(1.2, 0.25, rng.randi() % 50), Nature.wind_mat(Color("5aab44").lightened(snappedf(rng.randf() * 0.08, 0.02)), 0.09, 2.4, -1.2), off2)
 	# collision: the trunk
 	var cs := CollisionShape3D.new()
 	var sh := CylinderShape3D.new()

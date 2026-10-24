@@ -3,6 +3,10 @@ extends StaticBody3D
 ## The cabin computer: a chunky desk PC that boots straight into the TimberMart store.
 
 var main: Node
+var _screen: MeshInstance3D
+var _label: Label3D
+var _off_mat: Material
+var _on_mat: Material
 
 
 func build(p_main: Node) -> void:
@@ -17,15 +21,18 @@ func build(p_main: Node) -> void:
 		LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.06, 0.76, 0.6)), wood, Vector3(sx * 0.6, 0.38, 0))
 	# monitor
 	LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.62, 0.48, 0.4)), beige, Vector3(-0.05, 1.08, -0.08))
-	LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.5, 0.36, 0.01)), LowPoly.mat(Color("1d5c3a"), 0.3, 1.2), Vector3(-0.05, 1.1, 0.125))
+	_off_mat = LowPoly.mat(Color("1a1d1c"), 0.15)
+	_on_mat = LowPoly.mat(Color("1d5c3a"), 0.3, 1.2)
+	_screen = LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.5, 0.36, 0.01)), _off_mat, Vector3(-0.05, 1.1, 0.125))
 	LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.2, 0.06, 0.2)), beige, Vector3(-0.05, 0.82, -0.05))
-	var scr := Label3D.new()
-	scr.text = "TimberMart\nclick to shop"
-	scr.font_size = 32
-	scr.pixel_size = 0.0028
-	scr.modulate = Color("c8ffd8")
-	scr.position = Vector3(-0.05, 1.1, 0.132)
-	add_child(scr)
+	_label = Label3D.new()
+	_label.text = "TimberMart"
+	_label.font_size = 32
+	_label.pixel_size = 0.0028
+	_label.modulate = Color("c8ffd8")
+	_label.position = Vector3(-0.05, 1.1, 0.132)
+	_label.visible = false
+	add_child(_label)
 	# keyboard, mouse, tower
 	LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.45, 0.03, 0.16)), beige, Vector3(-0.05, 0.805, 0.2))
 	for k in 3:
@@ -42,6 +49,12 @@ func build(p_main: Node) -> void:
 	cs.shape = sh
 	cs.position = Vector3(0, 0.7, 0)
 	add_child(cs)
+
+
+## Screen is dark and blank until someone is using the store.
+func set_on(on: bool) -> void:
+	_screen.material_override = _on_mat if on else _off_mat
+	_label.visible = on
 
 
 func hint_text() -> String:

@@ -222,11 +222,10 @@ func _rebuild_toolbar() -> void:
 			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			v.add_child(tr)
 		else:
-			var l0 := _label("✋" if id == "hands" else "", 26, Color.WHITE)
-			l0.custom_minimum_size = Vector2(44, 44)
-			l0.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			l0.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			v.add_child(l0)
+			var hand := HandIcon.new()
+			hand.custom_minimum_size = Vector2(44, 44)
+			hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			v.add_child(hand)
 		var l := _label("%d  %s" % [i + 1, Tools.TOOLS[id].name], 11, Color("ffcf6a") if sel else Color(1, 1, 1, 0.8), font_bold)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(l)
@@ -288,3 +287,29 @@ func _process(delta: float) -> void:
 		hint.text = player.look_target_text() if not start_panel.visible else ""
 	else:
 		hint.text = ""
+
+
+## A flat karate-chop hand drawn with polygons (fonts don't all have a hand glyph).
+class HandIcon extends Control:
+	func _draw() -> void:
+		var c := size * 0.5
+		var k := minf(size.x, size.y) / 44.0
+		var skin := Color("f2c9a0")
+		var line := Color("6b4428")
+		var sleeve := Color("d94a3d")
+		# palm + four fingers held together, tilted like a chop
+		var pts := PackedVector2Array([Vector2(-7, 14), Vector2(-9, -4), Vector2(-8, -16), Vector2(-4, -19),
+			Vector2(5, -19), Vector2(8, -16), Vector2(9, -2), Vector2(14, -6), Vector2(17, -4), Vector2(9, 10), Vector2(7, 14)])
+		var xf := Transform2D(deg_to_rad(-15.0), c)
+		var poly := PackedVector2Array()
+		for p in pts:
+			poly.append(xf * (p * k))
+		draw_colored_polygon(poly, skin)
+		poly.append(poly[0])
+		draw_polyline(poly, line, 1.5 * k, true)
+		for f in [-3.5, 0.0, 3.5]:
+			draw_line(xf * (Vector2(f, -19) * k), xf * (Vector2(f, -9) * k), line, 1.0 * k, true)
+		var cuff := PackedVector2Array()
+		for p in [Vector2(-8, 13), Vector2(8, 13), Vector2(8, 20), Vector2(-8, 20)]:
+			cuff.append(xf * (p * k))
+		draw_colored_polygon(cuff, sleeve)

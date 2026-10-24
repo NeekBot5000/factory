@@ -261,7 +261,7 @@ func rear_point() -> Vector3:
 # ------------------------------------------------------------------ driving
 
 func _drive(path: Array[Vector3], forward: bool, done: Callable) -> void:
-	_path = path
+	_path = path.duplicate()   # copy: the path is cleared when finished, and callers pass route_out itself
 	_path_i = 0
 	_forward = forward
 	_on_done = done

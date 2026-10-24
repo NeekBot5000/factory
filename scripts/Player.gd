@@ -46,14 +46,18 @@ var _bob := 0.0
 var _step_acc := 0.0
 var _snag := 0.0
 var _arm_base := Vector3(0.26, -0.3, -0.46)
+var _cap: CapsuleShape3D
+const STEP_H := 0.42
 
 
 func _ready() -> void:
 	collision_layer = 4
-	collision_mask = 1 | 2
+	add_to_group("player")
+	collision_mask = 1          # items don't block or shove the player; the player pushes them (see _push_items)
 	floor_max_angle = deg_to_rad(50.0)
 	var cs := CollisionShape3D.new()
 	var cap := CapsuleShape3D.new()
+	_cap = cap
 	cap.radius = 0.32
 	cap.height = 1.75
 	cs.shape = cap
@@ -290,7 +294,7 @@ func start_swing() -> void:
 func _do_impact() -> void:
 	chops += 1
 	var d := tdef()
-	var hit := look_ray(float(d.reach), 1 | 2)
+	var hit := look_ray(float(d.reach), 1 | 2 | Bush.LAYER)
 	if hit.is_empty():
 		if tool == "hands":
 			Sfx.play("whoosh", 1.2, -6.0)
@@ -313,34 +317,79 @@ func _do_impact() -> void:
 			_burst(hit.position, t.wood_color, 8)
 		if float(d.hurt) > 0.0:
 			take_damage(float(d.hurt))
+		t.shake_crown(-cam.global_transform.basis.z, 0.4 + float(d.radius))
 	elif c is RigidBody3D:
 		(c as RigidBody3D).apply_central_impulse(-cam.global_transform.basis.z * 1.5)
 		Sfx.play("drop", 1.3)
+	elif c.has_method("on_hit"):
+		c.call("on_hit", hit.position, hit.normal, tool)
+	elif c is Terrain:
+		# grass flattens where you hit (visual only) and some dirt flies
+		get_parent().call("bend_grass", hit.position, 1.0 + float(d.radius) * 3.0)
+		Nature.burst(get_parent(), hit.position, hit.normal, Color("7a5a3a"), 8, 1.8, 0.03, 9.0, 0.6)
+		Nature.burst(get_parent(), hit.position, hit.normal, Color("5f9a3a"), 6, 1.4, 0.03, 5.0, 0.8)
+		Sfx.play("thud", 1.4, -6.0)
 	else:
-		Sfx.play("thud")
-		if float(d.hurt) > 0.0:
-			take_damage(float(d.hurt) * 0.5)
+		Sfx.play("thud", 1.0, -4.0)
 	_shake = 0.06 if tool == "drill" else 0.12 + float(d.radius) * 0.3
 
 
+## Walks up steps, porch edges and small ledges instead of needing a jump.
+func _step_up(delta: float) -> void:
+	if not is_on_floor() or velocity.y > 0.1:
+		return
+	var h := Vector3(velocity.x, 0, velocity.z)
+	if h.length() < 0.3:
+		return
+	var fwd := h.normalized() * maxf(h.length() * delta, 0.08)
+	var t := global_transform
+	var wall := KinematicCollision3D.new()
+	if not test_move(t, fwd, wall) or wall.get_normal().y > 0.9:
+		return                                  # nothing in the way
+	if test_move(t, Vector3.UP * STEP_H):
+		return                                  # no head room
+	t.origin += Vector3.UP * STEP_H
+	if test_move(t, fwd):
+		return                                  # too tall: a real wall
+	t.origin += fwd
+	var col := KinematicCollision3D.new()
+	if not test_move(t, Vector3.DOWN * STEP_H, col):
+		return
+	if col.get_normal().y < 0.7:
+		return
+	t.origin += col.get_travel()
+	global_position = t.origin - fwd             # keep the forward motion for move_and_slide
+	global_position.y += 0.01
+
+
+## The player shoves loose items (bark, boxes) out of the way instead of being moved by them.
+func _push_items() -> void:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var shape := CapsuleShape3D.new()
+	shape.radius = _cap.radius + 0.08
+	shape.height = _cap.height
+	q.shape = shape
+	q.transform = Transform3D(Basis(), global_position + Vector3(0, _cap.height * 0.5, 0))
+	q.collision_mask = 2
+	var hv := Vector3(velocity.x, 0, velocity.z)
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 16):
+		var b := r.collider as RigidBody3D
+		if b == null or b == held or b.freeze:
+			continue
+		var away := b.global_position - global_position
+		away.y = 0.0
+		if away.length() < 0.01:
+			away = -global_transform.basis.z
+		away = away.normalized()
+		# match the player's speed along the push direction, plus a gentle nudge out of the capsule
+		var want := maxf(hv.dot(away), 0.0) + 0.6
+		var cur := b.linear_velocity.dot(away)
+		if cur < want:
+			b.apply_central_impulse(away * (want - cur) * b.mass * 0.5)
+
+
 func _burst(pos: Vector3, color: Color, amount: int) -> void:
-	var p := CPUParticles3D.new()
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.amount = amount
-	p.lifetime = 0.6
-	p.mesh = LowPoly.box(Vector3(0.02, 0.02, 0.02))
-	p.material_override = LowPoly.mat(color)
-	p.direction = (cam.global_position - pos).normalized()
-	p.spread = 55.0
-	p.initial_velocity_min = 0.8
-	p.initial_velocity_max = 2.2
-	p.gravity = Vector3(0, -9.0, 0)
-	p.local_coords = false
-	get_parent().add_child(p)
-	p.global_position = pos
-	p.emitting = true
-	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
+	Nature.burst(get_parent(), pos, cam.global_position - pos, color, amount, 2.2, 0.02, 9.0, 0.6)
 
 
 # ------------------------------------------------------------------ health
@@ -459,7 +508,9 @@ func _physics_process(delta: float) -> void:
 			velocity.y = JUMP
 	else:
 		velocity.y -= GRAVITY * delta
+	_step_up(delta)
 	move_and_slide()
+	_push_items()
 	var hspeed := Vector2(velocity.x, velocity.z).length()
 	if is_on_floor() and hspeed > 0.5:
 		_bob += delta * hspeed * 2.2
