@@ -83,7 +83,7 @@ func display_name() -> String:
 func hint_text() -> String:
 	if opened:
 		return ""
-	return "TimberMart box: %s    [Left click] open    [E] carry" % Tools.SHOP[item].name
+	return "[Click] open    [E] grab"
 
 
 func on_click(_player: Node) -> void:

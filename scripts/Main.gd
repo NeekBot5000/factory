@@ -106,7 +106,7 @@ func _forest() -> void:
 			# keep the road and the truck parking spot clear
 			if p.y > 1.0 and p.y < 118.0 and absf(p.x - Terrain.road_x(p.y)) < 4.6:
 				continue
-			if p.x > 2.5 and p.x < 10.0 and p.y > 3.0 and p.y < 20.0:
+			if _in_lot(p):
 				continue
 			var ok := true
 			for q in points:
@@ -126,12 +126,19 @@ func _forest() -> void:
 			trees.append(tree)
 
 
+## The truck parking spot and its turning loop.
+func _in_lot(p: Vector2) -> bool:
+	return p.x > 2.5 and p.x < 13.0 and p.y > 2.0 and p.y < 20.0
+
+
 func _decor() -> void:
 	# rocks, bushes, stumps, flowers and grass tufts
 	for i in 70:
 		var a := rng.randf() * TAU
 		var r := rng.randf_range(7.0, 80.0)
 		var p := Vector2(cos(a), sin(a)) * r
+		if _in_lot(p) or (p.y > 1.0 and p.y < 118.0 and absf(p.x - Terrain.road_x(p.y)) < 4.6):
+			continue
 		var y := terrain.height_at(p.x, p.y)
 		if i % 2 == 0:
 			var s := rng.randf_range(0.3, 0.9)
@@ -179,27 +186,48 @@ func _road_point(z: float) -> Vector3:
 	return Vector3(x, terrain.height_at(x, z), z)
 
 
-func _trucks() -> void:
-	# green log truck parked beside the cabin, bed facing the porch
-	var park := Vector3(6.0, 0.0, 8.5)
-	park.y = terrain.height_at(park.x, park.z)
-	var out: Array[Vector3] = [Vector3(6.0, terrain.height_at(6.0, 12.5), 12.5), _road_point(17.0)]
-	var z := 22.0
-	while z <= 110.0:
-		out.append(_road_point(z))
+## Points along the road from z0 to the end of the map, then over the crest and down out of sight.
+func _road_out(z0: float) -> Array[Vector3]:
+	var pts: Array[Vector3] = []
+	var z := z0
+	while z <= 108.0:
+		pts.append(_road_point(z))
 		z += 4.0
+	var rim := _road_point(110.0)
+	pts.append(rim)
+	pts.append(rim + Vector3(0, -1.5, 6.0))
+	pts.append(rim + Vector3(0, -7.0, 14.0))
+	pts.append(rim + Vector3(0, -14.0, 22.0))
+	return pts
+
+
+func _ground(x: float, z: float) -> Vector3:
+	return Vector3(x, terrain.height_at(x, z), z)
+
+
+func _trucks() -> void:
+	# green log truck parked beside the cabin, bed facing the porch, cab facing the road
+	var park := _ground(6.0, 8.5)
+	var out: Array[Vector3] = [park, _ground(6.0, 11.5), _ground(4.8, 14.5), _ground(2.0, 17.0)]
+	out.append_array(_road_out(21.0))
+	# comes back forwards and loops round the clearing into the same spot
+	var back := _road_out(20.0)
+	back.reverse()
+	back.append_array([_ground(1.5, 16.5), _ground(5.5, 15.0), _ground(9.0, 13.0), _ground(10.6, 10.2),
+		_ground(10.6, 7.4), _ground(9.6, 5.6), _ground(8.0, 5.0), _ground(6.6, 5.8), _ground(6.05, 7.2), park])
 	ship_truck = Truck.new()
 	add_child(ship_truck)
-	ship_truck.build("ship", self, Transform3D(Basis.looking_at(Vector3(0, 0, 1), Vector3.UP), park), out)
-	# orange TimberMart van: stops on the road in front of the cabin
-	var vout: Array[Vector3] = []
-	z = 15.0
-	while z <= 110.0:
-		vout.append(_road_point(z))
-		z += 4.0
+	ship_truck.build("ship", self, Transform3D(Basis.looking_at(Vector3(0, 0, 1), Vector3.UP), park), out, back)
+	# orange TimberMart van: drives in, U-turns in front of the cabin so its rear door faces the porch
+	var vin := _road_out(20.0)
+	vin.reverse()
+	vin.append_array([_ground(1.4, 15.0), _ground(1.6, 12.2), _ground(0.9, 10.2), _ground(-0.9, 9.3),
+		_ground(-2.7, 10.0), _ground(-3.3, 11.8), _ground(-3.2, 14.0)])
+	var vout: Array[Vector3] = [_ground(-3.2, 14.0), _ground(-2.8, 17.0), _ground(-1.6, 19.5)]
+	vout.append_array(_road_out(23.0))
 	van = Truck.new()
 	add_child(van)
-	van.build("deliver", self, Transform3D.IDENTITY, vout)
+	van.build("deliver", self, Transform3D.IDENTITY, vout, vin)
 
 
 func on_order_placed() -> void:

@@ -39,7 +39,7 @@ func rise_from_box(to: Vector3) -> void:
 
 
 func hint_text() -> String:
-	return "[E] take %s" % Tools.SHOP[item].name
+	return "[E] take"
 
 
 func on_use(player: Node) -> void:
@@ -51,9 +51,9 @@ func take(player: Node) -> void:
 	Sfx.play("equip")
 	if Tools.TOOLS.has(item):
 		player.call("equip", item)
-		Game.toast.emit("%s equipped - press %d to switch to it" % [Tools.SHOP[item].name, Tools.TOOL_ORDER.find(item) + 1], Color("7aff9a"))
+		Game.toast.emit("%s  [%d]" % [Tools.SHOP[item].name, Tools.TOOL_ORDER.find(item) + 1], Color("7aff9a"))
 	else:
-		Game.toast.emit("Got the TimberPhone! Press Tab to use it anywhere", Color("7aff9a"))
+		Game.toast.emit("TimberPhone  [Tab]", Color("7aff9a"))
 	queue_free()
 
 

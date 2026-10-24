@@ -50,14 +50,14 @@ func buy(id: String) -> bool:
 	if is_owned(id) or is_ordered(id):
 		return false
 	if not can_afford(float(it.price)):
-		toast.emit("Not enough money for %s" % it.name, Color("ff7a7a"))
+		toast.emit("Not enough money", Color("ff7a7a"))
 		return false
 	money -= float(it.price)
 	money_changed.emit(money)
 	orders.append({"id": next_order, "item": id, "status": "processing", "t": 0.0})
 	next_order += 1
 	orders_changed.emit()
-	toast.emit("Ordered %s - the delivery truck is on its way" % it.name, Color("8fd0ff"))
+	toast.emit("Ordered %s" % it.name, Color("8fd0ff"))
 	save_game()
 	return true
 

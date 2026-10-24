@@ -37,7 +37,7 @@ func build(rng: RandomNumberGenerator, size: float) -> void:
 
 
 func hint_text() -> String:
-	return "Bush"
+	return ""
 
 
 ## Called by the player's tools.

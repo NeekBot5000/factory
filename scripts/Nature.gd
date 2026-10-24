@@ -99,7 +99,9 @@ static func burst(parent: Node, pos: Vector3, dir: Vector3, color: Color, amount
 		size: float = 0.025, gravity: float = 9.0, lifetime: float = 0.7, spread: float = 55.0, glow: float = 0.0) -> void:
 	var b := Debris.new()
 	parent.add_child(b)
-	b.start(pos, dir, color, maxi(1, amount), speed, size, gravity, lifetime, spread, glow)
+	# snappy: fast launch, heavier gravity, short life (rising dust keeps its gentle drift)
+	var fast := 2.6 if gravity > 0.0 else 1.4
+	b.start(pos, dir, color, maxi(1, amount), speed * fast, size, gravity * fast * 1.6, lifetime / sqrt(fast), spread, glow)
 
 
 class Debris extends MultiMeshInstance3D:
@@ -151,9 +153,41 @@ class Debris extends MultiMeshInstance3D:
 	func _update(delta: float) -> void:
 		for i in _pos.size():
 			_vel[i] += Vector3(0, -_gravity, 0) * delta
-			_vel[i] *= 1.0 - minf(1.0, delta * 1.5)
+			_vel[i] *= 1.0 - minf(1.0, delta * 2.5)
 			_pos[i] += _vel[i] * delta
 			_rot[i] += _spin[i] * delta
 			var k := clampf(1.0 - (_t / _life[i] - 0.6) / 0.4, 0.0, 1.0) if _t < _life[i] else 0.0
 			var s := _size * randf_range(0.95, 1.05) * k
 			multimesh.set_instance_transform(i, Transform3D(Basis.from_euler(_rot[i]).scaled(Vector3.ONE * maxf(s, 0.0001)), _pos[i]))
+
+
+## Chimney smoke: a column of puffs that rise, drift, swell and shrink away. Real meshes, so they cast shadows.
+class Smoke extends Node3D:
+	const PUFFS := 12
+	const LIFE := 4.5
+	var _puffs: Array[MeshInstance3D] = []
+	var _seed := PackedFloat32Array()
+	var _t := 0.0
+
+	func _ready() -> void:
+		var m := LowPoly.mat(Color(0.84, 0.84, 0.87), 1.0)
+		for i in PUFFS:
+			var mi := MeshInstance3D.new()
+			mi.mesh = LowPoly.blob(0.18, 0.2, 3 + i % 4)
+			mi.material_override = m
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+			add_child(mi)
+			_puffs.append(mi)
+			_seed.append(randf() * TAU)
+
+	func _process(delta: float) -> void:
+		_t += delta
+		for i in PUFFS:
+			var age := fposmod(_t + float(i) / PUFFS * LIFE, LIFE)
+			var k := age / LIFE
+			var sd := _seed[i]
+			var wob := Vector3(sin(age * 1.3 + sd) * 0.15, 0.0, cos(age * 1.1 + sd) * 0.15)
+			_puffs[i].position = Vector3(0.35, 1.0, 0.1) * age * 0.55 + Vector3(0.12, 0.0, 0.0) * age * age * 0.2 + wob * k
+			var sc := lerpf(0.5, 2.2, sqrt(k)) * (1.0 - smoothstep(0.75, 1.0, k))
+			_puffs[i].scale = Vector3.ONE * maxf(sc, 0.001)
+			_puffs[i].rotation = Vector3(sd, age * 0.4 + sd, 0.0)

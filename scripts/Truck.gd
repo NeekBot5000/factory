@@ -9,13 +9,15 @@ extends AnimatableBody3D
 signal shipped(value: float)
 signal arrived
 
-const SPEED := 8.0
+const SPEED := 10.0
+const AWAY_TIME := 4.0
 
 var role := "ship"
 var main: Node
 var state := "parked"
 var park_xform := Transform3D.IDENTITY
-var route_out: Array[Vector3] = []     # from the parking spot out to the edge of the map
+var route_out: Array[Vector3] = []     # from the cabin, over the crest at the end of the road (out of sight)
+var route_in: Array[Vector3] = []      # from behind the crest back to the parking / unloading spot
 var wheels: Array[Node3D] = []
 var bed_area: Area3D
 var sign: Label3D
@@ -24,19 +26,20 @@ var cargo: Array[Node3D] = []
 var cargo_value := 0.0
 var engine: AudioStreamPlayer3D
 
-var _path: Array[Vector3] = []
-var _path_i := 0
-var _forward := true
+var _track := PackedVector3Array()    # smoothed, densely sampled path being driven
+var _cum := PackedFloat32Array()       # distance along _track at each sample
+var _s := 0.0
 var _wait := 0.0
 var _speed := 0.0
 var _on_done := Callable()
 
 
-func build(p_role: String, p_main: Node, park: Transform3D, out: Array[Vector3]) -> void:
+func build(p_role: String, p_main: Node, park: Transform3D, out: Array[Vector3], back: Array[Vector3]) -> void:
 	role = p_role
 	main = p_main
 	park_xform = park
 	route_out = out
+	route_in = back
 	sync_to_physics = true
 	collision_layer = 1
 	collision_mask = 0
@@ -54,7 +57,7 @@ func build(p_role: String, p_main: Node, park: Transform3D, out: Array[Vector3])
 	if role == "ship":
 		global_transform = park
 	else:
-		global_transform = Transform3D(Basis.IDENTITY, route_out[route_out.size() - 1] + Vector3(0, -50, 0))
+		global_transform = Transform3D(Basis.IDENTITY, route_in[0])
 		visible = false
 		state = "away"
 
@@ -125,20 +128,12 @@ func _flatbed() -> void:
 	add_child(bed_area)
 	sign = Label3D.new()
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sign.font_size = 64
-	sign.pixel_size = 0.006
+	sign.font_size = 48
+	sign.pixel_size = 0.005
 	sign.outline_size = 12
-	sign.position = Vector3(0, 3.0, -1.2)
+	sign.position = Vector3(0, 2.7, 1.0)
 	sign.modulate = Color("ffe28a")
 	add_child(sign)
-	var logo := Label3D.new()
-	logo.text = "PINEWOOD\nTIMBER CO."
-	logo.font_size = 48
-	logo.pixel_size = 0.004
-	logo.position = Vector3(1.07, 1.65, -2.1)
-	logo.rotation_degrees.y = 90
-	logo.modulate = Color("f5f0e0")
-	add_child(logo)
 
 
 func _van() -> void:
@@ -146,16 +141,6 @@ func _van() -> void:
 	LowPoly.mesh_instance(self, LowPoly.box(Vector3(2.3, 2.3, 4.3)), box_col, Vector3(0, 2.05, 0.95))
 	LowPoly.mesh_instance(self, LowPoly.box(Vector3(2.32, 0.25, 4.32)), LowPoly.mat(Color("e8792b"), 0.5), Vector3(0, 1.0, 0.95))
 	_col(Vector3(2.3, 2.3, 4.3), Vector3(0, 2.05, 0.95))
-	for s in [-1, 1]:
-		var logo := Label3D.new()
-		logo.text = "TimberMart\nDelivery"
-		logo.font_size = 72
-		logo.pixel_size = 0.006
-		logo.modulate = Color("e8792b")
-		logo.outline_size = 0
-		logo.position = Vector3(s * 1.16, 2.2, 0.9)
-		logo.rotation_degrees.y = 90 * s
-		add_child(logo)
 	rear_door = Node3D.new()
 	rear_door.position = Vector3(0, 3.15, 3.12)
 	add_child(rear_door)
@@ -177,16 +162,10 @@ func load_value() -> float:
 
 
 func hint_text() -> String:
-	if role == "deliver":
-		return "TimberMart delivery van"
-	match state:
-		"parked":
-			var v := load_value()
-			if v <= 0.0:
-				return "Log truck - throw or drop bark into the bed, then [E] to ship it"
-			return "Log truck - load worth $%.2f    [E] ship it to town" % v
-		_:
-			return "The log truck is on its way to town"
+	if role == "ship" and state == "parked":
+		var v := load_value()
+		if v > 0.0:
+			return "[E] ship  $%.2f" % v
 	return ""
 
 
@@ -200,7 +179,6 @@ func ship() -> bool:
 		return false
 	var v := load_value()
 	if v <= 0.0:
-		Game.toast.emit("The truck bed is empty - load some bark first", Color("ffd27a"))
 		return false
 	cargo.clear()
 	cargo_value = v
@@ -215,9 +193,12 @@ func ship() -> bool:
 			cargo.append(c)
 	Sfx.play("horn")
 	state = "leaving"
-	_drive(route_out, true, func():
+	sign.visible = false
+	_drive(route_out, func():
 		state = "away"
-		_wait = 6.0)
+		visible = false
+		engine.stop()
+		_wait = AWAY_TIME)
 	return true
 
 
@@ -227,12 +208,9 @@ func deliver() -> void:
 	if role != "deliver" or state != "away":
 		return
 	visible = true
-	var back: Array[Vector3] = route_out.duplicate()
-	back.reverse()
-	# backs up to the cabin so the rear door faces the porch, then drives off forwards
-	global_transform = Transform3D(Basis(Vector3.UP, PI), back[0])
 	state = "arriving"
-	_drive(back, false, func():
+	# drives in forwards and U-turns in the clearing so the rear door ends up facing the cabin
+	_drive(route_in, func():
 		state = "unloading"
 		_unload())
 
@@ -247,9 +225,10 @@ func _unload() -> void:
 	tw.tween_property(rear_door, "rotation_degrees:x", 0.0, 0.6)
 	tw.tween_callback(func():
 		state = "leaving"
-		_drive(route_out, true, func():
+		_drive(route_out, func():
 			state = "away"
 			visible = false
+			engine.stop()
 			arrived.emit()))
 
 
@@ -260,20 +239,74 @@ func rear_point() -> Vector3:
 
 # ------------------------------------------------------------------ driving
 
-func _drive(path: Array[Vector3], forward: bool, done: Callable) -> void:
-	_path = path.duplicate()   # copy: the path is cleared when finished, and callers pass route_out itself
-	_path_i = 0
-	_forward = forward
+## Smooths the waypoints into a dense Catmull-Rom curve and starts driving along it (always forwards).
+func _drive(path: Array[Vector3], done: Callable) -> void:
+	_track = _smooth(path)
+	_cum = PackedFloat32Array()
+	_cum.resize(_track.size())
+	var total := 0.0
+	for i in _track.size():
+		if i > 0:
+			total += _track[i].distance_to(_track[i - 1])
+		_cum[i] = total
+	_s = 0.0
 	_on_done = done
 	_speed = 0.0
+	global_transform = _pose(0.0)
 	if not engine.playing:
 		engine.play()
 
 
+static func _smooth(pts: Array[Vector3]) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var n := pts.size()
+	for i in n - 1:
+		var p0: Vector3 = pts[maxi(i - 1, 0)]
+		var p1: Vector3 = pts[i]
+		var p2: Vector3 = pts[i + 1]
+		var p3: Vector3 = pts[mini(i + 2, n - 1)]
+		var steps := maxi(2, int(p1.distance_to(p2) / 0.5))
+		for k in steps:
+			var t := float(k) / steps
+			var t2 := t * t
+			var t3 := t2 * t
+			out.append(0.5 * ((2.0 * p1) + (-p0 + p2) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3))
+	out.append(pts[n - 1])
+	return out
+
+
+func _sample(s: float) -> Vector3:
+	var total := _cum[_cum.size() - 1]
+	s = clampf(s, 0.0, total)
+	var lo := 0
+	var hi := _cum.size() - 1
+	while hi - lo > 1:
+		var mid := (lo + hi) >> 1
+		if _cum[mid] <= s:
+			lo = mid
+		else:
+			hi = mid
+	var seg := maxf(_cum[hi] - _cum[lo], 0.0001)
+	return _track[lo].lerp(_track[hi], (s - _cum[lo]) / seg)
+
+
+## Position at distance s, facing along the curve (looking a little ahead and behind smooths the steering).
+func _pose(s: float) -> Transform3D:
+	var p := _sample(s)
+	var ahead := _sample(s + 2.5)
+	var behind := _sample(s - 2.5)
+	var dir := ahead - behind
+	if dir.length() < 0.01:
+		return Transform3D(global_basis, p)
+	return Transform3D(Basis.looking_at(dir.normalized(), Vector3.UP), p)
+
+
 func _physics_process(delta: float) -> void:
-	if role == "ship" and state == "parked" and sign != null:
-		var v := load_value()
-		sign.text = "LOAD  $%.2f\n[E] SHIP" % v if v > 0.0 else "LOAD BARK HERE"
+	if role == "ship" and sign != null:
+		var v := load_value() if state == "parked" else 0.0
+		sign.visible = state == "parked" and v > 0.0
+		if sign.visible:
+			sign.text = "$%.2f" % v
 	if role == "ship" and state == "away":
 		_wait -= delta
 		if _wait <= 0.0:
@@ -282,48 +315,35 @@ func _physics_process(delta: float) -> void:
 					c.queue_free()
 			cargo.clear()
 			Game.add_money(cargo_value)
-			Game.toast.emit("Sold a truckload of bark for $%.2f" % cargo_value, Color("7aff9a"))
+			Game.toast.emit("+$%.2f" % cargo_value, Color("7aff9a"))
 			Sfx.play("buy")
 			shipped.emit(cargo_value)
 			state = "returning"
-			var back: Array[Vector3] = route_out.duplicate()
-			back.reverse()
-			_drive(back, false, func():
+			visible = true
+			_drive(route_in, func():
 				state = "parked"
 				global_transform = park_xform
 				engine.stop())
-	if _path.is_empty():
+	if _track.is_empty():
 		return
-	if _path_i >= _path.size():
-		_path.clear()
+	var total := _cum[_cum.size() - 1]
+	var remaining := total - _s
+	var want := minf(SPEED, maxf(1.2, remaining * 0.9))
+	if _s < 6.0:
+		want = minf(want, 2.0 + _s * 1.2)       # pull away gently
+	_speed = move_toward(_speed, want, delta * 4.0)
+	_s += _speed * delta
+	if _s >= total:
+		global_transform = _pose(total)
+		_track = PackedVector3Array()
 		var cb := _on_done
 		_on_done = Callable()
-		if role == "deliver" and state == "leaving":
-			engine.stop()
 		if cb.is_valid():
 			cb.call()
 		return
-	var target: Vector3 = _path[_path_i]
-	var pos := global_position
-	var to := target - pos
-	var dist := Vector2(to.x, to.z).length()
-	var remaining := dist
-	for k in range(_path_i, _path.size() - 1):
-		remaining += _path[k].distance_to(_path[k + 1])
-	var want := minf(SPEED, maxf(1.5, remaining * 1.2))
-	_speed = move_toward(_speed, want, delta * 5.0)
-	var step := _speed * delta
-	if dist <= step or dist < 0.05:
-		global_position = target
-		_path_i += 1
-	else:
-		var dir := Vector3(to.x, 0, to.z).normalized()
-		var face := dir if _forward else -dir
-		var b := Basis.looking_at(face, Vector3.UP)
-		var q := global_basis.get_rotation_quaternion().slerp(b.get_rotation_quaternion(), minf(1.0, delta * 4.0))
-		var np := pos + dir * step
-		np.y = lerpf(pos.y, target.y, step / maxf(dist, 0.001))
-		global_transform = Transform3D(Basis(q), np)
+	var target := _pose(_s)
+	var q := global_basis.get_rotation_quaternion().slerp(target.basis.get_rotation_quaternion(), minf(1.0, delta * 6.0))
+	global_transform = Transform3D(Basis(q), target.origin)
 	for w in wheels:
-		w.rotation.x -= _speed * delta / 0.48 * (1.0 if _forward else -1.0)
+		w.rotation.x -= _speed * delta / 0.48
 	engine.pitch_scale = 0.7 + _speed / SPEED * 0.5

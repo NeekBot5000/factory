@@ -107,12 +107,19 @@ func _physics_process(delta: float) -> void:
 				var target: Vector3 = player.cam.global_transform * Player.HOLD_OFFSET
 				check(chip.global_position.distance_to(target) < 0.4, "held chip follows the hands (%.2f)" % chip.global_position.distance_to(target))
 				player.primary()
-				check(player.held == null, "left click throws it")
+				check(player.held == chip, "left click no longer throws")
+				step = 65
+				t = 0.0
+		65:
+			player.set("_yaw", player.get("_yaw") + delta * 14.0)   # whip round...
+			if t > 0.35:
+				player.interact()                                    # ...and let go
+				check(player.held == null, "E drops it")
 				step = 7
 				t = 0.0
 		7:
 			if t > 0.8:
-				check(chip.global_position.distance_to(player.global_position) > 2.0, "thrown chip flew away")
+				check(chip.global_position.distance_to(player.global_position) > 2.0, "dropped while spinning, it keeps its momentum and flies off (%.1f m)" % chip.global_position.distance_to(player.global_position))
 				player.health = 3.0
 				_face_tree()
 				player.set("_pitch", deg_to_rad(0.0))

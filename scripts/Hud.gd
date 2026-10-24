@@ -186,10 +186,7 @@ func _build_start() -> void:
 	var t := _label("TIMBER", 52, Color("ffcf6a"), font_title)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	var s := _label("Strip bark off the trees, carry it to the log truck by the cabin and ship it for cash.\nBuy better tools on the cabin computer - the delivery van brings them in boxes.", 16, Color(1, 1, 1, 0.85))
-	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(s)
-	var c := _label("WASD move    Mouse look    Shift sprint    Space jump\nLeft click  chop / open boxes / throw    E  use / pick up / drop\n1-5 or mouse wheel  switch tools    Tab  phone    Esc  release mouse", 15, Color("8fd0ff"))
+	var c := _label("WASD  Shift  Space    Click  E    1-5    Tab", 14, Color(1, 1, 1, 0.55))
 	c.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(c)
 	var go := _label("Click to play", 22, Color.WHITE, font_title)

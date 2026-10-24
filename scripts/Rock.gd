@@ -18,7 +18,7 @@ func build(rng: RandomNumberGenerator, s: float) -> void:
 
 
 func hint_text() -> String:
-	return "Rock"
+	return ""
 
 
 func on_hit(pos: Vector3, normal: Vector3, tool: String) -> void:

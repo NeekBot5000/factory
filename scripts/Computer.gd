@@ -58,7 +58,7 @@ func set_on(on: bool) -> void:
 
 
 func hint_text() -> String:
-	return "Computer - TimberMart    [E] use"
+	return "[E] use"
 
 
 func on_use(_player: Node) -> void:

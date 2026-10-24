@@ -159,18 +159,7 @@ func _chimney(top: float) -> void:
 	for k in int(h / 0.4):
 		LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.8, 0.4, 1.0)), stone if k % 2 == 0 else stone2, Vector3(x, 0.2 + k * 0.4, -0.8), Vector3(0, (k % 3) * 2.0, 0))
 	_box_col(Vector3(0.8, h, 1.0), Vector3(x, h * 0.5, -0.8))
-	var smoke := CPUParticles3D.new()
-	smoke.amount = 10
-	smoke.lifetime = 4.0
-	smoke.mesh = LowPoly.blob(0.18, 0.2, 3)
-	smoke.material_override = LowPoly.mat(Color(0.82, 0.82, 0.85))
-	smoke.direction = Vector3(0.3, 1, 0)
-	smoke.spread = 12.0
-	smoke.gravity = Vector3(0.2, 0.3, 0)
-	smoke.initial_velocity_min = 0.4
-	smoke.initial_velocity_max = 0.7
-	smoke.scale_amount_min = 0.6
-	smoke.scale_amount_max = 1.8
+	var smoke := Nature.Smoke.new()
 	smoke.position = Vector3(x, h + 0.2, -0.8)
 	add_child(smoke)
 

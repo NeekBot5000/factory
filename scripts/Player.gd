@@ -47,6 +47,7 @@ var _step_acc := 0.0
 var _snag := 0.0
 var _arm_base := Vector3(0.26, -0.3, -0.46)
 var _cap: CapsuleShape3D
+var _mouse_avg := 10.0
 const STEP_H := 0.42
 
 
@@ -158,6 +159,11 @@ func cycle_tool(step: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and controls_enabled:
 		var m := event as InputEventMouseMotion
+		# Browsers sometimes report one bogus giant jump while the pointer is locked; drop those spikes.
+		var len := m.relative.length()
+		if len > 120.0 and len > _mouse_avg * 8.0:
+			return
+		_mouse_avg = lerpf(_mouse_avg, len, 0.2)
 		_yaw -= m.relative.x * mouse_sens
 		_pitch = clampf(_pitch - m.relative.y * mouse_sens, deg_to_rad(-88.0), deg_to_rad(88.0))
 	elif event is InputEventMouseButton and event.pressed:
@@ -186,7 +192,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if Game.has_phone:
 				get_parent().call("open_phone")
 			else:
-				Game.toast.emit("You don't have a phone yet - buy a TimberPhone on the cabin computer", Color("ffd27a"))
+				Game.toast.emit("No phone", Color("ffd27a"))
 		elif k >= KEY_1 and k <= KEY_5:
 			var id: String = Tools.TOOL_ORDER[k - KEY_1]
 			if Game.is_owned(id):
@@ -198,7 +204,6 @@ func primary() -> void:
 	if not controls_enabled:
 		return
 	if held != null:
-		throw_held()
 		return
 	var hit := look_ray(float(tdef().reach), 1 | 2)
 	if not hit.is_empty() and hit.collider.has_method("on_click"):
@@ -237,30 +242,15 @@ func look_ray(length: float, mask: int) -> Dictionary:
 
 func look_target_text() -> String:
 	if held != null:
-		var n: String = held.call("display_name") if held.has_method("display_name") else "it"
-		return "Holding %s    [E] drop    [Left click] throw" % n
+		return "[E] drop"
 	var hit := look_ray(GRAB_REACH, 1 | 2)
 	if hit.is_empty():
 		return ""
 	var c: Object = hit.collider
 	if c.has_method("hint_text"):
 		return String(c.call("hint_text"))
-	if c is ForestTree:
-		if cam.global_position.distance_to(hit.position) > float(tdef().reach):
-			return ""
-		var t := c as ForestTree
-		var pj := t.panel_at(hit.position)
-		var what := "bare wood"
-		if pj.x >= 0:
-			if t.has_panel(ForestTree.OUTER, pj.x, pj.y):
-				what = "bark"
-			elif t.has_panel(ForestTree.INNER, pj.x, pj.y):
-				what = "inner bark"
-		var verb := "karate chop (it hurts!)" if tool == "hands" else ("hold to drill" if bool(tdef().get("hold", false)) else "swing")
-		return "%s tree  -  %s    [Left click] %s" % [t.kind.capitalize(), what, verb]
 	if c is Node and (c as Node).is_in_group("grabbable"):
-		var n2: String = c.call("display_name") if c.has_method("display_name") else "item"
-		return "[E] pick up %s" % n2
+		return "[E] grab"
 	return ""
 
 
@@ -444,19 +434,9 @@ func drop_held() -> void:
 		return
 	if is_instance_valid(held):
 		remove_collision_exception_with(held)
-		held.linear_velocity = velocity * 0.5
+		# it keeps whatever momentum it had in your hands: spin round fast and let go to fling it
 	held = null
 	Sfx.play("drop", 0.9, -6.0)
-
-
-func throw_held() -> void:
-	if held == null:
-		return
-	var b := held
-	drop_held()
-	b.linear_velocity = -cam.global_transform.basis.z * 7.0 + velocity
-	b.angular_velocity = Vector3(randf_range(-6, 6), randf_range(-6, 6), randf_range(-6, 6))
-	Sfx.play("whoosh", 0.9)
 
 
 func _update_held(delta: float) -> void:
@@ -474,7 +454,7 @@ func _update_held(delta: float) -> void:
 			return
 	else:
 		_snag = 0.0
-	held.linear_velocity = (d * 16.0).limit_length(20.0)
+	held.linear_velocity = (d * 16.0).limit_length(28.0)
 	held.angular_velocity = held.angular_velocity.lerp(Vector3.ZERO, minf(1.0, delta * 10.0))
 	var want := Basis(Vector3.UP, _yaw)
 	var q := held.global_basis.get_rotation_quaternion().slerp(want.get_rotation_quaternion(), minf(1.0, delta * 6.0))
