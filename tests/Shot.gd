@@ -77,6 +77,7 @@ func _process(delta: float) -> void:
 
 
 func _snap(name: String) -> void:
+	print("DRAWCALLS ", RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME), " objects ", RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME), " fps ", Engine.get_frames_per_second())
 	var img := get_viewport().get_texture().get_image()
 	var path := ProjectSettings.globalize_path("%s/%s.png" % [out_dir, name])
 	img.save_png(path)

@@ -59,9 +59,8 @@ func _make_plot(p: Vector2i) -> void:
 	root.add_child(g)
 	_grid_nodes.append(g)
 	# decorations while locked
-	var deco := Node3D.new()
-	root.add_child(deco)
-	_scatter(deco, biome, p)
+	var specs: Array = []
+	_scatter(specs, biome, p)
 	var lbl := Label3D.new()
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = true
@@ -72,10 +71,10 @@ func _make_plot(p: Vector2i) -> void:
 	lbl.position = Vector3(0, 2.6, 0)
 	lbl.render_priority = 3
 	root.add_child(lbl)
-	_plots[p] = {"root": root, "top": top, "dirt": dirt, "deco": deco, "label": lbl, "grid": g, "top_c": top_c, "side_c": bd.side}
+	_plots[p] = {"root": root, "top": top, "dirt": dirt, "specs": specs, "deco_handles": [], "label": lbl, "grid": g, "top_c": top_c, "side_c": bd.side}
 
 
-func _scatter(deco: Node3D, biome: String, p: Vector2i) -> void:
+func _scatter(deco: Array, biome: String, p: Vector2i) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(p)
 	var n := 9
@@ -88,7 +87,7 @@ func _scatter(deco: Node3D, biome: String, p: Vector2i) -> void:
 				var h := rng.randf_range(0.9, 1.5) * (1.4 if biome == "jungle" else 1.0)
 				_add(deco, Meshes.cyl_mesh(0.1, 0.13, h * 0.5, 5), Meshes.mat(Color("7a5230")), pos + Vector3(0, h * 0.25, 0))
 				var leaf: Color = Color("3f9e3b") if biome == "meadow" else Color("1f7a3a")
-				_add(deco, Meshes.cyl_mesh(0.0, 0.6, h, 6), Meshes.mat(leaf.lightened(rng.randf() * 0.12)), pos + Vector3(0, h * 0.5 + h * 0.4, 0))
+				_add(deco, Meshes.cyl_mesh(0.0, 0.6, h, 6), Meshes.mat(leaf.lightened(rng.randi_range(0, 2) * 0.05)), pos + Vector3(0, h * 0.5 + h * 0.4, 0))
 			"snow":
 				var h2 := rng.randf_range(1.0, 1.7)
 				_add(deco, Meshes.cyl_mesh(0.08, 0.1, 0.4, 5), Meshes.mat(Color("6b5640")), pos + Vector3(0, 0.2, 0))
@@ -99,17 +98,26 @@ func _scatter(deco: Node3D, biome: String, p: Vector2i) -> void:
 				_add(deco, Meshes.box_mesh(Vector3(0.4, 0.14, 0.14)), Meshes.mat(Color("3f9a52")), pos + Vector3(0.2, h3 * 0.6, 0))
 			"volcano":
 				var h4 := rng.randf_range(0.5, 1.4)
-				_add(deco, Meshes.cyl_mesh(0.0, 0.45, h4, 5), Meshes.mat(Color("2a2330").lightened(rng.randf() * 0.08)), pos + Vector3(0, h4 * 0.5, 0))
+				_add(deco, Meshes.cyl_mesh(0.0, 0.45, h4, 5), Meshes.mat(Color("2a2330").lightened(rng.randi_range(0, 2) * 0.04)), pos + Vector3(0, h4 * 0.5, 0))
 				if rng.randf() < 0.4:
 					_add(deco, Meshes.cyl_mesh(0.12, 0.12, 0.05, 6), Meshes.mat(Color("ff6a2a"), 2.0), pos + Vector3(0.5, 0.03, 0.2))
 
 
-func _add(parent: Node3D, mesh: Mesh, m: Material, pos: Vector3) -> void:
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.material_override = m
-	mi.position = pos
-	parent.add_child(mi)
+func _add(specs: Array, mesh: Mesh, m: Material, pos: Vector3) -> void:
+	specs.append([mesh, m, pos])
+
+
+func _set_deco(e: Dictionary, on: bool) -> void:
+	var handles: Array = e.deco_handles
+	var batcher: Batcher = Game.world.batcher
+	if on and handles.is_empty():
+		var root: Node3D = e.root
+		for sp in e.specs:
+			handles.append(batcher.add(sp[0], sp[1], Transform3D(Basis.IDENTITY, root.position + (sp[2] as Vector3))))
+	elif not on and not handles.is_empty():
+		for h in handles:
+			batcher.remove(h)
+		handles.clear()
 
 
 func _make_underside() -> void:
@@ -139,8 +147,7 @@ func refresh() -> void:
 	for p in _plots:
 		var e: Dictionary = _plots[p]
 		var owned := Game.plots.has(p)
-		var deco: Node3D = e.deco
-		deco.visible = not owned
+		_set_deco(e, not owned)
 		var top_m: MeshInstance3D = e.top
 		var dirt_m: MeshInstance3D = e.dirt
 		var lbl: Label3D = e.label

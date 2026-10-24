@@ -11,10 +11,10 @@ var paid := 0.0
 var ghost := false
 var body: StaticBody3D
 var area: Area3D
-var spin: Node3D
 var drop_accum := 0.0
 var uid := 0
 var sold := 0
+var _handles: Array = []
 
 
 func setup(p_world: Node, p_type: String, p_cell: Vector3i, p_rot: int, p_ghost: bool = false) -> void:
@@ -40,7 +40,19 @@ func setup(p_world: Node, p_type: String, p_cell: Vector3i, p_rot: int, p_ghost:
 func set_rot(r: int) -> void:
 	rot = posmod(r, 4)
 	rotation_degrees.y = -90.0 * rot
+	for h in _handles:
+		world.batcher.move(h, _xf())
 	apply_speed()
+
+
+func _xf() -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, deg_to_rad(-90.0 * rot)), position)
+
+
+func release_visuals() -> void:
+	for h in _handles:
+		world.batcher.remove(h)
+	_handles.clear()
 
 
 func dir_vec() -> Vector3:
@@ -89,14 +101,20 @@ func set_overlay(m: Material) -> void:
 
 # ------------------------------------------------------------ builders
 
-func _box(size: Vector3, pos: Vector3, m: Material, rot_deg: Vector3 = Vector3.ZERO) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	mi.mesh = Meshes.box_mesh(size)
-	mi.material_override = m
-	mi.position = pos
-	mi.rotation_degrees = rot_deg
-	add_child(mi)
-	return mi
+func _vis(mesh: Mesh, m: Material, pos: Vector3, rot_deg: Vector3 = Vector3.ZERO) -> void:
+	var local := Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))), pos)
+	if ghost:
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.material_override = m
+		mi.transform = local
+		add_child(mi)
+	else:
+		_handles.append(world.batcher.add(mesh, m, _xf() * local, local))
+
+
+func _box(size: Vector3, pos: Vector3, m: Material, rot_deg: Vector3 = Vector3.ZERO) -> void:
+	_vis(Meshes.box_mesh(size), m, pos, rot_deg)
 
 
 func _make_body() -> StaticBody3D:
@@ -153,10 +171,7 @@ func _build_belt() -> void:
 
 
 func _build_ramp() -> void:
-	var m := MeshInstance3D.new()
-	m.mesh = Meshes.wedge(0.96, 1.0, 0.917)
-	m.material_override = Meshes.mat(Color("2a2f3d"))
-	add_child(m)
+	_vis(Meshes.wedge_mesh(), Meshes.mat(Color("2a2f3d")), Vector3.ZERO)
 	var n := Vector3(0, 0.7071, 0.7071)
 	var top_center := Vector3(0, 0.7, 0)
 	var rx := Vector3(45, 0, 0)
@@ -201,28 +216,10 @@ func _build_dropper() -> void:
 	for sx in [-1, 1]:
 		for sz in [-1, 1]:
 			_box(Vector3(0.07, 0.35, 0.07), Vector3(0.41 * sx, 0.175, 0.41 * sz), post_m)
-	var funnel := MeshInstance3D.new()
-	funnel.mesh = Meshes.cyl_mesh(0.46, 0.13, 0.5, 8)
-	funnel.material_override = body_m
-	funnel.position = Vector3(0, 0.75, 0)
-	add_child(funnel)
-	var band := MeshInstance3D.new()
-	band.mesh = Meshes.cyl_mesh(0.47, 0.47, 0.1, 8)
-	band.material_override = Meshes.mat(c, 0.25, 0.5)
-	band.position = Vector3(0, 0.93, 0)
-	add_child(band)
-	var neck := MeshInstance3D.new()
-	neck.mesh = Meshes.cyl_mesh(0.13, 0.13, 0.12, 8)
-	neck.material_override = Meshes.mat(c.darkened(0.2), 0.2, 0.5)
-	neck.position = Vector3(0, 0.41, 0)
-	add_child(neck)
-	var gem := MeshInstance3D.new()
-	gem.mesh = Meshes.item_mesh(def.res)
-	gem.material_override = Meshes.item_mat(def.res, 1)
-	gem.position = Vector3(0, 1.1, 0)
-	gem.scale = Vector3.ONE * 1.2
-	add_child(gem)
-	spin = gem
+	_vis(Meshes.cyl_mesh(0.46, 0.13, 0.5, 8), body_m, Vector3(0, 0.75, 0))
+	_vis(Meshes.cyl_mesh(0.47, 0.47, 0.1, 8), Meshes.mat(c, 0.25, 0.5), Vector3(0, 0.93, 0))
+	_vis(Meshes.cyl_mesh(0.13, 0.13, 0.12, 8), Meshes.mat(c.darkened(0.2), 0.2, 0.5), Vector3(0, 0.41, 0))
+	_vis(Meshes.item_mesh(def.res), Meshes.spin_mat(c), Vector3(0, 1.12, 0))
 	if not ghost:
 		body = _make_body()
 		_add_shape(body, Vector3(0.84, 0.65, 0.84), Vector3(0, 0.675, 0))
@@ -236,17 +233,7 @@ func _build_seller() -> void:
 	_box(Vector3(0.08, 0.5, 0.08), Vector3(-0.42, 0.45, 0.42), Meshes.mat(tint.darkened(0.3)))
 	_box(Vector3(0.08, 0.5, 0.08), Vector3(0.42, 0.45, -0.42), Meshes.mat(tint.darkened(0.3)))
 	_box(Vector3(0.08, 0.5, 0.08), Vector3(-0.42, 0.45, -0.42), Meshes.mat(tint.darkened(0.3)))
-	var coin := MeshInstance3D.new()
-	coin.mesh = Meshes.cyl_mesh(0.2, 0.2, 0.05, 8)
-	coin.material_override = Meshes.mat(Color("ffd23f"), 0.5, 0.3)
-	coin.position = Vector3(0, 0.62, 0)
-	var holder := Node3D.new()
-	holder.position = Vector3(0, 0.62, 0)
-	coin.position = Vector3.ZERO
-	coin.rotation_degrees.x = 90
-	holder.add_child(coin)
-	add_child(holder)
-	spin = holder
+	_vis(Meshes.coin_mesh(), Meshes.spin_mat(Color("ffd23f")), Vector3(0, 0.62, 0))
 	if not ghost:
 		body = _make_body()
 		_add_shape(body, Vector3(0.96, 0.2, 0.96), Vector3(0, 0.1, 0))

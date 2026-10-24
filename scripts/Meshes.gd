@@ -211,6 +211,69 @@ static func wedge(w: float, depth: float, height: float) -> ArrayMesh:
 	return poly(verts, faces)
 
 
+static func coin_mesh() -> ArrayMesh:
+	if _mesh_cache.has("coin"):
+		return _mesh_cache["coin"]
+	var verts := PackedVector3Array()
+	var r := 0.2
+	var t := 0.03
+	for i in 8:
+		var a := i / 8.0 * TAU + TAU / 16.0
+		verts.append(Vector3(cos(a) * r, sin(a) * r, t))
+	for i in 8:
+		var a := i / 8.0 * TAU + TAU / 16.0
+		verts.append(Vector3(cos(a) * r, sin(a) * r, -t))
+	var faces := [[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]]
+	for i in 8:
+		var j := (i + 1) % 8
+		faces.append([i, j, j + 8, i + 8])
+	var m := poly(verts, faces)
+	_mesh_cache["coin"] = m
+	return m
+
+
+static func wedge_mesh() -> ArrayMesh:
+	if _mesh_cache.has("wedge"):
+		return _mesh_cache["wedge"]
+	var m := wedge(0.96, 1.0, 0.917)
+	_mesh_cache["wedge"] = m
+	return m
+
+
+const SPIN_SHADER := """
+shader_type spatial;
+uniform vec3 col : source_color = vec3(1.0, 0.8, 0.2);
+varying float ang;
+void vertex() {
+	float a = TIME * 2.2;
+	float c = cos(a);
+	float s = sin(a);
+	// spin around the world-up axis of the part (model Y), regardless of the mesh's own rotation
+	vec3 v = VERTEX;
+	VERTEX = vec3(c * v.x + s * v.z, v.y, -s * v.x + c * v.z);
+	NORMAL = vec3(c * NORMAL.x + s * NORMAL.z, NORMAL.y, -s * NORMAL.x + c * NORMAL.z);
+}
+void fragment() {
+	ALBEDO = col;
+	EMISSION = col * 0.45;
+	ROUGHNESS = 0.35;
+}
+"""
+
+
+static func spin_mat(color: Color) -> ShaderMaterial:
+	var key := "spin_" + color.to_html(false)
+	if _mat_cache.has(key):
+		return _mat_cache[key]
+	var sh := Shader.new()
+	sh.code = SPIN_SHADER
+	var m := ShaderMaterial.new()
+	m.shader = sh
+	m.set_shader_parameter("col", color)
+	_mat_cache[key] = m
+	return m
+
+
 static func item_mesh(kind: String) -> Mesh:
 	var key := "item_" + kind
 	if _mesh_cache.has(key):

@@ -6,9 +6,9 @@ const ITEM_LIFETIME := 150.0
 var cells := {}
 var parts: Array[Part] = []
 var droppers: Array[Part] = []
-var spinners: Array[Part] = []
 
 var terrain: Terrain
+var batcher: Batcher
 var rig: CameraRig
 var builder: Builder
 var hud: Hud
@@ -26,6 +26,9 @@ var _sun: DirectionalLight3D
 func _ready() -> void:
 	Game.world = self
 	_setup_env()
+	batcher = Batcher.new()
+	batcher.name = "Batcher"
+	add_child(batcher)
 	terrain = Terrain.new()
 	add_child(terrain)
 	terrain.build()
@@ -124,9 +127,6 @@ func _on_upgrades_changed() -> void:
 
 
 func _process(delta: float) -> void:
-	for p in spinners:
-		if p.spin:
-			p.spin.rotation.y += delta * 2.2
 	for c in _clouds:
 		c.position.x += delta * 0.6
 		if c.position.x > 160.0:
@@ -174,13 +174,7 @@ func place(type_id: String, c: Vector3i, rot: int, charge: bool = true, paid: fl
 	parts.append(p)
 	match String(p.def.kind):
 		"dropper": droppers.append(p)
-	if p.spin:
-		spinners.append(p)
 	Game.on_part_added(type_id)
-	if charge:
-		p.scale = Vector3.ONE * 0.5
-		var tw := p.create_tween()
-		tw.tween_property(p, "scale", Vector3.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	return p
 
 
@@ -190,7 +184,7 @@ func remove(p: Part, refund: bool = true) -> void:
 	cells.erase(p.cell)
 	parts.erase(p)
 	droppers.erase(p)
-	spinners.erase(p)
+	p.release_visuals()
 	if refund:
 		Game.add_bonus(p.paid)
 	Game.on_part_removed(p.type_id)
