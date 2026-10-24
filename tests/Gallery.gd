@@ -8,6 +8,7 @@ var views: Array = []
 
 func _ready() -> void:
 	Game.save_enabled = false
+	Game.fresh_start = false
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://tests/shots"))
 	world = load("res://scripts/World.gd").new()
 	add_child(world)

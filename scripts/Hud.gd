@@ -1090,7 +1090,7 @@ func _p_menu() -> void:
 	modal_body.add_child(_button("Save game now", func():
 		Game.save_game()
 		show_toast("Game saved", C_GOOD), 260))
-	for e in [["shadows", "Shadows"], ["show_fps", "Show FPS"]]:
+	for e in [["shadows", "Shadows"], ["show_fps", "Show FPS"], ["day_night", "Day / night cycle"]]:
 		var key: String = e[0]
 		var cb := CheckButton.new()
 		cb.text = String(e[1])

@@ -11,6 +11,7 @@ var shots: Array = []
 
 func _ready() -> void:
 	Game.save_enabled = false
+	Game.fresh_start = false
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
 	world = load("res://scripts/World.gd").new()
 	add_child(world)
@@ -49,6 +50,11 @@ func _ready() -> void:
 			world.hud._set_cat("machines")
 			world.builder.select_part("press")
 			_cam(Vector3(2, 0.4, 3), 9.0, 30.0, 40.0)],
+		[23.5, "10_dusk", func():
+			world.builder.set_mode("none")
+			world.day_time = 0.73
+			_cam(Vector3(-4, 0, -4), 18.0, 35.0, 40.0)],
+		[25.0, "11_night", func(): world.day_time = 0.88],
 	]
 
 

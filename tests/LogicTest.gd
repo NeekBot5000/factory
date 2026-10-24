@@ -11,6 +11,7 @@ func check(cond: bool, msg: String) -> void:
 
 func _ready() -> void:
 	Game.save_enabled = false
+	Game.fresh_start = false
 	# levels
 	check(Game.level_for(0.0) == 0, "level 0 at 0 earned")
 	check(Game.level_for(75.0) == 1, "level 1 at 75")
@@ -86,6 +87,7 @@ func _ready() -> void:
 	check(Game.stars == 2, "stars restored")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.SAVE_PATH))
 	Game.save_enabled = false
+	Game.fresh_start = false
 	# offline progress
 	Game.save_enabled = true
 	Game.income_rate = 100.0

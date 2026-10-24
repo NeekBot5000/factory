@@ -32,7 +32,8 @@ var stats := {"sold": 0, "upgrades": 0, "ascensions": 0, "placed": 0, "part_upgr
 var quest_index := 0
 var play_time := 0.0
 var income_rate := 0.0
-var settings := {"shadows": true, "volume": 0.7, "music": 0.45, "seen_help": false, "show_fps": false}
+var settings := {"shadows": true, "volume": 0.7, "music": 0.45, "seen_help": false, "show_fps": false, "day_night": true}
+var fresh_start := true
 var saved_buildings: Array = []
 var saved_links: Array = []
 var demand_map := {}
@@ -155,7 +156,7 @@ func machine_mult() -> float:
 
 
 func item_cap() -> int:
-	return 250 + int(float(Defs.UPGRADES.item_cap.per) * upg("item_cap"))
+	return 400 + int(float(Defs.UPGRADES.item_cap.per) * upg("item_cap"))
 
 
 func offline_eff() -> float:
@@ -573,6 +574,7 @@ func load_game() -> void:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
 	var d: Dictionary = parsed
+	fresh_start = false
 	money = float(d.get("money", START_MONEY))
 	lifetime = float(d.get("lifetime", 0.0))
 	stars = int(d.get("stars", 0))
@@ -632,9 +634,11 @@ func new_game() -> void:
 	saved_buildings = []
 	saved_links = []
 	offline_report = {}
+	fresh_start = true
 	_reset_state()
 	if world:
 		world.clear_all(false)
+		world.build_starter()
 	plots_changed.emit()
 	upgrades_changed.emit()
 	unlocks_changed.emit()

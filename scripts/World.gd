@@ -31,6 +31,10 @@ var _clouds: Array[Node3D] = []
 var _ui_timer := 0.0
 var _sun: DirectionalLight3D
 var _links_dirty := true
+var _env: Environment
+var _sky_mat: ProceduralSkyMaterial
+var day_time := 0.3          # 0..1, 0.25 = morning, 0.5 = noon, 0.75 = evening
+const DAY_LENGTH := 600.0
 
 
 func _ready() -> void:
@@ -63,6 +67,8 @@ func _ready() -> void:
 	Game.upgrades_changed.connect(_on_upgrades_changed)
 	Game.settings_changed.connect(_on_settings_changed)
 	_load_buildings()
+	if Game.fresh_start and parts.is_empty():
+		build_starter()
 	_on_upgrades_changed()
 	get_tree().auto_accept_quit = false
 
@@ -79,6 +85,8 @@ func _setup_env() -> void:
 	sm.sun_angle_max = 25.0
 	sky.sky_material = sm
 	env.sky = sky
+	_env = env
+	_sky_mat = sm
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.ambient_light_energy = 0.5
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
@@ -129,6 +137,15 @@ func _setup_env() -> void:
 		_clouds.append(c)
 
 
+func build_starter() -> void:
+	## A tiny working line so a new player sees the loop immediately: tree farm -> belt -> seller.
+	place("treefarm_oak", Vector3i(-4, 0, 0), 1, false, 25.0)
+	for x in range(-3, 3):
+		place("conveyor", Vector3i(x, 0, 0), 1, false, 2.0)
+	place("seller", Vector3i(3, 0, 0), 1, false, 15.0)
+	Game.fresh_start = false
+
+
 func _on_settings_changed() -> void:
 	_sun.shadow_enabled = bool(Game.settings.shadows)
 
@@ -142,6 +159,7 @@ func _on_upgrades_changed() -> void:
 func _process(delta: float) -> void:
 	for p in animators:
 		p.animate(delta)
+	_day_night(delta)
 	for c in _clouds:
 		c.position.x += delta * 0.6
 		if c.position.x > 160.0:
@@ -150,6 +168,33 @@ func _process(delta: float) -> void:
 	if _ui_timer > 1.0:
 		_ui_timer = 0.0
 		terrain.refresh()
+
+
+func _day_night(delta: float) -> void:
+	if not bool(Game.settings.get("day_night", true)):
+		if day_time != 0.4:
+			day_time = 0.4
+		else:
+			return
+	else:
+		day_time = fmod(day_time + delta / DAY_LENGTH, 1.0)
+	# light curve: bright most of the time, a short golden dusk and a mild blue night
+	var sun_h := sin((day_time - 0.25) * TAU)        # -1 midnight .. 1 noon
+	var light := clampf(sun_h * 1.6 + 0.6, 0.0, 1.0)
+	var dusk := clampf(1.0 - absf(sun_h) * 3.0, 0.0, 1.0)
+	_sun.light_energy = lerpf(0.25, 1.25, light)
+	_sun.light_color = Color(1, 1, 1).lerp(Color(1.0, 0.68, 0.45), dusk * 0.8).lerp(Color(0.6, 0.7, 1.0), 1.0 - light)
+	_sun.rotation_degrees = Vector3(lerpf(-12.0, -55.0, clampf(sun_h, 0.0, 1.0)), -38.0 + day_time * 80.0, 0)
+	_env.ambient_light_energy = lerpf(0.32, 0.5, light)
+	_sky_mat.sky_top_color = Color("16204a").lerp(Color("3d86e0"), light)
+	_sky_mat.sky_horizon_color = Color("3a4a7a").lerp(Color("bfe3ff"), light).lerp(Color("ffb27a"), dusk * 0.6)
+	_sky_mat.ground_horizon_color = _sky_mat.sky_horizon_color
+	_env.fog_light_color = _sky_mat.sky_horizon_color
+
+
+func is_night() -> bool:
+	var sun_h := sin((day_time - 0.25) * TAU)
+	return sun_h < -0.25
 
 
 func _notification(what: int) -> void:

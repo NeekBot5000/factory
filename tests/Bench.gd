@@ -8,6 +8,7 @@ var N_LINES := 30
 
 func _ready() -> void:
 	Game.save_enabled = false
+	Game.fresh_start = false
 	world = load("res://scripts/World.gd").new()
 	add_child(world)
 	await get_tree().process_frame
