@@ -25,16 +25,26 @@ func blade_offsets() -> Array:
 
 func build() -> void:
 	_deck(Color("ff8a3d"), float(def.speed))
-	var housing := Meshes.mat(Color("e0652a"), 0.0, 0.5)
+	var orange := Meshes.mat(Color("e0652a"), 0.0, 0.5)
+	var dark := Meshes.mat(Color("8c3a14"), 0.0, 0.6)
+	# low side frames
 	for sz in [-1, 1]:
-		_box(Vector3(1.0, 0.7, 0.08), Vector3(0, 0.55, 0.44 * sz), housing)
-	_box(Vector3(0.24, 0.7, 0.24), Vector3(0.38, 0.55, 0.0), Meshes.mat(Color("bf4f1c"), 0.0, 0.5))
-	_box(Vector3(1.0, 0.08, 0.96), Vector3(0, 0.92, 0), housing)
-	_box(Vector3(0.14, 0.14, 0.4), Vector3(0.38, 1.0, 0), Meshes.metal_mat(STEEL))
+		_box(Vector3(1.0, 0.22, 0.08), Vector3(0, 0.28, 0.46 * sz), orange)
+	# arbor bridge over the belt holding the blade shaft
+	for sz in [-1, 1]:
+		_box(Vector3(0.1, 0.62, 0.1), Vector3(0.44, 0.5, 0.36 * sz), orange)
+		_box(Vector3(0.1, 0.62, 0.1), Vector3(-0.44, 0.5, 0.36 * sz), orange)
+	_box(Vector3(0.98, 0.08, 0.1), Vector3(0, 0.84, 0.36), dark)
+	_box(Vector3(0.98, 0.08, 0.1), Vector3(0, 0.84, -0.36), dark)
+	_cyl(0.035, 0.98, Vector3(0, 0.62, 0), Meshes.metal_mat(STEEL, 0.2), Vector3(0, 0, 90), 6)
+	_box(Vector3(0.22, 0.22, 0.26), Vector3(0.6, 0.62, 0.0), dark)
+	_box(Vector3(0.06, 0.14, 0.14), Vector3(0.74, 0.62, 0.0), Meshes.metal_mat(STEEL))
 	_hood = _pivot(Vector3.ZERO)
 	for o in blade_offsets():
-		var b := _anim(Meshes.blade_mesh(0.28), Meshes.metal_mat(Color("dfe4ec"), 0.15), Vector3(o, 0.34, 0), Vector3(0, 90, 0), _hood)
+		var b := _anim(Meshes.blade_mesh(0.3), Meshes.metal_mat(Color("dfe4ec"), 0.15), Vector3(o, 0.4, 0), Vector3(0, 90, 0), _hood)
 		_blades.append(b)
+		var guard := _anim(Meshes.box_mesh(Vector3(0.04, 0.16, 0.66)), Meshes.glass(Color("ffb070"), 0.35), Vector3(o, 0.74, 0), Vector3.ZERO, _hood)
+		guard.set_meta("guard", true)
 		if not ghost:
 			var key := _blades.size() - 1
 			_areas.append(_make_area(Vector3(0.03, 0.45, 0.8), Vector3(o, 0.42, 0), func(body_hit: Node3D): _on_enter(body_hit, key)))
@@ -60,8 +70,14 @@ func interact() -> bool:
 
 func on_config_changed() -> void:
 	var offs := blade_offsets()
+	var guards := []
+	for c in _hood.get_children():
+		if c.has_meta("guard"):
+			guards.append(c)
 	for i in _blades.size():
 		_blades[i].position.x = offs[i]
+		if i < guards.size():
+			guards[i].position.x = offs[i]
 		if i < _areas.size():
 			(_areas[i].get_child(0) as CollisionShape3D).position.x = offs[i]
 

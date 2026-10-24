@@ -65,8 +65,8 @@ func _make_plot(p: Vector2i) -> void:
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = true
 	lbl.fixed_size = true
-	lbl.pixel_size = 0.0007
-	lbl.font_size = 36
+	lbl.pixel_size = 0.0006
+	lbl.font_size = 34
 	lbl.outline_size = 12
 	lbl.position = Vector3(0, 2.6, 0)
 	lbl.render_priority = 3
@@ -165,8 +165,7 @@ func refresh() -> void:
 				lbl.text = "%s\nLAND %s" % [bname, Util.money(cost)]
 				lbl.modulate = Color("7aff9a") if Game.can_afford(cost) else Color("ffd27a")
 			else:
-				lbl.text = "%s\n(locked)" % bname
-				lbl.modulate = Color(1, 1, 1, 0.45)
+				lbl.visible = false
 
 
 func set_grid_visible(v: bool) -> void:

@@ -127,7 +127,10 @@ func _spawn_log() -> void:
 func _spawn_boulder() -> void:
 	var pur := clampf(randf_range(0.3, 0.5) + 0.02 * Game.upg("rich_veins"), 0.05, 0.95)
 	var s := Vector3(randf_range(0.36, 0.5), randf_range(0.32, 0.46), randf_range(0.36, 0.5))
-	var xf := Transform3D(Basis.from_euler(Vector3(0, randf() * TAU, 0)), global_position + Vector3(randf_range(-0.04, 0.04), 0.06, randf_range(-0.04, 0.04)))
+	var y := 0.06
+	if not world.cells.has(cell + Vector3i(0, -1, 0)) and cell.y == 0:
+		y = s.y * 0.5 + 0.03
+	var xf := Transform3D(Basis.from_euler(Vector3(0, randf() * TAU, 0)), global_position + Vector3(randf_range(-0.04, 0.04), y, randf_range(-0.04, 0.04)))
 	world.spawn_item({"mat": def.mat, "shape": "chunk", "size": s, "purity": pur}, xf, Vector3.ZERO, true)
 
 

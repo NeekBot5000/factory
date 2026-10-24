@@ -3,6 +3,10 @@ extends Part
 
 const TIMER_VALUES := [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0, 30.0]
 const COUNTER_VALUES := [2, 3, 4, 5, 8, 10, 16, 20, 50, 100]
+const DELAY_VALUES := [0.1, 0.2, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0]
+
+var _events: Array = []   # [time_left, value] for the delay component
+var _delayed := false
 
 var _pulse := 0.0
 var _acc := 0.0
@@ -25,6 +29,7 @@ func init_config() -> void:
 		"timer": config = {"interval": 1.0}
 		"sensor": config = {"filter": "any"}
 		"counter": config = {"n": 5}
+		"delay": config = {"delay": 0.5}
 
 
 func build() -> void:
@@ -110,6 +115,7 @@ func _label_text() -> String:
 		"not": return "NOT"
 		"xor": return "XOR"
 		"counter": return "%d/%d" % [count, int(config.get("n", 5))]
+		"delay": return "%.2fs" % float(config.get("delay", 0.5))
 	return ""
 
 
@@ -131,6 +137,7 @@ func config_options() -> Array:
 		"timer": return [{"key": "interval", "label": "Pulse every (s)", "values": TIMER_VALUES}]
 		"sensor": return [{"key": "filter", "label": "Detect", "values": Defs.SENSOR_FILTERS}]
 		"counter": return [{"key": "n", "label": "Pulse every N inputs", "values": COUNTER_VALUES}]
+		"delay": return [{"key": "delay", "label": "Delay (s)", "values": DELAY_VALUES}]
 		"lever": return [{"key": "on", "label": "State", "values": [false, true], "names": ["Off", "On"]}]
 	return []
 
@@ -148,6 +155,7 @@ func info_lines() -> Array:
 		"timer": return ["Pulses every %ss" % str(config.interval)]
 		"sensor": return ["Detects: %s" % String(config.filter)]
 		"counter": return ["Count %d / %d" % [count, int(config.n)]]
+		"delay": return ["Repeats the input %.2fs later" % float(config.delay)]
 		"and": return ["On when ALL inputs are on (%d/%d)" % [in_on, in_total]]
 		"or": return ["On when ANY input is on (%d/%d)" % [in_on, in_total]]
 		"not": return ["On when NO input is on"]
@@ -195,6 +203,15 @@ func update_output(delta: float) -> void:
 			sig_out = in_on == 0
 		"xor":
 			sig_out = in_on % 2 == 1
+		"delay":
+			if sig_in != _delayed:
+				_events.append([float(config.delay), sig_in])
+				_delayed = sig_in
+			for e in _events:
+				e[0] = float(e[0]) - delta
+			while not _events.is_empty() and float(_events[0][0]) <= 0.0:
+				sig_out = bool(_events[0][1])
+				_events.pop_front()
 		"counter":
 			if rising_edge():
 				count += 1

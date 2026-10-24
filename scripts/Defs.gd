@@ -19,16 +19,16 @@ const BIOMES := {
 
 # price = $ per cubic unit of material (before form multipliers / purity).
 const MATERIALS := {
-	"oak": {"name": "Oak", "cat": "wood", "color": Color("dcb57e"), "bark": Color("6b4a2f"), "price": 18.0, "biome": "meadow"},
-	"mahogany": {"name": "Mahogany", "cat": "wood", "color": Color("b85c3c"), "bark": Color("4a2a1e"), "price": 110.0, "biome": "jungle"},
-	"frostpine": {"name": "Frostpine", "cat": "wood", "color": Color("eee6cf"), "bark": Color("56687a"), "price": 520.0, "biome": "snow"},
-	"copper": {"name": "Copper", "cat": "ore", "color": Color("e8803a"), "rock": Color("6d625a"), "price": 60.0, "biome": "meadow"},
-	"iron": {"name": "Iron", "cat": "ore", "color": Color("b7c3d2"), "rock": Color("595b63"), "price": 160.0, "biome": "meadow"},
-	"gold": {"name": "Gold", "cat": "ore", "color": Color("ffd23f"), "rock": Color("8a7350"), "price": 1100.0, "biome": "desert"},
-	"emerald": {"name": "Emerald", "cat": "gem", "color": Color("2fe08a"), "rock": Color("4b5d4f"), "price": 900.0, "biome": "jungle"},
-	"crystal": {"name": "Crystal", "cat": "gem", "color": Color("5fd8ff"), "rock": Color("6d7f99"), "price": 3800.0, "biome": "snow"},
-	"ruby": {"name": "Ruby", "cat": "gem", "color": Color("ff3b5c"), "rock": Color("3d2a30"), "price": 15000.0, "biome": "volcano"},
-	"void": {"name": "Voidsteel", "cat": "ore", "color": Color("b24bff"), "rock": Color("1d1726"), "price": 60000.0, "biome": "volcano"},
+	"oak": {"name": "Oak", "cat": "wood", "color": Color("dcb57e"), "bark": Color("6b4a2f"), "price": 40.0, "biome": "meadow"},
+	"mahogany": {"name": "Mahogany", "cat": "wood", "color": Color("b85c3c"), "bark": Color("4a2a1e"), "price": 300.0, "biome": "jungle"},
+	"frostpine": {"name": "Frostpine", "cat": "wood", "color": Color("eee6cf"), "bark": Color("56687a"), "price": 1500.0, "biome": "snow"},
+	"copper": {"name": "Copper", "cat": "ore", "color": Color("e8803a"), "rock": Color("6d625a"), "price": 150.0, "biome": "meadow"},
+	"iron": {"name": "Iron", "cat": "ore", "color": Color("b7c3d2"), "rock": Color("595b63"), "price": 400.0, "biome": "meadow"},
+	"gold": {"name": "Gold", "cat": "ore", "color": Color("ffd23f"), "rock": Color("8a7350"), "price": 2500.0, "biome": "desert"},
+	"emerald": {"name": "Emerald", "cat": "gem", "color": Color("2fe08a"), "rock": Color("4b5d4f"), "price": 2500.0, "biome": "jungle"},
+	"crystal": {"name": "Crystal", "cat": "gem", "color": Color("5fd8ff"), "rock": Color("6d7f99"), "price": 12000.0, "biome": "snow"},
+	"ruby": {"name": "Ruby", "cat": "gem", "color": Color("ff3b5c"), "rock": Color("3d2a30"), "price": 50000.0, "biome": "volcano"},
+	"void": {"name": "Voidsteel", "cat": "ore", "color": Color("b24bff"), "rock": Color("1d1726"), "price": 200000.0, "biome": "volcano"},
 }
 
 const FORM_MULT := {
@@ -84,7 +84,7 @@ const SCRIPTS := {
 # dir: part has a facing; in/out: has a signal input / output port.
 const PARTS := {
 	# ---- production
-	"treefarm_oak": {"name": "Oak Tree Farm", "kind": "source", "src": "tree", "mat": "oak", "interval": 6.0, "cat": "production", "dir": true, "in": true, "cost": 25.0, "unlock": 0.0, "level": 0,
+	"treefarm_oak": {"name": "Oak Tree Farm", "kind": "source", "src": "tree", "mat": "oak", "interval": 5.0, "cat": "production", "dir": true, "in": true, "cost": 25.0, "unlock": 0.0, "level": 0,
 		"desc": "Grows an oak and topples the log onto the cell in front."},
 	"drill_copper": {"name": "Copper Drill", "kind": "source", "src": "drill", "mat": "copper", "interval": 3.5, "cat": "production", "in": true, "cost": 60.0, "unlock": 120.0, "level": 1,
 		"desc": "Drills copper ore boulders and drops them straight down."},
@@ -163,6 +163,8 @@ const PARTS := {
 	"gate_or": {"name": "OR Gate", "kind": "logic", "logic": "or", "cat": "logic", "in": true, "out": true, "cost": 20.0, "unlock": 400.0, "level": 3, "desc": "On when any input is on."},
 	"gate_not": {"name": "NOT Gate", "kind": "logic", "logic": "not", "cat": "logic", "in": true, "out": true, "cost": 20.0, "unlock": 400.0, "level": 3, "desc": "On when no input is on."},
 	"gate_xor": {"name": "XOR Gate", "kind": "logic", "logic": "xor", "cat": "logic", "in": true, "out": true, "cost": 20.0, "unlock": 800.0, "level": 4, "desc": "On when an odd number of inputs are on."},
+	"delay": {"name": "Delay", "kind": "logic", "logic": "delay", "cat": "logic", "in": true, "out": true, "cost": 30.0, "unlock": 600.0, "level": 3,
+		"desc": "Repeats its input after a delay (click to set). Perfect for timing a piston to an item that a sensor saw earlier."},
 	"counter": {"name": "Counter", "kind": "logic", "logic": "counter", "cat": "logic", "in": true, "out": true, "cost": 50.0, "unlock": 1200.0, "level": 4,
 		"desc": "Counts input pulses; pulses its output every N (click to change N)."},
 	"lamp": {"name": "Lamp", "kind": "logic", "logic": "lamp", "cat": "logic", "in": true, "cost": 15.0, "unlock": 150.0, "level": 2, "desc": "Lights up when powered."},

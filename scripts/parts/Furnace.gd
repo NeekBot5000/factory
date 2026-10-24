@@ -70,12 +70,16 @@ func apply_speed() -> void:
 		body.constant_linear_velocity = dir_vec() * 0.5
 
 
+func capacity() -> int:
+	return 4 + level
+
+
 func heat_rate() -> float:
 	return HEAT_RATE * machine_mult() * (2.0 if fuel > 0.0 else 1.0)
 
 
 func info_lines() -> Array:
-	var l := ["Rear opening %.2f wide: crush big ore first" % OPENING, "Heat x%.2f%s" % [heat_rate() / HEAT_RATE, ("  fuel %.0fs" % fuel) if fuel > 0.0 else ""]]
+	var l := ["Rear opening %.2f wide: crush big ore first" % OPENING, "Melts %d pieces at once, heat x%.2f%s" % [capacity(), heat_rate() / HEAT_RATE, ("  fuel %.0fs" % fuel) if fuel > 0.0 else ""]]
 	for m in pools:
 		l.append("%s pool: %d%%" % [Defs.MATERIALS[m].name, int(float(pools[m]) / ingot_volume() * 100.0)])
 	l.append("Ingots cast: %d" % ingots_made)
@@ -103,6 +107,7 @@ func tick(delta: float) -> void:
 		return
 	var rate := heat_rate()
 	var busy := false
+	var slots := capacity()
 	for it in _inside.keys():
 		if not is_instance_valid(it) or not (it as Item).active:
 			_inside.erase(it)
@@ -110,6 +115,9 @@ func tick(delta: float) -> void:
 		var item := it as Item
 		if item.form == "crate":
 			continue
+		if slots <= 0:
+			break
+		slots -= 1
 		busy = true
 		var c := Defs.mat_cat(item.mat)
 		var k := 2.5 if c == "wood" else 1.0
