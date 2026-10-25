@@ -217,4 +217,5 @@ func log_value_test() -> void:
 		lg.trunk.layers[l] = arr2
 	var bare := lg.value()
 	check(bare > full * 5.0, "a stripped log is worth far more than one in full bark ($%.2f vs $%.2f)" % [bare, full])
+	check(lg.hint_text().contains("$%.2f" % bare), "looking at a log shows what it's worth (%s)" % lg.hint_text())
 	lg.queue_free()

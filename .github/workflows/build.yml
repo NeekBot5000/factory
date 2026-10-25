@@ -50,49 +50,49 @@ jobs:
 
       - name: Gameplay test (chopping, damage, carrying, fainting)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/ChopTest.tscn --fixed-fps 60 2>&1 | tee chop.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/ChopTest.tscn --fixed-fps 60 2>&1 | tee chop.log
           grep -q "CHOP RESULT: PASS" chop.log
           ! grep -q "SCRIPT ERROR" chop.log
 
       - name: Gameplay test (tools, shipping truck, shop, delivery boxes)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/LoopTest.tscn --fixed-fps 60 2>&1 | tee loop.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/LoopTest.tscn --fixed-fps 60 2>&1 | tee loop.log
           grep -q "LOOP RESULT: PASS" loop.log
           ! grep -q "SCRIPT ERROR" loop.log
 
       - name: Gameplay test (saw, logs, shears, vacuum, hammer builds)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/BuildTest.tscn --fixed-fps 60 2>&1 | tee build.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/BuildTest.tscn --fixed-fps 60 2>&1 | tee build.log
           grep -q "BUILD RESULT: PASS" build.log
           ! grep -q "SCRIPT ERROR" build.log
 
       - name: Gameplay test (axe variety)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/AxeTest.tscn --fixed-fps 60 2>&1 | tee axe.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/AxeTest.tscn --fixed-fps 60 2>&1 | tee axe.log
           grep -q "AXE RESULT: PASS" axe.log
           ! grep -q "SCRIPT ERROR" axe.log
 
       - name: Save test (builds survive a restart)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/SaveTest.tscn --fixed-fps 60 2>&1 | tee save.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/SaveTest.tscn --fixed-fps 60 2>&1 | tee save.log
           grep -q "SAVE RESULT: PASS" save.log
           ! grep -q "SCRIPT ERROR" save.log
 
       - name: Gameplay test (robo-axe, saws, drills, vacuums)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/GearTest.tscn --fixed-fps 60 2>&1 | tee gear.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/GearTest.tscn --fixed-fps 60 2>&1 | tee gear.log
           grep -q "GEAR RESULT: PASS" gear.log
           ! grep -q "SCRIPT ERROR" gear.log
 
       - name: Gameplay test (mining, wires, machines)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/MachineTest.tscn --fixed-fps 60 2>&1 | tee machine.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/MachineTest.tscn --fixed-fps 60 2>&1 | tee machine.log
           grep -q "MACHINE RESULT: PASS" machine.log
           ! grep -q "SCRIPT ERROR" machine.log
 
       - name: Soak test (random inputs, save + reload)
         run: |
-          ${GODOT_BIN} --headless --path . res://tests/SoakTest.tscn --fixed-fps 60 2>&1 | tee soak.log
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/SoakTest.tscn --fixed-fps 60 2>&1 | tee soak.log
           grep -q "SOAK RESULT: PASS" soak.log
           ! grep -q "SCRIPT ERROR" soak.log
 

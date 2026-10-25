@@ -154,8 +154,12 @@ func value() -> float:
 	return clean * (1.0 - 0.85 * bark)
 
 
+## What the HUD says when you look at it: what you can do with it, and what the mill would pay for it.
 func hint_text() -> String:
+	var worth := "worth $%.2f" % value()
 	var p: Node = get_tree().get_first_node_in_group("player")
 	if p != null and String(p.get("tool")) == "hammer":
-		return "[Click] unlock" if locked else "[Click] lock in place"
-	return "[E] grab" if is_in_group("grabbable") else ""
+		return "%s    %s" % ["[Click] unlock" if locked else "[Click] lock in place", worth]
+	if is_in_group("grabbable"):
+		return "[E] grab    %s" % worth
+	return worth if locked else "Too heavy to lift - cut it up    %s" % worth
