@@ -161,10 +161,13 @@ func run() -> void:
 	# --- conveyor and ramp
 	var belt := place("conveyor", Vector3(-4, 0, 4))
 	var belt2 := place("conveyor", Vector3(-4, 0, 3))
-	var ramp := place("ramp", Vector3(-4, 0, 1.5))
+	var ramp := place("ramp", Vector3(-4, 0, 2))
 	Circuit.toggle_wire(main, crank, belt)
 	Circuit.toggle_wire(main, belt, belt2)
 	Circuit.toggle_wire(main, belt2, ramp)
+	place("pillar", Vector3(-4, 0, 0))
+	var belt3 := place("conveyor", Vector3(-4, 1, 0))
+	Circuit.toggle_wire(main, ramp, belt3)
 	var rider := spawn_ore(BASE + Vector3(-4, 0.75, 4.2))
 	await secs(1.0)
 	var rz := rider.global_position.z
@@ -172,10 +175,21 @@ func run() -> void:
 	await secs(2.5)
 	check(rider.global_position.z < rz - 1.5, "a running belt carries things forward (%.2f m)" % (rz - rider.global_position.z))
 	var top := 0.0
-	for k in 150:
+	var on_top := false
+	for k in 300:
 		await frames(1)
-		top = maxf(top, rider.global_position.y - BASE.y)
+		var rp := rider.global_position - BASE
+		top = maxf(top, rp.y)
+		if rp.y > 1.45 and rp.z < 0.3 and rp.z > -0.5:
+			on_top = true
 	check(top > 1.2, "and the ramp carries them up (%.2f m high)" % top)
+	check(on_top, "onto a belt standing on a pillar at the top (%s)" % str(rider.global_position - BASE))
+
+	# a belt on a pillar carries on from the top of the ramp
+	var pil := place("pillar", Vector3(8, 0, 8))
+	var on_pil := place("conveyor", Vector3(8, 1.0, 8))
+	check(pil is StaticBody3D and not (pil is Machine) and Builds.fixed("pillar") and Builds.unlocked("pillar"), "the stone pillar is a plain grid block, no blueprint needed")
+	check(absf(on_pil.global_position.y + Machines.BELT_Y - (BASE.y + Machines.BELT_Y + Machines.RAMP_RISE)) < 0.01, "a belt on a pillar lines up with the top of a ramp")
 
 	# --- rotator
 	var rot := place("rotator", Vector3(6, 0, 6)) as Rotator

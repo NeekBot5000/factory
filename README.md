@@ -81,7 +81,8 @@ Mined-out rocks slowly grow back (one every minute or so, never right next to yo
 | Lever | 2 stone + 1 copper | E flips it; passes power while on |
 | Push Button | 1 log + 2 stone + 1 copper | E presses it; passes power for 1.5 s |
 | Conveyor | 5 bark + 2 stone | powered belt that carries things forward |
-| Ramp Conveyor | 8 bark + 2 stone | carries things up a metre over two cells |
+| Ramp Conveyor | 8 bark + 2 stone | carries things up a metre; it fills its own cell and the one in front |
+| Stone Pillar | 4 stone | a 1 m block (no blueprint needed); a belt on top carries on from the top of a ramp |
 | Piston | 8 stone + 2 copper + 1 log | shoves its plate out a metre while powered |
 | Rotator | 4 stone + 1 copper + 1 log | turntable: hammer it to stick what's on it, then it spins it round |
 | Truck Caller | 3 stone + 1 log + 3 copper | sends the log truck to the mill when it gets power |

@@ -23,10 +23,11 @@ const BUILDS := {
 	"rotator": {"name": "Rotator", "needs": {"stone": 4, "copper": 1, "log": 1}, "bp": "bp_rotator"},
 	"conveyor": {"name": "Conveyor", "needs": {"bark": 5, "stone": 2}, "bp": "bp_conveyor"},
 	"ramp": {"name": "Ramp Conveyor", "needs": {"bark": 8, "stone": 2}, "bp": "bp_ramp"},
+	"pillar": {"name": "Stone Pillar", "needs": {"stone": 4}},
 	"truck_caller": {"name": "Truck Caller", "needs": {"stone": 3, "log": 1, "copper": 3}, "bp": "bp_truck_caller"},
 }
 const ORDER := ["basket", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult",
-	"crank", "lever", "button", "conveyor", "ramp", "piston", "rotator", "truck_caller"]
+	"crank", "lever", "button", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock"]},
@@ -34,7 +35,7 @@ const CATEGORIES := [
 	{"name": "Workshop", "items": ["chute", "catapult"]},
 	{"name": "Fun", "items": ["ball", "hoop"]},
 	{"name": "Power & Switches", "items": ["crank", "lever", "button"]},
-	{"name": "Machines", "items": ["conveyor", "ramp", "piston", "rotator", "truck_caller"]},
+	{"name": "Machines", "items": ["conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]},
 ]
 const SIZES := [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
 
@@ -45,9 +46,9 @@ const HOOP_DEFAULT := 3.05
 
 
 ## Bigger builds cost more: materials scale with the footprint (size squared), at least 1 of each.
-## Machines always build at 1x, on the grid.
+## Machines (and the pillar they stand on) always build at 1x, on the grid.
 static func fixed(id: String) -> bool:
-	return Machines.is_machine(id)
+	return Machines.is_machine(id) or id == "pillar"
 
 
 ## Whether you have the plans for it (machines need a blueprint from the shop).
@@ -107,7 +108,7 @@ static func make(id: String, root: Node3D, height: float = HOOP_DEFAULT, size: f
 		"compost": _compost(parent, parts)
 		"ball": _ball(parent, parts)
 		"catapult": _catapult(parent, parts)
-		_: Machines.model(id, parent, parts)
+		_: Machines.model(id, parent, parts)     # machines, and the stone pillar they can stand on
 	for p in parts:
 		(p.mi as MeshInstance3D).material_override = p.real
 	return parts
@@ -455,6 +456,8 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			_box_col(body, Vector3(0.42, 0.04, 0.42), cup + Vector3(0, 0.03, 0))
 			_box_col(body, Vector3(0.42, 0.18, 0.04), cup + Vector3(0, 0.12, 0.2))
 			(body as Catapult).setup_arm(body.get_node("Model/Arm"), cup * size, size)
+		"pillar":
+			_box_col(body, Vector3(0.98, 1.0, 0.98), Vector3(0, 0.5, 0))
 		_:
 			if body is Machine:
 				Machines.finish(id, body as Machine)

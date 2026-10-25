@@ -22,7 +22,7 @@ func _ready() -> void:
 	main.hud.hide_start = true
 	var o := Vector3(-7, 0, 9)
 	var specs := [["crank", Vector3(0, 0, 3)], ["lever", Vector3(1, 0, 3)], ["conveyor", Vector3(2, 0, 3)], ["conveyor", Vector3(2, 0, 2)],
-		["ramp", Vector3(2, 0, 0.5)], ["piston", Vector3(-1, 0, 1)], ["rotator", Vector3(-1, 0, -1)], ["button", Vector3(1, 0, 0)], ["truck_caller", Vector3(0, 0, -2)]]
+		["ramp", Vector3(2, 0, 1)], ["pillar", Vector3(2, 0, -1)], ["piston", Vector3(-1, 0, 1)], ["rotator", Vector3(-1, 0, -1)], ["button", Vector3(1, 0, 0)], ["truck_caller", Vector3(0, 0, -2)]]
 	for sp in specs:
 		var p: Vector3 = o + sp[1]
 		p.y = main.terrain.height_at(p.x, p.z)

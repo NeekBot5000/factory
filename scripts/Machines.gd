@@ -15,6 +15,7 @@ const RED := Color("d64034")
 const BELT_Y := 0.5         # top of a conveyor belt
 const RAMP_LEN := 2.0       # horizontal length of a ramp conveyor
 const RAMP_RISE := 1.0
+const RAMP_Z := -0.5        # a ramp covers its own grid cell and the one in front, so it lines up with belts
 
 
 static func is_machine(id: String) -> bool:
@@ -89,7 +90,13 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 		"conveyor":
 			_belt(root, parts, 1.0, 0.0, bark, stone, iron, dark)
 		"ramp":
-			_belt(root, parts, RAMP_LEN, RAMP_RISE, bark, stone, iron, dark)
+			_belt(root, parts, RAMP_LEN, RAMP_RISE, bark, stone, iron, dark, RAMP_Z)
+		"pillar":
+			# a 1 m block of dressed stone: belts on top of it run at the height of a ramp's top end
+			for k in 8:
+				var o := Vector3(0.245 if k & 1 else -0.245, 0.25 if k & 4 else 0.75, 0.245 if k & 2 else -0.245)
+				_p(parts, root, LowPoly.box(Vector3(0.48, 0.49, 0.48)), o, "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(1.0, 0.04, 1.0)), Vector3(0, 0.99, 0), "", LowPoly.mat(STONE.lightened(0.15), 1.0))
 		"truck_caller":
 			for sx in [-0.14, 0.14]:
 				_p(parts, root, LowPoly.box(Vector3(0.27, 0.2, 0.5)), Vector3(sx, 0.1, 0), "stone", stone)
@@ -107,11 +114,11 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 
 
 ## A belt `len` long (along Z), rising `rise` toward the front (-Z). Belt top starts at BELT_Y.
-static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Material, stone: Material, iron: Material, dark: Material) -> void:
+static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Material, stone: Material, iron: Material, dark: Material, z0 := 0.0) -> void:
 	var tilt := atan2(rise, len)
 	var slope := Vector3(0, rise, -len)
 	var run := slope.length()
-	var c := Vector3(0, BELT_Y - 0.04 + rise * 0.5, 0)
+	var c := Vector3(0, BELT_Y - 0.04 + rise * 0.5, z0)
 	var rot := Vector3(rad_to_deg(tilt), 0, 0)
 	var dir := slope.normalized()
 	var nrm := Vector3(0, cos(tilt), sin(tilt))
@@ -176,7 +183,7 @@ static func finish(id: String, body: Machine) -> void:
 			var len := RAMP_LEN if id == "ramp" else 1.0
 			var tilt := atan2(rise, len)
 			var run := Vector3(0, rise, -len).length()
-			var c := Vector3(0, BELT_Y - 0.04 + rise * 0.5, 0)
+			var c := Vector3(0, BELT_Y - 0.04 + rise * 0.5, RAMP_Z if id == "ramp" else 0.0)
 			var b := Basis(Vector3.RIGHT, tilt)
 			Builds._rot_col(body, Vector3(0.64, 0.08, run), c, b)
 			for sx in [-1.0, 1.0]:

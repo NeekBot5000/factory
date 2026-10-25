@@ -194,7 +194,7 @@ func _rebuild_toolbar() -> void:
 	var first := 0
 	var last := owned.size()
 	if owned.size() > MAX_SLOTS:
-		first = clampi(owned.find(player.tool) - 5, 0, owned.size() - MAX_SLOTS)
+		first = clampi(owned.find(player.tool) - 4, 0, owned.size() - MAX_SLOTS)
 		last = first + MAX_SLOTS
 		if first > 0:
 			toolbar.add_child(_more_label("+%d" % first))
@@ -231,7 +231,7 @@ func _rebuild_toolbar() -> void:
 		toolbar.add_child(_more_label("+%d" % (owned.size() - last)))
 
 
-const MAX_SLOTS := 11     # odd, so the tool in hand sits in the middle (5 either side)
+const MAX_SLOTS := 9      # odd, so the tool in hand sits in the middle (4 either side)
 
 
 func _more_label(t: String) -> Label:
