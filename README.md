@@ -16,10 +16,25 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 |---|---|---|
 | Bare hands | free | small chips, hurts you |
 | Trusty Hatchet | $30 | no more damage, bigger circle |
-| Double-Bit Axe | $160 | two heads, sweeping side swing |
-| Crescent Labrys | $650 | spinning overhead slam, huge patch |
-| Bark Drill | $2400 | hold the mouse button and it eats bark continuously |
+| Double-Bit Axe | $160 | alternating diagonal chops from both sides |
+| Crescent Labrys | $650 | big spinning diagonal slam, huge patch |
+| Bow Saw | $450 | hold on a trunk to fell the tree; hold on a log to cut it in two |
+| Pruning Shears | $90 | snip clumps of leaves off bushes and crowns (felled trees keep theirs) |
+| Timber Auger | $2400 | hold the mouse button and it bores bark off continuously |
+| Builder's Hammer | $120 | build things from what you gather |
+| Leaf Vacuum | $1200 | sucks loose bark/leaves/boxes into a floating clump; let go to drop |
 | TimberPhone | $350 | the store and the truck, from anywhere (Tab) |
+
+Logs keep their bark, so you can still strip them; the mill pays for timber plus a little for bark left on.
+
+**Building:** take out the hammer, scroll to pick a plan, click for a hologram, click to set it down (the hoop
+then takes its height from where you look). Drop materials into the hologram and each piece fills in; any
+kind of bark counts. E on a plan cancels it and gives everything back.
+
+| Build | Needs |
+|---|---|
+| Bark Basket | 16 bark (carry it around, fill it up) |
+| Basketball Hoop | 12 bark + 1 log |
 
 ## Play
 
@@ -32,10 +47,11 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | WASD / arrows | move |
 | Mouse | look (click the window to capture the mouse, Esc to release) |
 | Shift / Space | sprint / jump |
-| Left click | swing your tool (hold for the drill) / open a box / use the computer |
-| E or right click | pick up / drop, ship the truck, take an unboxed item |
-| Left click while holding | throw it |
-| 1-5 / mouse wheel | switch tools |
+| Left click | swing / hold for saw, auger, vacuum / open a box / use the computer / build |
+| E or right click | pick up / drop, ship the truck, take an item, cancel a build |
+| Q | drop your tool on the ground |
+| Spin and drop | things keep their momentum, so you can fling them |
+| 1-9 / mouse wheel | switch tools (with the hammer, the wheel picks a build) |
 | Tab | phone (once you own it) |
 
 Progress saves automatically.

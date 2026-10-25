@@ -18,6 +18,9 @@ var state := "parked"
 var park_xform := Transform3D.IDENTITY
 var route_out: Array[Vector3] = []     # from the cabin, over the crest at the end of the road (out of sight)
 var route_in: Array[Vector3] = []      # from behind the crest back to the parking / unloading spot
+var route_dock: Array[Vector3] = []    # van only: the short back-up onto the loading dock
+var _reverse := false
+var _beep := 0.0
 var wheels: Array[Node3D] = []
 var bed_area: Area3D
 var sign: Label3D
@@ -156,9 +159,21 @@ func load_value() -> float:
 		return 0.0
 	var v := 0.0
 	for b in bed_area.get_overlapping_bodies():
-		if b is Chip and not (b as Chip).freeze:
-			v += (b as Chip).value
+		v += sale_value(b)
 	return v
+
+
+## What the mill pays for something in the bed (bark, leaves, logs); 0 for anything else.
+static func sale_value(b: Node) -> float:
+	if not (b is RigidBody3D) or (b as RigidBody3D).freeze:
+		return 0.0
+	if b is Chip:
+		return (b as Chip).value
+	if b is Leaf:
+		return (b as Leaf).value
+	if b is Log:
+		return (b as Log).value()
+	return 0.0
 
 
 func hint_text() -> String:
@@ -183,8 +198,8 @@ func ship() -> bool:
 	cargo.clear()
 	cargo_value = v
 	for b in bed_area.get_overlapping_bodies():
-		if b is Chip and not (b as Chip).freeze:
-			var c := b as Chip
+		if sale_value(b) > 0.0:
+			var c := b as RigidBody3D
 			if main.player.held == c:
 				main.player.drop_held()
 			c.freeze = true
@@ -211,8 +226,10 @@ func deliver() -> void:
 	state = "arriving"
 	# drives in forwards and U-turns in the clearing so the rear door ends up facing the cabin
 	_drive(route_in, func():
-		state = "unloading"
-		_unload())
+		# then back up onto the loading dock, beeping
+		_drive(route_dock, func():
+			state = "unloading"
+			_unload(), true))
 
 
 func _unload() -> void:
@@ -240,7 +257,8 @@ func rear_point() -> Vector3:
 # ------------------------------------------------------------------ driving
 
 ## Smooths the waypoints into a dense Catmull-Rom curve and starts driving along it (always forwards).
-func _drive(path: Array[Vector3], done: Callable) -> void:
+func _drive(path: Array[Vector3], done: Callable, reverse := false) -> void:
+	_reverse = reverse
 	_track = _smooth(path)
 	_cum = PackedFloat32Array()
 	_cum.resize(_track.size())
@@ -298,7 +316,7 @@ func _pose(s: float) -> Transform3D:
 	var dir := ahead - behind
 	if dir.length() < 0.01:
 		return Transform3D(global_basis, p)
-	return Transform3D(Basis.looking_at(dir.normalized(), Vector3.UP), p)
+	return Transform3D(Basis.looking_at(-dir.normalized() if _reverse else dir.normalized(), Vector3.UP), p)
 
 
 func _physics_process(delta: float) -> void:
@@ -328,7 +346,7 @@ func _physics_process(delta: float) -> void:
 		return
 	var total := _cum[_cum.size() - 1]
 	var remaining := total - _s
-	var want := minf(SPEED, maxf(1.2, remaining * 0.9))
+	var want := minf(SPEED if not _reverse else 2.2, maxf(1.0, remaining * 0.9))
 	if _s < 6.0:
 		want = minf(want, 2.0 + _s * 1.2)       # pull away gently
 	_speed = move_toward(_speed, want, delta * 4.0)
@@ -345,5 +363,10 @@ func _physics_process(delta: float) -> void:
 	var q := global_basis.get_rotation_quaternion().slerp(target.basis.get_rotation_quaternion(), minf(1.0, delta * 6.0))
 	global_transform = Transform3D(Basis(q), target.origin)
 	for w in wheels:
-		w.rotation.x -= _speed * delta / 0.48
+		w.rotation.x -= _speed * delta / 0.48 * (-1.0 if _reverse else 1.0)
+	if _reverse:
+		_beep -= delta
+		if _beep <= 0.0:
+			_beep = 0.5
+			Sfx.play("click", 1.6, 2.0)
 	engine.pitch_scale = 0.7 + _speed / SPEED * 0.5

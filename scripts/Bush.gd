@@ -47,6 +47,28 @@ func on_hit(pos: Vector3, normal: Vector3, _tool: String) -> void:
 	Nature.burst(get_parent(), pos, normal + Vector3.UP * 0.6, _color.lightened(0.15), 18, 2.4, 0.065, 3.0, 1.3, 70.0)
 
 
+var _snips_left := 6
+var _trim := 1.0
+
+
+## Shears: tear a clump of leaves off. After enough snips the bush is trimmed away.
+func snip(at: Vector3, out_dir: Vector3) -> void:
+	shake(0.7, global_position - at)
+	Sfx.play("rustle", randf_range(1.1, 1.3), -4.0)
+	for k in randi_range(2, 3):
+		var lf := Leaf.new()
+		get_parent().add_child(lf)
+		lf.setup(_color, randf_range(0.11, 0.17))
+		lf.global_position = at + Vector3(randf_range(-0.1, 0.1), 0.05, randf_range(-0.1, 0.1))
+		lf.linear_velocity = out_dir * randf_range(0.6, 1.4) + Vector3.UP * 0.8
+	_snips_left -= 1
+	_trim *= 0.88
+	_leaves.scale = Vector3.ONE * _trim
+	if _snips_left <= 0:
+		Nature.burst(get_parent(), global_position + Vector3.UP * 0.3, Vector3.UP, _color, 24, 1.8, 0.08, 4.0, 1.2, 140.0)
+		queue_free()
+
+
 func shake(amount: float, dir: Vector3) -> void:
 	dir.y = 0.0
 	_shake_dir = dir.normalized() if dir.length() > 0.01 else Vector3.RIGHT
@@ -80,7 +102,7 @@ func _process(delta: float) -> void:
 	var a := sin(_t * 22.0) * _shake * 0.28
 	var axis := Vector3.UP.cross(_shake_dir).normalized()
 	_leaves.basis = Basis(axis, a) if axis.length() > 0.5 else Basis()
-	_leaves.scale = Vector3.ONE * (1.0 + sin(_t * 30.0) * _shake * 0.05)
+	_leaves.scale = Vector3.ONE * _trim * (1.0 + sin(_t * 30.0) * _shake * 0.05)
 	if _shake <= 0.0:
-		_leaves.basis = Basis()
+		_leaves.basis = Basis.from_scale(Vector3.ONE * _trim)
 		set_process(false)

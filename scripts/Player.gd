@@ -49,6 +49,22 @@ var _arm_base := Vector3(0.26, -0.3, -0.46)
 var _cap: CapsuleShape3D
 var _mouse_avg := 10.0
 const STEP_H := 0.42
+const SAW_TREE_TIME := 2.6      # seconds of sawing to fell an average tree
+const SAW_LOG_TIME := 1.1
+const VAC_RANGE := 7.0
+const VAC_MAX := 40
+
+var builder: Builder
+var saw_progress := 0.0          # 0..1 while sawing (shown on the crosshair)
+var _saw_target: Object = null
+var _saw_fx := 0.0
+var _sawing := false
+var _vacuuming := false
+var _vac_caught := {}            # RigidBody3D -> orbit phase
+var _vac_fx := 0.0
+var _vac_sound: AudioStreamPlayer
+var _backhand := false           # the double-bit axe alternates forehand / backhand swings
+var force_trigger := false       # tests: act as if the mouse button were held
 
 
 func _ready() -> void:
@@ -74,6 +90,14 @@ func _ready() -> void:
 	head.add_child(cam)
 	cam.current = true
 	_build_arm()
+	builder = Builder.new()
+	add_child(builder)
+	builder.setup(self, get_parent())
+	_vac_sound = AudioStreamPlayer.new()
+	_vac_sound.stream = Sfx.engine_stream()
+	_vac_sound.pitch_scale = 2.6
+	_vac_sound.volume_db = -14.0
+	add_child(_vac_sound)
 	spawn_xform = global_transform
 	_yaw = rotation.y
 	rotation.y = 0.0
@@ -115,8 +139,9 @@ func tdef() -> Dictionary:
 
 
 func equip(id: String) -> void:
-	if not Game.is_owned(id) or not Tools.TOOLS.has(id) or id == tool:
+	if not Game.in_toolbar(id) or not Tools.TOOLS.has(id) or id == tool:
 		return
+	builder.cancel()
 	tool = id
 	_swing = -1.0
 	_equip_t = 0.0
@@ -134,12 +159,9 @@ func _apply_tool_visuals() -> void:
 	if tool != "hands":
 		tool_model = Tools.build_model(tool, tool_root)
 		match tool:
-			"drill":
+			"drill", "vacuum", "saw", "shears":
 				tool_model.rotation_degrees = Vector3(0, 0, 0)
 				tool_model.position = Vector3(0, -0.02, 0.0)
-			"labrys":
-				tool_model.rotation_degrees = Vector3(-40, 0, 0)
-				tool_model.position = Vector3(0, 0, 0.0)
 			_:
 				tool_model.rotation_degrees = Vector3(-35, 0, 0)
 
@@ -149,9 +171,32 @@ func _on_tools_changed() -> void:
 
 
 func cycle_tool(step: int) -> void:
-	var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.is_owned(t))
+	if tool == "hammer":
+		builder.scroll(step)     # with the hammer out, the wheel picks what to build
+		return
+	var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.in_toolbar(t))
 	var i := owned.find(tool)
 	equip(owned[posmod(i + step, owned.size())])
+
+
+## Q: put the current tool down on the ground (pick it up again with E).
+func drop_tool() -> void:
+	if tool == "hands":
+		return
+	var id := tool
+	var item := ToolItem.new()
+	get_parent().add_child(item)
+	item.setup(id)
+	item.global_position = cam.global_position - cam.global_transform.basis.z * 0.7 + Vector3(0, -0.3, 0)
+	item.global_basis = Basis(Vector3.UP, _yaw) * Basis(Vector3.RIGHT, -PI * 0.5)
+	item.linear_velocity = velocity + (-cam.global_transform.basis.z) * 1.5
+	item.angular_velocity = Vector3(randf_range(-2, 2), randf_range(-2, 2), randf_range(-2, 2))
+	builder.cancel()
+	tool = "hands"
+	_apply_tool_visuals()
+	Game.set_dropped(id, true)
+	tool_changed.emit(tool)
+	Sfx.play("drop", 0.8)
 
 
 # ------------------------------------------------------------------ input
@@ -186,6 +231,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if k == KEY_E or k == KEY_F:
 			interact()
+		elif k == KEY_Q:
+			drop_tool()
 		elif k == KEY_ESCAPE:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		elif k == KEY_TAB:
@@ -193,9 +240,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_parent().call("open_phone")
 			else:
 				Game.toast.emit("No phone", Color("ffd27a"))
-		elif k >= KEY_1 and k <= KEY_5:
+		elif k >= KEY_1 and k <= KEY_9 and k - KEY_1 < Tools.TOOL_ORDER.size():
 			var id: String = Tools.TOOL_ORDER[k - KEY_1]
-			if Game.is_owned(id):
+			if Game.in_toolbar(id):
 				equip(id)
 
 
@@ -205,9 +252,12 @@ func primary() -> void:
 		return
 	if held != null:
 		return
-	var hit := look_ray(float(tdef().reach), 1 | 2)
+	var hit := look_ray(minf(float(tdef().reach), 3.0), 1 | 2)
 	if not hit.is_empty() and hit.collider.has_method("on_click"):
 		hit.collider.call("on_click", self)
+		return
+	if tool == "hammer":
+		builder.click()
 		return
 	if bool(tdef().get("hold", false)):
 		return   # continuous tools run while the button is held (see _physics_process)
@@ -218,10 +268,13 @@ func primary() -> void:
 func interact() -> void:
 	if not controls_enabled:
 		return
+	if builder.busy():
+		builder.cancel()
+		return
 	if held != null:
 		drop_held()
 		return
-	var hit := look_ray(GRAB_REACH, 1 | 2)
+	var hit := look_ray(GRAB_REACH, 1 | 2 | Blueprint.LAYER)
 	if not hit.is_empty() and hit.collider.has_method("on_use"):
 		hit.collider.call("on_use", self)
 		return
@@ -241,9 +294,11 @@ func look_ray(length: float, mask: int) -> Dictionary:
 
 
 func look_target_text() -> String:
+	if builder.busy():
+		return builder.hint_text()
 	if held != null:
 		return "[E] drop"
-	var hit := look_ray(GRAB_REACH, 1 | 2)
+	var hit := look_ray(GRAB_REACH, 1 | 2 | Blueprint.LAYER)
 	if hit.is_empty():
 		return ""
 	var c: Object = hit.collider
@@ -259,15 +314,24 @@ func aim_ring_px(viewport_h: float) -> float:
 	var reach := float(tdef().reach)
 	var hit := look_ray(reach, 1)
 	var dist := reach
-	if not hit.is_empty() and hit.collider is ForestTree:
+	if not hit.is_empty() and trunk_of(hit.collider) != null:
 		dist = cam.global_position.distance_to(hit.position)
-	var r := float(tdef().radius)
+	var r := maxf(float(tdef().radius), 0.04)
 	return clampf(r / (maxf(dist, 0.3) * tan(deg_to_rad(cam.fov * 0.5))) * viewport_h * 0.5, 5.0, 400.0)
 
 
 func aiming_at_tree() -> bool:
-	var hit := look_ray(float(tdef().reach), 1)
-	return not hit.is_empty() and hit.collider is ForestTree
+	var hit := look_ray(minf(float(tdef().reach), 3.0), 1 | 2)
+	return not hit.is_empty() and trunk_of(hit.collider) != null
+
+
+## The barked trunk behind a collider: a standing tree, or the trunk inside a log.
+static func trunk_of(c: Object) -> ForestTree:
+	if c is ForestTree:
+		return c as ForestTree
+	if c is Log:
+		return (c as Log).trunk
+	return null
 
 
 # ------------------------------------------------------------------ chopping
@@ -277,6 +341,8 @@ func start_swing() -> void:
 		return
 	_swing = 0.0
 	_impact_done = false
+	if tool == "double_bit":
+		_backhand = not _backhand
 	if tool != "hands":
 		Sfx.play("whoosh", 1.4 - float(tdef().radius), -8.0)
 
@@ -284,14 +350,19 @@ func start_swing() -> void:
 func _do_impact() -> void:
 	chops += 1
 	var d := tdef()
+	if tool == "shears":
+		_snip()
+		return
+	if tool == "hammer":
+		return
 	var hit := look_ray(float(d.reach), 1 | 2 | Bush.LAYER)
 	if hit.is_empty():
 		if tool == "hands":
 			Sfx.play("whoosh", 1.2, -6.0)
 		return
 	var c: Object = hit.collider
-	if c is ForestTree:
-		var t := c as ForestTree
+	if trunk_of(c) != null:
+		var t := trunk_of(c)
 		var res := t.strip_circle(hit.position, float(d.radius))
 		if not res.is_empty():
 			var data := t.piece_data(int(res.layer), res.panels)
@@ -308,6 +379,8 @@ func _do_impact() -> void:
 		if float(d.hurt) > 0.0:
 			take_damage(float(d.hurt))
 		t.shake_crown(-cam.global_transform.basis.z, 0.4 + float(d.radius))
+		if c is Log:
+			(c as Log).apply_impulse(-cam.global_transform.basis.z * 0.6, hit.position - (c as Log).global_position)
 	elif c is RigidBody3D:
 		(c as RigidBody3D).apply_central_impulse(-cam.global_transform.basis.z * 1.5)
 		Sfx.play("drop", 1.3)
@@ -364,8 +437,8 @@ func _push_items() -> void:
 	var hv := Vector3(velocity.x, 0, velocity.z)
 	for r in get_world_3d().direct_space_state.intersect_shape(q, 16):
 		var b := r.collider as RigidBody3D
-		if b == null or b == held or b.freeze:
-			continue
+		if b == null or b == held or b.freeze or b is Log:
+			continue     # logs are solid to the player and too heavy to shove
 		var away := b.global_position - global_position
 		away.y = 0.0
 		if away.length() < 0.01:
@@ -445,7 +518,7 @@ func _update_held(delta: float) -> void:
 	if not is_instance_valid(held) or held.freeze:
 		held = null
 		return
-	var target := cam.global_transform * HOLD_OFFSET
+	var target := cam.global_transform * (HOLD_OFFSET + (Vector3(0, -0.15, -0.4) if held is Log else Vector3.ZERO))
 	var d := target - held.global_position
 	if d.length() > 1.8:
 		_snag += delta
@@ -457,6 +530,8 @@ func _update_held(delta: float) -> void:
 	held.linear_velocity = (d * 16.0).limit_length(28.0)
 	held.angular_velocity = held.angular_velocity.lerp(Vector3.ZERO, minf(1.0, delta * 10.0))
 	var want := Basis(Vector3.UP, _yaw)
+	if held is Log:
+		want = want * Basis(Vector3.BACK, PI * 0.5)     # carry logs crosswise
 	var q := held.global_basis.get_rotation_quaternion().slerp(want.get_rotation_quaternion(), minf(1.0, delta * 6.0))
 	held.global_basis = Basis(q)
 
@@ -510,8 +585,12 @@ func _physics_process(delta: float) -> void:
 			_do_impact()
 		if _swing >= 1.0:
 			_swing = -1.0
-	# continuous tools (drill): run while the button is held
-	_drilling = bool(d.get("hold", false)) and controls_enabled and held == null and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	# continuous tools: run while the button is held
+	var trigger := bool(d.get("hold", false)) and controls_enabled and held == null and (force_trigger or (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)))
+	_drilling = trigger and tool == "drill"
+	_saw_step(delta, trigger and tool == "saw")
+	_vacuum_step(delta, trigger and tool == "vacuum")
+	builder.update(delta)
 	if _drilling:
 		_drill_cd -= delta
 		if _drill_cd <= 0.0:
@@ -542,21 +621,101 @@ func _process(delta: float) -> void:
 
 # ------------------------------------------------------------------ animation
 
-## Returns [rest, windup, strike] poses as [position offset, rotation degrees] per tool.
+## Swing arcs for the bladed tools (camera space): diagonal chops from up high, the head arriving at the crosshair
+## with the edge leading at ~45 degrees (the double-bit alternates from the right and from the left). The forearm points along the arc's radius and the tool continues
+## it, with the cutting edge facing the direction of travel - so the sharp edge always leads into the wood.
+## pivot = shoulder, axis = rotation axis, r0 = radius direction at angle 0, len = forearm reach,
+## angles (deg): windup, impact, follow-through.
+const ARCS := {
+	"chop": {"pivot": Vector3(-0.2, -0.45, -0.4), "axis": Vector3(-0.87, 0.5, 0.0), "r0": Vector3(0.5, 0.87, 0.0), "len": 0.3, "a": [-70.0, 36.0, 90.0]},
+	"sweep": {"pivot": Vector3(-0.3, -0.65, -0.28), "axis": Vector3(-0.87, 0.5, 0.0), "r0": Vector3(0.5, 0.87, 0.0), "len": 0.32, "a": [-75.0, 36.0, 90.0]},
+	"sweep_back": {"pivot": Vector3(0.3, -0.65, -0.28), "axis": Vector3(-0.87, -0.5, 0.0), "r0": Vector3(-0.5, 0.87, 0.0), "len": 0.32, "a": [-75.0, 36.0, 90.0]},
+	"slam": {"pivot": Vector3(-0.3, -0.7, -0.25), "axis": Vector3(-0.87, 0.5, 0.0), "r0": Vector3(0.5, 0.87, 0.0), "len": 0.32, "a": [-85.0, 36.0, 90.0]},
+	"hammer": {"pivot": Vector3(0.1, -0.45, 0.0), "axis": Vector3(-1.0, 0.0, 0.0), "r0": Vector3(0.0, 1.0, 0.25), "len": 0.3, "a": [-30.0, 64.0, 78.0]},
+}
+# tool basis inside the arm: handle (+Y) along the forearm (-Z), cutting edge (-Z) along the arm's +X (the arc tangent)
+const TOOL_IN_ARM := Basis(Vector3(0, 1, 0), Vector3(0, 0, -1), Vector3(-1, 0, 0))
+
+
+func _arc_name() -> String:
+	var anim := String(tdef().anim)
+	if anim == "sweep" and _backhand:
+		return "sweep_back"
+	return anim
+
+
+## Arm transform (camera space) with the hand at `hand`, forearm along `radial`, arm +X along `tangent`.
+static func _arm_xform(hand: Vector3, radial: Vector3, tangent: Vector3) -> Transform3D:
+	var z := -radial.normalized()
+	var x := (tangent - tangent.project(z)).normalized()
+	var y := z.cross(x)
+	return Transform3D(Basis(x, y, z), hand + radial.normalized() * 0.13)
+
+
+func _arc_xform(arc: Dictionary, deg: float) -> Transform3D:
+	var axis: Vector3 = (arc.axis as Vector3).normalized()
+	var r: Vector3 = (arc.r0 as Vector3).normalized().rotated(axis, deg_to_rad(deg))
+	var hand: Vector3 = arc.pivot + r * float(arc.len)
+	return _arm_xform(hand, r, axis.cross(r))
+
+
+func _rest_xform() -> Transform3D:
+	# tool held up in front, edge facing forward
+	var radial := Vector3(0.15, 0.8, -0.55).normalized()
+	var tangent := radial.cross(Vector3.RIGHT)
+	return _arm_xform(_arm_base + Vector3(0.0, -0.04, 0.02) + Vector3(0, sin(_bob * 0.5) * 0.01, 0), radial, tangent)
+
+
+static func _blend(a: Transform3D, b: Transform3D, k: float) -> Transform3D:
+	return Transform3D(Basis(a.basis.get_rotation_quaternion().slerp(b.basis.get_rotation_quaternion(), k)), a.origin.lerp(b.origin, k))
+
+
+## Older pose-based animation for hands and the powered / handheld tools: [rest, windup, strike].
 func _poses() -> Array:
 	match String(tdef().anim):
-		"chop":
-			return [[Vector3(0, 0, 0), Vector3(12, 4, 0)], [Vector3(0.03, 0.14, 0.12), Vector3(75, 0, 12)], [Vector3(-0.06, -0.12, -0.22), Vector3(-55, 12, 0)]]
-		"sweep":
-			return [[Vector3(0, 0, 0), Vector3(14, 4, 0)], [Vector3(0.24, 0.06, 0.06), Vector3(8, -80, -25)], [Vector3(-0.3, -0.02, -0.16), Vector3(-6, 65, 18)]]
-		"slam":
-			return [[Vector3(-0.02, 0, 0), Vector3(16, 6, 0)], [Vector3(-0.12, 0.32, 0.16), Vector3(100, 0, 0)], [Vector3(-0.14, -0.16, -0.26), Vector3(-62, 0, 0)]]
 		"drill":
 			return [[Vector3(-0.02, 0.02, 0), Vector3(2, 4, 0)], [Vector3(-0.04, 0.02, -0.06), Vector3(0, 2, 0)], [Vector3(-0.05, 0.02, -0.12), Vector3(0, 0, 0)]]
+		"saw":
+			return [[Vector3(-0.06, -0.02, 0), Vector3(-4, 6, 0)], [Vector3(-0.08, -0.04, 0.05), Vector3(-6, 3, 0)], [Vector3(-0.1, -0.06, -0.12), Vector3(-8, 0, 0)]]
+		"vacuum":
+			return [[Vector3(-0.06, 0.0, 0), Vector3(-2, 6, 0)], [Vector3(-0.08, 0.0, -0.04), Vector3(-2, 3, 0)], [Vector3(-0.1, 0.0, -0.06), Vector3(0, 0, 0)]]
+		"snip":
+			return [[Vector3(-0.04, 0.04, 0), Vector3(14, 6, 0)], [Vector3(-0.05, 0.08, -0.02), Vector3(22, 4, 0)], [Vector3(-0.06, 0.12, -0.14), Vector3(28, 2, 0)]]
 	return [[Vector3(0, 0, 0), Vector3(4, 6, 0)], [Vector3(0.06, 0.24, 0.1), Vector3(55, -5, 30)], [Vector3(-0.2, -0.02, -0.26), Vector3(-20, 25, -15)]]
 
 
 func _animate_arm(delta: float) -> void:
+	var anim := String(tdef().anim)
+	var impact := float(tdef().impact)
+	var spin := 0.0
+	var target: Transform3D
+	if ARCS.has(anim) and held == null:
+		var arc: Dictionary = ARCS[_arc_name()]
+		var ang: Array = arc.a
+		var rest := _rest_xform()
+		target = rest
+		if _swing >= 0.0:
+			var t := _swing
+			var wind_end := impact * 0.55
+			var follow_end := minf(impact + 0.18, 0.95)
+			if t < wind_end:
+				target = _blend(rest, _arc_xform(arc, ang[0]), ease(t / wind_end, 0.5))
+			elif t < impact:
+				var k := ease((t - wind_end) / (impact - wind_end), 2.2)
+				target = _arc_xform(arc, lerpf(ang[0], ang[1], k))
+				if anim == "slam":
+					spin = k * 360.0
+			elif t < follow_end:
+				target = _arc_xform(arc, lerpf(ang[1], ang[2], ease((t - impact) / (follow_end - impact), 0.5)))
+			else:
+				target = _blend(_arc_xform(arc, ang[2]), rest, ease((t - follow_end) / (1.0 - follow_end), 0.7))
+		target.origin.y -= (1.0 - ease(_equip_t, 0.4)) * 0.35
+		var k2 := 0.75 if _swing >= 0.0 else 0.3
+		arm.transform = _blend(arm.transform, target, k2)
+		if tool_model != null:
+			tool_model.position = Vector3.ZERO
+			tool_model.basis = TOOL_IN_ARM * Basis(Vector3.UP, deg_to_rad(spin))
+		return
 	var poses := _poses()
 	var rest_p: Vector3 = _arm_base + poses[0][0] + Vector3(0, sin(_bob * 0.5) * 0.01, 0)
 	var rest_r: Vector3 = poses[0][1]
@@ -566,14 +725,18 @@ func _animate_arm(delta: float) -> void:
 	var hit_r: Vector3 = poses[2][1]
 	var p := rest_p
 	var r := rest_r
-	var spin := 0.0
-	var impact := float(tdef().impact)
+	var now := Time.get_ticks_msec() * 0.001
 	if held != null:
 		p = _arm_base + Vector3(-0.05, -0.2, 0.08)
 		r = Vector3(-10, 10, 0)
-	elif _drilling:
-		p = hit_p + Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * 0.004
+	elif _drilling or _vacuuming:
+		p = hit_p + Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * (0.004 if _drilling else 0.006)
 		r = hit_r
+	elif _sawing:
+		# push-pull strokes
+		var k := sin(now * 13.0) * 0.5 + 0.5
+		p = up_p.lerp(hit_p, k)
+		r = up_r.lerp(hit_r, k)
 	elif _swing >= 0.0:
 		var t := _swing
 		var wind_end := impact * 0.7
@@ -585,8 +748,6 @@ func _animate_arm(delta: float) -> void:
 			var k2 := ease((t - wind_end) / (impact - wind_end), 2.0)
 			p = up_p.lerp(hit_p, k2)
 			r = up_r.lerp(hit_r, k2)
-			if String(tdef().anim) == "slam":
-				spin = k2 * 360.0
 		else:
 			var k3 := ease((t - impact) / (1.0 - impact), 0.6)
 			p = hit_p.lerp(rest_p, k3)
@@ -596,7 +757,128 @@ func _animate_arm(delta: float) -> void:
 	arm.position = arm.position.lerp(p, 0.6)
 	arm.rotation_degrees = arm.rotation_degrees.lerp(r, 0.6)
 	if tool_model != null:
-		tool_model.rotation_degrees.y = spin
+		if ARCS.has(anim):
+			tool_model.basis = TOOL_IN_ARM
 		var bit := tool_model.get_node_or_null("Bit")
 		if bit != null:
 			bit.rotation.z += delta * (40.0 if _drilling else 0.0)
+		# shears: jaws open on the windup and snap shut at the impact
+		var ba := tool_model.get_node_or_null("BladeA") as Node3D
+		var bb := tool_model.get_node_or_null("BladeB") as Node3D
+		if ba != null and bb != null:
+			var open := 0.35
+			if _swing >= 0.0:
+				open = 0.6 if _swing < impact else lerpf(0.0, 0.35, clampf((_swing - impact) / 0.4, 0.0, 1.0))
+			ba.rotation.x = lerpf(ba.rotation.x, open * 0.5, 0.5)
+			bb.rotation.x = lerpf(bb.rotation.x, -open * 0.5, 0.5)
+
+
+# ------------------------------------------------------------------ saw, shears, vacuum
+
+## Hold the saw on a standing trunk to fell the tree, or on a log to cut it in two.
+func _saw_step(delta: float, on: bool) -> void:
+	_sawing = false
+	if not on:
+		saw_progress = maxf(0.0, saw_progress - delta * 2.0)
+		if saw_progress <= 0.0:
+			_saw_target = null
+		return
+	var hit := look_ray(float(tdef().reach), 1)      # looks past loose bark/leaves lying on a log
+	var c: Object = null if hit.is_empty() else hit.collider
+	if c == null or trunk_of(c) == null or (c is ForestTree and (c as ForestTree).bands < 4):
+		saw_progress = maxf(0.0, saw_progress - delta * 2.0)
+		return
+	_sawing = true
+	if c != _saw_target:
+		_saw_target = c
+		saw_progress = 0.0
+	var t := trunk_of(c)
+	var need := SAW_LOG_TIME if c is Log else SAW_TREE_TIME * (t.radius / 0.38)
+	saw_progress += delta / need
+	_saw_fx -= delta
+	if _saw_fx <= 0.0:
+		_saw_fx = 0.09
+		Nature.burst(get_parent(), hit.position, hit.normal + Vector3.DOWN * 0.3, t.wood_color.lightened(0.1), 6, 1.4, 0.018, 6.0, 0.5, 60.0)
+		Sfx.play("saw", randf_range(0.9, 1.1), -6.0)
+	if saw_progress >= 1.0:
+		saw_progress = 0.0
+		_saw_target = null
+		var away := -cam.global_transform.basis.z
+		if c is ForestTree:
+			var tree := c as ForestTree
+			var j := int(floor(tree.to_local(hit.position).y / ForestTree.BAND_H))
+			tree.fell(j, away)
+			Sfx.play("timber")
+		else:
+			(c as Log).cut_at(hit.position)
+			Sfx.play("thud", 1.2)
+		Nature.burst(get_parent(), hit.position, Vector3.UP, t.wood_color, 24, 2.0, 0.03, 6.0, 0.8, 120.0)
+
+
+## Shears: one snip per click. Leaves come off crowns (incl. felled ones) and bushes.
+func _snip() -> void:
+	var hit := look_ray(float(tdef().reach), 1 | Foliage.LAYER | Bush.LAYER)
+	Sfx.play("click", 0.6, -2.0)
+	if hit.is_empty():
+		return
+	var out := (cam.global_position - (hit.position as Vector3)).normalized()
+	if hit.collider is Foliage:
+		(hit.collider as Foliage).snip(int(hit.shape), hit.position, out, get_parent())
+		Sfx.play("rustle", randf_range(1.1, 1.3), -4.0)
+	elif hit.collider is Bush:
+		(hit.collider as Bush).snip(hit.position, out)
+
+
+## Vacuum: loose things in front get pulled in and swirl in a clump at the nozzle until you let go.
+func _vacuum_step(delta: float, on: bool) -> void:
+	_vacuuming = on
+	if not on:
+		if not _vac_caught.is_empty():
+			_vac_caught.clear()       # they just drop, keeping their momentum
+		if _vac_sound.playing:
+			_vac_sound.stop()
+		return
+	if not _vac_sound.playing:
+		_vac_sound.play()
+	var fwd := -cam.global_transform.basis.z
+	var nozzle := cam.global_position + fwd * 1.25 + cam.global_transform.basis.y * -0.18
+	var q := PhysicsShapeQueryParameters3D.new()
+	var sph := SphereShape3D.new()
+	sph.radius = VAC_RANGE * 0.6
+	q.shape = sph
+	q.transform = Transform3D(Basis(), cam.global_position + fwd * VAC_RANGE * 0.5)
+	q.collision_mask = 2
+	var now := Time.get_ticks_msec() * 0.001
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 96):
+		var b := r.collider as RigidBody3D
+		if b == null or b.freeze or b == held or not b.is_in_group("grabbable"):
+			continue
+		if b is Log and (b as Log).length > 1.6:
+			continue
+		var to := b.global_position - cam.global_position
+		var caught := _vac_caught.has(b)
+		if not caught:
+			if to.length() > VAC_RANGE or fwd.dot(to.normalized()) < 0.8:
+				continue
+			if b.global_position.distance_to(nozzle) < 0.7 and _vac_caught.size() < VAC_MAX:
+				_vac_caught[b] = randf() * TAU
+				caught = true
+		b.sleeping = false
+		if caught:
+			var ph: float = _vac_caught[b]
+			var orbit := Vector3(cos(now * 5.0 + ph), sin(now * 7.0 + ph * 1.7) * 0.6, sin(now * 5.0 + ph)) * 0.22
+			b.linear_velocity = ((nozzle + orbit) - b.global_position) * 10.0
+			b.angular_velocity = b.angular_velocity.lerp(Vector3(3, 5, 2), delta * 2.0)
+		else:
+			var pull := (nozzle - b.global_position)
+			var speed := clampf(2.0 + (VAC_RANGE - pull.length()) * 1.4, 2.0, 11.0)
+			b.linear_velocity = b.linear_velocity.lerp(pull.normalized() * speed, minf(1.0, delta * 6.0))
+	for b in _vac_caught.keys():
+		if not is_instance_valid(b) or (b as RigidBody3D).freeze:
+			_vac_caught.erase(b)
+	# a stream of dust being sucked in
+	_vac_fx -= delta
+	if _vac_fx <= 0.0:
+		_vac_fx = 0.05
+		var src := nozzle + fwd * randf_range(1.0, 3.0) + Vector3(randf_range(-0.6, 0.6), randf_range(-0.4, 0.4), randf_range(-0.6, 0.6))
+		Nature.burst(get_parent(), src, nozzle - src, Color(0.8, 0.78, 0.7), 3, (nozzle - src).length() * 1.2, 0.012, 0.0, 0.45, 8.0)

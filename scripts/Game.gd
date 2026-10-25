@@ -15,6 +15,7 @@ var orders: Array = []          # {id, item, status: "processing"|"shipping"|"de
 var next_order := 1
 var total_earned := 0.0
 var save_enabled := true
+var dropped := {}               # tools lying on the ground (owned, but not in your hands); not saved
 
 
 func _ready() -> void:
@@ -36,6 +37,19 @@ func is_owned(id: String) -> bool:
 	if id == "phone":
 		return has_phone
 	return owned.has(id)
+
+
+## In the tool bar: owned and not lying on the ground somewhere.
+func in_toolbar(id: String) -> bool:
+	return is_owned(id) and not dropped.has(id)
+
+
+func set_dropped(id: String, on: bool) -> void:
+	if on:
+		dropped[id] = true
+	else:
+		dropped.erase(id)
+	tools_changed.emit()
 
 
 func is_ordered(id: String) -> bool:
@@ -111,6 +125,7 @@ func load_game() -> void:
 
 
 func reset() -> void:
+	dropped = {}
 	money = 0.0
 	owned = {"hands": true}
 	has_phone = false

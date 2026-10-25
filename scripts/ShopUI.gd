@@ -160,7 +160,7 @@ func _build_computer() -> void:
 	var foot := PanelContainer.new()
 	foot.add_theme_stylebox_override("panel", _flat(Color("ebe3d5"), 0, 8))
 	v.add_child(foot)
-	foot.add_child(_label("Orders ship immediately. Our orange delivery van drops boxes on the road by your cabin - click a box to open it.", 13, MUTED))
+	foot.add_child(_label("Orders ship immediately. The orange delivery van drops your boxes at the loading dock by the cabin.", 13, MUTED))
 
 
 func _build_phone() -> void:
@@ -345,6 +345,8 @@ func _tool_stats(id: String, box: Container) -> void:
 	if not Tools.TOOLS.has(id):
 		return
 	var d: Dictionary = Tools.TOOLS[id]
+	if float(d.radius) <= 0.0:
+		return     # saws, shears, vacuum, hammer: no stripping circle to compare
 	box.add_child(_stat_bar("Strip size", float(d.radius), 0.36))
 	var rate := 1.0 / float(d.cooldown)
 	box.add_child(_stat_bar("Speed", rate, 6.5))
@@ -440,7 +442,7 @@ func _p_product() -> void:
 	d.custom_minimum_size.x = 260
 	v.add_child(d)
 	_tool_stats(id, v)
-	if Tools.TOOLS.has(id):
+	if Tools.TOOLS.has(id) and float(Tools.TOOLS[id].radius) > 0.0:
 		var td: Dictionary = Tools.TOOLS[id]
 		v.add_child(_label("Strips a %d cm circle per hit, %.1f hits per second%s." % [int(float(td.radius) * 200.0), 1.0 / float(td.cooldown), " (hold to drill)" if td.get("hold", false) else ""], 14, INK))
 	v.add_child(_label("$%s" % _price(float(it.price)), 30, GREEN, font_title))

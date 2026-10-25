@@ -66,14 +66,6 @@ func setup(p_item: String, p_main: Node, art: Texture2D) -> void:
 	# packing tape across the seam
 	var tape := LowPoly.mesh_instance(_visual, LowPoly.box(Vector3(0.1, 0.025, SIZE.z + 0.02)), LowPoly.mat(Color("d9c48f"), 0.4), Vector3(0, h.y + 0.004, 0))
 	tape.name = "Tape"
-	var lbl := Label3D.new()
-	lbl.text = "TimberMart"
-	lbl.font_size = 40
-	lbl.pixel_size = 0.003
-	lbl.modulate = Color("8a3b1c")
-	lbl.rotation_degrees.x = -90
-	lbl.position = Vector3(0, h.y + 0.02, h.z * 0.6)
-	_visual.add_child(lbl)
 
 
 func display_name() -> String:

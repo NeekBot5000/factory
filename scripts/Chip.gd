@@ -9,6 +9,7 @@ var kind := "oak"
 var size := Vector3.ONE * 0.1
 var panels := 1
 var value := 0.0
+var color := Color("5b4030")
 
 
 func setup(data: Dictionary, p_kind: String) -> void:
@@ -16,6 +17,7 @@ func setup(data: Dictionary, p_kind: String) -> void:
 	kind = p_kind
 	size = data.size
 	panels = int(data.get("panels", 1))
+	color = data.get("color", color)
 	var per: float = PANEL_VALUE.outer if layer == 0 else PANEL_VALUE.inner
 	if kind == "birch" and layer == 0:
 		per *= 1.6

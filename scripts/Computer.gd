@@ -4,7 +4,6 @@ extends StaticBody3D
 
 var main: Node
 var _screen: MeshInstance3D
-var _label: Label3D
 var _off_mat: Material
 var _on_mat: Material
 
@@ -25,14 +24,6 @@ func build(p_main: Node) -> void:
 	_on_mat = LowPoly.mat(Color("1d5c3a"), 0.3, 1.2)
 	_screen = LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.5, 0.36, 0.01)), _off_mat, Vector3(-0.05, 1.1, 0.125))
 	LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.2, 0.06, 0.2)), beige, Vector3(-0.05, 0.82, -0.05))
-	_label = Label3D.new()
-	_label.text = "TimberMart"
-	_label.font_size = 32
-	_label.pixel_size = 0.0028
-	_label.modulate = Color("c8ffd8")
-	_label.position = Vector3(-0.05, 1.1, 0.132)
-	_label.visible = false
-	add_child(_label)
 	# keyboard, mouse, tower
 	LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.45, 0.03, 0.16)), beige, Vector3(-0.05, 0.805, 0.2))
 	for k in 3:
@@ -54,7 +45,6 @@ func build(p_main: Node) -> void:
 ## Screen is dark and blank until someone is using the store.
 func set_on(on: bool) -> void:
 	_screen.material_override = _on_mat if on else _off_mat
-	_label.visible = on
 
 
 func hint_text() -> String:

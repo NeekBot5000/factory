@@ -13,9 +13,12 @@ var hint: Label
 var crosshair: Control
 var flash: ColorRect
 var fade: ColorRect
-var start_panel: PanelContainer
 var toast_box: VBoxContainer
 var toolbar: HBoxContainer
+var build_menu: PanelContainer
+var build_list: VBoxContainer
+var _menu_sel := -1
+var _menu_state := ""
 var font_body: FontVariation
 var font_bold: FontVariation
 var font_title: FontVariation
@@ -100,6 +103,22 @@ void fragment() {
 	toolbar.add_theme_constant_override("separation", 6)
 	toolbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(toolbar)
+	# hammer build menu (right side)
+	build_menu = PanelContainer.new()
+	build_menu.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.72), 12, 14))
+	build_menu.anchor_left = 1.0
+	build_menu.anchor_right = 1.0
+	build_menu.anchor_top = 0.5
+	build_menu.anchor_bottom = 0.5
+	build_menu.offset_right = -20
+	build_menu.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	build_menu.grow_vertical = Control.GROW_DIRECTION_BOTH
+	build_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	build_menu.visible = false
+	root.add_child(build_menu)
+	build_list = VBoxContainer.new()
+	build_list.add_theme_constant_override("separation", 6)
+	build_menu.add_child(build_list)
 	# hint
 	hint = _label("", 17, Color.WHITE)
 	hint.anchor_left = 0.5
@@ -126,7 +145,6 @@ void fragment() {
 	fade.color = Color(0, 0, 0, 0)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(fade)
-	_build_start()
 	player.health_changed.connect(_on_health)
 	player.hurt.connect(func(_a): _flash_a = 0.85)
 	player.fainted.connect(_on_faint)
@@ -172,35 +190,13 @@ func _label(t: String, size: int, c: Color, f: Font = null) -> Label:
 	return l
 
 
-func _build_start() -> void:
-	start_panel = PanelContainer.new()
-	start_panel.set_anchors_preset(Control.PRESET_CENTER)
-	start_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	start_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	start_panel.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.85), 18, 28))
-	start_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(start_panel)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
-	start_panel.add_child(v)
-	var t := _label("TIMBER", 52, Color("ffcf6a"), font_title)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(t)
-	var c := _label("WASD  Shift  Space    Click  E    1-5    Tab", 14, Color(1, 1, 1, 0.55))
-	c.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(c)
-	var go := _label("Click to play", 22, Color.WHITE, font_title)
-	go.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(go)
-
-
 func _rebuild_toolbar() -> void:
 	for c in toolbar.get_children():
 		toolbar.remove_child(c)
 		c.queue_free()
 	for i in Tools.TOOL_ORDER.size():
 		var id: String = Tools.TOOL_ORDER[i]
-		if not Game.is_owned(id):
+		if not Game.in_toolbar(id):
 			continue
 		var sel := player.tool == id
 		var pc := PanelContainer.new()
@@ -246,6 +242,9 @@ func show_toast(text: String, color: Color = Color.WHITE) -> void:
 
 func _draw_crosshair() -> void:
 	crosshair.draw_circle(Vector2.ZERO, 2.5, Color(1, 1, 1, 0.9))
+	if player.saw_progress > 0.0:
+		crosshair.draw_arc(Vector2.ZERO, 16.0, -PI * 0.5, -PI * 0.5 + TAU * player.saw_progress, 40, Color("ffcf6a"), 3.0, true)
+		return
 	var on_tree := player.aiming_at_tree()
 	var col := Color(1, 0.85, 0.4, 0.8) if on_tree else Color(1, 1, 1, 0.35)
 	crosshair.draw_arc(Vector2.ZERO, _ring_px, 0, TAU, 40, col, 1.6, true)
@@ -273,15 +272,16 @@ func _process(delta: float) -> void:
 	var low := clampf(1.0 - player.health / 40.0, 0.0, 1.0) * 0.45
 	(flash.material as ShaderMaterial).set_shader_parameter("strength", maxf(_flash_a, low))
 	var ui_open: bool = main.shop_ui != null
-	start_panel.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and player.controls_enabled and not hide_start and not ui_open
-	crosshair.visible = not start_panel.visible and not ui_open
+	crosshair.visible = not ui_open
 	toolbar.visible = not ui_open
+	_update_build_menu()
 	money_lbl.get_parent().visible = not ui_open
 	if crosshair.visible:
+		crosshair.queue_redraw()
 		_ring_px = lerpf(_ring_px, player.aim_ring_px(root.get_viewport_rect().size.y), 0.35)
 		crosshair.queue_redraw()
 	if player.controls_enabled and not ui_open:
-		hint.text = player.look_target_text() if not start_panel.visible else ""
+		hint.text = player.look_target_text()
 	else:
 		hint.text = ""
 
@@ -310,3 +310,32 @@ class HandIcon extends Control:
 		for p in [Vector2(-8, 13), Vector2(8, 13), Vector2(8, 20), Vector2(-8, 20)]:
 			cuff.append(xf * (p * k))
 		draw_colored_polygon(cuff, sleeve)
+
+
+func _update_build_menu() -> void:
+	var show := player.tool == "hammer" and not (main.shop_ui != null)
+	build_menu.visible = show
+	if not show:
+		return
+	var sel := player.builder.selected
+	if sel == _menu_sel and player.builder.state == _menu_state:
+		return
+	_menu_sel = sel
+	_menu_state = player.builder.state
+	for c in build_list.get_children():
+		c.queue_free()
+	build_list.add_child(_label("BUILD", 13, Color(1, 1, 1, 0.55), font_bold))
+	for i in Builds.ORDER.size():
+		var id: String = Builds.ORDER[i]
+		var on := i == sel
+		var row := PanelContainer.new()
+		row.add_theme_stylebox_override("panel", _flat(Color("ffcf6a") if on else Color(1, 1, 1, 0.06), 8, 10))
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", 0)
+		row.add_child(v)
+		var ink := Color("2b2118") if on else Color.WHITE
+		v.add_child(_label(Builds.BUILDS[id].name, 16, ink, font_bold))
+		v.add_child(_label(Builds.needs_text(id), 13, ink.lerp(Color(0.5, 0.5, 0.5), 0.35)))
+		build_list.add_child(row)
+	build_list.add_child(_label("[Scroll] choose   [Click] build", 12, Color(1, 1, 1, 0.5)))

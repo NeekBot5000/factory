@@ -27,6 +27,10 @@ var _layer_mi: Array[MeshInstance3D] = [null, null]
 var _seed := 0
 var _crown: Node3D
 var _shake_tw: Tween
+var _core_mi: MeshInstance3D
+var _col: CollisionShape3D
+var is_section := false     # a piece of trunk inside a Log: closed at both ends, no crown, no collision of its own
+var felled := false         # sawn down: just a stump now
 
 
 func setup(rng: RandomNumberGenerator, p_kind: String) -> void:
@@ -67,6 +71,65 @@ func setup(rng: RandomNumberGenerator, p_kind: String) -> void:
 		_rebuild(l)
 
 
+## Makes this node a piece of `src`'s trunk covering bands j0..j1-1 (used inside a Log).
+func setup_section(src: ForestTree, j0: int, j1: int) -> void:
+	is_section = true
+	kind = src.kind
+	_seed = src._seed
+	radius = src.radius
+	r_mid = src.r_mid
+	r_core = src.r_core
+	bark_color = src.bark_color
+	inner_color = src.inner_color
+	wood_color = src.wood_color
+	bands = j1 - j0
+	trunk_h = bands * BAND_H
+	for l in 2:
+		var a := PackedByteArray()
+		a.resize(SECTORS * bands)
+		for j in bands:
+			for i in SECTORS:
+				a[j * SECTORS + i] = src.layers[l][(j + j0) * SECTORS + i]
+		layers[l] = a
+	collision_layer = 0
+	collision_mask = 0
+	_build_static()
+	for l in 2:
+		var mi := MeshInstance3D.new()
+		mi.material_override = LowPoly.vcol_mat(0.95)
+		add_child(mi)
+		_layer_mi[l] = mi
+		_rebuild(l)
+
+
+## Saws through the trunk at band `cut_j`: everything above becomes a falling Log (crown and all) and this
+## tree is left as a stump.
+func fell(cut_j: int, push_dir: Vector3) -> Log:
+	cut_j = clampi(cut_j, 1, bands - 2)
+	var lg := Log.new()
+	get_parent().add_child(lg)
+	lg.setup_from(self, cut_j, bands, global_transform * Transform3D(Basis(), Vector3(0, cut_j * BAND_H + 0.03, 0)))
+	if _crown != null:
+		lg.attach_crown(_crown)
+		_crown = null
+	# what's left is a stump
+	bands = cut_j
+	trunk_h = bands * BAND_H
+	felled = true
+	remove_from_group("trees")
+	_core_mi.mesh = LowPoly.cyl(r_core * 0.985, r_core * 0.985, trunk_h, SECTORS)
+	_core_mi.position.y = trunk_h * 0.5
+	var sh := CylinderShape3D.new()
+	sh.radius = radius
+	sh.height = trunk_h
+	_col.shape = sh
+	_col.position.y = trunk_h * 0.5
+	for l in 2:
+		_rebuild(l)
+	lg.topple(push_dir)
+	return lg
+
+
 ## Each chop makes the crown shudder away from the hit and spring back.
 func shake_crown(dir: Vector3, amount: float) -> void:
 	dir.y = 0.0
@@ -90,7 +153,9 @@ func shake_crown(dir: Vector3, amount: float) -> void:
 
 func _build_static() -> void:
 	# wood core (only visible where bark has been stripped)
-	LowPoly.mesh_instance(self, LowPoly.cyl(r_core * 0.985, r_core * 0.985, trunk_h, SECTORS), LowPoly.mat(wood_color, 0.8), Vector3(0, trunk_h * 0.5, 0))
+	_core_mi = LowPoly.mesh_instance(self, LowPoly.cyl(r_core * 0.985, r_core * 0.985, trunk_h, SECTORS), LowPoly.mat(wood_color, 0.8), Vector3(0, trunk_h * 0.5, 0))
+	if is_section:
+		return
 	# root flare
 	LowPoly.mesh_instance(self, LowPoly.cyl(radius * 1.02, radius * 1.45, 0.35, SECTORS), LowPoly.mat(bark_color.darkened(0.15)), Vector3(0, 0.1, 0))
 	# canopy: hangs off a pivot at the base of the trunk so the whole crown can sway / shake
@@ -114,14 +179,17 @@ func _build_static() -> void:
 			for k in 3:
 				var off2 := Vector3(rng.randf_range(-1.3, 1.3), trunk_h + rng.randf_range(0.2, 1.6), rng.randf_range(-1.3, 1.3))
 				LowPoly.mesh_instance(_crown, LowPoly.blob(1.2, 0.25, rng.randi() % 50), Nature.wind_mat(Color("5aab44").lightened(snappedf(rng.randf() * 0.08, 0.02)), 0.09, 2.4, -1.2), off2)
+	var fol := Foliage.new()
+	_crown.add_child(fol)
+	fol.setup(_crown)
 	# collision: the trunk
-	var cs := CollisionShape3D.new()
+	_col = CollisionShape3D.new()
 	var sh := CylinderShape3D.new()
 	sh.radius = radius
 	sh.height = trunk_h
-	cs.shape = sh
-	cs.position.y = trunk_h * 0.5
-	add_child(cs)
+	_col.shape = sh
+	_col.position.y = trunk_h * 0.5
+	add_child(_col)
 
 
 # ------------------------------------------------------------------ layer geometry
@@ -184,7 +252,7 @@ func _rebuild(l: int) -> void:
 				LowPoly.quad(st, _corner(ri, i + 1, y0), _corner(ro, i + 1, y0), _corner(ro, i + 1, y1), _corner(ri, i + 1, y1), n1, edge)
 			if not has_panel(l, i, j + 1):
 				LowPoly.quad(st, _corner(ri, i, y1), _corner(ro, i, y1), _corner(ro, i + 1, y1), _corner(ri, i + 1, y1), Vector3.UP, edge)
-			if j > 0 and not has_panel(l, i, j - 1):
+			if (j > 0 or is_section) and not has_panel(l, i, j - 1):
 				LowPoly.quad(st, _corner(ri, i, y0), _corner(ro, i, y0), _corner(ro, i + 1, y0), _corner(ri, i + 1, y0), Vector3.DOWN, edge)
 	_layer_mi[l].mesh = st.commit() if any else null
 
@@ -333,5 +401,6 @@ func piece_data(l: int, panels: Array) -> Dictionary:
 		"box_center": (hi + lo) * 0.5,
 		"layer": l,
 		"panels": panels.size(),
+		"color": bark_color if l == OUTER else inner_color,
 		"outward": (global_transform.basis * Vector3(cos(mid_a), 0, sin(mid_a))).normalized(),
 	}

@@ -58,6 +58,11 @@ jobs:
           ${GODOT_BIN} --headless --path . res://tests/LoopTest.tscn --fixed-fps 60 2>&1 | tee loop.log
           grep -q "LOOP RESULT: PASS" loop.log
 
+      - name: Gameplay test (saw, logs, shears, vacuum, hammer builds)
+        run: |
+          ${GODOT_BIN} --headless --path . res://tests/BuildTest.tscn --fixed-fps 60 2>&1 | tee build.log
+          grep -q "BUILD RESULT: PASS" build.log
+
       - name: Export Web, Windows and Linux
         run: |
           mkdir -p build/web build/windows build/linux

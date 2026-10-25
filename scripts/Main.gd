@@ -164,7 +164,7 @@ func _decor() -> void:
 		var p := Vector2(cos(a), sin(a)) * r
 		var xf := Transform3D(Basis.from_euler(Vector3(rng.randf_range(-0.2, 0.2), rng.randf() * TAU, rng.randf_range(-0.2, 0.2))).scaled(Vector3.ONE * rng.randf_range(0.7, 1.5)), Vector3(p.x, terrain.height_at(p.x, p.y) + 0.12, p.y))
 		mm.set_instance_transform(i, xf)
-		var c := Color("4f9a37").lerp(Color("7cb84a"), rng.randf())
+		var c := Color("438530").lerp(Color("6aa23f"), rng.randf())
 		if rng.randf() < 0.04:
 			c = [Color("f5e05a"), Color("f2f2f2"), Color("d06ad6")][rng.randi() % 3]
 		mm.set_instance_color(i, c)
@@ -218,16 +218,61 @@ func _trucks() -> void:
 	ship_truck = Truck.new()
 	add_child(ship_truck)
 	ship_truck.build("ship", self, Transform3D(Basis.looking_at(Vector3(0, 0, 1), Vector3.UP), park), out, back)
-	# orange TimberMart van: drives in, U-turns in front of the cabin so its rear door faces the porch
-	var vin := _road_out(20.0)
+	# orange TimberMart van: drives in, U-turns past the cabin, then backs onto the loading dock
+	var vin := _road_out(24.0)
 	vin.reverse()
-	vin.append_array([_ground(1.4, 15.0), _ground(1.6, 12.2), _ground(0.9, 10.2), _ground(-0.9, 9.3),
-		_ground(-2.7, 10.0), _ground(-3.3, 11.8), _ground(-3.2, 14.0)])
-	var vout: Array[Vector3] = [_ground(-3.2, 14.0), _ground(-2.8, 17.0), _ground(-1.6, 19.5)]
-	vout.append_array(_road_out(23.0))
+	vin.append_array([_ground(1.6, 19.5), _ground(1.7, 17.4), _ground(1.0, 15.7), _ground(-0.8, 15.0),
+		_ground(-2.6, 15.6), _ground(-3.2, 17.3), _ground(-3.2, 19.0)])
+	var vdock: Array[Vector3] = [_ground(-3.2, 19.0), _ground(-3.2, 17.2), _ground(-3.2, 15.4)]
+	var vout: Array[Vector3] = [_ground(-3.2, 15.4), _ground(-3.0, 19.0), _ground(-2.0, 21.5)]
+	vout.append_array(_road_out(25.0))
 	van = Truck.new()
 	add_child(van)
 	van.build("deliver", self, Transform3D.IDENTITY, vout, vin)
+	van.route_dock = vdock
+	_loading_dock(_ground(-3.2, 10.9))
+
+
+## Wooden loading dock where the van drops off your orders.
+func _loading_dock(at: Vector3) -> void:
+	var dock := StaticBody3D.new()
+	dock.collision_layer = 1
+	add_child(dock)
+	dock.position = at
+	var h := 0.45
+	var w := 2.8
+	var d := 2.6
+	var plank := LowPoly.mat(Color("9c6d43"), 0.9)
+	var plank2 := LowPoly.mat(Color("8a5e38"), 0.9)
+	var beam := LowPoly.mat(Color("5b4030"), 0.95)
+	for k in 9:
+		var z := -d * 0.5 + d / 18.0 + k * d / 9.0
+		LowPoly.mesh_instance(dock, LowPoly.box(Vector3(w, 0.06, d / 9.0 - 0.015)), plank if k % 2 == 0 else plank2, Vector3(0, h - 0.03, z))
+	LowPoly.mesh_instance(dock, LowPoly.box(Vector3(w - 0.1, h - 0.06, d - 0.1)), beam, Vector3(0, (h - 0.06) * 0.5, 0))
+	for sx in [-1.0, 1.0]:
+		for sz in [-1.0, 1.0]:
+			LowPoly.mesh_instance(dock, LowPoly.box(Vector3(0.16, h + 0.02, 0.16)), beam, Vector3(sx * (w * 0.5 - 0.08), (h + 0.02) * 0.5, sz * (d * 0.5 - 0.08)))
+	# hazard stripes along the edge the van backs up to, and two rubber bumpers
+	var yellow := LowPoly.mat(Color("f5c02e"), 0.6)
+	var black := LowPoly.mat(Color("23252a"), 0.8)
+	for k in 10:
+		LowPoly.mesh_instance(dock, LowPoly.box(Vector3(w / 10.0, 0.07, 0.12)), yellow if k % 2 == 0 else black, Vector3(-w * 0.5 + w / 20.0 + k * w / 10.0, h + 0.005, d * 0.5 - 0.06))
+	for sx in [-1.0, 1.0]:
+		LowPoly.mesh_instance(dock, LowPoly.box(Vector3(0.3, 0.26, 0.14)), black, Vector3(sx * 0.85, h * 0.5, d * 0.5 + 0.06))
+	# a step up on the cabin side
+	LowPoly.mesh_instance(dock, LowPoly.box(Vector3(1.2, 0.22, 0.4)), plank, Vector3(0, 0.11, -d * 0.5 - 0.2))
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(w, h, d)
+	cs.shape = sh
+	cs.position = Vector3(0, h * 0.5, 0)
+	dock.add_child(cs)
+	var cs2 := CollisionShape3D.new()
+	var sh2 := BoxShape3D.new()
+	sh2.size = Vector3(1.2, 0.22, 0.4)
+	cs2.shape = sh2
+	cs2.position = Vector3(0, 0.11, -d * 0.5 - 0.2)
+	dock.add_child(cs2)
 
 
 func on_order_placed() -> void:

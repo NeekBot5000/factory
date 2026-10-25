@@ -61,7 +61,7 @@ func _v(x: float, z: float) -> Vector3:
 
 
 func _color(p: Vector3, n: Vector3) -> Color:
-	var g := Color("5c9c3e").lerp(Color("4a8a35"), clampf(detail.get_noise_2d(p.x * 2.0, p.z * 2.0) * 0.5 + 0.5, 0.0, 1.0))
+	var g := Color("4f8a35").lerp(Color("3f7a2e"), clampf(detail.get_noise_2d(p.x * 2.0, p.z * 2.0) * 0.5 + 0.5, 0.0, 1.0))
 	if n.y < 0.85:
 		g = g.lerp(Color("7a6a4a"), 0.5)
 	# dirt road from the cabin porch out through the forest (the trucks drive on it)
