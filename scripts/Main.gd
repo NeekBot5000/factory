@@ -203,6 +203,8 @@ func regrow_rock() -> bool:
 		var pos: Vector3 = sp.pos
 		if player != null and player.global_position.distance_to(pos) < 8.0:
 			continue
+		if _occupied(pos, float(sp.s)):
+			continue      # something's been built (or dropped) where it stood
 		var rr := RandomNumberGenerator.new()
 		rr.seed = int(id) * 7919 + 13
 		var rock := Rock.new()
@@ -211,6 +213,21 @@ func regrow_rock() -> bool:
 		rock.position = pos
 		rock.build(rr, float(sp.s), String(sp.ore))
 		return true
+	return false
+
+
+func _occupied(pos: Vector3, s: float) -> bool:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(s * 2.0, s * 0.9, s * 1.6)
+	q.shape = sh
+	q.transform = Transform3D(Basis(), pos)
+	q.collision_mask = 1 | 2 | Blueprint.LAYER
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 8):
+		# only things you made or dropped count (some rocks always stood half inside a tree)
+		var c: Node = r.collider
+		if c is RigidBody3D or c is Blueprint or Player.build_of(c) != null:
+			return true
 	return false
 
 

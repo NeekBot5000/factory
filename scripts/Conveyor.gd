@@ -12,6 +12,7 @@ var _phase := 0.0
 var _slat_list: Array[Node3D] = []
 var _area_xf := Transform3D.IDENTITY
 var _area_size := Vector3.ONE
+var _query: PhysicsShapeQueryParameters3D
 
 
 func setup_belt(slats: Node3D, dir: Vector3, center: Vector3, run: float, tilt: float) -> void:
@@ -53,12 +54,13 @@ func _physics_process(delta: float) -> void:
 		var t := fmod((k + 0.5) / 4.0 + _phase, _run)
 		_slat_list[k].position = _start + _dir * t
 	# a belt that's running keeps what's on it awake (sleeping bodies would ignore it)
-	var q := PhysicsShapeQueryParameters3D.new()
-	var sh := BoxShape3D.new()
-	sh.size = _area_size
-	q.shape = sh
-	q.transform = global_transform * _area_xf
-	q.collision_mask = 2
-	for r in get_world_3d().direct_space_state.intersect_shape(q, 24):
+	if _query == null:
+		_query = PhysicsShapeQueryParameters3D.new()
+		var sh := BoxShape3D.new()
+		sh.size = _area_size
+		_query.shape = sh
+		_query.collision_mask = 2
+	_query.transform = global_transform * _area_xf
+	for r in get_world_3d().direct_space_state.intersect_shape(_query, 24):
 		if r.collider is RigidBody3D:
 			(r.collider as RigidBody3D).sleeping = false

@@ -106,6 +106,15 @@ func run() -> void:
 	gone.queue_free()
 	await frames(2)
 	check(main.regrow_rock() and get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id")).size() == n_rocks, "mined-out rocks grow back over time")
+	var gone2 := get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id"))[5] as Rock
+	var spot := gone2.global_position
+	gone2.remove_from_group("rocks")
+	gone2.queue_free()
+	var blocker := Builds.finish("pillar", main, Transform3D(Basis(), spot - Vector3(0, 0.3, 0)), 3.05, [], 1.0)
+	await frames(2)
+	check(not main.regrow_rock(), "but not inside something you've built on the spot")
+	blocker.remove_from_group("builds")
+	blocker.queue_free()
 
 	# --- the last leaves of a crown always hold saplings
 	var t: ForestTree = main.trees[5]
