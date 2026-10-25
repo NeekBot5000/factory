@@ -100,6 +100,8 @@ jobs:
         run: |
           mkdir -p build/web build/windows build/linux
           ${GODOT_BIN} --headless --path . --export-release "Web" build/web/index.html
+          # a fresh name for the game data on every build, so browsers never keep playing a cached old version
+          python3 tools/version_web_pack.py build/web "${GITHUB_SHA::8}"
           ${GODOT_BIN} --headless --path . --export-release "Windows" build/windows/Timber.exe
           ${GODOT_BIN} --headless --path . --export-release "Linux" build/linux/Timber.x86_64
           ls -la build/*
