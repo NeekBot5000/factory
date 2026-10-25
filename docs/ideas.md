@@ -29,7 +29,9 @@ already there easier to read; none of them tells you what to do.*
 
 ## Livestock and wildlife (chosen 26 Oct, for later)
 
-Animals are physical like everything else, and they plug into the leaf and sapling loops:
+Animals are physical like everything else, and they plug into the leaf and sapling loops. **Leaf eaters always
+drop something when they eat** (you asked for this): every few leaves a goat or sheep eats, it drops a manure
+lump, plus a tuft of wool (sheep) or fills its udder for milk (goat). Feeding them is what makes them produce.
 
 | Animal | What it does | Ties into |
 |---|---|---|
