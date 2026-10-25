@@ -50,6 +50,11 @@ and what I need to do.
 * Iron veins looked like snow (now steel blue); live wires glowed like lightning (toned down).
 * Machine lamps and wire glow rewrote their materials 20 times a second; now only on change.
 
+* **Machines could stack on machines** when you aimed at a belt to extend it; now only pillars take a machine on top.
+* **Blueprints all had the same icon** in the shop; each now shows the machine it unlocks.
+* **Values on hover:** looking at a log, a bark piece or an ore chunk shows what it's worth, and rocks say
+  what's in them and which pickaxe they need.
+
 ### Playtesting and test hardening
 * Screenshot playtest of the machine line (`tests/MachineShot.tscn`).
 * **Soak test** (`tests/SoakTest.tscn`, now in CI): one of every build, wired machines, 2 minutes of random
@@ -61,6 +66,11 @@ and what I need to do.
   belts, so on weak machines graphics will be the limit. Added an **automatic graphics fallback** for exported
   builds: after 4 s under 40 fps it softens shadows, then drops shadows and two-thirds of the grass, then
   shortens the view, and remembers the level.
+
+* **Web build check:** exported the web build locally and loaded it in headless Chromium. It boots with no
+  errors. (github.io itself is blocked from this sandbox, and the software-rendered browser runs at ~1 fps, so
+  it can't judge real frame rates.)
+* CI test steps now time out after 15 minutes. A test with a parse error used to leave Godot idle forever.
 
 ### Documents
 * `docs/founder-assessment.md`: potential, riskiest assumption, a free 10-strangers test, who does what.

@@ -169,18 +169,14 @@ func run() -> void:
 	player.force_trigger = true
 	await frames(150)
 	var nozzle: Vector3 = player.cam.global_position - player.cam.global_transform.basis.z * 1.25
-	var near := 0
-	for c in bits:
-		if c.global_position.distance_to(nozzle) < 0.8:
-			near += 1
+	var held_bits: Array = bits.filter(func(c): return c.global_position.distance_to(nozzle) < 0.8)
+	var near := held_bits.size()
 	check(near >= 4, "the vacuum holds the bark floating at the nozzle (%d/6)" % near)
 	player.force_trigger = false
 	await secs(2.0)
-	var fell_down := 0
-	for c in bits:
-		if c.global_position.y < nozzle.y - 0.4:
-			fell_down += 1
-	check(fell_down >= 3, "letting go drops them (%d/6 fell)" % fell_down)
+	# every piece it was holding has dropped away from the nozzle (some land on the felled log, so no fixed height)
+	var fell_down := held_bits.filter(func(c): return c.global_position.distance_to(nozzle) > 0.6 and c.global_position.y < nozzle.y - 0.2).size()
+	check(fell_down == near, "letting go drops them (%d/%d fell)" % [fell_down, near])
 	# --- hammer: basket
 	player.equip("hammer")
 	await frames(20)

@@ -43,8 +43,13 @@ func _ready() -> void:
 	_cam.current = true
 	_holder = Node3D.new()
 	add_child(_holder)
+	# tools you already own first, so the toolbar fills in straight away; then the rest of the shop
 	for id in Tools.SHOP_ORDER:
-		_queue.append(id)
+		if Game.is_owned(id):
+			_queue.append(id)
+	for id in Tools.SHOP_ORDER:
+		if not _queue.has(id):
+			_queue.append(id)
 	for id in Builds.ORDER:
 		_queue.append("build:" + id)
 

@@ -143,7 +143,10 @@ scripts/Cabin.gd       procedural log cabin       scripts/Terrain.gd  forest flo
 scripts/Hud.gd         crosshair, health, money, toolbar   scripts/Sfx.gd  procedural sounds
 scripts/Machine.gd     base for powered machines; Circuit.gd works out power, Wire.gd draws cables
 scripts/Machines.gd    machine models and finishing (Crank, Lever, PushButton, Piston, Rotator, Conveyor, TruckCaller)
-scripts/Rock.gd, Ore.gd  mineable rocks and the chunks they drop
+scripts/Rock.gd, Ore.gd  mineable rocks and the chunks they drop (mined rocks regrow, see Main.regrow_rock)
+scripts/Quality.gd     steps graphics down on slow computers (exported builds only)
+scripts/Builds.gd, Builder.gd, Blueprint.gd, BuildMenu.gd  hammer builds: catalogue + models, placement, plans, menu
+scripts/WorldSave.gd   everything you've done to the world, for the save file
 tests/*Test.tscn       headless gameplay tests (MachineTest: mining, wires, machines; SoakTest: random inputs + reload)
 tests/Bench.tscn       balance bench: $/minute for every stripping tool
 tests/Shot.tscn        screenshots (xvfb)
