@@ -17,12 +17,12 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Bare hands | free | small chips, hurts you |
 | Trusty Hatchet | $30 | no more damage, bigger circle |
 | Double-Bit Axe | $160 | every swing hits twice: forehand, then straight back with the other bit |
-| Crescent Labrys | $650 | big spinning diagonal slam, huge patch |
+| Crescent Labrys | $600 | big spinning diagonal slam, huge patch |
 | Twin Hatchets | $300 | one in each hand: very fast alternating small chops |
-| Combo Axe | $750 | each hit in quick succession grows the next one; pause and it resets |
-| Bark Scraper | $220 | big sheets of outer bark only - never touches the inner layer |
+| Combo Axe | $250 | each hit in quick succession grows the next one; pause and it resets |
+| Bark Scraper | $400 | big sheets of outer bark only - never touches the inner layer |
 | Inner Gouge | $380 | inner bark only, small strips that sell for 35% more |
-| Ringing Axe | $520 | slow; every hit takes a full ring of bark all the way round |
+| Ringing Axe | $750 | slow; every hit takes a full ring of bark all the way round |
 | Greataxe | $900 | the biggest patch of all, but a long windup and you walk slowly |
 | Robo-Axe X9 | $6500 | automatic: hold the trigger, it chops ~7 times a second, each hit a 3x3 patch through both layers |
 | Buck Saw | $280 | logs only (can't fell): one cut splits the whole log into carryable rounds |
@@ -107,6 +107,7 @@ five minutes to grow.
 | R while placing a build | turn it |
 | Hammer click on a log | lock it in place (iron bands); click again to unlock |
 | Hammer click on a rotator | stick what's on it to the table / let go |
+| Hammer + X on a build | take it down (you get back what it would sell for) |
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 

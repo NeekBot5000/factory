@@ -184,9 +184,16 @@ func run() -> void:
 	# --- hammer: basket
 	player.equip("hammer")
 	await frames(20)
-	var ground := player.global_position - player.global_basis.z * 2.5
-	ground.y = main.terrain.height_at(ground.x, ground.z)
-	await aim_at(ground, 2.5)
+	# pick a patch of bare ground (the felled log or a tree can be in the way)
+	var ground := Vector3.ZERO
+	for k in 8:
+		var dir := Vector3(sin(k * 0.8), 0, cos(k * 0.8))
+		ground = player.global_position + dir * 2.5
+		ground.y = main.terrain.height_at(ground.x, ground.z)
+		await aim_at(ground, 2.5)
+		var h := player.look_ray(4.0, 1 | 2)
+		if not h.is_empty() and h.collider is Terrain:
+			break
 	player.primary()
 	await frames(3)
 	check(main.shop_ui is BuildMenu, "clicking with the hammer opens the build menu")

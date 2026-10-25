@@ -189,12 +189,17 @@ func _rebuild_toolbar() -> void:
 	for c in toolbar.get_children():
 		toolbar.remove_child(c)
 		c.queue_free()
-	var n := 0
-	for i in Tools.TOOL_ORDER.size():
-		var id: String = Tools.TOOL_ORDER[i]
-		if not Game.in_toolbar(id):
-			continue
-		n += 1
+	var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.in_toolbar(t))
+	# with lots of tools the bar shows a window of them around the one in hand, so it never runs off screen
+	var first := 0
+	var last := owned.size()
+	if owned.size() > MAX_SLOTS:
+		first = clampi(owned.find(player.tool) - 5, 0, owned.size() - MAX_SLOTS)
+		last = first + MAX_SLOTS
+		if first > 0:
+			toolbar.add_child(_more_label("+%d" % first))
+	for n in range(first + 1, last + 1):
+		var id: String = owned[n - 1]
 		var sel := player.tool == id
 		var pc := PanelContainer.new()
 		pc.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.75 if sel else 0.5), 10, 6, Color("ffcf6a") if sel else Color(1, 1, 1, 0.15), 2 if sel else 1))
@@ -222,6 +227,17 @@ func _rebuild_toolbar() -> void:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(l)
 		toolbar.add_child(pc)
+	if last < owned.size():
+		toolbar.add_child(_more_label("+%d" % (owned.size() - last)))
+
+
+const MAX_SLOTS := 11     # odd, so the tool in hand sits in the middle (5 either side)
+
+
+func _more_label(t: String) -> Label:
+	var l := _label(t, 14, Color(1, 1, 1, 0.6), font_bold)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return l
 
 
 func show_toast(text: String, color: Color = Color.WHITE) -> void:

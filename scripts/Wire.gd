@@ -42,7 +42,7 @@ func other(m: Machine) -> Machine:
 
 
 func set_live(on: bool) -> void:
-	_mat.emission_energy_multiplier = 1.2 if on else 0.0
+	_mat.emission_energy_multiplier = 0.45 if on else 0.0
 
 
 func _process(_delta: float) -> void:

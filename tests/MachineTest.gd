@@ -4,6 +4,7 @@ extends Node
 var main: Node3D
 var player: Player
 var fails := 0
+var finished := false     # a script error stops the run part-way; that must not count as a pass
 var floor_y := 40.0
 const BASE := Vector3(60, 40, 60)
 
@@ -33,6 +34,7 @@ func _ready() -> void:
 	await frames(3)
 	player = main.player
 	await run()
+	check(finished, "the whole test ran to the end")
 	print("MACHINE RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()
 
@@ -222,3 +224,16 @@ func run() -> void:
 	var levers := get_tree().get_nodes_in_group("machines").filter(func(m): return m is Lever and (m as Lever).on)
 	check(get_tree().get_nodes_in_group("wires").size() == n_wires, "wires come back after loading (%d)" % get_tree().get_nodes_in_group("wires").size())
 	check(levers.size() == 1, "and the lever is still on")
+
+	# --- taking builds down
+	var tl := place("lever", Vector3(10, 0, 10))
+	tl.set_meta("sale_value", 5.0)
+	var w := Circuit.toggle_wire(main, tl, place("crank", Vector3(11, 0, 10)))
+	var m0 := Game.money
+	check(Player.build_of(tl.get_node("Model").get_child(0)) == tl, "the hammer knows which build a part belongs to")
+	player.take_down(tl)
+	await frames(3)
+	check(not is_instance_valid(tl) and is_equal_approx(Game.money, m0 + 5.0), "hammer + X takes a build down and gives back what it's worth")
+	check(w == "added" and get_tree().get_nodes_in_group("wires").all(func(x): return is_instance_valid(x.a) and is_instance_valid(x.b)), "and its wires go with it")
+	check(Player.build_of(on_it) == null, "loose things aren't builds")
+	finished = true

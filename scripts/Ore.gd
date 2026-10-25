@@ -6,7 +6,7 @@ extends RigidBody3D
 const KINDS := {
 	"stone": {"name": "Stone", "color": Color("8a8780"), "fleck": Color("a39f95"), "value": 0.4},
 	"copper": {"name": "Copper ore", "color": Color("7a746c"), "fleck": Color("d9783a"), "value": 3.0},
-	"iron": {"name": "Iron ore", "color": Color("6e6a66"), "fleck": Color("b8b2c9"), "value": 6.0},
+	"iron": {"name": "Iron ore", "color": Color("6e6a66"), "fleck": Color("6f80a8"), "value": 6.0},
 }
 
 var kind := "stone"

@@ -79,6 +79,7 @@ var _pouring := false            # holding R with something in your hands: tip i
 var _tilt := 0.0
 var _hold_dist := 0.0            # bigger things are held further away
 var _lie_t := 0.0
+var _told_inner := false          # the gouge's "outer bark first" hint, once
 var wire_from: Machine = null     # wire spool: the machine you clicked first
 var _wire_preview: MeshInstance3D
 
@@ -380,6 +381,11 @@ func look_target_text() -> String:
 			return "[Click] a second machine    [Click empty] cancel"
 		if wm != null:
 			return "[Click] start a wire from %s" % Builds.BUILDS[wm.get_meta("build").id].name
+	if tool == "hammer":
+		var bt := build_of(look_ray(GRAB_REACH + 1.0, 1 | 2).get("collider"))
+		if bt != null:
+			var extra := "    [Click] stick / let go" if bt is Rotator else ""
+			return "[X] take down  +$%.2f%s" % [float(bt.get_meta("sale_value", 0.0)), extra]
 	var hit := look_ray(GRAB_REACH, 1 | 2 | Blueprint.LAYER)
 	if hit.is_empty():
 		return ""
@@ -487,6 +493,9 @@ func _do_impact() -> void:
 		else:
 			Sfx.play("chop_wood")
 			_burst(hit.position, t.wood_color, 8)
+			if String(d.get("layer", "")) == "inner" and not _told_inner:
+				_told_inner = true
+				Game.toast.emit("The gouge only cuts inner bark - take the outer bark off first", Color("ffd27a"))
 		# heavier tools kick the view harder
 		_kick = 0.01 + strip_radius() * 0.09 + (0.03 if bool(d.get("through", false)) else 0.0)
 		if float(d.hurt) > 0.0:
@@ -865,6 +874,34 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < -30.0:
 		global_transform = spawn_xform
 		velocity = Vector3.ZERO
+
+
+## The finished, fixed-in-place build a collider belongs to (benches, chutes, machines...). Loose ones like
+## baskets and balls aren't counted: you sell those in the truck.
+static func build_of(c: Object) -> Node3D:
+	var n := c as Node
+	while n != null and not (n is Window):
+		if n.is_in_group("builds"):
+			return null if n is RigidBody3D else n as Node3D
+		n = n.get_parent()
+	return null
+
+
+## Hammer + X: knock a build down. It's gone, and you get back what it would have sold for.
+func take_down(b: Node3D) -> void:
+	if b is Rotator:
+		(b as Rotator).unstick_all()
+	var v := float(b.get_meta("sale_value", 0.0))
+	if v > 0.0:
+		Game.add_money(v)
+	Nature.burst(get_parent(), b.global_position + Vector3.UP * 0.4, Vector3.UP, Color("a0703c"), 30, 2.5, 0.06, 6.0, 1.0, 140.0)
+	Sfx.play("thud", 0.8, 2.0)
+	Sfx.play("chop_wood", 0.7)
+	start_swing()
+	b.remove_from_group("builds")
+	b.remove_from_group("machines")
+	b.queue_free()
+	Game.save_game()
 
 
 ## Wire spool click: first click picks a machine, the second runs a wire to another (or takes it down again).
