@@ -16,7 +16,7 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 |---|---|---|
 | Bare hands | free | small chips, hurts you |
 | Trusty Hatchet | $30 | no more damage, bigger circle |
-| Double-Bit Axe | $160 | alternating diagonal chops from both sides |
+| Double-Bit Axe | $160 | every swing hits twice: forehand, then straight back with the other bit |
 | Crescent Labrys | $650 | big spinning diagonal slam, huge patch |
 | Twin Hatchets | $300 | one in each hand: very fast alternating small chops |
 | Combo Axe | $750 | each hit in quick succession grows the next one; pause and it resets |
@@ -24,6 +24,13 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Inner Gouge | $380 | inner bark only, small strips that sell for 35% more |
 | Ringing Axe | $520 | slow; every hit takes a full ring of bark all the way round |
 | Greataxe | $900 | the biggest patch of all, but a long windup and you walk slowly |
+| Robo-Axe X9 | $6500 | automatic: hold the trigger, it chops ~7 times a second, each hit a 3x3 patch through both layers |
+| Buck Saw | $280 | logs only (can't fell): one cut splits the whole log into carryable rounds |
+| Chainsaw | $1800 | fells and cuts about 3x faster than the bow saw |
+| Twin Auger | $3200 | two bits side by side: bores two strips at once |
+| Hole Saw | $2100 | small, but takes outer and inner bark together |
+| Twin-Nozzle Vac | $2600 | two intakes: wider pull, twice the capacity, two clumps |
+| Cyclone Vac | $3400 | long narrow pull; let go and it fires its load forward |
 | Bow Saw | $450 | hold on a trunk to fell the tree; hold on a log to cut it in two |
 | Pruning Shears | $90 | snip clumps of leaves off bushes and crowns (felled trees keep theirs) |
 | Timber Auger | $2400 | hold the mouse button and it bores bark off continuously |

@@ -78,6 +78,30 @@ func cut_at(world_point: Vector3) -> Array[Log]:
 	return out
 
 
+## Buck saw: cuts the whole log into rounds of `section` bands (the last one takes the leftover).
+func buck(section: int) -> Array[Log]:
+	var out: Array[Log] = []
+	var n := trunk.bands
+	if n <= section:
+		return out
+	var base := trunk.global_transform
+	var j := 0
+	while j < n:
+		var j1 := mini(j + section, n)
+		if n - j1 < 3:
+			j1 = n                     # don't leave a tiny stub
+		var lg := Log.new()
+		get_parent().add_child(lg)
+		lg.setup_from(trunk, j, j1, base * Transform3D(Basis(), Vector3(0, j * ForestTree.BAND_H + 0.02 * out.size(), 0)))
+		lg.linear_velocity = linear_velocity
+		out.append(lg)
+		j = j1
+	if is_instance_valid(_crown):
+		out[out.size() - 1].attach_crown(_crown)
+	queue_free()
+	return out
+
+
 ## What the mill pays: timber by volume, plus a quarter of the price for any bark still on it (strip it first!).
 func value() -> float:
 	var v := 25.0 * length * pow(radius / 0.4, 2.0)

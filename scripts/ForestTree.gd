@@ -317,6 +317,51 @@ func strip_circle(world_point: Vector3, circle_r: float, only := -1) -> Dictiona
 	return {"layer": l, "panels": panels}
 
 
+## Goes through both layers: every panel in the area loses its outer bark AND the inner bark under it in one go.
+## The area is a circle of `circle_r` metres, or (grid > 0) a square of grid x grid panels centred on the hit.
+## Returns [{layer, panels}] for each layer that lost something.
+func strip_through(world_point: Vector3, circle_r: float, grid := 0) -> Array:
+	var c := panel_at(world_point)
+	if c.x < 0:
+		return []
+	var hit_local := to_local(world_point)
+	var area: Array[Vector2i] = []
+	if grid > 0:
+		var h := grid / 2
+		for dj in range(-h, grid - h):
+			for di in range(-h, grid - h):
+				var j := c.y + dj
+				if j >= 0 and j < bands:
+					area.append(Vector2i(posmod(c.x + di, SECTORS), j))
+	else:
+		var ro := layer_radii(OUTER).y
+		var reach_j := int(ceil(circle_r / BAND_H)) + 1
+		var reach_i := int(ceil(circle_r / (TAU * ro / SECTORS))) + 1
+		for dj in range(-reach_j, reach_j + 1):
+			for di in range(-reach_i, reach_i + 1):
+				var i := posmod(c.x + di, SECTORS)
+				var j := c.y + dj
+				if j < 0 or j >= bands:
+					continue
+				if (di == 0 and dj == 0) or _panel_center(OUTER, i, j).distance_to(hit_local) <= circle_r:
+					area.append(Vector2i(i, j))
+	var out: Array = []
+	for l in [OUTER, INNER]:
+		var got: Array[Vector2i] = []
+		for p in area:
+			if has_panel(l, p.x, p.y):
+				got.append(p)
+		if got.is_empty():
+			continue
+		for p in got:
+			layers[l][_idx(p.x, p.y)] = 0
+		out.append({"layer": l, "panels": got})
+	if not out.is_empty():
+		_rebuild(OUTER)
+		_rebuild(INNER)
+	return out
+
+
 ## Ringing axe: the whole band at the hit height comes off all the way round (the outermost layer at the hit).
 func strip_ring(world_point: Vector3) -> Dictionary:
 	var c := panel_at(world_point)

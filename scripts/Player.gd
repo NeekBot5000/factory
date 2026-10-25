@@ -69,6 +69,8 @@ var _vac_sound: AudioStreamPlayer
 var _backhand := false           # the double-bit axe alternates forehand / backhand swings
 var _combo_n := 0                # combo axe: hits in a row (each one grows the next)
 var _combo_t := 0.0
+var _kick := 0.0                 # view kick on impact (heavier tools kick harder)
+var _impacts := 0                # impacts done this swing (the double-bit hits twice)
 const COMBO_MAX := 8
 var force_trigger := false       # tests: act as if the mouse button were held
 var lying: Node3D = null         # the hammock you're lying in, if any
@@ -193,7 +195,7 @@ func _apply_tool_visuals() -> void:
 	if tool != "hands":
 		tool_model = Tools.build_model(tool, tool_root)
 		match tool:
-			"drill", "vacuum", "saw", "shears":
+			"drill", "vacuum", "saw", "shears", "chainsaw", "bucksaw", "twin_auger", "holesaw", "twinvac", "cyclone":
 				tool_model.rotation_degrees = Vector3(0, 0, 0)
 				tool_model.position = Vector3(0, -0.02, 0.0)
 			_:
@@ -391,6 +393,7 @@ func start_swing() -> void:
 		return
 	_swing = 0.0
 	_impact_done = false
+	_impacts = 0
 	if String(tdef().anim) in ["sweep", "twin"]:
 		_backhand = not _backhand
 	if tool != "hands":
@@ -416,31 +419,46 @@ func _do_impact() -> void:
 	var c: Object = hit.collider
 	if trunk_of(c) != null:
 		var t := trunk_of(c)
-		var res := {}
-		if bool(d.get("ring", false)):
-			res = t.strip_ring(hit.position)
-		else:
-			var only := -1
-			match String(d.get("layer", "")):
-				"outer": only = ForestTree.OUTER
-				"inner": only = ForestTree.INNER
-			res = t.strip_circle(hit.position, strip_radius(), only)
+		# what comes off: one sheet normally; through-tools take both layers; the twin auger bores two spots
+		var results: Array = []
+		var spots: Array[Vector3] = [hit.position]
+		if int(d.get("bits", 1)) == 2:
+			var side := cam.global_transform.basis.x * 0.17
+			spots = [hit.position - side, hit.position + side]
+		for at in spots:
+			if bool(d.get("ring", false)):
+				results.append(t.strip_ring(at))
+			elif bool(d.get("through", false)):
+				results.append_array(t.strip_through(at, strip_radius(), int(d.get("grid", 0))))
+			else:
+				var only := -1
+				match String(d.get("layer", "")):
+					"outer": only = ForestTree.OUTER
+					"inner": only = ForestTree.INNER
+				results.append(t.strip_circle(at, strip_radius(), only))
+		results = results.filter(func(r): return not (r as Dictionary).is_empty())
 		if tool == "combo":
 			_combo_n = mini(_combo_n + 1, COMBO_MAX)     # any hit on the trunk keeps the rhythm going
 			_combo_t = 0.0
-		if not res.is_empty():
+		for res in results:
 			var data := t.piece_data(int(res.layer), res.panels)
 			data["value_mult"] = float(d.get("value", 1.0))
 			get_parent().call("spawn_chip", data, t.kind, -cam.global_transform.basis.z)
 			pieces_stripped += (res.panels as Array).size()
-			if tool == "drill":
-				Sfx.play("drill", 1.0, -8.0)
-			else:
-				Sfx.play("chop" if tool == "hands" else "axe", 1.0 if int(res.layer) == 0 else 1.15)
 			_burst(hit.position, t.bark_color if int(res.layer) == 0 else t.inner_color, 10 + (res.panels as Array).size() * 2)
+		if not results.is_empty():
+			if String(d.anim) == "drill":
+				Sfx.play("drill", 1.0, -8.0)
+			elif tool == "robo":
+				Sfx.play("clink", 1.6, -8.0)
+				Sfx.play("axe", 1.3, -4.0)
+			else:
+				Sfx.play("chop" if tool == "hands" else "axe", 1.0 if int(results[0].layer) == 0 else 1.15)
 		else:
 			Sfx.play("chop_wood")
 			_burst(hit.position, t.wood_color, 8)
+		# heavier tools kick the view harder
+		_kick = 0.01 + strip_radius() * 0.09 + (0.03 if bool(d.get("through", false)) else 0.0)
 		if float(d.hurt) > 0.0:
 			take_damage(float(d.hurt))
 		t.shake_crown(-cam.global_transform.basis.z, 0.4 + strip_radius())
@@ -459,7 +477,7 @@ func _do_impact() -> void:
 		Sfx.play("thud", 1.4, -6.0)
 	else:
 		Sfx.play("thud", 1.0, -4.0)
-	_shake = 0.06 if tool == "drill" else 0.12 + float(d.radius) * 0.3
+	_shake = 0.06 if String(d.anim) == "drill" else 0.12 + float(d.radius) * 0.3
 
 
 ## Walks up steps, porch edges and small ledges instead of needing a jump.
@@ -785,16 +803,24 @@ func _physics_process(delta: float) -> void:
 	var d := tdef()
 	if _swing >= 0.0:
 		_swing += delta / float(d.cooldown)
-		if _swing >= float(d.impact) and not _impact_done:
-			_impact_done = true
+		# most swings hit once; the double-bit hits twice (forehand, then backhand)
+		var hits: Array = d.get("impacts", [float(d.impact)])
+		while _impacts < hits.size() and _swing >= float(hits[_impacts]):
+			_impacts += 1
+			_impact_done = _impacts >= hits.size()
 			_do_impact()
 		if _swing >= 1.0:
 			_swing = -1.0
+	var pressing := controls_enabled and held == null and (force_trigger or (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)))
+	# automatic tools (robotic axe) keep swinging while the button is held
+	if bool(d.get("auto", false)) and pressing and _swing < 0.0:
+		start_swing()
 	# continuous tools: run while the button is held
-	var trigger := bool(d.get("hold", false)) and controls_enabled and held == null and (force_trigger or (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)))
-	_drilling = trigger and tool == "drill"
-	_saw_step(delta, trigger and tool == "saw")
-	_vacuum_step(delta, trigger and tool == "vacuum")
+	var trigger := bool(d.get("hold", false)) and pressing
+	var kind := String(d.get("kind", ""))
+	_drilling = trigger and kind == "drill"
+	_saw_step(delta, trigger and kind == "saw")
+	_vacuum_step(delta, trigger and kind == "vacuum")
 	builder.update(delta)
 	if _drilling:
 		_drill_cd -= delta
@@ -821,6 +847,8 @@ func _process(delta: float) -> void:
 	_shake = maxf(0.0, _shake - delta)
 	var sh := Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * _shake * 0.15
 	cam.position = Vector3(0, sin(_bob) * 0.035, 0) + sh
+	_kick = move_toward(_kick, 0.0, delta * 0.35)
+	cam.rotation.x = -_kick * 0.6
 	_animate_arm(delta)
 
 
@@ -901,13 +929,21 @@ func _animate_arm(delta: float) -> void:
 	var impact := float(tdef().impact)
 	var spin := 0.0
 	var target: Transform3D
-	if ARCS.has(anim) and held == null:
-		var arc: Dictionary = ARCS[_arc_name()]
+	if (ARCS.has(anim) or anim == "double") and held == null:
+		var arc: Dictionary = ARCS["sweep" if anim == "double" else _arc_name()]
+		var t := _swing
+		if anim == "double":
+			# forehand into the trunk, then straight back across with the other bit
+			impact = 0.7
+			if _swing >= 0.5:
+				arc = ARCS["sweep_back"]
+				t = (_swing - 0.5) * 2.0
+			elif _swing >= 0.0:
+				t = _swing * 2.0
 		var ang: Array = arc.a
 		var rest := _rest_xform()
 		var swing := rest
 		if _swing >= 0.0:
-			var t := _swing
 			var wind_end := impact * 0.55
 			var follow_end := minf(impact + 0.18, 0.95)
 			if t < wind_end:
@@ -988,7 +1024,9 @@ func _animate_arm(delta: float) -> void:
 			tool_model.basis = TOOL_IN_ARM
 		var bit := tool_model.get_node_or_null("Bit")
 		if bit != null:
-			bit.rotation.z += delta * (40.0 if _drilling else 0.0)
+			bit.rotation.z += delta * (40.0 if _drilling or _vacuuming else 0.0)
+			if tool == "chainsaw" and _sawing:
+				bit.position.z = -0.47 + fmod(Time.get_ticks_msec() * 0.001 * 3.0, 0.028)
 		# shears: jaws open on the windup and snap shut at the impact
 		var ba := tool_model.get_node_or_null("BladeA") as Node3D
 		var bb := tool_model.get_node_or_null("BladeB") as Node3D
@@ -1012,7 +1050,9 @@ func _saw_step(delta: float, on: bool) -> void:
 		return
 	var hit := look_ray(float(tdef().reach), 1)      # looks past loose bark/leaves lying on a log
 	var c: Object = null if hit.is_empty() else hit.collider
-	if c == null or trunk_of(c) == null or (c is ForestTree and (c as ForestTree).bands < 4):
+	var d := tdef()
+	var can_fell := bool(d.get("fell", true))
+	if c == null or trunk_of(c) == null or (c is ForestTree and ((c as ForestTree).bands < 4 or not can_fell)):
 		saw_progress = maxf(0.0, saw_progress - delta * 2.0)
 		return
 	_sawing = true
@@ -1021,12 +1061,15 @@ func _saw_step(delta: float, on: bool) -> void:
 		saw_progress = 0.0
 	var t := trunk_of(c)
 	var need := SAW_LOG_TIME if c is Log else SAW_TREE_TIME * (t.radius / 0.38)
-	saw_progress += delta / need
+	saw_progress += delta / need * float(d.get("speed", 1.0))
 	_saw_fx -= delta
 	if _saw_fx <= 0.0:
-		_saw_fx = 0.09
-		Nature.burst(get_parent(), hit.position, hit.normal + Vector3.DOWN * 0.3, t.wood_color.lightened(0.1), 6, 1.4, 0.018, 6.0, 0.5, 60.0)
-		Sfx.play("saw", randf_range(0.9, 1.1), -6.0)
+		var chain := tool == "chainsaw"
+		_saw_fx = 0.05 if chain else 0.09
+		Nature.burst(get_parent(), hit.position, hit.normal + Vector3.DOWN * 0.3, t.wood_color.lightened(0.1), 10 if chain else 6, 2.6 if chain else 1.4, 0.018, 6.0, 0.5, 60.0)
+		Sfx.play("drill" if chain else "saw", randf_range(0.6, 0.7) if chain else randf_range(0.9, 1.1), -6.0)
+		if chain:
+			_shake = maxf(_shake, 0.05)
 	if saw_progress >= 1.0:
 		saw_progress = 0.0
 		_saw_target = null
@@ -1036,6 +1079,9 @@ func _saw_step(delta: float, on: bool) -> void:
 			var j := int(floor(tree.to_local(hit.position).y / ForestTree.BAND_H))
 			tree.fell(j, away)
 			Sfx.play("timber")
+		elif bool(d.get("buck", false)):
+			(c as Log).buck(7)        # the whole log into ~1.3 m rounds in one go
+			Sfx.play("thud", 1.0)
 		else:
 			(c as Log).cut_at(hit.position)
 			Sfx.play("thud", 1.2)
@@ -1057,37 +1103,57 @@ func _snip() -> void:
 
 
 ## Vacuum: loose things in front get pulled in and swirl in a clump at the nozzle until you let go.
+## Variants: two intakes (two clumps, left and right), and the cyclone that fires its clump forward on release.
 func _vacuum_step(delta: float, on: bool) -> void:
-	_vacuuming = on
+	var d := tdef()
+	var fwd := -cam.global_transform.basis.z
 	if not on:
+		_vacuuming = false
 		if not _vac_caught.is_empty():
-			_vac_caught.clear()       # they just drop, keeping their momentum
+			if bool(d.get("launch", false)):
+				for b in _vac_caught.keys():
+					if is_instance_valid(b):
+						(b as RigidBody3D).linear_velocity = fwd * 16.0 + Vector3.UP * 2.0 + Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1))
+				Sfx.play("whoosh", 0.5, 4.0)
+			_vac_caught.clear()       # otherwise they just drop, keeping their momentum
 		if _vac_sound.playing:
 			_vac_sound.stop()
 		return
+	_vacuuming = true
 	if not _vac_sound.playing:
 		_vac_sound.play()
-	var fwd := -cam.global_transform.basis.z
-	var nozzle := cam.global_position + fwd * 1.25 + cam.global_transform.basis.y * -0.18
+	var reach := float(d.get("range", VAC_RANGE))
+	var cone := float(d.get("cone", 0.8))
+	var cap := int(d.get("cap", VAC_MAX))
+	var basis := cam.global_transform.basis
+	var nozzles: Array[Vector3] = []
+	for off in d.get("nozzles", [Vector3.ZERO]):
+		nozzles.append(cam.global_position + fwd * 1.25 + basis.y * -0.18 + basis.x * (off as Vector3).x)
 	var q := PhysicsShapeQueryParameters3D.new()
 	var sph := SphereShape3D.new()
-	sph.radius = VAC_RANGE * 0.6
+	sph.radius = reach * 0.6
 	q.shape = sph
-	q.transform = Transform3D(Basis(), cam.global_position + fwd * VAC_RANGE * 0.5)
+	q.transform = Transform3D(Basis(), cam.global_position + fwd * reach * 0.5)
 	q.collision_mask = 2
 	var now := Time.get_ticks_msec() * 0.001
-	for r in get_world_3d().direct_space_state.intersect_shape(q, 96):
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 128):
 		var b := r.collider as RigidBody3D
 		if b == null or b.freeze or b == held or not b.is_in_group("grabbable"):
 			continue
 		if b is Log and (b as Log).length > 1.6:
 			continue
 		var to := b.global_position - cam.global_position
+		# the nearest intake takes it
+		var ni := 0
+		for k in nozzles.size():
+			if b.global_position.distance_to(nozzles[k]) < b.global_position.distance_to(nozzles[ni]):
+				ni = k
+		var nozzle := nozzles[ni]
 		var caught := _vac_caught.has(b)
 		if not caught:
-			if to.length() > VAC_RANGE or fwd.dot(to.normalized()) < 0.8:
+			if to.length() > reach or fwd.dot(to.normalized()) < cone:
 				continue
-			if b.global_position.distance_to(nozzle) < 0.7 and _vac_caught.size() < VAC_MAX:
+			if b.global_position.distance_to(nozzle) < 0.7 and _vac_caught.size() < cap:
 				_vac_caught[b] = randf() * TAU
 				caught = true
 		b.sleeping = false
@@ -1098,14 +1164,15 @@ func _vacuum_step(delta: float, on: bool) -> void:
 			b.angular_velocity = b.angular_velocity.lerp(Vector3(3, 5, 2), delta * 2.0)
 		else:
 			var pull := (nozzle - b.global_position)
-			var speed := clampf(2.0 + (VAC_RANGE - pull.length()) * 1.4, 2.0, 11.0)
+			var speed := clampf(2.0 + (reach - pull.length()) * 1.4, 2.0, 11.0)
 			b.linear_velocity = b.linear_velocity.lerp(pull.normalized() * speed, minf(1.0, delta * 6.0))
 	for b in _vac_caught.keys():
 		if not is_instance_valid(b) or (b as RigidBody3D).freeze:
 			_vac_caught.erase(b)
+	var nozzle0 := nozzles[randi() % nozzles.size()]
 	# a stream of dust being sucked in
 	_vac_fx -= delta
 	if _vac_fx <= 0.0:
 		_vac_fx = 0.05
-		var src := nozzle + fwd * randf_range(1.0, 3.0) + Vector3(randf_range(-0.6, 0.6), randf_range(-0.4, 0.4), randf_range(-0.6, 0.6))
-		Nature.burst(get_parent(), src, nozzle - src, Color(0.8, 0.78, 0.7), 3, (nozzle - src).length() * 1.2, 0.012, 0.0, 0.45, 8.0)
+		var src := nozzle0 + fwd * randf_range(1.0, 3.0) + Vector3(randf_range(-0.6, 0.6), randf_range(-0.4, 0.4), randf_range(-0.6, 0.6))
+		Nature.burst(get_parent(), src, nozzle0 - src, Color(0.8, 0.78, 0.7), 3, (nozzle0 - src).length() * 1.2, 0.012, 0.0, 0.45, 8.0)
