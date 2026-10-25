@@ -141,7 +141,8 @@ scripts/Hud.gd         crosshair, health, money, toolbar   scripts/Sfx.gd  proce
 scripts/Machine.gd     base for powered machines; Circuit.gd works out power, Wire.gd draws cables
 scripts/Machines.gd    machine models and finishing (Crank, Lever, PushButton, Piston, Rotator, Conveyor, TruckCaller)
 scripts/Rock.gd, Ore.gd  mineable rocks and the chunks they drop
-tests/*Test.tscn       headless gameplay tests (MachineTest covers mining, wires and machines)
+tests/*Test.tscn       headless gameplay tests (MachineTest: mining, wires, machines; SoakTest: random inputs + reload)
+tests/Bench.tscn       balance bench: $/minute for every stripping tool
 tests/Shot.tscn        screenshots (xvfb)
 ```
 All models and sounds are generated in code. The only external assets are two SIL OFL fonts.

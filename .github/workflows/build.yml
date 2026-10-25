@@ -90,6 +90,12 @@ jobs:
           grep -q "MACHINE RESULT: PASS" machine.log
           ! grep -q "SCRIPT ERROR" machine.log
 
+      - name: Soak test (random inputs, save + reload)
+        run: |
+          ${GODOT_BIN} --headless --path . res://tests/SoakTest.tscn --fixed-fps 60 2>&1 | tee soak.log
+          grep -q "SOAK RESULT: PASS" soak.log
+          ! grep -q "SCRIPT ERROR" soak.log
+
       - name: Export Web, Windows and Linux
         run: |
           mkdir -p build/web build/windows build/linux

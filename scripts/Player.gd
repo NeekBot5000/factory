@@ -307,7 +307,8 @@ func primary() -> void:
 		hit.collider.call("on_click", self)
 		return
 	if tool == "wires":
-		wire_click(Machine.of(hit.collider) if not hit.is_empty() else null)
+		# same reach as the hint text, so a click goes where the hint says it will
+		wire_click(Machine.of(look_ray(float(tdef().reach), 1 | 2).get("collider")))
 		return
 	if tool == "hammer":
 		# hammer on a rotator (or something sitting on one): stick it on / let go
@@ -942,7 +943,7 @@ func _update_wire_preview() -> void:
 	if _wire_preview == null:
 		_wire_preview = MeshInstance3D.new()
 		_wire_preview.mesh = LowPoly.box(Vector3(0.02, 0.02, 1.0))
-		_wire_preview.material_override = LowPoly.mat(Color("d9783a"), 0.4, 0.4)
+		_wire_preview.material_override = LowPoly.mat(Color("d9783a"), 0.4, 0.4).duplicate()     # its own copy: it turns red
 		_wire_preview.top_level = true
 		_wire_preview.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(_wire_preview)
