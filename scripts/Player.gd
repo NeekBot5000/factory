@@ -72,6 +72,8 @@ var _combo_t := 0.0
 const COMBO_MAX := 8
 var force_trigger := false       # tests: act as if the mouse button were held
 var lying: Node3D = null         # the hammock you're lying in, if any
+var _hold_yaw := 0.0             # extra turn you've given the thing in your hands (wheel / R)
+var _hold_dist := 0.0            # bigger things are held further away
 var _lie_t := 0.0
 
 
@@ -252,9 +254,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif b.button_index == MOUSE_BUTTON_RIGHT:
 			interact()
 		elif b.button_index == MOUSE_BUTTON_WHEEL_UP:
-			cycle_tool(-1)
+			if held != null:
+				_hold_yaw += deg_to_rad(15.0)      # turn what you're holding
+			else:
+				cycle_tool(-1)
 		elif b.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			cycle_tool(1)
+			if held != null:
+				_hold_yaw -= deg_to_rad(15.0)
+			else:
+				cycle_tool(1)
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var k := (event as InputEventKey).keycode
 		if not controls_enabled:
@@ -263,6 +271,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			interact()
 		elif k == KEY_Q:
 			drop_tool()
+		elif k == KEY_R and held != null:
+			_hold_yaw += PI * 0.5
 		elif k == KEY_ESCAPE:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		elif k == KEY_TAB:
@@ -332,7 +342,7 @@ func look_target_text() -> String:
 	if builder.busy():
 		return builder.hint_text()
 	if held != null:
-		return "[E] drop"
+		return "[E] drop    [Scroll / R] turn"
 	var hit := look_ray(GRAB_REACH, 1 | 2 | Blueprint.LAYER)
 	if hit.is_empty():
 		return ""
@@ -548,8 +558,28 @@ func try_grab() -> bool:
 	held = b
 	add_collision_exception_with(held)
 	held.sleeping = false
+	_hold_yaw = 0.0
+	_hold_dist = maxf(0.0, _body_radius(b) - 0.25) * 1.3
 	Sfx.play("pickup")
 	return true
+
+
+## Rough radius of a body from its collision shapes (so big things are held further out).
+static func _body_radius(b: Node3D) -> float:
+	var r := 0.1
+	for c in b.get_children():
+		var cs := c as CollisionShape3D
+		if cs == null or cs.shape == null:
+			continue
+		var e := 0.1
+		if cs.shape is BoxShape3D:
+			e = (cs.shape as BoxShape3D).size.length() * 0.5
+		elif cs.shape is SphereShape3D:
+			e = (cs.shape as SphereShape3D).radius
+		elif cs.shape is CylinderShape3D:
+			e = Vector2((cs.shape as CylinderShape3D).radius, (cs.shape as CylinderShape3D).height * 0.5).length()
+		r = maxf(r, cs.position.length() + e)
+	return r
 
 
 func drop_held() -> void:
@@ -568,9 +598,9 @@ func _update_held(delta: float) -> void:
 	if not is_instance_valid(held) or held.freeze:
 		held = null
 		return
-	var target := cam.global_transform * (HOLD_OFFSET + (Vector3(0, -0.15, -0.4) if held is Log else Vector3.ZERO))
+	var target := cam.global_transform * (HOLD_OFFSET + (Vector3(0, -0.15, -0.4) if held is Log else Vector3.ZERO) + Vector3(0, -_hold_dist * 0.35, -_hold_dist))
 	var d := target - held.global_position
-	if d.length() > 1.8:
+	if d.length() > 1.8 + _hold_dist:
 		_snag += delta
 		if _snag > 0.5:
 			drop_held()
@@ -579,7 +609,7 @@ func _update_held(delta: float) -> void:
 		_snag = 0.0
 	held.linear_velocity = (d * 16.0).limit_length(28.0)
 	held.angular_velocity = held.angular_velocity.lerp(Vector3.ZERO, minf(1.0, delta * 10.0))
-	var want := Basis(Vector3.UP, _yaw)
+	var want := Basis(Vector3.UP, _yaw + _hold_yaw)
 	if held is Log:
 		want = want * Basis(Vector3.BACK, PI * 0.5)     # carry logs crosswise
 	var q := held.global_basis.get_rotation_quaternion().slerp(want.get_rotation_quaternion(), minf(1.0, delta * 6.0))

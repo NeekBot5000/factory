@@ -67,6 +67,7 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | E or right click | pick up / drop, ship the truck, take an item, cancel a build |
 | Q | drop your tool on the ground |
 | Spin and drop | things keep their momentum, so you can fling them |
+| Scroll or R while holding | turn what you are holding |
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 

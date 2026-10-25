@@ -136,6 +136,8 @@ func _flatbed() -> void:
 	sign.outline_size = 12
 	sign.position = Vector3(0, 2.7, 1.0)
 	sign.modulate = Color("ffe28a")
+	sign.no_depth_test = true          # always readable, even behind a full load
+	sign.render_priority = 10
 	add_child(sign)
 
 

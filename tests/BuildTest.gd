@@ -363,3 +363,33 @@ func new_builds() -> void:
 	player.interact()
 	await frames(5)
 	check(player.lying == null, "E again gets you up")
+	await holding()
+
+
+func holding() -> void:
+	# a big basket is held further out than a small one, and can be turned
+	var small := Builds.finish("basket", main, spot(Vector3(0, 0, -2.0)), 0.0, [], 1.0) as RigidBody3D
+	var big := Builds.finish("basket", main, spot(Vector3(2, 0, -2.0)), 0.0, [], 2.5) as RigidBody3D
+	await frames(10)
+	var dists: Array[float] = []
+	for b in [small, big]:
+		player.held = b
+		player.add_collision_exception_with(b)
+		player.set("_hold_dist", maxf(0.0, Player._body_radius(b) - 0.25) * 1.3)
+		await frames(60)
+		dists.append(b.global_position.distance_to(player.cam.global_position))
+		player.drop_held()
+		await frames(5)
+	check(dists[1] > dists[0] + 0.5, "bigger baskets are held further away (%.2f vs %.2f m)" % [dists[0], dists[1]])
+	player.held = small
+	player.set("_hold_yaw", 0.0)
+	await frames(40)
+	var y0 := small.global_basis.get_euler().y
+	var ev := InputEventKey.new()
+	ev.keycode = KEY_R
+	ev.pressed = true
+	player._unhandled_input(ev)
+	await frames(60)
+	var turned := absf(wrapf(small.global_basis.get_euler().y - y0, -PI, PI))
+	check(turned > 1.2, "R turns what you're holding (%.0f deg)" % rad_to_deg(turned))
+	player.drop_held()
