@@ -8,19 +8,21 @@ const LAUNCH := Vector3(0, 7.5, -11.0)   # local launch velocity
 var arm: Node3D
 var cup_area: Area3D
 var _busy := false
+var _size := 1.0
 
 
-func setup_arm(p_arm: Node3D, cup_local: Vector3) -> void:
+func setup_arm(p_arm: Node3D, cup_local: Vector3, size: float = 1.0) -> void:
 	arm = p_arm
+	_size = size
 	cup_area = Area3D.new()
 	cup_area.collision_layer = 0
 	cup_area.collision_mask = 2
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(0.6, 0.5, 0.6)
+	sh.size = Vector3(0.6, 0.5, 0.6) * size
 	cs.shape = sh
 	cup_area.add_child(cs)
-	cup_area.position = cup_local + Vector3(0, 0.2, 0)
+	cup_area.position = cup_local + Vector3(0, 0.2, 0) * size
 	add_child(cup_area)
 
 
@@ -42,7 +44,7 @@ func fire() -> void:
 	var tw := create_tween()
 	tw.tween_property(arm, "rotation_degrees:x", -105.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_callback(func():
-		var v := global_basis * LAUNCH
+		var v := global_basis * LAUNCH * sqrt(_size)
 		for b in load:
 			if not is_instance_valid(b) or b == held:
 				continue

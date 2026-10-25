@@ -2,7 +2,7 @@ class_name Hammock
 extends StaticBody3D
 ## A leaf hammock strung between two log posts. E to climb in and sway; E again to get out.
 
-var bed_point := Vector3(0, 0.8, 0)
+var bed_h := 0.55     # where you lie, above the base (scaled with the build)
 
 
 func hint_text() -> String:

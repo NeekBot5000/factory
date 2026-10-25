@@ -29,23 +29,23 @@ const CATEGORIES := [
 ]
 
 const SHOP := {
-	"hatchet": {"name": "Trusty Hatchet", "price": 30.0, "cat": "hand_axes", "tag": "Starter",
+	"hatchet": {"name": "Trusty Hatchet", "price": 30.0, "cat": "hand_axes", "tag": "Light",
 		"desc": "A light forged hatchet with a hickory handle. No more bruised hands, and it lifts a palm-sized sheet of bark per swing."},
-	"double_bit": {"name": "Double-Bit Axe", "price": 160.0, "cat": "hand_axes", "tag": "Popular",
+	"double_bit": {"name": "Double-Bit Axe", "price": 160.0, "cat": "hand_axes", "tag": "Balanced",
 		"desc": "Two balanced heads on a straight handle. Swing it sideways in a wide arc to peel off big strips of bark."},
 	"labrys": {"name": "Crescent Labrys", "price": 650.0, "cat": "heavy_axes", "tag": "Heavy",
 		"desc": "A two-handed axe with mirrored crescent blades. A spinning overhead slam strips a huge patch in one blow."},
-	"drill": {"name": "Timber Auger", "price": 2400.0, "cat": "power", "tag": "Power",
+	"drill": {"name": "Timber Auger", "price": 2400.0, "cat": "power", "tag": "Heavy",
 		"desc": "A cordless rotary debarker. Hold the trigger and sweep it across the trunk to strip bark continuously."},
-	"saw": {"name": "Bow Saw", "price": 450.0, "cat": "saws", "tag": "New",
+	"saw": {"name": "Bow Saw", "price": 450.0, "cat": "saws", "tag": "Long reach",
 		"desc": "A steel bow saw. Hold it against a trunk to fell the whole tree, then saw the log into pieces. Logs sell by the metre."},
-	"shears": {"name": "Pruning Shears", "price": 90.0, "cat": "saws", "tag": "Leafy",
+	"shears": {"name": "Pruning Shears", "price": 90.0, "cat": "saws", "tag": "Light",
 		"desc": "Long-reach shears. Snip big clumps of leaves off bushes and tree crowns. Leaves don't sell for much, but there are tons of them."},
-	"hammer": {"name": "Builder's Hammer", "price": 120.0, "cat": "building", "tag": "Build",
+	"hammer": {"name": "Builder's Hammer", "price": 120.0, "cat": "building", "tag": "Compact",
 		"desc": "Build things out of what you gather: pick a plan, set it down, then drop the materials into it."},
-	"vacuum": {"name": "Leaf Vacuum", "price": 1200.0, "cat": "gadgets", "tag": "Handy",
+	"vacuum": {"name": "Leaf Vacuum", "price": 1200.0, "cat": "gadgets", "tag": "Bulky",
 		"desc": "Hold the trigger to suck up loose bark and boxes. They float in front of the nozzle until you let go."},
-	"phone": {"name": "TimberPhone", "price": 350.0, "cat": "gadgets", "tag": "Anywhere",
+	"phone": {"name": "TimberPhone", "price": 350.0, "cat": "gadgets", "tag": "Pocket-size",
 		"desc": "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it."},
 }
 const SHOP_ORDER := ["hatchet", "double_bit", "labrys", "saw", "shears", "drill", "hammer", "vacuum", "phone"]

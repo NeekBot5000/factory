@@ -7,11 +7,14 @@ const LAYER := 64
 
 var id := ""
 var height := Builds.HOOP_DEFAULT
+var size := 1.0
+var _label: Label3D
 var needs := {}
 var have := {}
 var _parts: Array = []
 var _filled: Array = []          # per part: Color or null
 var _stored: Array = []          # bodies swallowed so far (hidden, frozen) so cancel can give them back
+var _worth := 0.0                # what the materials put in would have sold for
 var _area: Area3D
 var _main: Node
 var _t := 0.0
@@ -29,26 +32,28 @@ static func ghost_mat(valid: bool = true) -> StandardMaterial3D:
 	return m
 
 
-func setup(p_id: String, p_height: float, main: Node) -> void:
+func setup(p_id: String, p_height: float, main: Node, p_size: float = 1.0) -> void:
 	id = p_id
 	height = p_height
+	size = p_size
 	_main = main
-	needs = (Builds.BUILDS[id].needs as Dictionary).duplicate()
+	needs = Builds.needs_for(id, size)
 	for r in needs:
 		have[r] = 0
 	collision_layer = LAYER
 	collision_mask = 0
 	if _ghost == null:
 		_ghost = ghost_mat(true)
-	_parts = Builds.make(id, self, height)
+	_parts = Builds.make(id, self, height, size)
 	var aabb := AABB()
 	var first := true
+	var inv := global_transform.affine_inverse()
 	for p in _parts:
 		var mi: MeshInstance3D = p.mi
 		mi.material_override = _ghost
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_filled.append(null)
-		var a: AABB = mi.transform * mi.get_aabb()
+		var a: AABB = (inv * mi.global_transform) * mi.get_aabb()
 		aabb = a if first else aabb.merge(a)
 		first = false
 	# something to look at (E cancels) and a generous drop zone around the hologram
@@ -68,14 +73,40 @@ func setup(p_id: String, p_height: float, main: Node) -> void:
 	acs.position = aabb.get_center()
 	_area.add_child(acs)
 	add_child(_area)
+	# floating counter of what it still needs
+	_label = make_label()
+	_label.position = Vector3(0, aabb.end.y + 0.35, 0)
+	add_child(_label)
+	_update_label()
 	add_to_group("blueprints")
 
 
-func hint_text() -> String:
+## The floating "still needs" counter used on plans and on the placement hologram.
+static func make_label() -> Label3D:
+	var l := Label3D.new()
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.font = load("res://assets/fonts/Fredoka.ttf")
+	l.font_size = 44
+	l.pixel_size = 0.004
+	l.outline_size = 14
+	l.outline_modulate = Color(0.05, 0.08, 0.12, 0.85)
+	l.modulate = Color("bfeaff")
+	l.no_depth_test = true
+	l.fixed_size = false
+	return l
+
+
+func _update_label() -> void:
 	var bits: Array[String] = []
 	for r in needs:
-		bits.append("%d/%d %s" % [have[r], needs[r], Builds.RES_NAME[r]])
-	return "   ".join(bits) + "      [E] cancel"
+		var left := int(needs[r]) - int(have[r])
+		if left > 0:
+			bits.append("%d %s" % [left, Builds.RES_NAME[r]])
+	_label.text = "  ·  ".join(bits)
+
+
+func hint_text() -> String:
+	return "[E] cancel"
 
 
 func on_use(_player: Node) -> void:
@@ -102,6 +133,7 @@ func _physics_process(delta: float) -> void:
 func _absorb(b: RigidBody3D, r: Dictionary) -> void:
 	var take := mini(int(r.amount), int(needs[r.res]) - int(have[r.res]))
 	have[r.res] = int(have[r.res]) + take
+	_update_label()
 	# parts fill in proportion: with 50 bark and 16 bark parts, a part turns solid every ~3 bark
 	var idx: Array[int] = []
 	var filled := 0
@@ -125,6 +157,7 @@ func _absorb(b: RigidBody3D, r: Dictionary) -> void:
 			mi.scale = Vector3.ONE * 1.25
 			tw.tween_property(mi, "scale", Vector3.ONE, 0.2).set_trans(Tween.TRANS_BACK)
 			filled += 1
+	_worth += Truck.sale_value(b)
 	# the material flies into place and disappears into the build
 	b.freeze = true
 	b.set_meta("bp_layer", b.collision_layer)
@@ -154,7 +187,9 @@ func _complete() -> void:
 		if _parts[p_i].res != "":
 			colors.append(_filled[p_i] if _filled[p_i] != null else (_parts[p_i].real as StandardMaterial3D).albedo_color)
 	var world := get_parent()
-	var obj := Builds.finish(id, world, global_transform, height, colors)
+	var obj := Builds.finish(id, world, global_transform, height, colors, size)
+	# sells for a bit less than the materials that went into it
+	obj.set_meta("sale_value", snappedf(_worth * 0.85, 0.01))
 	for b in _stored:
 		if is_instance_valid(b):
 			b.queue_free()

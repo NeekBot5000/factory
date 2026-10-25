@@ -173,8 +173,8 @@ func _on_tools_changed() -> void:
 
 
 func cycle_tool(step: int) -> void:
-	if tool == "hammer":
-		builder.scroll(step)     # with the hammer out, the wheel picks what to build
+	if tool == "hammer" and builder.busy():
+		builder.scroll(step)     # while placing a build, the wheel resizes it
 		return
 	var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.in_toolbar(t))
 	var i := owned.find(tool)
@@ -572,7 +572,7 @@ func _physics_process(delta: float) -> void:
 			get_up()
 		else:
 			_lie_t += delta
-			global_position = lying.global_transform * Vector3(sin(_lie_t * 0.9) * 0.04, 0.55, 0)
+			global_position = lying.global_transform * Vector3(sin(_lie_t * 0.9) * 0.04, float(lying.get("bed_h")), 0)
 			head.position.y = 0.3
 			cam.rotation.z = sin(_lie_t * 0.9) * 0.03
 			velocity = Vector3.ZERO

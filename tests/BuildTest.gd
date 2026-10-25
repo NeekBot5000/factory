@@ -187,10 +187,16 @@ func run() -> void:
 	var ground := player.global_position - player.global_basis.z * 2.5
 	ground.y = main.terrain.height_at(ground.x, ground.z)
 	await aim_at(ground, 2.5)
-	player.builder.selected = Builds.ORDER.find("basket")
 	player.primary()
 	await frames(3)
-	check(player.builder.state == "place", "hammer click shows the hologram")
+	check(main.shop_ui is BuildMenu, "clicking with the hammer opens the build menu")
+	(main.shop_ui as BuildMenu).call("_pick", "basket")
+	await frames(3)
+	check(main.shop_ui == null and player.builder.state == "place", "picking a plan shows its hologram")
+	player.builder.scroll(-1)
+	check(player.builder.size() > 1.0 and Builds.needs_for("basket", player.builder.size()).bark > 50, "scrolling makes it bigger and dearer (%sx: %s)" % [str(player.builder.size()), Builds.needs_text("basket", player.builder.size())])
+	player.builder.scroll(1)
+	await frames(3)
 	player.primary()
 	await frames(3)
 	var bps := get_tree().get_nodes_in_group("blueprints")
@@ -215,7 +221,7 @@ func run() -> void:
 		await frames(4)
 		check(main.chips.size() >= chips_before + pieces and get_tree().get_nodes_in_group("blueprints").is_empty(), "E on the plan cancels it and all %d pieces drop out" % pieces)
 	# build it for real
-	player.primary()
+	player.builder.start("basket")
 	await frames(2)
 	player.primary()
 	await frames(3)
@@ -233,14 +239,15 @@ func run() -> void:
 	var baskets := get_tree().get_nodes_in_group("baskets")
 	check(baskets.size() == 1, "50 bark of any kind builds a basket")
 	if baskets.size() == 1:
+		var sv := float((baskets[0] as Node).get_meta("sale_value", 0.0))
+		check(sv > 20.0 and sv < 50.0 * 0.6 * 1.6, "the basket sells for a bit less than its bark ($%.2f)" % sv)
+	if baskets.size() == 1:
 		check((baskets[0] as Node).is_in_group("grabbable"), "the basket can be picked up")
 	# --- hammer: hoop with a custom height
-	player.builder.scroll(Builds.ORDER.find("hoop") - player.builder.selected)
-	check(player.builder.current() == "hoop", "scrolling picks the hoop")
 	var g2 := player.global_position + player.global_basis.x * 3.0
 	g2.y = main.terrain.height_at(g2.x, g2.z)
 	await aim_at(g2, 3.0)
-	player.primary()
+	player.builder.start("hoop")
 	await frames(3)
 	player.primary()
 	await frames(3)

@@ -17,6 +17,16 @@ const BUILDS := {
 	"catapult": {"name": "Catapult", "needs": {"log": 3, "bark": 10, "leaf": 6}},
 }
 const ORDER := ["basket", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult"]
+const CATEGORIES := [
+	{"name": "Storage", "items": ["basket", "rack"]},
+	{"name": "Furniture", "items": ["bench", "hammock"]},
+	{"name": "Fire & Garden", "items": ["campfire", "compost"]},
+	{"name": "Workshop", "items": ["chute", "catapult"]},
+	{"name": "Fun", "items": ["ball", "hoop"]},
+]
+const SIZES := [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
+
+static var _S := 1.0     # scale applied to colliders while finishing a sized build
 const RES_NAME := {"bark": "bark", "log": "log", "leaf": "leaves"}
 
 const HOOP_MIN := 1.8
@@ -24,9 +34,18 @@ const HOOP_MAX := 4.5
 const HOOP_DEFAULT := 3.05
 
 
-static func needs_text(id: String) -> String:
-	var parts: Array[String] = []
+## Bigger builds cost more: materials scale with the footprint (size squared), at least 1 of each.
+static func needs_for(id: String, size: float = 1.0) -> Dictionary:
+	var out := {}
 	var n: Dictionary = BUILDS[id].needs
+	for r in n:
+		out[r] = maxi(1, int(ceil(float(n[r]) * size * size - 0.001)))
+	return out
+
+
+static func needs_text(id: String, size: float = 1.0) -> String:
+	var parts: Array[String] = []
+	var n := needs_for(id, size)
 	for r in n:
 		parts.append("%d %s" % [n[r], RES_NAME[r]])
 	return "  +  ".join(parts)
@@ -44,8 +63,15 @@ static func resource_of(body: Node) -> Dictionary:
 
 
 ## Builds the model's parts under `parent`. Returns [{mi, res, real}] - res "" for finishing parts.
-static func make(id: String, parent: Node3D, height: float = HOOP_DEFAULT) -> Array:
+## Parts hang off a "Model" node scaled to `size`; the hoop keeps its rim at `height` whatever the size.
+static func make(id: String, root: Node3D, height: float = HOOP_DEFAULT, size: float = 1.0) -> Array:
 	var parts: Array = []
+	var parent := Node3D.new()
+	parent.name = "Model"
+	parent.scale = Vector3.ONE * size
+	root.add_child(parent)
+	if id == "hoop":
+		height = height / size
 	match id:
 		"basket": _basket(parent, parts)
 		"hoop": _hoop(parent, parts, height)
@@ -278,7 +304,8 @@ static func _catapult(root: Node3D, parts: Array) -> void:
 
 
 ## The finished object, coloured with the materials that went into it.
-static func finish(id: String, world: Node, xform: Transform3D, height: float, colors: Array) -> Node3D:
+static func finish(id: String, world: Node, xform: Transform3D, height: float, colors: Array, size: float = 1.0) -> Node3D:
+	_S = size
 	var body: Node3D
 	match id:
 		"basket":
@@ -291,8 +318,8 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 		"ball":
 			var ball := Basketball.new()
 			world.add_child(ball)
-			ball.global_transform = xform * Transform3D(Basis(), Vector3(0, Basketball.R + 0.02, 0))
-			ball.setup(colors)
+			ball.global_transform = xform * Transform3D(Basis(), Vector3(0, Basketball.R * size + 0.02, 0))
+			ball.setup(colors, size)
 			ball.add_to_group("builds")
 			return ball
 		"campfire":
@@ -309,7 +336,7 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 		(body as StaticBody3D).collision_layer = 1
 	world.add_child(body)
 	body.global_transform = xform
-	var parts := make(id, body, height)
+	var parts := make(id, body, height, size)
 	var k := 0
 	for p in parts:
 		if p.res != "" and k < colors.size():
@@ -324,23 +351,24 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			body.add_to_group("grabbable")
 			body.add_to_group("baskets")
 		"hoop":
-			var top := height + 0.6
+			var hh := height / size
+			var top := hh + 0.6
 			_box_col(body, Vector3(0.22, top, 0.22), Vector3(0, top * 0.5, -0.45))
-			_box_col(body, Vector3(1.2, 0.84, 0.05), Vector3(0, height + 0.3, -0.2))
+			_box_col(body, Vector3(1.2, 0.84, 0.05), Vector3(0, hh + 0.3, -0.2))
 			# a real rim the ball can clang off, and a net sensor to count baskets
-			var c := Vector3(0, height, 0.1)
+			var c := Vector3(0, hh, 0.1) * size
 			for i in 12:
 				var a := TAU * i / 12.0
-				_box_col(body, Vector3(0.04, 0.04, 0.04), c + Vector3(cos(a), 0, sin(a)) * 0.24)
+				_box_col(body, Vector3(0.04, 0.04, 0.04), c / size + Vector3(cos(a), 0, sin(a)) * 0.24)
 			var net := Area3D.new()
 			net.collision_layer = 0
 			net.collision_mask = 2
 			var ncs := CollisionShape3D.new()
 			var nsh := CylinderShape3D.new()
-			nsh.radius = 0.16
-			nsh.height = 0.12
+			nsh.radius = 0.16 * size
+			nsh.height = 0.12 * size
 			ncs.shape = nsh
-			ncs.position = c + Vector3(0, -0.12, 0)
+			ncs.position = c + Vector3(0, -0.12, 0) * size
 			net.add_child(ncs)
 			body.add_child(net)
 			net.body_entered.connect(func(b):
@@ -355,8 +383,9 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 				_box_col(body, Vector3(0.26, 0.42, 0.26), Vector3(sx, 0.21, 0))
 		"campfire":
 			_box_col(body, Vector3(0.6, 0.16, 0.6), Vector3(0, 0.08, 0))
-			(body as Campfire).light_up()
+			(body as Campfire).light_up(size)
 		"hammock":
+			(body as Hammock).bed_h = 0.55 * size
 			for sx in [-1.35, 1.35]:
 				_box_col(body, Vector3(0.22, 1.75, 0.22), Vector3(sx, 0.875, 0))
 			_box_col(body, Vector3(2.0, 0.08, 0.85), Vector3(0, 0.72, 0))
@@ -379,7 +408,7 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 					_rot_col(body, Vector3(0.13, 1.0, 0.13), Vector3(sx, 0.46, sz * 0.24), Basis(Vector3.RIGHT, deg_to_rad(sz * 22.0)))
 		"compost":
 			_box_col(body, Vector3(1.2, 0.3, 1.2), Vector3(0, 0.15, 0))
-			(body as Compost).activate(body.get_node("Mound"))
+			(body as Compost).activate(body.get_node("Model/Mound"), size)
 		"catapult":
 			for sx in [-0.45, 0.45]:
 				_box_col(body, Vector3(0.18, 0.18, 1.9), Vector3(sx, 0.1, 0.2))
@@ -387,7 +416,7 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			var cup := CAT_PIVOT + Vector3(0, 0, CAT_ARM)
 			_box_col(body, Vector3(0.42, 0.04, 0.42), cup + Vector3(0, 0.03, 0))
 			_box_col(body, Vector3(0.42, 0.18, 0.04), cup + Vector3(0, 0.12, 0.2))
-			(body as Catapult).setup_arm(body.get_node("Arm"), cup)
+			(body as Catapult).setup_arm(body.get_node("Model/Arm"), cup * size, size)
 	body.add_to_group("builds")
 	return body
 
@@ -395,16 +424,16 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 static func _rot_col(body: Node3D, size: Vector3, pos: Vector3, basis: Basis) -> void:
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = size
+	sh.size = size * _S
 	cs.shape = sh
-	cs.transform = Transform3D(basis, pos)
+	cs.transform = Transform3D(basis, pos * _S)
 	body.add_child(cs)
 
 
 static func _box_col(body: Node3D, size: Vector3, pos: Vector3) -> void:
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = size
+	sh.size = size * _S
 	cs.shape = sh
-	cs.position = pos
+	cs.position = pos * _S
 	body.add_child(cs)

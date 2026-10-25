@@ -10,37 +10,39 @@ var _area: Area3D
 var _burning := {}          # body -> [seconds left, total]
 var _t := 0.0
 var _crackle := 0.0
+var scale_hint := 1.0
 
 
-func light_up() -> void:
+func light_up(size: float = 1.0) -> void:
+	scale_hint = size
 	var fire := LowPoly.mat(Color("ff8a2b"), 0.5, 2.5)
 	var core := LowPoly.mat(Color("ffd36a"), 0.5, 3.0)
 	for k in 5:
 		var a := TAU * k / 5.0
-		var mi := LowPoly.mesh_instance(self, LowPoly.cyl(0.0, 0.09, 0.45, 5), fire, Vector3(cos(a) * 0.1, 0.35, sin(a) * 0.1))
+		var mi := LowPoly.mesh_instance(self, LowPoly.cyl(0.0, 0.09, 0.45, 5), fire, Vector3(cos(a) * 0.1, 0.35, sin(a) * 0.1) * size, Vector3.ZERO, Vector3.ONE * size)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_flames.append(mi)
-	var c := LowPoly.mesh_instance(self, LowPoly.cyl(0.0, 0.1, 0.35, 5), core, Vector3(0, 0.3, 0))
+	var c := LowPoly.mesh_instance(self, LowPoly.cyl(0.0, 0.1, 0.35, 5), core, Vector3(0, 0.3, 0) * size, Vector3.ZERO, Vector3.ONE * size)
 	c.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_flames.append(c)
 	_light = OmniLight3D.new()
 	_light.light_color = Color("ffa04a")
 	_light.light_energy = 1.6
-	_light.omni_range = 5.0
-	_light.position = Vector3(0, 0.6, 0)
+	_light.omni_range = 5.0 * size
+	_light.position = Vector3(0, 0.6, 0) * size
 	add_child(_light)
 	var smoke := Nature.Smoke.new()
-	smoke.position = Vector3(0, 0.7, 0)
-	smoke.scale = Vector3.ONE * 0.6
+	smoke.position = Vector3(0, 0.7, 0) * size
+	smoke.scale = Vector3.ONE * 0.6 * size
 	add_child(smoke)
 	_area = Area3D.new()
 	_area.collision_layer = 0
 	_area.collision_mask = 2
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(0.9, 0.7, 0.9)
+	sh.size = Vector3(0.9, 0.7, 0.9) * size
 	cs.shape = sh
-	cs.position = Vector3(0, 0.45, 0)
+	cs.position = Vector3(0, 0.45, 0) * size
 	_area.add_child(cs)
 	add_child(_area)
 
@@ -51,7 +53,7 @@ func _physics_process(delta: float) -> void:
 	_t += delta
 	for i in _flames.size():
 		var f := _flames[i]
-		f.scale = Vector3(1.0, 0.8 + 0.35 * sin(_t * (9.0 + i) + i * 1.7) + randf() * 0.15, 1.0)
+		f.scale = Vector3(1.0, 0.8 + 0.35 * sin(_t * (9.0 + i) + i * 1.7) + randf() * 0.15, 1.0) * scale_hint
 	_light.light_energy = 1.4 + sin(_t * 13.0) * 0.2 + randf() * 0.25
 	_crackle -= delta
 	if _crackle <= 0.0:
@@ -74,7 +76,7 @@ func _physics_process(delta: float) -> void:
 			_burning.erase(b)
 			continue
 		var body := b as Node3D
-		if body.global_position.distance_to(global_position + Vector3(0, 0.4, 0)) > 1.2:
+		if body.global_position.distance_to(global_position + Vector3(0, 0.4, 0) * scale_hint) > 1.2 * scale_hint:
 			_burning.erase(b)          # pulled out of the fire in time
 			continue
 		var st: Array = _burning[b]

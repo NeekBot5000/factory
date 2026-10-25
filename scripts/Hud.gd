@@ -15,10 +15,6 @@ var flash: ColorRect
 var fade: ColorRect
 var toast_box: VBoxContainer
 var toolbar: HBoxContainer
-var build_menu: PanelContainer
-var build_list: VBoxContainer
-var _menu_sel := -1
-var _menu_state := ""
 var font_body: FontVariation
 var font_bold: FontVariation
 var font_title: FontVariation
@@ -103,22 +99,6 @@ void fragment() {
 	toolbar.add_theme_constant_override("separation", 6)
 	toolbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(toolbar)
-	# hammer build menu (right side)
-	build_menu = PanelContainer.new()
-	build_menu.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.72), 12, 14))
-	build_menu.anchor_left = 1.0
-	build_menu.anchor_right = 1.0
-	build_menu.anchor_top = 0.5
-	build_menu.anchor_bottom = 0.5
-	build_menu.offset_right = -20
-	build_menu.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	build_menu.grow_vertical = Control.GROW_DIRECTION_BOTH
-	build_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	build_menu.visible = false
-	root.add_child(build_menu)
-	build_list = VBoxContainer.new()
-	build_list.add_theme_constant_override("separation", 3)
-	build_menu.add_child(build_list)
 	# hint
 	hint = _label("", 17, Color.WHITE)
 	hint.anchor_left = 0.5
@@ -274,7 +254,6 @@ func _process(delta: float) -> void:
 	var ui_open: bool = main.shop_ui != null
 	crosshair.visible = not ui_open
 	toolbar.visible = not ui_open
-	_update_build_menu()
 	money_lbl.get_parent().visible = not ui_open
 	if crosshair.visible:
 		crosshair.queue_redraw()
@@ -310,32 +289,3 @@ class HandIcon extends Control:
 		for p in [Vector2(-8, 13), Vector2(8, 13), Vector2(8, 20), Vector2(-8, 20)]:
 			cuff.append(xf * (p * k))
 		draw_colored_polygon(cuff, sleeve)
-
-
-func _update_build_menu() -> void:
-	var show := player.tool == "hammer" and not (main.shop_ui != null)
-	build_menu.visible = show
-	if not show:
-		return
-	var sel := player.builder.selected
-	if sel == _menu_sel and player.builder.state == _menu_state:
-		return
-	_menu_sel = sel
-	_menu_state = player.builder.state
-	for c in build_list.get_children():
-		c.queue_free()
-	build_list.add_child(_label("BUILD", 13, Color(1, 1, 1, 0.55), font_bold))
-	for i in Builds.ORDER.size():
-		var id: String = Builds.ORDER[i]
-		var on := i == sel
-		var row := PanelContainer.new()
-		row.add_theme_stylebox_override("panel", _flat(Color("ffcf6a") if on else Color(1, 1, 1, 0.06), 8, 7))
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var v := VBoxContainer.new()
-		v.add_theme_constant_override("separation", 0)
-		row.add_child(v)
-		var ink := Color("2b2118") if on else Color.WHITE
-		v.add_child(_label(Builds.BUILDS[id].name, 14, ink, font_bold))
-		v.add_child(_label(Builds.needs_text(id), 11, ink.lerp(Color(0.5, 0.5, 0.5), 0.35)))
-		build_list.add_child(row)
-	build_list.add_child(_label("[Scroll] choose   [Click] build", 12, Color(1, 1, 1, 0.5)))

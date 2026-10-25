@@ -27,9 +27,11 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 
 Logs keep their bark, so you can still strip them; the mill pays for timber plus a little for bark left on.
 
-**Building:** take out the hammer, scroll to pick a plan, click for a hologram, click to set it down (the hoop
-then takes its height from where you look). Drop materials into the hologram and each piece fills in; any
-kind of bark or wood counts, leaves too. E on a plan cancels it and gives everything back.
+**Building:** take out the hammer and click to open the build menu (categories, previews). Pick a plan and its
+hologram follows your aim; scroll to make it bigger (bigger costs more), click to set it down (the hoop then
+takes its height from where you look). Drop materials into the hologram - it shows what it still needs - and each
+piece fills in; any kind of bark or wood counts, leaves too. E on a plan cancels it and gives everything back.
+Movable builds (baskets, balls) sell in the log truck for a bit less than their materials.
 
 | Build | Needs | What it does |
 |---|---|---|
@@ -59,7 +61,7 @@ kind of bark or wood counts, leaves too. E on a plan cancels it and gives everyt
 | E or right click | pick up / drop, ship the truck, take an item, cancel a build |
 | Q | drop your tool on the ground |
 | Spin and drop | things keep their momentum, so you can fling them |
-| 1-9 / mouse wheel | switch tools (with the hammer, the wheel picks a build) |
+| 1-9 / mouse wheel | switch tools (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 
 Progress saves automatically.

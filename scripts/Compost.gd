@@ -10,18 +10,20 @@ var _area: Area3D
 var _mound: Node3D
 var _stock := 0
 var _rot := 0.0
+var _size := 1.0
 
 
-func activate(mound: Node3D) -> void:
+func activate(mound: Node3D, size: float = 1.0) -> void:
 	_mound = mound
+	_size = size
 	_area = Area3D.new()
 	_area.collision_layer = 0
 	_area.collision_mask = 2
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(1.3, 0.9, 1.3)
+	sh.size = Vector3(1.3, 0.9, 1.3) * size
 	cs.shape = sh
-	cs.position = Vector3(0, 0.5, 0)
+	cs.position = Vector3(0, 0.5, 0) * size
 	_area.add_child(cs)
 	add_child(_area)
 
@@ -51,7 +53,7 @@ func _physics_process(delta: float) -> void:
 			var s := Sapling.new()
 			get_parent().add_child(s)
 			s.setup()
-			s.global_position = global_position + Vector3(0, 1.0, 0)
+			s.global_position = global_position + Vector3(0, 1.0 * _size, 0)
 			s.linear_velocity = Vector3(randf_range(-1.2, 1.2), 3.0, randf_range(-1.2, 1.2))
 			Nature.burst(get_parent(), global_position + Vector3(0, 0.8, 0), Vector3.UP, Color("6aa846"), 16, 1.5, 0.05, 3.0, 1.0, 100.0)
 			Sfx.play("reveal", 1.2, -4.0)

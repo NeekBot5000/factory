@@ -1,17 +1,20 @@
 class_name Builder
 extends Node
-## The hammer's build mode. Scroll to pick a plan, click to get a hologram, move it where you want it and click
-## to set it down (the hoop then takes its height from where you look - click again to lock it in).
-## The placed plan becomes a Blueprint that you fill by dropping materials into it.
+## The hammer's build mode. Click with the hammer to open the build menu, pick something, then a hologram follows
+## your aim: scroll to make it bigger or smaller (bigger costs more), click to set it down (the hoop then takes its
+## height from where you look - click again to lock it in). The placed plan becomes a Blueprint that you fill by
+## dropping materials into it.
 
 const REACH := 9.0
 
 var player: Player
 var main: Node
-var selected := 0
-var state := "idle"          # idle | place | height
+var build_id := "basket"
+var size_i := 2               # index into Builds.SIZES (1.0x)
+var state := "idle"           # idle | place | height
 var _holo: Node3D
 var _holo_parts: Array = []
+var _holo_label: Label3D
 var _holo_h := Builds.HOOP_DEFAULT
 var _valid := false
 var _base := Transform3D.IDENTITY
@@ -27,37 +30,53 @@ func setup(p: Player, m: Node) -> void:
 
 
 func current() -> String:
-	return Builds.ORDER[selected]
+	return build_id
 
 
-func scroll(step: int) -> void:
-	if state == "height":
-		return
-	selected = posmod(selected + step, Builds.ORDER.size())
-	Sfx.play("click")
-	if state == "place":
-		_make_holo()
+func size() -> float:
+	return Builds.SIZES[size_i]
 
 
+## Hammer click when nothing is being placed: open the build menu.
 func click() -> void:
 	match state:
 		"idle":
-			state = "place"
-			_holo_h = Builds.HOOP_DEFAULT
-			_make_holo()
-			Sfx.play("click")
+			main.call("open_build_menu")
 		"place":
 			if not _valid:
 				Sfx.play("thud", 1.4, -6.0)
 				return
 			_base = _holo.global_transform
-			if current() == "hoop":
+			if build_id == "hoop":
 				state = "height"
 				Sfx.play("click")
 			else:
 				_confirm()
 		"height":
 			_confirm()
+
+
+## Picked from the menu: start placing it.
+func start(id: String) -> void:
+	build_id = id
+	size_i = Builds.SIZES.find(1.0)
+	state = "place"
+	_holo_h = Builds.HOOP_DEFAULT
+	_make_holo()
+	Sfx.play("click")
+
+
+## Mouse wheel while placing: resize.
+func scroll(step: int) -> void:
+	if state != "place":
+		return
+	var ni := clampi(size_i - step, 0, Builds.SIZES.size() - 1)
+	if ni != size_i:
+		size_i = ni
+		Sfx.play("click", 0.8 + size() * 0.15)
+		var keep := _holo.global_transform
+		_make_holo()
+		_holo.global_transform = keep
 
 
 func cancel() -> void:
@@ -74,7 +93,7 @@ func busy() -> bool:
 func hint_text() -> String:
 	match state:
 		"place":
-			return "[Click] place    [E] cancel"
+			return "Size %sx    [Scroll] size    [Click] place    [E] cancel" % str(size())
 		"height":
 			return "Look up / down for height    [Click] build    [E] cancel"
 	return ""
@@ -85,9 +104,16 @@ func _make_holo() -> void:
 		_holo.queue_free()
 	_holo = Node3D.new()
 	main.add_child(_holo)
-	_holo_parts = Builds.make(current(), _holo, _holo_h)
+	_holo_parts = Builds.make(build_id, _holo, _holo_h, size())
+	var top := 0.5
 	for p in _holo_parts:
-		(p.mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mi := p.mi as MeshInstance3D
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		top = maxf(top, (mi.get_parent() as Node3D).scale.y * (mi.position.y + mi.get_aabb().end.y))
+	_holo_label = Blueprint.make_label()
+	_holo_label.text = Builds.needs_text(build_id, size()).replace("  +  ", "  ·  ")
+	_holo_label.position = Vector3(0, top + 0.35, 0)
+	_holo.add_child(_holo_label)
 	_paint(true)
 
 
@@ -100,7 +126,7 @@ func _confirm() -> void:
 	var bp := Blueprint.new()
 	main.add_child(bp)
 	bp.global_transform = _holo.global_transform
-	bp.setup(current(), _holo_h, main)
+	bp.setup(build_id, _holo_h, main, size())
 	cancel()
 	player.start_swing()
 	Sfx.play("thud", 1.6)
@@ -115,7 +141,7 @@ func update(_delta: float) -> void:
 	flat = flat.normalized() if flat.length() > 0.01 else Vector3.FORWARD
 	if state == "place":
 		var from := cam.global_position
-		var q := PhysicsRayQueryParameters3D.create(from, from + fwd * REACH, 1)
+		var q := PhysicsRayQueryParameters3D.create(from, from + fwd * REACH * maxf(1.0, size()), 1)
 		q.exclude = [player.get_rid()]
 		var hit := player.get_world_3d().direct_space_state.intersect_ray(q)
 		# look through loose logs and other moving things to the ground underneath
@@ -143,7 +169,7 @@ func update(_delta: float) -> void:
 		if absf(denom) > 0.001:
 			var t := (_base.origin - o).dot(n) / denom
 			if t > 0.0:
-				h = clampf((o + fwd * t).y - _base.origin.y, Builds.HOOP_MIN, Builds.HOOP_MAX)
+				h = clampf((o + fwd * t).y - _base.origin.y, Builds.HOOP_MIN * size(), Builds.HOOP_MAX * size())
 		if absf(h - _holo_h) > 0.04:
 			_holo_h = snappedf(h, 0.05)
 			var keep := _base

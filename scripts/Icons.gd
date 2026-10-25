@@ -45,6 +45,8 @@ func _ready() -> void:
 	add_child(_holder)
 	for id in Tools.SHOP_ORDER:
 		_queue.append(id)
+	for id in Builds.ORDER:
+		_queue.append("build:" + id)
 
 
 func get_icon(id: String) -> Texture2D:
@@ -63,7 +65,8 @@ func _process(_delta: float) -> void:
 		if _wait <= 0:
 			var img := get_texture().get_image()
 			icons[_current_id] = ImageTexture.create_from_image(img)
-			box_art[_current_id] = ImageTexture.create_from_image(_outline_art(img))
+			if not _current_id.begins_with("build:"):
+				box_art[_current_id] = ImageTexture.create_from_image(_outline_art(img))
 			_current.queue_free()
 			_current = null
 			icon_ready.emit(_current_id)
@@ -73,9 +76,14 @@ func _process(_delta: float) -> void:
 	_current_id = _queue.pop_front()
 	_current = Node3D.new()
 	_holder.add_child(_current)
-	var m := Tools.build_model(_current_id, _current)
-	# show axes diagonally like a product shot
-	_current.rotation_degrees = Vector3(0, 90, -35) if _current_id != "drill" and _current_id != "phone" else Vector3(0, 120, 0)
+	if _current_id.begins_with("build:"):
+		# build previews: the finished thing in its plain materials, three-quarter view
+		Builds.make(_current_id.substr(6), _current, 2.4 if _current_id == "build:hoop" else Builds.HOOP_DEFAULT)
+		_current.rotation_degrees = Vector3(0, 35, 0)
+	else:
+		Tools.build_model(_current_id, _current)
+		# show axes diagonally like a product shot
+		_current.rotation_degrees = Vector3(0, 90, -35) if _current_id != "drill" and _current_id != "phone" else Vector3(0, 120, 0)
 	_frame()
 	_wait = 3
 

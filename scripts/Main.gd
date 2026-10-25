@@ -15,7 +15,7 @@ var ship_truck: Truck
 var van: Truck
 var computer: Computer
 var ui_layer: CanvasLayer
-var shop_ui: ShopUI
+var shop_ui: Control          # whichever full-screen UI is open: the store (computer / phone) or the build menu
 var _dispatch_timer := -1.0
 var grass_mat: ShaderMaterial
 var _grass_hits: Array[Vector4] = []    # xyz = where something hit the ground, w = strength (decays)
@@ -343,6 +343,21 @@ func open_computer() -> void:
 
 func open_phone() -> void:
 	_open_ui(true)
+
+
+## Hammer click: the build menu.
+func open_build_menu() -> void:
+	if shop_ui != null:
+		return
+	player.drop_held()
+	player.controls_enabled = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var bm := BuildMenu.new()
+	shop_ui = bm
+	ui_layer.add_child(bm)
+	bm.setup(self)
+	bm.closed.connect(close_ui)
+	Sfx.play("click")
 
 
 func _open_ui(compact: bool) -> void:
