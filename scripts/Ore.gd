@@ -42,3 +42,7 @@ func setup(p_kind: String, p_size: float = 0.14) -> void:
 	add_child(cs)
 	add_to_group("grabbable")
 	add_to_group("ores")
+
+
+func hint_text() -> String:
+	return "[E] grab    %s  $%.2f" % [KINDS[kind].name, value]

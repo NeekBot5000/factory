@@ -57,3 +57,7 @@ func display_name() -> String:
 	if panels > 1:
 		what += " sheet"
 	return "%s ($%.2f)" % [what, value]
+
+
+func hint_text() -> String:
+	return "[E] grab    $%.2f" % value

@@ -42,7 +42,10 @@ func build(rng: RandomNumberGenerator, s: float, p_ore := "stone") -> void:
 
 
 func hint_text() -> String:
-	return ""
+	match ore:
+		"copper": return "Copper vein  ·  any pickaxe"
+		"iron": return "Iron vein  ·  needs a steel pickaxe"
+	return "Stone  ·  any pickaxe"
 
 
 func on_hit(pos: Vector3, normal: Vector3, tool: String) -> void:
