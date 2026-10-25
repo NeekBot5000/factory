@@ -80,6 +80,16 @@ func _process(_delta: float) -> void:
 		# build previews: the finished thing in its plain materials, three-quarter view
 		Builds.make(_current_id.substr(6), _current, 2.4 if _current_id == "build:hoop" else Builds.HOOP_DEFAULT)
 		_current.rotation_degrees = Vector3(0, 35, 0)
+	elif _current_id.begins_with("bp_") and Builds.BUILDS.has(_current_id.substr(3)):
+		# blueprints: the machine it unlocks, with a roll of plans leaning against it
+		Builds.make(_current_id.substr(3), _current)
+		var roll := Node3D.new()
+		_current.add_child(roll)
+		Tools.build_model(_current_id, roll)
+		roll.position = Vector3(0.55, 0.0, 0.35)
+		roll.rotation_degrees = Vector3(0, 0, -18)
+		roll.scale = Vector3.ONE * 1.6
+		_current.rotation_degrees = Vector3(0, 35, 0)
 	else:
 		Tools.build_model(_current_id, _current)
 		# show axes diagonally like a product shot
