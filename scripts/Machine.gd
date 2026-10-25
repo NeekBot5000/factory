@@ -9,6 +9,8 @@ var size := 1.0
 var powered := false
 var _was_powered := false
 
+var _lamp_shown := -1
+
 static var _next_uid := 1
 
 
@@ -108,6 +110,10 @@ func add_lamp(pos: Vector3) -> MeshInstance3D:
 
 
 func _update_lamp() -> void:
+	# only touch the material when the light actually changes (material writes aren't free, and this runs 20x a second)
+	if _lamp_shown == int(powered):
+		return
+	_lamp_shown = int(powered)
 	var lamp := get_node_or_null("Lamp") as MeshInstance3D
 	if lamp != null:
 		var m := lamp.material_override as StandardMaterial3D

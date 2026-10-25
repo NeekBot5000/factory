@@ -10,6 +10,7 @@ var b: Machine
 var _segs: Array[MeshInstance3D] = []
 var _mat: StandardMaterial3D
 var _last := [Vector3.INF, Vector3.INF]
+var _live := false
 
 
 func setup(p_a: Machine, p_b: Machine) -> void:
@@ -42,6 +43,9 @@ func other(m: Machine) -> Machine:
 
 
 func set_live(on: bool) -> void:
+	if on == _live:
+		return
+	_live = on
 	_mat.emission_energy_multiplier = 0.45 if on else 0.0
 
 
