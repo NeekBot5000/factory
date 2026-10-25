@@ -555,13 +555,75 @@ func try_grab() -> bool:
 	var b := hit.collider as RigidBody3D
 	if b == null or not b.is_in_group("grabbable"):
 		return false
+	# grabbing something that's sitting in a basket picks up the whole basket
+	var bk := _basket_around(b)
+	if bk != null:
+		b = bk
 	held = b
 	add_collision_exception_with(held)
 	held.sleeping = false
+	if b.is_in_group("baskets"):
+		_pack_basket(b)
 	_hold_yaw = 0.0
 	_hold_dist = maxf(0.0, _body_radius(b) - 0.25) * 1.3
 	Sfx.play("pickup")
 	return true
+
+
+func _basket_around(b: RigidBody3D) -> RigidBody3D:
+	if b.is_in_group("baskets"):
+		return null
+	for bk in get_tree().get_nodes_in_group("baskets"):
+		var basket := bk as RigidBody3D
+		var s := float(basket.get_meta("size", 1.0))
+		var lp := basket.to_local(b.global_position)
+		if absf(lp.x) < Builds.BASKET_W * 0.5 * s and absf(lp.z) < Builds.BASKET_D * 0.5 * s and lp.y > -0.05 and lp.y < (Builds.BASKET_H + 0.25) * s:
+			return basket
+	return null
+
+
+## Picking up a basket: everything lying inside it rides along (frozen to the basket) instead of spilling out.
+func _pack_basket(basket: RigidBody3D) -> void:
+	var s := float(basket.get_meta("size", 1.0))
+	var half := Vector3(Builds.BASKET_W * 0.5, 0.0, Builds.BASKET_D * 0.5) * s
+	var top := (Builds.BASKET_H + 0.25) * s
+	var q := PhysicsShapeQueryParameters3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(half.x * 2.0, top, half.z * 2.0)
+	q.shape = sh
+	q.transform = basket.global_transform * Transform3D(Basis(), Vector3(0, top * 0.5, 0))
+	q.collision_mask = 2
+	q.exclude = [basket.get_rid()]
+	var packed: Array = []
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 128):
+		var b := r.collider as RigidBody3D
+		if b == null or b.freeze or b == basket or b.is_in_group("baskets"):
+			continue
+		var lp := basket.to_local(b.global_position)
+		if absf(lp.x) > half.x or absf(lp.z) > half.z or lp.y < -0.05 or lp.y > top:
+			continue
+		b.set_meta("pack_layer", b.collision_layer)
+		b.collision_layer = 0
+		b.freeze = true
+		b.reparent(basket, true)
+		packed.append(b)
+	basket.set_meta("packed", packed)
+
+
+## Putting it down: the contents settle back in, moving with the basket.
+func _unpack_basket(basket: RigidBody3D) -> void:
+	if not basket.has_meta("packed"):
+		return
+	var world := get_parent()
+	for b in basket.get_meta("packed"):
+		if not is_instance_valid(b):
+			continue
+		var rb := b as RigidBody3D
+		rb.reparent(world, true)
+		rb.collision_layer = int(rb.get_meta("pack_layer", 2))
+		rb.freeze = false
+		rb.linear_velocity = basket.linear_velocity
+	basket.remove_meta("packed")
 
 
 ## Rough radius of a body from its collision shapes (so big things are held further out).
@@ -588,6 +650,7 @@ func drop_held() -> void:
 	if is_instance_valid(held):
 		remove_collision_exception_with(held)
 		# it keeps whatever momentum it had in your hands: spin round fast and let go to fling it
+		_unpack_basket(held)
 	held = null
 	Sfx.play("drop", 0.9, -6.0)
 

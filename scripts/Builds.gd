@@ -350,6 +350,7 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 				_box_col(body, Vector3(0.035, BASKET_H, BASKET_D), Vector3(s * BASKET_W * 0.5, BASKET_H * 0.5, 0))
 			body.add_to_group("grabbable")
 			body.add_to_group("baskets")
+			body.set_meta("size", size)
 		"hoop":
 			var hh := height / size
 			var top := hh + 0.6

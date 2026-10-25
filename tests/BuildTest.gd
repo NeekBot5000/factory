@@ -393,3 +393,34 @@ func holding() -> void:
 	var turned := absf(wrapf(small.global_basis.get_euler().y - y0, -PI, PI))
 	check(turned > 1.2, "R turns what you're holding (%.0f deg)" % rad_to_deg(turned))
 	player.drop_held()
+	await carry_full_basket()
+
+
+func carry_full_basket() -> void:
+	var bk := Builds.finish("basket", main, spot(Vector3(-1.5, 0, -1.5)), 0.0, [], 1.0) as RigidBody3D
+	await frames(20)
+	var tr := nearest_tree()
+	var load: Array[Chip] = []
+	for i in 6:
+		var c: Chip = main.spawn_chip(tr.piece_data(1, [Vector2i(i, 1)]), "oak", Vector3.ZERO)
+		c.global_position = bk.global_transform * Vector3(randf_range(-0.2, 0.2), 0.25 + i * 0.05, randf_range(-0.12, 0.12))
+		c.linear_velocity = Vector3.ZERO
+		load.append(c)
+	await frames(60)
+	# pick it up the normal way
+	await aim_at(bk.global_position + Vector3(0, 0.25, 0), 1.4)
+	var ok := player.try_grab()
+	check(ok and player.held == bk, "picked up the basket")
+	# walk off and spin round with it
+	for k in 90:
+		player.global_position += Vector3(0.03, 0, 0.02)
+		player.set("_yaw", player.get("_yaw") + 0.03)
+		await frames(1)
+	player.drop_held()
+	await frames(90)
+	var inside := 0
+	for c in load:
+		var lp := bk.to_local(c.global_position)
+		if absf(lp.x) < 0.4 and absf(lp.z) < 0.3 and lp.y > -0.05 and lp.y < 0.6:
+			inside += 1
+	check(inside >= load.size() - 1, "carrying a basket keeps its contents inside (%d/%d)" % [inside, load.size()])
