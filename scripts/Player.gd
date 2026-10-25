@@ -198,7 +198,7 @@ func _apply_tool_visuals() -> void:
 	if tool != "hands":
 		tool_model = Tools.build_model(tool, tool_root)
 		match tool:
-			"drill", "vacuum", "saw", "shears", "chainsaw", "bucksaw", "twin_auger", "holesaw", "twinvac", "cyclone":
+			"drill", "vacuum", "saw", "shears", "chainsaw", "bucksaw", "twin_auger", "holesaw", "twinvac", "cyclone", "rock_drill", "core_drill":
 				tool_model.rotation_degrees = Vector3(0, 0, 0)
 				tool_model.position = Vector3(0, -0.02, 0.0)
 			_:
@@ -858,7 +858,7 @@ func _physics_process(delta: float) -> void:
 	# continuous tools: run while the button is held
 	var trigger := bool(d.get("hold", false)) and pressing
 	var kind := String(d.get("kind", ""))
-	_drilling = trigger and kind == "drill"
+	_drilling = trigger and (kind == "drill" or kind == "rockdrill")
 	_saw_step(delta, trigger and kind == "saw")
 	_vacuum_step(delta, trigger and kind == "vacuum")
 	builder.update(delta)
@@ -866,7 +866,9 @@ func _physics_process(delta: float) -> void:
 		_drill_cd -= delta
 		if _drill_cd <= 0.0:
 			_drill_cd = float(d.cooldown)
-			if aiming_at_tree():
+			if kind == "rockdrill":
+				drill_rock()
+			elif aiming_at_tree():
 				_do_impact()
 	_since_hurt += delta
 	if _since_hurt > 3.0 and health < max_health and health > 0.0:
@@ -962,6 +964,16 @@ func _update_wire_preview() -> void:
 	_wire_preview.global_transform = Transform3D(Basis.looking_at(d.normalized(), up).scaled(Vector3(1, 1, d.length())), (a + b) * 0.5)
 	var too_far := d.length() > Wire.MAX_LEN
 	(_wire_preview.material_override as StandardMaterial3D).albedo_color = Color("ff5a4a") if too_far else Color("d9783a")
+
+
+## Rock drills: every turn of the bit knocks a chunk off the rock you're holding it on.
+func drill_rock() -> bool:
+	var hit := look_ray(float(tdef().reach), 1)
+	if hit.is_empty() or not hit.collider.has_method("on_hit") or not (hit.collider is Rock):
+		return false
+	hit.collider.call("on_hit", hit.position, hit.normal, tool)
+	_shake = 0.05
+	return true
 
 
 ## Used by tests to drive the drill without a mouse.

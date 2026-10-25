@@ -39,6 +39,8 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | TimberPhone | $350 | the store and the truck, from anywhere (Tab) |
 | Pickaxe | $80 | knocks chunks of stone and copper ore off rocks |
 | Steel Pickaxe | $900 | hits twice as hard and gets through iron veins |
+| Rock Drill | $650 | hold it on a rock: chunks come off about twice as fast as a pickaxe (stone and copper) |
+| Steel Core Drill | $2600 | faster, hits twice as hard, and bores through iron |
 | Wire Spool | $200 | click one machine, then another, to wire them together (again to unwire) |
 
 Logs keep their bark, so you can still strip them. The mill pays well for clean timber, but bark left on drags
@@ -69,6 +71,9 @@ Rocks around the forest are stone; some show orange **copper** veins, and the **
 (south-west of the cabin) is full of copper and silvery **iron**. Every pickaxe hit knocks off a chunk you can
 carry, sell, or drop into a machine's hologram.
 
+The simple machines take stone and copper; the advanced ones (piston, rotator, truck caller) need iron ore,
+which only the Steel Pickaxe or Steel Core Drill can get out of a vein.
+
 Machines need their **blueprint** from TimberMart first (the build menu shows them greyed out until then). They
 always build on a 1 m grid facing one of four ways, so belts line up end to end; their front points away from
 you as you place them. Power comes from a **hand crank** (E winds it: 15 s per wind, up to two minutes) and runs
@@ -83,9 +88,9 @@ Mined-out rocks slowly grow back (one every minute or so, never right next to yo
 | Conveyor | 5 bark + 2 stone | powered belt that carries things forward |
 | Ramp Conveyor | 8 bark + 2 stone | carries things up a metre; it fills its own cell and the one in front |
 | Stone Pillar | 4 stone | a 1 m block (no blueprint needed); a belt on top carries on from the top of a ramp |
-| Piston | 8 stone + 2 copper + 1 log | shoves its plate out a metre while powered |
-| Rotator | 4 stone + 1 copper + 1 log | turntable: hammer it to stick what's on it, then it spins it round |
-| Truck Caller | 3 stone + 1 log + 3 copper | sends the log truck to the mill when it gets power |
+| Piston | 6 stone + 3 iron + 2 copper | shoves its iron plate out a metre while powered |
+| Rotator | 4 stone + 2 iron + 1 copper + 1 log | turntable: hammer it to stick what's on it, then it spins it round |
+| Truck Caller | 3 stone + 3 copper + 2 iron + 1 log | sends the log truck to the mill when it gets power |
 
 The last clump of leaves on any crown always drops one or two saplings, so every tree can be replaced; they take
 five minutes to grow.

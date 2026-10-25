@@ -27,7 +27,7 @@ func secs(s: float) -> void:
 func _ready() -> void:
 	Game.save_enabled = false
 	Game.reset()
-	for id in ["pickaxe", "steel_pick", "wires", "hammer", "shears"]:
+	for id in ["pickaxe", "steel_pick", "rock_drill", "core_drill", "wires", "hammer", "shears"]:
 		Game.owned[id] = true
 	main = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
@@ -44,6 +44,21 @@ func ores() -> Array:
 
 
 ## A flat test floor up in the sky, away from trees and terrain bumps.
+## Stand in front of `at` (from the side away from the rocks' centre) and look straight at it.
+func face(at: Vector3, dist: float) -> void:
+	var stand := at + Vector3(0, 0, dist)
+	stand.y = main.terrain.height_at(stand.x, stand.z) + 0.05
+	player.global_position = stand
+	player.velocity = Vector3.ZERO
+	await frames(2)
+	var to := at - (player.global_position + Vector3(0, 1.58, 0))
+	player.set("_yaw", atan2(-to.x, -to.z))
+	player.set("_pitch", atan2(to.y, Vector2(to.x, to.z).length()))
+	player.rotation.y = atan2(-to.x, -to.z)
+	player.head.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
+	await frames(1)
+
+
 func make_floor() -> void:
 	var sb := LowPoly.static_box(main, Vector3(40, 1, 40), BASE + Vector3(0, -0.5, 0))
 	sb.collision_layer = 1
@@ -115,6 +130,40 @@ func run() -> void:
 	check(not main.regrow_rock(), "but not inside something you've built on the spot")
 	blocker.remove_from_group("builds")
 	blocker.queue_free()
+
+	# --- powered rock drills: hold the trigger on a rock
+	var dr := Rock.new()
+	main.add_child(dr)
+	var dp := Vector3(34, 0, 34)
+	dr.position = Vector3(dp.x, main.terrain.height_at(dp.x, dp.z) + 0.3, dp.z)
+	dr.build(rng, 1.1, "copper")
+	await face(dr.global_position + Vector3(0, 0.15, 0), 1.6)
+	player.equip("rock_drill")
+	await frames(20)
+	var nd := ores().size()
+	player.force_trigger = true
+	await secs(1.5)
+	player.force_trigger = false
+	var drilled := ores().size() - nd
+	check(drilled >= 4, "the rock drill chews chunks off while you hold it on a rock (%d in 1.5 s)" % drilled)
+	var ir := Rock.new()
+	main.add_child(ir)
+	var ip := Vector3(38, 0, 34)
+	ir.position = Vector3(ip.x, main.terrain.height_at(ip.x, ip.z) + 0.3, ip.z)
+	ir.build(rng, 1.1, "iron")
+	await face(ir.global_position + Vector3(0, 0.15, 0), 1.6)
+	var ni := ores().size()
+	player.force_trigger = true
+	await secs(1.0)
+	player.force_trigger = false
+	check(ores().size() == ni, "the plain rock drill can't get through iron")
+	player.equip("core_drill")
+	await frames(20)
+	player.force_trigger = true
+	await secs(1.0)
+	player.force_trigger = false
+	check(ores().size() - ni >= 3, "the steel core drill bores through iron (%d chunks)" % (ores().size() - ni))
+	check(Builds.needs_for("piston").has("iron") and Builds.needs_for("rotator").has("iron") and Builds.needs_for("truck_caller").has("iron") and not Builds.needs_for("conveyor").has("iron"), "advanced machines need iron ore, simple ones don't")
 
 	# --- the last leaves of a crown always hold saplings
 	var t: ForestTree = main.trees[5]

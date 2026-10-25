@@ -80,8 +80,7 @@ and what I need to do.
 * `docs/ideas.md`: prioritised additions, what to cut or park, balance notes.
 
 ## Parked (needs you)
-* **Onboarding / goals checklist.** You had me remove the intro panel. A new player spawns with $0 and no hint.
-  Recommendation: a small goals checklist in a HUD corner that hides itself when done.
+* ~~Onboarding / goals checklist.~~ Decided 26 Oct: no goals list. Players learn by exploring.
 * **Posting the game publicly** (itch.io etc.) for the strangers test needs your accounts and your OK.
 * **Jolt physics warning** ("job system exceeded the maximum number of jobs") appeared once in a soak run. It's
   an engine-level warning that waits rather than crashes; worth watching, nothing to fix in our code.
@@ -92,7 +91,10 @@ Everything left on my list needs a decision from you (below), so I stopped inste
 commits, all pushed to `claude/roblox-islands-factory-game-u7anm4`. All 8 test suites pass, and the
 stability runs (every suite 6 times, plus BuildTest 8 more) are clean after the two flaky tests were fixed.
 
-**Decisions waiting on you (recommendation first):**
+**Your answers (26 Oct):** no goals list (players learn by exploring); advanced machines need iron (done);
+stone and iron-tier drills (done); livestock comes later and needs a purpose (options proposed).
+
+**Decisions that were waiting on you (recommendation first):**
 1. **Onboarding:** add a small goals checklist in a HUD corner (recommended), or keep the game hint-free.
 2. **The 10-strangers test** (`docs/founder-assessment.md`): upload the web build to itch.io and post it once.
    It needs your accounts.

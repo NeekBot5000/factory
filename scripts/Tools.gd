@@ -29,10 +29,12 @@ const TOOLS := {
 	"cyclone": {"name": "Cyclone Vac", "radius": 0.0, "cooldown": 0.1, "impact": 0.0, "hurt": 0.0, "anim": "vacuum", "reach": 12.0, "hold": true, "kind": "vacuum", "range": 12.0, "cone": 0.93, "cap": 25, "launch": true},
 	"pickaxe": {"name": "Pickaxe", "radius": 0.05, "cooldown": 0.6, "impact": 0.5, "hurt": 0.0, "anim": "chop", "reach": 2.5, "mine": 1, "tier": 1},
 	"steel_pick": {"name": "Steel Pickaxe", "radius": 0.05, "cooldown": 0.5, "impact": 0.5, "hurt": 0.0, "anim": "chop", "reach": 2.6, "mine": 2, "tier": 2},
+	"rock_drill": {"name": "Rock Drill", "radius": 0.05, "cooldown": 0.3, "impact": 0.0, "hurt": 0.0, "anim": "drill", "reach": 2.4, "hold": true, "kind": "rockdrill", "mine": 1, "tier": 1},
+	"core_drill": {"name": "Steel Core Drill", "radius": 0.05, "cooldown": 0.25, "impact": 0.0, "hurt": 0.0, "anim": "drill", "reach": 2.5, "hold": true, "kind": "rockdrill", "mine": 2, "tier": 2},
 	"wires": {"name": "Wire Spool", "radius": 0.0, "cooldown": 0.3, "impact": 0.5, "hurt": 0.0, "anim": "snip", "reach": 4.0},
 	"hammer": {"name": "Builder's Hammer", "radius": 0.0, "cooldown": 0.45, "impact": 0.5, "hurt": 0.0, "anim": "hammer", "reach": 2.2},
 }
-const TOOL_ORDER := ["hands", "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "wires", "hammer"]
+const TOOL_ORDER := ["hands", "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "rock_drill", "core_drill", "wires", "hammer"]
 
 const CATEGORIES := [
 	{"id": "all", "name": "Everything"},
@@ -87,6 +89,10 @@ const SHOP := {
 		"desc": "Knocks chunks of stone off rocks, and copper ore out of copper veins. Iron is too hard for it."},
 	"steel_pick": {"name": "Steel Pickaxe", "price": 900.0, "cat": "mining", "tag": "Hardened",
 		"desc": "Hits twice as hard and cuts through iron veins. The quarry in the woods is full of them."},
+	"rock_drill": {"name": "Rock Drill", "price": 650.0, "cat": "mining", "tag": "Powered",
+		"desc": "Hold the trigger on a rock and it chews chunks off about twice as fast as a pickaxe. Stone and copper only."},
+	"core_drill": {"name": "Steel Core Drill", "price": 2600.0, "cat": "mining", "tag": "Hardened",
+		"desc": "A hardened, faster drill that hits twice as hard and bores straight through iron veins."},
 	"wires": {"name": "Wire Spool", "price": 200.0, "cat": "specialty", "tag": "Electric",
 		"desc": "Click one machine, then another, to run a wire between them. Do it again to take the wire down."},
 	"bp_crank": {"name": "Hand Crank Blueprint", "price": 150.0, "cat": "blueprints", "tag": "Power",
@@ -112,7 +118,7 @@ const SHOP := {
 	"phone": {"name": "TimberPhone", "price": 350.0, "cat": "other", "tag": "Pocket-size",
 		"desc": "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it."},
 }
-const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "drill", "twin_auger", "holesaw", "shears", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "wires", "hammer", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_truck_caller", "phone"]
+const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "drill", "twin_auger", "holesaw", "shears", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "rock_drill", "core_drill", "wires", "hammer", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_truck_caller", "phone"]
 
 const WOOD := Color("a0703c")
 const STEEL := Color("c9ced6")
@@ -186,6 +192,8 @@ static func build_model(id: String, parent: Node3D) -> Node3D:
 		"cyclone": _cyclone(root)
 		"pickaxe": _pickaxe(root, false)
 		"steel_pick": _pickaxe(root, true)
+		"rock_drill": _rock_drill(root, false)
+		"core_drill": _rock_drill(root, true)
 		"wires": _wires(root)
 		_:
 			if id.begins_with("bp_"):
@@ -595,3 +603,27 @@ static func _blueprint(root: Node3D, _id: String) -> void:
 		LowPoly.mesh_instance(root, LowPoly.cyl(0.0455, 0.0455, 0.006, 10), white, Vector3(0, 0.04 + k * 0.06, 0))
 	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.002, 0.2, 0.14)), blue, Vector3(0.05, 0.18, -0.07))
 	LowPoly.mesh_instance(root, LowPoly.cyl(0.047, 0.047, 0.015, 10), LowPoly.mat(Color("c9b48a"), 0.9), Vector3(0, 0.16, 0))
+
+
+## Rock drill: a chunky jackhammer body with twin grips and a fat bit that spins (point toward -Z).
+static func _rock_drill(root: Node3D, hardened: bool) -> void:
+	var body_col := Color("d4a52a") if not hardened else Color("3b4f73")
+	var body := LowPoly.mat(body_col, 0.5)
+	var black := LowPoly.mat(Color("222428"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.05, 0.12, 0.05)), black, Vector3(0, 0.02, 0), Vector3(-12, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.07, 0.08, 0.22)), body, Vector3(0, 0.12, -0.06))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.072, 0.025, 0.18)), black, Vector3(0, 0.17, -0.06))
+	for sx in [-1.0, 1.0]:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.01, 0.01, 0.1, 6), black, Vector3(sx * 0.055, 0.12, 0.02), Vector3(0, 0, 90))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.04, 0.045, 0.05, 8), black, Vector3(0, 0.12, -0.19), Vector3(90, 0, 0))
+	var bit := Node3D.new()
+	bit.name = "Bit"
+	bit.position = Vector3(0, 0.12, -0.22)
+	root.add_child(bit)
+	var tip := steel(Color("c9d3e0") if hardened else STEEL, 0.25)
+	LowPoly.mesh_instance(bit, LowPoly.cyl(0.018, 0.018, 0.14, 6), tip, Vector3(0, 0, -0.07), Vector3(90, 0, 0))
+	for k in 4:
+		LowPoly.mesh_instance(bit, LowPoly.box(Vector3(0.05, 0.008, 0.03)), tip, Vector3(0, 0, -0.04 - k * 0.025), Vector3(0, 0, k * 45.0))
+	LowPoly.mesh_instance(bit, LowPoly.cyl(0.0, 0.022, 0.05, 6), tip, Vector3(0, 0, -0.165), Vector3(-90, 0, 0))
+	if hardened:
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.074, 0.012, 0.12)), LowPoly.mat(Color("ff8a3d"), 0.4, 0.6), Vector3(0, 0.1, -0.06))

@@ -58,6 +58,10 @@ func _ready() -> void:
 		[11.0, "m07_quarry", func():
 			player.equip("pickaxe")
 			_stand(Vector3(-22, 0, -14), Vector3(-28, 0, -20), -12)],
+		[13.0, "m08_rock_drill", func():
+			player.equip("rock_drill")],
+		[14.5, "m09_core_drill", func():
+			player.equip("core_drill")],
 	]
 	(plan[0][2] as Callable).call()
 

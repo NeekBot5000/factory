@@ -1,7 +1,7 @@
 class_name Rock
 extends StaticBody3D
 ## A boulder. Plain stone, or with a vein of copper or iron showing through. Pickaxes knock chunks off it until it
-## crumbles away; iron needs a steel pickaxe. Other tools just kick up dust and sparks.
+## crumbles away; iron needs a steel pickaxe (or the steel core drill). Other tools just kick up dust and sparks.
 
 var _color := Color("8a8780")
 var ore := "stone"
@@ -9,6 +9,7 @@ var hp := 6
 var max_hp := 6
 var size := 0.6
 var _mesh: Node3D
+static var _last_told := -100000
 
 
 func build(rng: RandomNumberGenerator, s: float, p_ore := "stone") -> void:
@@ -44,7 +45,7 @@ func build(rng: RandomNumberGenerator, s: float, p_ore := "stone") -> void:
 func hint_text() -> String:
 	match ore:
 		"copper": return "Copper vein  ·  any pickaxe"
-		"iron": return "Iron vein  ·  needs a steel pickaxe"
+		"iron": return "Iron vein  ·  needs a steel pickaxe or core drill"
 	return "Stone  ·  any pickaxe"
 
 
@@ -67,7 +68,10 @@ func on_hit(pos: Vector3, normal: Vector3, tool: String) -> void:
 	if ore == "iron" and tier < 2:
 		# too hard for a basic pick: sparks fly but nothing comes off
 		Nature.burst(parent, pos, normal, Color("ffd36a"), 18, 4.5, 0.015, 6.0, 0.35, 40.0, 3.0)
-		Game.toast.emit("Too hard - needs a steel pickaxe", Color("ffd27a"))
+		# (once in a while: a drill held on it would say it several times a second)
+		if Time.get_ticks_msec() - _last_told > 4000:
+			_last_told = Time.get_ticks_msec()
+			Game.toast.emit("Too hard - needs a steel pickaxe or core drill", Color("ffd27a"))
 		return
 	hp -= power
 	# a chunk breaks off: mostly the vein's ore, sometimes plain stone

@@ -15,16 +15,17 @@ const BUILDS := {
 	"ball": {"name": "Basketball", "needs": {"leaf": 8}},
 	"hoop": {"name": "Basketball Hoop", "needs": {"bark": 12, "log": 1}},
 	"catapult": {"name": "Catapult", "needs": {"log": 3, "bark": 10, "leaf": 6}},
-	# machines: you need the blueprint from TimberMart first ("bp"); they build at 1x on a grid
+	# machines: you need the blueprint from TimberMart first ("bp"); they build at 1x on a grid. The simple ones
+	# take stone and copper; the advanced ones (piston, rotator, truck caller) need iron ore too
 	"crank": {"name": "Hand Crank", "needs": {"stone": 4, "log": 1, "copper": 1}, "bp": "bp_crank"},
 	"lever": {"name": "Lever", "needs": {"stone": 2, "copper": 1}, "bp": "bp_lever"},
 	"button": {"name": "Push Button", "needs": {"log": 1, "stone": 2, "copper": 1}, "bp": "bp_button"},
-	"piston": {"name": "Piston", "needs": {"stone": 8, "copper": 2, "log": 1}, "bp": "bp_piston"},
-	"rotator": {"name": "Rotator", "needs": {"stone": 4, "copper": 1, "log": 1}, "bp": "bp_rotator"},
+	"piston": {"name": "Piston", "needs": {"stone": 6, "iron": 3, "copper": 2}, "bp": "bp_piston"},
+	"rotator": {"name": "Rotator", "needs": {"stone": 4, "iron": 2, "copper": 1, "log": 1}, "bp": "bp_rotator"},
 	"conveyor": {"name": "Conveyor", "needs": {"bark": 5, "stone": 2}, "bp": "bp_conveyor"},
 	"ramp": {"name": "Ramp Conveyor", "needs": {"bark": 8, "stone": 2}, "bp": "bp_ramp"},
 	"pillar": {"name": "Stone Pillar", "needs": {"stone": 4}},
-	"truck_caller": {"name": "Truck Caller", "needs": {"stone": 3, "log": 1, "copper": 3}, "bp": "bp_truck_caller"},
+	"truck_caller": {"name": "Truck Caller", "needs": {"stone": 3, "log": 1, "copper": 3, "iron": 2}, "bp": "bp_truck_caller"},
 }
 const ORDER := ["basket", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult",
 	"crank", "lever", "button", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]

@@ -5,13 +5,14 @@ and risk it adds. "S/M/L" is rough size.
 
 ## Do next: makes the first 10 minutes work
 
+*Decided: no goals list or tutorial hints. Players learn the game by exploring. The items below only make what's
+already there easier to read; none of them tells you what to do.*
+
 | Idea | Why | Size |
 |---|---|---|
-| **Goals checklist** in a HUD corner: strip 10 bark, ship a load, buy a hatchet, build a basket, fell a tree. Hides itself when done | New players spawn with no idea what to do; this is the cheapest fix | S |
-| **First sale celebration**: the truck honks, money ticks up big, a hint points at the computer | Connects "bark" to "money" to "new tool" in one moment | S |
+| **First sale celebration**: the truck honks and the money ticks up big | Makes the bark-to-money moment feel good | S |
 | **Truck shows its load value while you carry bark toward it** (already shows when parked; make it visible from further away) | Shows the reward before the player commits | S |
 | **Graphics quality toggle** (shadows, grass density, view distance) | School laptops and Chromebooks are the likely audience | S |
-| **Hands-only start hint**: the first time you get hurt, a toast says "buy a hatchet on the cabin computer" | Bare hands take 6 health per hit, so steady chopping makes you faint after ~17 hits (about 6 seconds). Without an explanation that feels like a bug | S |
 
 ## Good additions: deepen what's there
 
@@ -51,6 +52,6 @@ measuring tape that shows a log's value when you aim at it with the hammer.
   from the quarry. Rocks now regrow every 75 s, so ore can't run out for good.
 * The crank stores 15 s per wind (max 2 minutes). Until a generator exists, automation needs you nearby. That's
   OK as a first step, but Phase 3 power should come before many more Phase 2 machines.
-* **Iron has no use yet** besides selling (~$6 a chunk), so the $900 Steel Pickaxe is mostly a faster pickaxe
-  until the smelter (Phase 3) exists. Options: make the piston need 2 iron ore (gives iron a purpose now), or
-  hold the steel pickaxe out of the shop until the smelter ships. Recommendation: the piston change; it's one line.
+* **Iron** is now needed by the advanced machines (piston 3, rotator 2, truck caller 2), which gives the Steel
+  Pickaxe and the Steel Core Drill a purpose. Mining tiers: pickaxe -> rock drill (stone and copper, about 2x)
+  -> steel pickaxe / steel core drill (iron).

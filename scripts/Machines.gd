@@ -76,8 +76,11 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			for k in 2:
 				_p(parts, root, LowPoly.box(Vector3(0.84, 0.84, 0.08)), Vector3(0, 0.4, -0.2 + k * 0.5), "copper", copper)
 			var plate := _node(root, "Plate", Vector3(0, 0.4, -0.6))
-			_p(parts, plate, LowPoly.box(Vector3(0.78, 0.78, 0.1)), Vector3.ZERO, "log", logm)
-			_p(parts, plate, LowPoly.cyl(0.06, 0.06, 1.05, 8), Vector3(0, 0, 0.55), "", iron, Vector3(90, 0, 0))
+			# an iron push plate on an iron rod
+			_p(parts, plate, LowPoly.box(Vector3(0.78, 0.78, 0.1)), Vector3.ZERO, "iron", iron)
+			_p(parts, plate, LowPoly.cyl(0.06, 0.06, 1.05, 8), Vector3(0, 0, 0.55), "iron", iron, Vector3(90, 0, 0))
+			for k in 4:
+				_p(parts, plate, LowPoly.cyl(0.03, 0.03, 0.02, 6), Vector3(0.3 if k & 1 else -0.3, 0.3 if k & 2 else -0.3, -0.06), "", dark, Vector3(90, 0, 0))
 		"rotator":
 			for k in 4:
 				var a := TAU * k / 4.0 + PI / 4.0
@@ -86,7 +89,7 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			var table := _node(root, "Table", Vector3(0, 0.33, 0))
 			_p(parts, table, LowPoly.cyl(0.6, 0.6, 0.07, 16), Vector3.ZERO, "log", logm)
 			for k in 4:
-				_p(parts, table, LowPoly.box(Vector3(0.05, 0.012, 1.1)), Vector3(0, 0.04, 0), "", dark, Vector3(0, 45.0 * k, 0))
+				_p(parts, table, LowPoly.box(Vector3(0.05, 0.012, 1.1)), Vector3(0, 0.04, 0), "iron" if k % 2 == 0 else "", iron if k % 2 == 0 else dark, Vector3(0, 45.0 * k, 0))
 		"conveyor":
 			_belt(root, parts, 1.0, 0.0, bark, stone, iron, dark)
 		"ramp":
@@ -110,7 +113,8 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			_p(parts, root, LowPoly.box(Vector3(0.1, 0.12, 0.01)), Vector3(0.15, 1.56, 0.105), "", LowPoly.mat(Color("3f7d4a"), 0.7))
 			for sx in [-0.1, 0.12]:
 				_p(parts, root, LowPoly.cyl(0.035, 0.035, 0.012, 8), Vector3(sx, 1.48, 0.11), "", dark, Vector3(90, 0, 0))
-			_p(parts, root, LowPoly.cyl(0.03, 0.09, 0.2, 10), Vector3(0, 1.9, 0.02), "", iron, Vector3(80, 0, 0))
+			_p(parts, root, LowPoly.cyl(0.03, 0.09, 0.2, 10), Vector3(0, 1.9, 0.02), "iron", iron, Vector3(80, 0, 0))
+			_p(parts, root, LowPoly.box(Vector3(0.66, 0.05, 0.08)), Vector3(0, 1.75, 0.07), "iron", iron)
 
 
 ## A belt `len` long (along Z), rising `rise` toward the front (-Z). Belt top starts at BELT_Y.

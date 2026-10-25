@@ -83,8 +83,10 @@ Next Founder OS skill after the test: `customer-interviews` (to read the feedbac
 
 ## What you need to do (only you can)
 
-1. **Decide on onboarding.** You asked me to remove the intro panel earlier. A quiet goals checklist in a HUD
-   corner (4-5 steps, disappears when done) would likely fix assumption #2 without being in the way. Your call.
+1. ~~Decide on onboarding.~~ **Decided: no goals list; players learn by exploring.** That makes the strangers
+   test more important: watch whether people work out "strip bark -> truck -> computer" on their own. If most
+   do, the discovery is part of the fun. If most quit before their first sale, look at what the world itself can
+   show (things you can see, not text), for example the truck parked where you spawn already does some of that.
 2. **Run the 10-strangers test** (upload to itch.io, post once, read the replies). This needs your accounts, and
    posting publicly is your decision, not mine.
 3. **Try it on a weak machine** (a school laptop or Chromebook) and tell me the frame rate and anything that
@@ -94,8 +96,7 @@ Next Founder OS skill after the test: `customer-interviews` (to read the feedbac
 
 ## What I'll do (Claude, on your go)
 
-* Build the goals checklist if you want it (about 1 hour, with a test).
-* Add a graphics-quality setting (shadows/grass density) if weak machines struggle.
+* Graphics already step down on their own on slow machines; add a manual setting if you want one.
 * Keep running the balance bench whenever tools are added, so prices stay honest.
 * Keep tests and CI green for every change; tonight CI also learned to fail on script errors.
 * Continue Phase 2/3 machines in small, tested slices once you've decided direction.
