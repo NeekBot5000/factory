@@ -92,7 +92,7 @@ commits, all pushed to `claude/roblox-islands-factory-game-u7anm4`. All 8 test s
 stability runs (every suite 6 times, plus BuildTest 8 more) are clean after the two flaky tests were fixed.
 
 **Your answers (26 Oct):** no goals list (players learn by exploring); advanced machines need iron (done);
-stone and iron-tier drills (done); livestock comes later and needs a purpose (options proposed).
+stone and iron-tier drills (done); no animals at all.
 
 **Decisions that were waiting on you (recommendation first):**
 1. **Onboarding:** add a small goals checklist in a HUD corner (recommended), or keep the game hint-free.

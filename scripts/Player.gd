@@ -277,6 +277,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			interact()
 		elif k == KEY_Q:
 			drop_tool()
+		elif k == KEY_X and tool == "hammer" and not builder.busy():
+			hammer_take_down()
 		elif k == KEY_R:
 			# R turns things: the build you're placing, or whatever is in your hands
 			if builder.busy():
@@ -383,7 +385,10 @@ func look_target_text() -> String:
 		if wm != null:
 			return "[Click] start a wire from %s" % Builds.BUILDS[wm.get_meta("build").id].name
 	if tool == "hammer":
-		var bt := build_of(look_ray(GRAB_REACH + 1.0, 1 | 2).get("collider"))
+		var lc: Object = look_ray(GRAB_REACH + 1.0, 1 | 2 | Blueprint.LAYER).get("collider")
+		if lc is Blueprint:
+			return "[X] knock down the plan (materials drop out)"
+		var bt := build_of(lc)
 		if bt != null:
 			var extra := "    [Click] stick / let go" if bt is Rotator else ""
 			return "[X] take down  +$%.2f%s" % [float(bt.get_meta("sale_value", 0.0)), extra]
@@ -879,15 +884,29 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 
 
-## The finished, fixed-in-place build a collider belongs to (benches, chutes, machines...). Loose ones like
-## baskets and balls aren't counted: you sell those in the truck.
+## The finished build a collider belongs to (benches, chutes, machines, baskets...), or null.
 static func build_of(c: Object) -> Node3D:
 	var n := c as Node
 	while n != null and not (n is Window):
 		if n.is_in_group("builds"):
-			return null if n is RigidBody3D else n as Node3D
+			return n as Node3D
 		n = n.get_parent()
 	return null
+
+
+## Hammer + X on whatever you're looking at: a finished build comes down (you get back what it would sell for),
+## a plan that's still a hologram is cancelled (everything you put in drops out).
+func hammer_take_down() -> bool:
+	var c: Object = look_ray(GRAB_REACH + 1.0, 1 | 2 | Blueprint.LAYER).get("collider")
+	if c is Blueprint:
+		(c as Blueprint).cancel()
+		start_swing()
+		return true
+	var b := build_of(c)
+	if b == null:
+		return false
+	take_down(b)
+	return true
 
 
 ## Hammer + X: knock a build down. It's gone, and you get back what it would have sold for.
@@ -944,7 +963,7 @@ func _update_wire_preview() -> void:
 		return
 	if _wire_preview == null:
 		_wire_preview = MeshInstance3D.new()
-		_wire_preview.mesh = LowPoly.box(Vector3(0.02, 0.02, 1.0))
+		_wire_preview.mesh = LowPoly.box(Vector3(0.03, 0.03, 1.0))
 		_wire_preview.material_override = LowPoly.mat(Color("d9783a"), 0.4, 0.4).duplicate()     # its own copy: it turns red
 		_wire_preview.top_level = true
 		_wire_preview.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -961,7 +980,7 @@ func _update_wire_preview() -> void:
 		return
 	_wire_preview.visible = true
 	var up := Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT
-	_wire_preview.global_transform = Transform3D(Basis.looking_at(d.normalized(), up).scaled(Vector3(1, 1, d.length())), (a + b) * 0.5)
+	_wire_preview.global_transform = Transform3D(Basis.looking_at(d.normalized(), up) * Basis.from_scale(Vector3(1, 1, d.length())), (a + b) * 0.5)
 	var too_far := d.length() > Wire.MAX_LEN
 	(_wire_preview.material_override as StandardMaterial3D).albedo_color = Color("ff5a4a") if too_far else Color("d9783a")
 

@@ -114,7 +114,7 @@ five minutes to grow.
 | R while placing a build | turn it |
 | Hammer click on a log | lock it in place (iron bands); click again to unlock |
 | Hammer click on a rotator | stick what's on it to the table / let go |
-| Hammer + X on a build | take it down (you get back what it would sell for) |
+| Hammer + X on a build | take it down (you get back what it would sell for); on a plan, knocks it down and drops the materials |
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 

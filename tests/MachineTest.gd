@@ -45,9 +45,9 @@ func ores() -> Array:
 
 ## A flat test floor up in the sky, away from trees and terrain bumps.
 ## Stand in front of `at` (from the side away from the rocks' centre) and look straight at it.
-func face(at: Vector3, dist: float) -> void:
+func face(at: Vector3, dist: float, on_floor := false) -> void:
 	var stand := at + Vector3(0, 0, dist)
-	stand.y = main.terrain.height_at(stand.x, stand.z) + 0.05
+	stand.y = (BASE.y if on_floor else main.terrain.height_at(stand.x, stand.z)) + 0.05
 	player.global_position = stand
 	player.velocity = Vector3.ZERO
 	await frames(2)
@@ -57,6 +57,19 @@ func face(at: Vector3, dist: float) -> void:
 	player.rotation.y = atan2(-to.x, -to.z)
 	player.head.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
 	await frames(1)
+
+
+func press(k: Key) -> void:
+	var e := InputEventKey.new()
+	e.keycode = k
+	e.physical_keycode = k
+	e.pressed = true
+	Input.parse_input_event(e)
+	await frames(2)
+	var u := e.duplicate() as InputEventKey
+	u.pressed = false
+	Input.parse_input_event(u)
+	await frames(2)
 
 
 func make_floor() -> void:
@@ -319,11 +332,25 @@ func run() -> void:
 	var w := Circuit.toggle_wire(main, tl, place("crank", Vector3(11, 0, 10)))
 	var m0 := Game.money
 	check(Player.build_of(tl.get_node("Model").get_child(0)) == tl, "the hammer knows which build a part belongs to")
-	player.take_down(tl)
+	# through the real key, not a function call: the X key wasn't hooked up at all once and a direct call hid it
+	player.equip("hammer")
+	await frames(20)
+	await face(tl.global_position + Vector3(0, 0.2, 0), 1.6, true)
+	check(player.look_target_text().begins_with("[X] take down"), "looking at a build with the hammer shows [X] take down")
+	await press(KEY_X)
 	await frames(3)
 	check(not is_instance_valid(tl) and is_equal_approx(Game.money, m0 + 5.0), "hammer + X takes a build down and gives back what it's worth")
 	check(w == "added" and get_tree().get_nodes_in_group("wires").all(func(x): return is_instance_valid(x.a) and is_instance_valid(x.b)), "and its wires go with it")
 	check(Player.build_of(on_it) == null, "loose things aren't builds")
+	var plan := Blueprint.new()
+	main.add_child(plan)
+	plan.global_transform = Transform3D(Basis(), BASE + Vector3(14, 0, 10))
+	plan.setup("bench", 3.05, main, 1.0)
+	await frames(2)
+	await face(plan.global_position + Vector3(0, 0.3, 0), 1.8, true)
+	await press(KEY_X)
+	await frames(3)
+	check(not is_instance_valid(plan) or plan.is_queued_for_deletion(), "hammer + X knocks down a plan that's still a hologram")
 	# graphics fallback levels apply cleanly (only real builds step down on their own)
 	var qn := main.get_node("Quality") as Quality
 	qn.apply(3)

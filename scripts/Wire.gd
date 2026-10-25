@@ -25,7 +25,7 @@ func setup(p_a: Machine, p_b: Machine) -> void:
 	_mat.emission_energy_multiplier = 0.0
 	for i in SEGMENTS:
 		var mi := MeshInstance3D.new()
-		mi.mesh = LowPoly.box(Vector3(0.025, 0.025, 1.0))
+		mi.mesh = LowPoly.box(Vector3(0.035, 0.035, 1.0))
 		mi.material_override = _mat
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
@@ -77,4 +77,6 @@ func _redraw() -> void:
 			mi.visible = false
 			continue
 		mi.visible = true
-		mi.global_transform = Transform3D(Basis.looking_at(d.normalized(), Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT).scaled(Vector3(1, 1, d.length() + 0.01)), (p0 + p1) * 0.5)
+		# stretch along the segment's own length (Basis.scaled would stretch along the world's axes instead)
+		var b := Basis.looking_at(d.normalized(), Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT)
+		mi.global_transform = Transform3D(b * Basis.from_scale(Vector3(1, 1, d.length() + 0.02)), (p0 + p1) * 0.5)

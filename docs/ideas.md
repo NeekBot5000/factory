@@ -27,24 +27,7 @@ already there easier to read; none of them tells you what to do.*
 | **Sensor + filter + splitter** (Phase 2) | Makes conveyor lines into actual logic | M |
 | Selected vehicles: mining crawler, forwarder, rail cart with baskets | Big "wow" items for late game | L each |
 
-## Livestock and wildlife (chosen 26 Oct, for later)
-
-Animals are physical like everything else, and they plug into the leaf and sapling loops. **Leaf eaters always
-drop something when they eat** (you asked for this): every few leaves a goat or sheep eats, it drops a manure
-lump, plus a tuft of wool (sheep) or fills its udder for milk (goat). Feeding them is what makes them produce.
-
-| Animal | What it does | Ties into |
-|---|---|---|
-| **Goats** | Eat leaves dropped in their pen's trough (and nibble grass); give milk you collect in a bucket and sell | The leaf pile finally has a use |
-| **Sheep** | Eat leaves too; grow wool you clip off with the **pruning shears** (a second use for them) and sell by the bundle | Shears, truck |
-| **Manure** | Every fed animal drops manure now and then (a physical lump). Drop it by a rooted sapling and it grows ~3x faster; drop it in the compost pile and saplings come quicker | Saplings, compost, replanting |
-| **Bees** | A hive (hammer build) makes saplings within ~10 m grow faster, and fills jars of honey to sell | Replanting |
-| **Chickens** | Peck around the pen, lay eggs to sell, and add a little manure | Pen, truck |
-| **Beavers** (wild) | Live by the river (Phase 3) and gnaw down nearby trees on their own; free logs if you get there first, and later a dam for the water wheel | River, logs |
-| **Deer and birds** (wild) | Ambient life: deer graze and bolt when you come close; birds burst out of a crown when you chop its tree | Atmosphere |
-
-Suggested build order: pen + trough (hammer), goats, manure as fertiliser, then sheep, bees, chickens; wildlife
-once the river exists. Animals come from TimberMart in a crate like tools do.
+*Decided 26 Oct: no animals or wildlife. Not the vibe of the game.*
 
 ## Small, hyper-specific helpers (you liked these)
 
