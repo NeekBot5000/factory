@@ -200,6 +200,16 @@ func run() -> void:
 	check(pil is StaticBody3D and not (pil is Machine) and Builds.fixed("pillar") and Builds.unlocked("pillar"), "the stone pillar is a plain grid block, no blueprint needed")
 	check(absf(on_pil.global_position.y + Machines.BELT_Y - (BASE.y + Machines.BELT_Y + Machines.RAMP_RISE)) < 0.01, "a belt on a pillar lines up with the top of a ramp")
 
+	# the builder won't stack a machine on a machine, but will on a pillar
+	var bld := player.builder
+	var bare := place("pillar", Vector3(12, 0, 12))
+	await frames(2)
+	var cell_m: Dictionary = bld.call("_grid_snap", BASE + Vector3(-4, 1.5, 4))
+	var cell_p: Dictionary = bld.call("_grid_snap", BASE + Vector3(12, 1.5, 12))
+	check(not cell_m.is_empty() and not bool(cell_m.ok), "aiming at a belt doesn't stack another machine on it")
+	check(not cell_p.is_empty() and bool(cell_p.ok) and absf((cell_p.pos as Vector3).y - (BASE.y + 1.0)) < 0.05, "but a pillar's top is fair game")
+	bare.queue_free()
+
 	# --- rotator
 	var rot := place("rotator", Vector3(6, 0, 6)) as Rotator
 	Circuit.toggle_wire(main, crank, rot)

@@ -185,4 +185,6 @@ func _grid_snap(p: Vector3) -> Dictionary:
 		hit = space.intersect_ray(q)
 	if hit.is_empty():
 		return {}
-	return {"pos": hit.position, "ok": (hit.normal as Vector3).y > 0.75 and not (hit.collider is ForestTree) and not (hit.collider is Truck)}
+	# machines don't stack on machines (aiming at a belt to extend it shouldn't pile one on top); pillars are for that
+	var on_machine := Machine.of(hit.collider) != null
+	return {"pos": hit.position, "ok": (hit.normal as Vector3).y > 0.75 and not on_machine and not (hit.collider is ForestTree) and not (hit.collider is Truck)}
