@@ -105,6 +105,27 @@ func _update_label() -> void:
 	_label.text = "  ·  ".join(bits)
 
 
+func save_data() -> Dictionary:
+	return {"kind": "plan", "id": id, "xf": Builds.xf_to_array(global_transform), "height": height, "size": size,
+		"have": have, "filled": Builds.colors_to_array(_filled), "worth": _worth}
+
+
+## Puts back a saved plan's progress (the materials themselves are already part of it).
+func restore(d: Dictionary) -> void:
+	var h: Dictionary = d.get("have", {})
+	for r in needs:
+		have[r] = mini(int(h.get(r, 0)), int(needs[r]))
+	_worth = float(d.get("worth", 0.0))
+	var f: Array = Builds.colors_from_array(d.get("filled", []))
+	for i in mini(f.size(), _parts.size()):
+		if f[i] != null:
+			_filled[i] = f[i]
+			var mi: MeshInstance3D = _parts[i].mi
+			mi.material_override = LowPoly.mat(f[i], 0.9)
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_update_label()
+
+
 func hint_text() -> String:
 	return "[E] cancel"
 
@@ -201,6 +222,8 @@ func _complete() -> void:
 	obj.scale = Vector3.ONE * 0.9
 	var tw := obj.create_tween()
 	tw.tween_property(obj, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK)
+	remove_from_group("blueprints")
+	Game.save_game()
 	queue_free()
 
 
@@ -224,4 +247,6 @@ func cancel() -> void:
 	_stored.clear()
 	Nature.burst(get_parent(), c, Vector3.UP, Color(0.45, 0.85, 1.0), 20, 2.0, 0.03, 3.0, 0.8, 140.0, 1.0)
 	Sfx.play("drop", 0.8)
+	remove_from_group("blueprints")
+	Game.save_game()
 	queue_free()

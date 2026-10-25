@@ -53,6 +53,22 @@ func _ready() -> void:
 	add_child(ui_layer)
 	if not Game.pending_orders().is_empty():
 		_dispatch_timer = 4.0
+	# what you built last time
+	Builds.load_world(self, Game.world_builds)
+	Game.world_saver = func(): return Builds.save_world(self)
+	var autosave := Timer.new()
+	autosave.wait_time = 15.0
+	autosave.autostart = true
+	autosave.timeout.connect(Game.save_game)
+	add_child(autosave)
+
+
+func _notification(what: int) -> void:
+	# keep what you built: save when the window closes or the tab loses focus (web builds never get a close event)
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+		Game.save_game()
+	elif what == NOTIFICATION_PREDELETE or what == NOTIFICATION_EXIT_TREE:
+		Game.world_saver = Callable()
 
 
 func _environment() -> void:

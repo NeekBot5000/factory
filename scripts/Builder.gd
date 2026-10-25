@@ -125,6 +125,7 @@ func _confirm() -> void:
 	bp.global_transform = _holo.global_transform
 	bp.setup(build_id, Builds.HOOP_DEFAULT * size(), main, size())
 	cancel()
+	Game.save_game()
 	player.start_swing()
 	Sfx.play("thud", 1.6)
 

@@ -6,7 +6,7 @@ signal tools_changed
 signal orders_changed
 signal toast(text: String, color: Color)
 
-const SAVE_PATH := "user://timber_save.json"
+var save_path := "user://timber_save.json"   # tests point this elsewhere
 
 var money := 0.0
 var owned := {"hands": true}
@@ -16,6 +16,8 @@ var next_order := 1
 var total_earned := 0.0
 var save_enabled := true
 var dropped := {}               # tools lying on the ground (owned, but not in your hands); not saved
+var world_builds: Array = []    # things built with the hammer (and plans in progress), as saved data
+var world_saver := Callable()   # set by the scene: returns the current world_builds
 
 
 func _ready() -> void:
@@ -96,17 +98,19 @@ func pending_orders() -> Array:
 func save_game() -> void:
 	if not save_enabled:
 		return
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var f := FileAccess.open(save_path, FileAccess.WRITE)
 	if f == null:
 		return
+	if world_saver.is_valid():
+		world_builds = world_saver.call()
 	# orders still in transit are refunded into "processing" so they get re-delivered next session
-	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned}))
+	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds}))
 
 
 func load_game() -> void:
-	if not save_enabled or not FileAccess.file_exists(SAVE_PATH):
+	if not save_enabled or not FileAccess.file_exists(save_path):
 		return
-	var d: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+	var d: Variant = JSON.parse_string(FileAccess.get_file_as_string(save_path))
 	if typeof(d) != TYPE_DICTIONARY:
 		return
 	money = float(d.get("money", 0.0))
@@ -122,10 +126,20 @@ func load_game() -> void:
 		orders.append(o)
 	next_order = int(d.get("next_order", 1))
 	total_earned = float(d.get("earned", 0.0))
+	world_builds = d.get("builds", [])
+
+
+## Clears the in-memory state without touching the save file (tests use this to simulate a restart).
+func reset_memory_only() -> void:
+	var keep := save_enabled
+	save_enabled = false
+	reset()
+	save_enabled = keep
 
 
 func reset() -> void:
 	dropped = {}
+	world_builds = []
 	money = 0.0
 	owned = {"hands": true}
 	has_phone = false

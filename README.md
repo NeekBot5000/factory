@@ -71,7 +71,7 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build: wheel turns, Shift + wheel resizes) |
 | Tab | phone (once you own it) |
 
-Progress saves automatically.
+Progress saves automatically, including everything you've built and plans still waiting for materials.
 
 ## Roadmap
 

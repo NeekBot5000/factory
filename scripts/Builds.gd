@@ -319,6 +319,7 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			ball.global_transform = xform * Transform3D(Basis(), Vector3(0, Basketball.R * size + 0.02, 0))
 			ball.setup(colors, size)
 			ball.add_to_group("builds")
+			ball.set_meta("build", {"id": id, "height": height, "size": size, "colors": colors})
 			return ball
 		"campfire":
 			body = Campfire.new()
@@ -417,7 +418,67 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			_box_col(body, Vector3(0.42, 0.18, 0.04), cup + Vector3(0, 0.12, 0.2))
 			(body as Catapult).setup_arm(body.get_node("Model/Arm"), cup * size, size)
 	body.add_to_group("builds")
+	body.set_meta("build", {"id": id, "height": height, "size": size, "colors": colors})
 	return body
+
+
+# ------------------------------------------------------------------ saving
+
+static func xf_to_array(t: Transform3D) -> Array:
+	var q := t.basis.get_rotation_quaternion()
+	return [t.origin.x, t.origin.y, t.origin.z, q.x, q.y, q.z, q.w]
+
+
+static func xf_from_array(a: Array) -> Transform3D:
+	return Transform3D(Basis(Quaternion(a[3], a[4], a[5], a[6])), Vector3(a[0], a[1], a[2]))
+
+
+static func colors_to_array(cols: Array) -> Array:
+	return cols.map(func(c): return (c as Color).to_html() if c is Color else "")
+
+
+static func colors_from_array(a: Array) -> Array:
+	return a.map(func(h): return Color.html(h) if String(h) != "" else null)
+
+
+## Everything you've built (and plans in progress), as plain data for the save file.
+static func save_world(world: Node) -> Array:
+	var out: Array = []
+	for n in world.get_tree().get_nodes_in_group("builds"):
+		var b := n as Node3D
+		# skip things on their way to the mill or otherwise not lying in the world
+		if not is_instance_valid(b) or b.get_parent() != world or not b.has_meta("build"):
+			continue
+		if b is RigidBody3D and (b as RigidBody3D).freeze:
+			continue
+		var m: Dictionary = b.get_meta("build")
+		out.append({"kind": "build", "id": m.id, "xf": xf_to_array(b.global_transform), "height": m.height,
+			"size": m.size, "colors": colors_to_array(m.colors), "value": float(b.get_meta("sale_value", 0.0))})
+	for n in world.get_tree().get_nodes_in_group("blueprints"):
+		var bp := n as Blueprint
+		if bp != null and is_instance_valid(bp):
+			out.append(bp.save_data())
+	return out
+
+
+static func load_world(world: Node, data: Array) -> void:
+	for d in data:
+		if typeof(d) != TYPE_DICTIONARY or not BUILDS.has(String(d.get("id", ""))):
+			continue
+		var xf := xf_from_array(d.xf)
+		if d.get("kind", "") == "build":
+			var cols: Array = colors_from_array(d.get("colors", [])).filter(func(c): return c != null)
+			var obj := finish(String(d.id), world, xf, float(d.height), cols, float(d.size))
+			if float(d.get("value", 0.0)) > 0.0:
+				obj.set_meta("sale_value", float(d.value))
+			if obj is Basketball:
+				obj.global_transform = xf
+		elif d.get("kind", "") == "plan":
+			var bp := Blueprint.new()
+			world.add_child(bp)
+			bp.global_transform = xf
+			bp.setup(String(d.id), float(d.height), world, float(d.size))
+			bp.restore(d)
 
 
 static func _rot_col(body: Node3D, size: Vector3, pos: Vector3, basis: Basis) -> void:
