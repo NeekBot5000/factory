@@ -10,6 +10,9 @@ var size := Vector3.ONE * 0.1
 var panels := 1
 var value := 0.0
 var color := Color("5b4030")
+var src := {}               # where it came from (to rebuild it from a save)
+var panel_list: Array = []
+var value_mult := 1.0
 
 
 func setup(data: Dictionary, p_kind: String) -> void:
@@ -18,6 +21,9 @@ func setup(data: Dictionary, p_kind: String) -> void:
 	size = data.size
 	panels = int(data.get("panels", 1))
 	color = data.get("color", color)
+	src = data.get("src", {})
+	panel_list = data.get("panel_list", [])
+	value_mult = float(data.get("value_mult", 1.0))
 	var per: float = PANEL_VALUE.outer if layer == 0 else PANEL_VALUE.inner
 	if kind == "birch" and layer == 0:
 		per *= 1.6

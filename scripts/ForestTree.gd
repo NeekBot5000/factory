@@ -112,8 +112,19 @@ func fell(cut_j: int, push_dir: Vector3) -> Log:
 	if _crown != null:
 		lg.attach_crown(_crown)
 		_crown = null
-	# what's left is a stump
+	_make_stump(cut_j)
+	lg.topple(push_dir)
+	return lg
+
+
+## Cuts this tree down to a stump `cut_j` bands tall (the crown, if still here, goes).
+func _make_stump(cut_j: int) -> void:
+	if _crown != null:
+		_crown.queue_free()
+		_crown = null
 	bands = cut_j
+	for l in 2:
+		layers[l] = (layers[l] as PackedByteArray).slice(0, SECTORS * bands)
 	trunk_h = bands * BAND_H
 	felled = true
 	remove_from_group("trees")
@@ -126,8 +137,68 @@ func fell(cut_j: int, push_dir: Vector3) -> Log:
 	_col.position.y = trunk_h * 0.5
 	for l in 2:
 		_rebuild(l)
-	lg.topple(push_dir)
-	return lg
+
+
+# ------------------------------------------------------------------ saving
+
+## Enough to recreate this tree's look (and the shape of any bark piece cut from it).
+func src_info() -> Dictionary:
+	return {"kind": kind, "seed": _seed, "radius": radius, "r_mid": r_mid, "r_core": r_core,
+		"bark": bark_color.to_html(), "inner": inner_color.to_html(), "wood": wood_color.to_html()}
+
+
+## A tree's layers, as text for the save file.
+func layer_state() -> Dictionary:
+	return {"bands": bands, "felled": felled,
+		"outer": Marshalls.raw_to_base64(layers[OUTER]), "inner": Marshalls.raw_to_base64(layers[INNER])}
+
+
+func is_untouched() -> bool:
+	if felled:
+		return false
+	for l in 2:
+		for b in layers[l]:
+			if b == 0:
+				return false
+	return true
+
+
+## Puts back saved bark (and stump, if it was felled).
+func apply_layer_state(d: Dictionary) -> void:
+	var o := Marshalls.base64_to_raw(String(d.get("outer", "")))
+	var i := Marshalls.base64_to_raw(String(d.get("inner", "")))
+	if bool(d.get("felled", false)):
+		_make_stump(int(d.get("bands", bands)))
+	if o.size() == SECTORS * bands and i.size() == SECTORS * bands:
+		layers[OUTER] = o
+		layers[INNER] = i
+		_rebuild(OUTER)
+		_rebuild(INNER)
+
+
+## A bare-bones tree with the look of `src` and the given layers - used to rebuild saved logs and bark pieces.
+static func ghost(src: Dictionary, n_bands: int, outer: PackedByteArray, inner: PackedByteArray) -> ForestTree:
+	var t := ForestTree.new()
+	t.kind = String(src.get("kind", "oak"))
+	t._seed = int(src.get("seed", 0))
+	t.radius = float(src.get("radius", 0.4))
+	t.r_mid = float(src.get("r_mid", t.radius - OUTER_T))
+	t.r_core = float(src.get("r_core", t.r_mid - INNER_T))
+	t.bark_color = Color.html(String(src.get("bark", "5b4030")))
+	t.inner_color = Color.html(String(src.get("inner", "b5653a")))
+	t.wood_color = Color.html(String(src.get("wood", "e2c08d")))
+	t.bands = n_bands
+	t.trunk_h = n_bands * BAND_H
+	if outer.size() != SECTORS * n_bands:
+		outer = PackedByteArray()
+		outer.resize(SECTORS * n_bands)
+		outer.fill(1)
+	if inner.size() != SECTORS * n_bands:
+		inner = PackedByteArray()
+		inner.resize(SECTORS * n_bands)
+		inner.fill(1)
+	t.layers = [outer, inner]
+	return t
 
 
 ## Each chop makes the crown shudder away from the hit and spring back.
@@ -476,5 +547,7 @@ func piece_data(l: int, panels: Array) -> Dictionary:
 		"layer": l,
 		"panels": panels.size(),
 		"color": bark_color if l == OUTER else inner_color,
+		"src": src_info(),
+		"panel_list": panels.map(func(p): return [p.x, p.y]),
 		"outward": (global_transform.basis * Vector3(cos(mid_a), 0, sin(mid_a))).normalized(),
 	}

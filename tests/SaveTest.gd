@@ -41,6 +41,41 @@ func _ready() -> void:
 		c.global_position = bp.global_position + Vector3(0, 0.6, 0)
 		await frames(10)
 	await frames(60)
+	# change the world: strip a tree, fell another, leave bark, leaves, a locked log, a dropped tool, a sapling,
+	# and trim a bush away
+	var t0: ForestTree = main.trees[0]
+	t0.strip_circle(t0.global_transform * Vector3(t0.radius, 1.0, 0), 0.3)
+	var outer_left := 0
+	for b in t0.layers[0]:
+		outer_left += b
+	var t1: ForestTree = main.trees[1]
+	var lg := t1.fell(10, Vector3.FORWARD)
+	await frames(120)
+	lg.set_locked(true)
+	var log_pos := lg.global_position
+	var lp := Vector3(6, 0, 4)
+	lp.y = main.terrain.height_at(lp.x, lp.z) + 0.3
+	var chip: Chip = main.spawn_chip(t0.piece_data(1, [Vector2i(3, 2), Vector2i(4, 2)]), t0.kind, Vector3.ZERO)
+	chip.global_position = lp
+	var lf := Leaf.new()
+	main.add_child(lf)
+	lf.setup(Color("5aa041"), 0.15)
+	lf.global_position = lp + Vector3(0.5, 0, 0)
+	var ti := ToolItem.new()
+	main.add_child(ti)
+	ti.setup("hatchet")
+	ti.global_position = lp + Vector3(-0.6, 0, 0)
+	Game.owned["hatchet"] = true
+	Game.set_dropped("hatchet", true)
+	var sp := Sapling.new()
+	main.add_child(sp)
+	sp.setup("pine")
+	sp.global_position = lp + Vector3(0, 0, 0.8)
+	var bushes := get_tree().get_nodes_in_group("bushes")
+	var gone_id: int = bushes[0].get_meta("bush_id")
+	bushes[0].queue_free()
+	await frames(60)
+	var chip_pos := chip.global_position
 	var basket_pos: Vector3 = basket.global_position
 	var bark_in := int(bp.have.get("bark", 0))
 	Game.save_game()
@@ -62,6 +97,21 @@ func _ready() -> void:
 	check(get_tree().get_nodes_in_group("hoops").size() == 1, "the hoop is still there")
 	var plans := get_tree().get_nodes_in_group("blueprints")
 	check(plans.size() == 1 and int((plans[0] as Blueprint).have.get("bark", 0)) == bark_in and bark_in > 0, "the half-built bench keeps its progress (%d bark)" % bark_in)
+	var mt: Array = main2.trees
+	var o2 := 0
+	for b in (mt[0] as ForestTree).layers[0]:
+		o2 += b
+	check(o2 == outer_left, "the bark you stripped stays stripped (%d panels left)" % o2)
+	check((mt[1] as ForestTree).felled and (mt[1] as ForestTree).bands == 10, "the felled tree is still a stump")
+	var logs := get_tree().get_nodes_in_group("logs")
+	check(logs.size() == 1 and (logs[0] as Log).locked and (logs[0] as Node3D).global_position.distance_to(log_pos) < 0.3, "the felled log is still there, locked where you left it")
+	var chips := get_tree().get_nodes_in_group("chips")
+	check(chips.size() == 1 and (chips[0] as Chip).panels == 2 and (chips[0] as Node3D).global_position.distance_to(chip_pos) < 0.5, "loose bark is still lying where you left it")
+	check(get_tree().get_nodes_in_group("leaves").size() == 1, "loose leaves too")
+	check(get_tree().get_nodes_in_group("tool_items").size() == 1 and not Game.in_toolbar("hatchet"), "the dropped hatchet is still on the ground")
+	check(get_tree().get_nodes_in_group("saplings").size() == 1, "and the sapling")
+	var ids := get_tree().get_nodes_in_group("bushes").map(func(b): return b.get_meta("bush_id"))
+	check(not ids.has(gone_id), "the bush you trimmed away stays gone")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.save_path))
 	print("SAVE RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()

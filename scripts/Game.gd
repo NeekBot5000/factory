@@ -5,6 +5,7 @@ signal money_changed(money: float)
 signal tools_changed
 signal orders_changed
 signal toast(text: String, color: Color)
+signal saved
 
 var save_path := "user://timber_save.json"   # tests point this elsewhere
 
@@ -18,6 +19,8 @@ var save_enabled := true
 var dropped := {}               # tools lying on the ground (owned, but not in your hands); not saved
 var world_builds: Array = []    # things built with the hammer (and plans in progress), as saved data
 var world_saver := Callable()   # set by the scene: returns the current world_builds
+var world_state := {}           # trees stripped/felled/grown, bushes, loose bark, leaves, logs, saplings, dropped tools
+var world_state_saver := Callable()
 
 
 func _ready() -> void:
@@ -103,8 +106,11 @@ func save_game() -> void:
 		return
 	if world_saver.is_valid():
 		world_builds = world_saver.call()
+	if world_state_saver.is_valid():
+		world_state = world_state_saver.call()
 	# orders still in transit are refunded into "processing" so they get re-delivered next session
-	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds}))
+	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state}))
+	saved.emit()
 
 
 func load_game() -> void:
@@ -127,6 +133,7 @@ func load_game() -> void:
 	next_order = int(d.get("next_order", 1))
 	total_earned = float(d.get("earned", 0.0))
 	world_builds = d.get("builds", [])
+	world_state = d.get("world", {})
 
 
 ## Clears the in-memory state without touching the save file (tests use this to simulate a restart).
@@ -140,6 +147,7 @@ func reset_memory_only() -> void:
 func reset() -> void:
 	dropped = {}
 	world_builds = []
+	world_state = {}
 	money = 0.0
 	owned = {"hands": true}
 	has_phone = false

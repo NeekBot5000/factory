@@ -19,6 +19,7 @@ var font_body: FontVariation
 var font_bold: FontVariation
 var font_title: FontVariation
 var hide_start := false
+var save_icon: SaveIcon
 var _flash_a := 0.0
 var _ring_px := 10.0
 
@@ -133,6 +134,20 @@ void fragment() {
 	Game.money_changed.connect(func(m): money_lbl.text = "$%.2f" % m)
 	Game.tools_changed.connect(_rebuild_toolbar)
 	Game.toast.connect(show_toast)
+	# autosave indicator: a little white hammer in the corner that taps while the game saves
+	save_icon = SaveIcon.new()
+	save_icon.anchor_left = 1.0
+	save_icon.anchor_right = 1.0
+	save_icon.anchor_top = 1.0
+	save_icon.anchor_bottom = 1.0
+	save_icon.offset_left = -64
+	save_icon.offset_top = -64
+	save_icon.offset_right = -20
+	save_icon.offset_bottom = -20
+	save_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	save_icon.modulate.a = 0.0
+	root.add_child(save_icon)
+	Game.saved.connect(save_icon.flash)
 	if main.icons != null:
 		main.icons.icon_ready.connect(func(_id): _rebuild_toolbar())
 	money_lbl.text = "$%.2f" % Game.money
@@ -293,3 +308,47 @@ class HandIcon extends Control:
 		for p in [Vector2(-8, 13), Vector2(8, 13), Vector2(8, 20), Vector2(-8, 20)]:
 			cuff.append(xf * (p * k))
 		draw_colored_polygon(cuff, sleeve)
+
+
+## A small white hammer that knocks a couple of times and fades when the game autosaves.
+class SaveIcon extends Control:
+	var _t := 99.0
+
+	func flash() -> void:
+		_t = 0.0
+		queue_redraw()
+
+	func _process(delta: float) -> void:
+		if _t > 2.0:
+			return
+		_t += delta
+		modulate.a = clampf(minf(_t / 0.15, (2.0 - _t) / 0.5), 0.0, 0.9)
+		queue_redraw()
+
+	func _draw() -> void:
+		var c := size * 0.5
+		var k := minf(size.x, size.y) / 44.0
+		var white := Color(1, 1, 1, 1)
+		var shadow := Color(0, 0, 0, 0.35)
+		# taps: swings down twice in the first second
+		var swing := 0.0
+		if _t < 1.0:
+			swing = absf(sin(_t * TAU * 2.0)) * 0.6
+		var xf := Transform2D(-0.6 + swing, c + Vector2(4, 6) * k)
+		var handle := [Vector2(-2.2, 0), Vector2(2.2, 0), Vector2(2.2, -26), Vector2(-2.2, -26)]
+		var head := [Vector2(-11, -32), Vector2(9, -32), Vector2(11, -29), Vector2(9, -24), Vector2(-11, -24)]
+		var claw := [Vector2(-11, -32), Vector2(-17, -36), Vector2(-15, -31), Vector2(-11, -26)]
+		for poly in [handle, head, claw]:
+			var sh := PackedVector2Array()
+			var pts := PackedVector2Array()
+			for p in poly:
+				pts.append(xf * ((p as Vector2) * k))
+				sh.append(xf * ((p as Vector2) * k) + Vector2(1.5, 1.5))
+			draw_colored_polygon(sh, shadow)
+			draw_colored_polygon(pts, white)
+		# a little spark when it lands
+		if _t < 1.0 and swing < 0.15:
+			var tip := xf * (Vector2(10, -28) * k)
+			for i in 4:
+				var a := TAU * i / 4.0 + 0.4
+				draw_line(tip + Vector2(cos(a), sin(a)) * 3.0 * k, tip + Vector2(cos(a), sin(a)) * 7.0 * k, white, 1.5 * k)

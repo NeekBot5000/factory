@@ -18,6 +18,7 @@ var ui_layer: CanvasLayer
 var shop_ui: Control          # whichever full-screen UI is open: the store (computer / phone) or the build menu
 var _dispatch_timer := -1.0
 var grass_mat: ShaderMaterial
+var n_wild_trees := 0            # trees from world generation (saved by index); grown ones come after
 var _grass_hits: Array[Vector4] = []    # xyz = where something hit the ground, w = strength (decays)
 
 
@@ -53,9 +54,12 @@ func _ready() -> void:
 	add_child(ui_layer)
 	if not Game.pending_orders().is_empty():
 		_dispatch_timer = 4.0
-	# what you built last time
+	n_wild_trees = trees.size()
+	# the world as you left it, and what you built
+	WorldSave.load(self, Game.world_state)
 	Builds.load_world(self, Game.world_builds)
 	Game.world_saver = func(): return Builds.save_world(self)
+	Game.world_state_saver = func(): return WorldSave.save(self)
 	var autosave := Timer.new()
 	autosave.wait_time = 15.0
 	autosave.autostart = true
@@ -69,6 +73,7 @@ func _notification(what: int) -> void:
 		Game.save_game()
 	elif what == NOTIFICATION_PREDELETE or what == NOTIFICATION_EXIT_TREE:
 		Game.world_saver = Callable()
+		Game.world_state_saver = Callable()
 
 
 func _environment() -> void:
@@ -164,6 +169,7 @@ func _decor() -> void:
 			rock.build(rng, s)
 		else:
 			var bush := Bush.new()
+			bush.set_meta("bush_id", i)
 			add_child(bush)
 			bush.position = Vector3(p.x, y, p.y)
 			bush.build(rng, rng.randf_range(0.7, 1.4))

@@ -140,18 +140,18 @@ func buck(section: int) -> Array[Log]:
 	return out
 
 
-## What the mill pays: timber by volume, plus a quarter of the price for any bark still on it (strip it first!).
+## What the mill pays: clean timber is worth a lot, but bark left on drags the price right down - a log still
+## in all its bark fetches only 15% of what the same log stripped bare would.
 func value() -> float:
-	var v := 25.0 * length * pow(radius / 0.4, 2.0)
+	var clean := 60.0 * length * pow(radius / 0.4, 2.0)
+	var total := 0
+	var left := 0
 	for l in 2:
-		var per: float = Chip.PANEL_VALUE.outer if l == 0 else Chip.PANEL_VALUE.inner
-		if kind == "birch" and l == 0:
-			per *= 1.6
-		var n := 0
+		total += trunk.layers[l].size()
 		for b in trunk.layers[l]:
-			n += b
-		v += n * per * 0.25
-	return v
+			left += b
+	var bark := float(left) / float(maxi(total, 1))
+	return clean * (1.0 - 0.85 * bark)
 
 
 func hint_text() -> String:

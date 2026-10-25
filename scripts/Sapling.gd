@@ -12,8 +12,8 @@ var _grow := 0.0
 var _sprout: Node3D
 
 
-func setup() -> void:
-	kind = ["oak", "birch", "pine"][randi() % 3]
+func setup(p_kind := "") -> void:
+	kind = p_kind if p_kind != "" else ["oak", "birch", "pine"][randi() % 3]
 	collision_layer = 2
 	collision_mask = 1 | 2
 	mass = 0.4
@@ -80,8 +80,10 @@ func _root() -> void:
 func _become_tree() -> void:
 	var main := get_parent()
 	var rng := RandomNumberGenerator.new()
-	rng.randomize()
+	var grow_seed := randi()
+	rng.seed = grow_seed
 	var tree := ForestTree.new()
+	tree.set_meta("grown", {"seed": grow_seed, "kind": kind})
 	main.add_child(tree)
 	tree.position = global_position - Vector3(0, 0.05, 0)
 	tree.rotation.y = rng.randf() * TAU

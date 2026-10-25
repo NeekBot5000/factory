@@ -6,10 +6,12 @@ const VALUE := 0.05
 
 var color := Color("4f9a3c")
 var value := VALUE
+var size := 0.15
 
 
-func setup(p_color: Color, size: float) -> void:
-	color = p_color.lerp(p_color.lightened(0.15), randf())
+func setup(p_color: Color, size_arg: float, exact := false) -> void:
+	size = size_arg
+	color = p_color if exact else p_color.lerp(p_color.lightened(0.15), randf())
 	collision_layer = 2
 	collision_mask = 1 | 2
 	mass = clampf(size * 0.6, 0.05, 0.4)

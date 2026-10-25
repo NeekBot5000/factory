@@ -38,7 +38,8 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Leaf Vacuum | $1200 | sucks loose bark/leaves/boxes into a floating clump; let go to drop |
 | TimberPhone | $350 | the store and the truck, from anywhere (Tab) |
 
-Logs keep their bark, so you can still strip them; the mill pays for timber plus a little for bark left on.
+Logs keep their bark, so you can still strip them. The mill pays well for clean timber, but bark left on drags
+the price down: a log in full bark fetches only 15% of what it would stripped bare.
 
 **Building:** take out the hammer and click to open the build menu (categories, previews). Pick a plan and its
 hologram follows your aim; R turns it, scroll makes it bigger (bigger costs more), click to set it down, E to
@@ -80,7 +81,9 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 
-Progress saves automatically, including everything you've built and plans still waiting for materials.
+Progress autosaves every 15 seconds (a little white hammer taps in the corner): money, tools, everything you've
+built, plans in progress, bark you've stripped, felled and grown trees, trimmed bushes, and every log, bark sheet,
+leaf, sapling and dropped tool lying around.
 
 ## Roadmap
 

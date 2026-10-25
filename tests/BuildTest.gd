@@ -141,7 +141,7 @@ func run() -> void:
 		var chips0: int = main.chips.size()
 		player.call("_do_impact")
 		await frames(2)
-		check(main.chips.size() > chips0 and short.value() < v0, "axes strip bark off a lying log too")
+		check(main.chips.size() > chips0 and short.value() > v0, "axes strip bark off a lying log too, and that makes it worth more")
 	# --- drop a tool and take it back
 	player.equip("hatchet")
 	await frames(20)

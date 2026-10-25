@@ -170,6 +170,7 @@ func _ready() -> void:
 					far += 1
 			check(far >= 3, "letting go of the cyclone vac fires its load forward (%d flew far)" % far)
 	await lock_test()
+	log_value_test()
 	print("GEAR RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()
 
@@ -196,3 +197,24 @@ func lock_test() -> void:
 	player.primary()
 	await frames(5)
 	check(not lg.locked and not lg.freeze, "clicking again unlocks it")
+
+
+func log_value_test() -> void:
+	var tr: ForestTree = main.trees[0]
+	var lg := Log.new()
+	main.add_child(lg)
+	lg.setup_from(tr, 0, 8, Transform3D(Basis(), Vector3(0, -50, 0)))
+	lg.freeze = true
+	var full := lg.value()
+	for l in 2:
+		var arr: PackedByteArray = lg.trunk.layers[l]
+		arr.fill(1)
+		lg.trunk.layers[l] = arr
+	full = lg.value()
+	for l in 2:
+		var arr2: PackedByteArray = lg.trunk.layers[l]
+		arr2.fill(0)
+		lg.trunk.layers[l] = arr2
+	var bare := lg.value()
+	check(bare > full * 5.0, "a stripped log is worth far more than one in full bark ($%.2f vs $%.2f)" % [bare, full])
+	lg.queue_free()
