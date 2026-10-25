@@ -76,6 +76,7 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | Spin and drop | things keep their momentum, so you can fling them |
 | Hold R while holding something | tip it over (pour a basket out) |
 | R while placing a build | turn it |
+| Hammer click on a log | lock it in place (iron bands); click again to unlock |
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 

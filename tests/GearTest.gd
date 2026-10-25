@@ -169,5 +169,30 @@ func _ready() -> void:
 				if c.global_position.distance_to(open) > 6.0:
 					far += 1
 			check(far >= 3, "letting go of the cyclone vac fires its load forward (%d flew far)" % far)
+	await lock_test()
 	print("GEAR RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()
+
+
+func lock_test() -> void:
+	var logs := get_tree().get_nodes_in_group("logs")
+	var lg: Log = null
+	for l in logs:
+		if (l as Log).length < 2.5:
+			lg = l
+	check(lg != null, "found a log to lock")
+	if lg == null:
+		return
+	player.equip("hammer")
+	await frames(20)
+	await face(lg, lg.global_position, 1.3)
+	player.primary()
+	await frames(5)
+	check(lg.locked and lg.freeze, "hammer click locks the log")
+	var p0 := lg.global_position
+	lg.apply_central_impulse(Vector3(0, 0, 50))
+	await frames(60)
+	check(lg.global_position.distance_to(p0) < 0.01 and not lg.is_in_group("grabbable"), "a locked log doesn't budge and can't be picked up")
+	player.primary()
+	await frames(5)
+	check(not lg.locked and not lg.freeze, "clicking again unlocks it")

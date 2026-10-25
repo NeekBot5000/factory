@@ -304,6 +304,14 @@ func primary() -> void:
 		hit.collider.call("on_click", self)
 		return
 	if tool == "hammer":
+		# hammer on a log: lock it in place / unlock it; anywhere else: the build menu
+		if not builder.busy() and not hit.is_empty() and hit.collider is Log:
+			var lg := hit.collider as Log
+			lg.set_locked(not lg.locked)
+			start_swing()
+			Sfx.play("clink", 0.8 if lg.locked else 1.2)
+			Sfx.play("thud", 1.5, -4.0)
+			return
 		builder.click()
 		return
 	if bool(tdef().get("hold", false)):

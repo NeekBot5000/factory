@@ -10,6 +10,8 @@ var length := 1.0
 var radius := 0.4
 var kind := "oak"
 var _crown: Node3D
+var locked := false
+var _bands: Node3D
 
 
 func setup_from(src: ForestTree, j0: int, j1: int, base: Transform3D) -> void:
@@ -50,6 +52,36 @@ func attach_crown(c: Node3D) -> void:
 			add_to_group("grabbable"))
 
 
+## Hammer: nail it in place. A locked log never moves (nothing can push, carry or suck it away) until unlocked.
+func set_locked(on: bool) -> void:
+	locked = on
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	freeze = on
+	if on:
+		remove_from_group("grabbable")
+		linear_velocity = Vector3.ZERO
+		angular_velocity = Vector3.ZERO
+		if _bands == null:
+			_bands = Node3D.new()
+			add_child(_bands)
+			var iron := LowPoly.mat(Color("3a3d44"), 0.5)
+			var nail := LowPoly.mat(Color("c9ced6"), 0.3)
+			for end in [-1.0, 1.0]:
+				var y: float = end * (length * 0.5 - minf(0.25, length * 0.2))
+				LowPoly.mesh_instance(_bands, LowPoly.cyl(radius * 1.06, radius * 1.06, 0.07, 16), iron, Vector3(0, y, 0))
+				for k in 4:
+					var a := TAU * k / 4.0
+					var nl := LowPoly.mesh_instance(_bands, LowPoly.cyl(0.018, 0.018, 0.02, 6), nail, Vector3(cos(a), 0, sin(a)) * radius * 1.08 + Vector3(0, y, 0))
+					nl.basis = Basis(Vector3.UP.cross(Vector3(cos(a), 0, sin(a))).normalized(), PI * 0.5)
+		_bands.visible = true
+	else:
+		if _bands != null:
+			_bands.visible = false
+		if length <= CARRY_MAX and not is_instance_valid(_crown):
+			add_to_group("grabbable")
+		sleeping = false
+
+
 ## Tip the freshly felled trunk over, away from the sawyer.
 func topple(dir: Vector3) -> void:
 	dir.y = 0.0
@@ -74,6 +106,9 @@ func cut_at(world_point: Vector3) -> Array[Log]:
 		out.append(lg)
 	if is_instance_valid(_crown):
 		out[1].attach_crown(_crown)      # the leafy top stays with the top piece
+	if locked:
+		for lg in out:
+			lg.set_locked(true)
 	queue_free()
 	return out
 
@@ -98,6 +133,9 @@ func buck(section: int) -> Array[Log]:
 		j = j1
 	if is_instance_valid(_crown):
 		out[out.size() - 1].attach_crown(_crown)
+	if locked:
+		for lg in out:
+			lg.set_locked(true)
 	queue_free()
 	return out
 
@@ -117,4 +155,7 @@ func value() -> float:
 
 
 func hint_text() -> String:
+	var p: Node = get_tree().get_first_node_in_group("player")
+	if p != null and String(p.get("tool")) == "hammer":
+		return "[Click] unlock" if locked else "[Click] lock in place"
 	return "[E] grab" if is_in_group("grabbable") else ""
