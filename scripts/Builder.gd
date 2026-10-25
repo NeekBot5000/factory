@@ -118,6 +118,12 @@ func update(_delta: float) -> void:
 		var q := PhysicsRayQueryParameters3D.create(from, from + fwd * REACH, 1)
 		q.exclude = [player.get_rid()]
 		var hit := player.get_world_3d().direct_space_state.intersect_ray(q)
+		# look through loose logs and other moving things to the ground underneath
+		for k in 4:
+			if hit.is_empty() or not (hit.collider is RigidBody3D):
+				break
+			q.exclude = q.exclude + [hit.rid]
+			hit = player.get_world_3d().direct_space_state.intersect_ray(q)
 		var pos := from + fwd * 4.0
 		_valid = false
 		if not hit.is_empty():

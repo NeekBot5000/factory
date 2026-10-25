@@ -29,12 +29,20 @@ Logs keep their bark, so you can still strip them; the mill pays for timber plus
 
 **Building:** take out the hammer, scroll to pick a plan, click for a hologram, click to set it down (the hoop
 then takes its height from where you look). Drop materials into the hologram and each piece fills in; any
-kind of bark counts. E on a plan cancels it and gives everything back.
+kind of bark or wood counts, leaves too. E on a plan cancels it and gives everything back.
 
-| Build | Needs |
-|---|---|
-| Bark Basket | 16 bark (carry it around, fill it up) |
-| Basketball Hoop | 12 bark + 1 log |
+| Build | Needs | What it does |
+|---|---|---|
+| Bark Basket | 50 bark | carry it around, fill it up |
+| Log Bench | 1 log + 6 bark | somewhere to sit |
+| Campfire | 6 bark + 10 leaves | burns anything dropped on it (logs too - their value goes up in smoke) |
+| Leaf Hammock | 2 logs + 30 leaves | E to lie down and sway |
+| Bark Chute | 3 logs + 12 bark | slippery slide: drop bark in the top |
+| Log Rack | 4 logs | V-cradles that hold logs |
+| Compost Pile | 40 leaves | feed it leaves and it sprouts saplings; plant one and it grows into a tree |
+| Basketball | 8 leaves | bouncy; drop it through the hoop to score |
+| Basketball Hoop | 12 bark + 1 log | height set by where you look |
+| Catapult | 3 logs + 10 bark + 6 leaves | click it to launch whatever's in the cup |
 
 ## Play
 

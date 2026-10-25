@@ -102,21 +102,29 @@ func _physics_process(delta: float) -> void:
 func _absorb(b: RigidBody3D, r: Dictionary) -> void:
 	var take := mini(int(r.amount), int(needs[r.res]) - int(have[r.res]))
 	have[r.res] = int(have[r.res]) + take
-	var target := global_position
+	# parts fill in proportion: with 50 bark and 16 bark parts, a part turns solid every ~3 bark
+	var idx: Array[int] = []
+	var filled := 0
 	for p_i in _parts.size():
-		if take <= 0:
+		if _parts[p_i].res == r.res:
+			idx.append(p_i)
+			if _filled[p_i] != null:
+				filled += 1
+	var should := idx.size() if int(have[r.res]) >= int(needs[r.res]) else int(floor(float(have[r.res]) * idx.size() / float(needs[r.res])))
+	var target := global_position
+	for p_i in idx:
+		if filled >= should:
 			break
-		if _parts[p_i].res == r.res and _filled[p_i] == null:
+		if _filled[p_i] == null:
 			_filled[p_i] = r.color
 			var mi: MeshInstance3D = _parts[p_i].mi
 			target = mi.global_position
-			var m := LowPoly.mat(r.color, 0.9)
-			mi.material_override = m
+			mi.material_override = LowPoly.mat(r.color, 0.9)
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 			var tw := mi.create_tween()
 			mi.scale = Vector3.ONE * 1.25
 			tw.tween_property(mi, "scale", Vector3.ONE, 0.2).set_trans(Tween.TRANS_BACK)
-			take -= 1
+			filled += 1
 	# the material flies into place and disappears into the build
 	b.freeze = true
 	b.set_meta("bp_layer", b.collision_layer)

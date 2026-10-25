@@ -117,7 +117,7 @@ void fragment() {
 	build_menu.visible = false
 	root.add_child(build_menu)
 	build_list = VBoxContainer.new()
-	build_list.add_theme_constant_override("separation", 6)
+	build_list.add_theme_constant_override("separation", 3)
 	build_menu.add_child(build_list)
 	# hint
 	hint = _label("", 17, Color.WHITE)
@@ -329,13 +329,13 @@ func _update_build_menu() -> void:
 		var id: String = Builds.ORDER[i]
 		var on := i == sel
 		var row := PanelContainer.new()
-		row.add_theme_stylebox_override("panel", _flat(Color("ffcf6a") if on else Color(1, 1, 1, 0.06), 8, 10))
+		row.add_theme_stylebox_override("panel", _flat(Color("ffcf6a") if on else Color(1, 1, 1, 0.06), 8, 7))
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var v := VBoxContainer.new()
 		v.add_theme_constant_override("separation", 0)
 		row.add_child(v)
 		var ink := Color("2b2118") if on else Color.WHITE
-		v.add_child(_label(Builds.BUILDS[id].name, 16, ink, font_bold))
-		v.add_child(_label(Builds.needs_text(id), 13, ink.lerp(Color(0.5, 0.5, 0.5), 0.35)))
+		v.add_child(_label(Builds.BUILDS[id].name, 14, ink, font_bold))
+		v.add_child(_label(Builds.needs_text(id), 11, ink.lerp(Color(0.5, 0.5, 0.5), 0.35)))
 		build_list.add_child(row)
 	build_list.add_child(_label("[Scroll] choose   [Click] build", 12, Color(1, 1, 1, 0.5)))

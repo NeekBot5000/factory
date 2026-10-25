@@ -222,7 +222,7 @@ func run() -> void:
 	bps = get_tree().get_nodes_in_group("blueprints")
 	bp = bps[0] if bps.size() > 0 else null
 	var i2 := 0
-	while bp != null and is_instance_valid(bp) and i2 < 60:
+	while bp != null and is_instance_valid(bp) and i2 < 90:
 		var data := tree.piece_data(0, [Vector2i(i2 % 16, 2)])
 		var c: Chip = main.spawn_chip(data, ["oak", "birch", "pine"][i2 % 3], Vector3.ZERO)
 		c.global_position = bp.global_position + Vector3(0, 0.8, 0)
@@ -231,11 +231,11 @@ func run() -> void:
 		await frames(8)
 	await frames(10)
 	var baskets := get_tree().get_nodes_in_group("baskets")
-	check(baskets.size() == 1, "16 bark of any kind builds a basket")
+	check(baskets.size() == 1, "50 bark of any kind builds a basket")
 	if baskets.size() == 1:
 		check((baskets[0] as Node).is_in_group("grabbable"), "the basket can be picked up")
 	# --- hammer: hoop with a custom height
-	player.builder.scroll(1)
+	player.builder.scroll(Builds.ORDER.find("hoop") - player.builder.selected)
 	check(player.builder.current() == "hoop", "scrolling picks the hoop")
 	var g2 := player.global_position + player.global_basis.x * 3.0
 	g2.y = main.terrain.height_at(g2.x, g2.z)
@@ -268,3 +268,91 @@ func run() -> void:
 			await frames(8)
 		await frames(10)
 		check(get_tree().get_nodes_in_group("hoops").size() == 1, "12 bark + a log builds the hoop")
+
+	await new_builds()
+
+
+func spot(off: Vector3) -> Transform3D:
+	var p := player.global_position + off
+	p.y = main.terrain.height_at(p.x, p.z)
+	return Transform3D(Basis(), p)
+
+
+func new_builds() -> void:
+	var toasts := []
+	Game.toast.connect(func(t, _c): toasts.append(t))
+	# leaves are a building material: a basketball from 8 leaves
+	var bpb := Blueprint.new()
+	main.add_child(bpb)
+	bpb.global_transform = spot(Vector3(-3, 0, 2))
+	bpb.setup("ball", 0.0, main)
+	for i in 10:
+		if not is_instance_valid(bpb):
+			break
+		var lf := Leaf.new()
+		main.add_child(lf)
+		lf.setup(Color("5aa041"), 0.14)
+		lf.global_position = bpb.global_position + Vector3(0, 0.5, 0)
+		await frames(8)
+	await frames(5)
+	var balls := get_tree().get_nodes_in_group("balls")
+	check(balls.size() == 1, "8 leaves build a basketball")
+	# swish: drop it through the hoop
+	var hoops := get_tree().get_nodes_in_group("hoops")
+	if balls.size() == 1 and hoops.size() == 1:
+		var hoop := hoops[0] as Node3D
+		var ball := balls[0] as RigidBody3D
+		var bpos: Vector3 = hoop.global_transform * Vector3(0, 0, 0.1)
+		bpos.y = (hoop.global_transform * Vector3(0, 4.05, 0.1)).y + 0.5
+		ball.global_position = bpos
+		ball.linear_velocity = Vector3.ZERO
+		ball.angular_velocity = Vector3.ZERO
+		await secs(1.5)
+		check(toasts.has("Swish!"), "dropping the ball through the hoop scores")
+	# catapult flings what's in the cup
+	var cat := Builds.finish("catapult", main, spot(Vector3(4, 0, -2)), 0.0, []) as Catapult
+	await frames(5)
+	var data := nearest_tree().piece_data(0, [Vector2i(0, 2)])
+	var c: Chip = main.spawn_chip(data, "oak", Vector3.ZERO)
+	var cup: Vector3 = cat.global_transform * (Builds.CAT_PIVOT + Vector3(0, 0.3, Builds.CAT_ARM))
+	c.global_position = cup
+	c.linear_velocity = Vector3.ZERO
+	await secs(0.8)
+	var before := c.global_position
+	cat.fire()
+	await secs(1.2)
+	check(c.global_position.distance_to(before) > 4.0, "the catapult launches the cup's load (%.1f m)" % c.global_position.distance_to(before))
+	# campfire burns a log away
+	var fire := Builds.finish("campfire", main, spot(Vector3(-4, 0, -3)), 0.0, []) as Campfire
+	var lg := Log.new()
+	main.add_child(lg)
+	lg.setup_from(nearest_tree(), 0, 4, fire.global_transform * Transform3D(Basis(Vector3.BACK, PI * 0.5), Vector3(0.36, 0.3, 0)))
+	await secs(9.0)
+	check(not is_instance_valid(lg), "logs left on the campfire burn away")
+	# compost turns leaves into a sapling, which roots in the ground
+	var comp := Builds.finish("compost", main, spot(Vector3(5, 0, 3)), 0.0, []) as Compost
+	for i in 8:
+		var lf2 := Leaf.new()
+		main.add_child(lf2)
+		lf2.setup(Color("5aa041"), 0.14)
+		lf2.global_position = comp.global_position + Vector3(randf_range(-0.2, 0.2), 0.8, randf_range(-0.2, 0.2))
+		await frames(6)
+	await secs(9.5)
+	var saps := get_tree().get_nodes_in_group("saplings")
+	check(saps.size() == 1, "8 leaves in the compost sprout a sapling")
+	if saps.size() == 1:
+		var sp := saps[0] as Sapling
+		await secs(4.0)
+		sp.global_position = spot(Vector3(8, 0, 6)).origin + Vector3(0, 0.3, 0)
+		sp.linear_velocity = Vector3.ZERO
+		await secs(3.0)
+		check(sp.freeze, "a sapling put on the ground takes root")
+	# hammock
+	var ham := Builds.finish("hammock", main, spot(Vector3(-6, 0, 4)), 0.0, []) as Hammock
+	await frames(2)
+	ham.on_use(player)
+	await frames(5)
+	check(player.lying == ham, "E on the hammock lies you down")
+	player.interact()
+	await frames(5)
+	check(player.lying == null, "E again gets you up")

@@ -65,6 +65,8 @@ var _vac_fx := 0.0
 var _vac_sound: AudioStreamPlayer
 var _backhand := false           # the double-bit axe alternates forehand / backhand swings
 var force_trigger := false       # tests: act as if the mouse button were held
+var lying: Node3D = null         # the hammock you're lying in, if any
+var _lie_t := 0.0
 
 
 func _ready() -> void:
@@ -268,6 +270,9 @@ func primary() -> void:
 func interact() -> void:
 	if not controls_enabled:
 		return
+	if lying != null:
+		get_up()
+		return
 	if builder.busy():
 		builder.cancel()
 		return
@@ -294,6 +299,8 @@ func look_ray(length: float, mask: int) -> Dictionary:
 
 
 func look_target_text() -> String:
+	if lying != null:
+		return "[E] get up"
 	if builder.busy():
 		return builder.hint_text()
 	if held != null:
@@ -538,9 +545,38 @@ func _update_held(delta: float) -> void:
 
 # ------------------------------------------------------------------ frame
 
+## Climb into a hammock: you lie back and sway; look around freely, E to get out.
+func lie_in(h: Node3D) -> void:
+	drop_held()
+	builder.cancel()
+	lying = h
+	velocity = Vector3.ZERO
+	Sfx.play("rustle", 0.8, -4.0)
+
+
+func get_up() -> void:
+	if lying != null and is_instance_valid(lying):
+		var out: Vector3 = lying.global_transform * Vector3(0, 0, 1.1)
+		out.y = maxf(out.y, lying.global_position.y) + 0.05
+		global_position = out
+	lying = null
+	head.position.y = 1.58
+	cam.rotation.z = 0.0
+
+
 func _physics_process(delta: float) -> void:
 	rotation.y = _yaw
 	head.rotation.x = _pitch
+	if lying != null:
+		if not is_instance_valid(lying):
+			get_up()
+		else:
+			_lie_t += delta
+			global_position = lying.global_transform * Vector3(sin(_lie_t * 0.9) * 0.04, 0.55, 0)
+			head.position.y = 0.3
+			cam.rotation.z = sin(_lie_t * 0.9) * 0.03
+			velocity = Vector3.ZERO
+			return
 	var input := Vector2.ZERO
 	if controls_enabled:
 		if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
