@@ -2,8 +2,8 @@ class_name Crank
 extends Machine
 ## Wind it with E: every wind stores some seconds of power, and it powers everything wired to it until it runs down.
 
-const PER_WIND := 10.0
-const MAX_CHARGE := 60.0
+const PER_WIND := 15.0
+const MAX_CHARGE := 120.0
 
 var charge := 0.0
 var _handle: Node3D

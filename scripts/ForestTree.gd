@@ -26,6 +26,8 @@ var wood_color := Color("e2c08d")
 var _layer_mi: Array[MeshInstance3D] = [null, null]
 var _seed := 0
 var _crown: Node3D
+var _fol: Foliage
+var _had_fol := false       # (a freed Foliage compares equal to null, so remember there was one)
 var _shake_tw: Tween
 var _core_mi: MeshInstance3D
 var _col: CollisionShape3D
@@ -109,7 +111,7 @@ func fell(cut_j: int, push_dir: Vector3) -> Log:
 	var lg := Log.new()
 	get_parent().add_child(lg)
 	lg.setup_from(self, cut_j, bands, global_transform * Transform3D(Basis(), Vector3(0, cut_j * BAND_H + 0.03, 0)))
-	if _crown != null:
+	if is_instance_valid(_crown):
 		lg.attach_crown(_crown)
 		_crown = null
 	_make_stump(cut_j)
@@ -119,7 +121,7 @@ func fell(cut_j: int, push_dir: Vector3) -> Log:
 
 ## Cuts this tree down to a stump `cut_j` bands tall (the crown, if still here, goes).
 func _make_stump(cut_j: int) -> void:
-	if _crown != null:
+	if is_instance_valid(_crown):
 		_crown.queue_free()
 		_crown = null
 	bands = cut_j
@@ -149,12 +151,18 @@ func src_info() -> Dictionary:
 
 ## A tree's layers, as text for the save file.
 func layer_state() -> Dictionary:
-	return {"bands": bands, "felled": felled,
+	var d := {"bands": bands, "felled": felled,
 		"outer": Marshalls.raw_to_base64(layers[OUTER]), "inner": Marshalls.raw_to_base64(layers[INNER])}
+	if not felled and _had_fol:
+		# leaves snipped off the crown (an empty list: every last leaf is gone)
+		d["crown"] = _fol.state() if is_instance_valid(_fol) else []
+	return d
 
 
 func is_untouched() -> bool:
 	if felled:
+		return false
+	if _had_fol and (not is_instance_valid(_fol) or not _fol.untouched()):
 		return false
 	for l in 2:
 		for b in layers[l]:
@@ -169,6 +177,13 @@ func apply_layer_state(d: Dictionary) -> void:
 	var i := Marshalls.base64_to_raw(String(d.get("inner", "")))
 	if bool(d.get("felled", false)):
 		_make_stump(int(d.get("bands", bands)))
+	elif d.has("crown") and is_instance_valid(_fol):
+		var st: Array = d.crown
+		if st.is_empty():
+			_crown.queue_free()
+			_crown = null
+		else:
+			_fol.apply_state(st)
 	if o.size() == SECTORS * bands and i.size() == SECTORS * bands:
 		layers[OUTER] = o
 		layers[INNER] = i
@@ -204,7 +219,7 @@ static func ghost(src: Dictionary, n_bands: int, outer: PackedByteArray, inner: 
 ## Each chop makes the crown shudder away from the hit and spring back.
 func shake_crown(dir: Vector3, amount: float) -> void:
 	dir.y = 0.0
-	if dir.length() < 0.01 or _crown == null:
+	if dir.length() < 0.01 or not is_instance_valid(_crown):
 		return
 	var axis := Vector3.UP.cross(dir.normalized())
 	var a := deg_to_rad(2.5) * amount
@@ -253,6 +268,8 @@ func _build_static() -> void:
 	var fol := Foliage.new()
 	_crown.add_child(fol)
 	fol.setup(_crown)
+	_fol = fol
+	_had_fol = true
 	# collision: the trunk
 	_col = CollisionShape3D.new()
 	var sh := CylinderShape3D.new()

@@ -67,6 +67,47 @@ func _ready() -> void:
 	ti.global_position = lp + Vector3(-0.6, 0, 0)
 	Game.owned["hatchet"] = true
 	Game.set_dropped("hatchet", true)
+	# snip some leaves off one crown and every last leaf off another (its saplings are cleared away again)
+	var t2: ForestTree = main.trees[2]
+	var f2 := t2.find_children("*", "Foliage", true, false)[0] as Foliage
+	for k in 5:
+		f2.snip(0, f2.global_position, Vector3.UP, main)
+	var crown2: Array = f2.state()
+	var t3: ForestTree = main.trees[3]
+	var f3 := t3.find_children("*", "Foliage", true, false)[0] as Foliage
+	var guard := 0
+	while is_instance_valid(f3) and not f3.is_queued_for_deletion() and guard < 3000:
+		guard += 1
+		if not f3.snip(0, f3.global_position, Vector3.UP, main):
+			await frames(1)
+	await frames(2)
+	for l0 in get_tree().get_nodes_in_group("leaves"):
+		if l0 != lf:
+			l0.remove_from_group("leaves")
+			l0.queue_free()
+	for s0 in get_tree().get_nodes_in_group("saplings"):
+		s0.remove_from_group("saplings")
+		s0.queue_free()
+	t3.shake_crown(Vector3.FORWARD, 0.5)      # used to touch the freed crown
+	# mine: one rock gone, one chipped, an ore chunk lying around; and a wired crank + lever
+	var rocks := get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id"))
+	var mined_id: int = rocks[0].get_meta("rock_id")
+	rocks[0].remove_from_group("rocks")
+	rocks[0].queue_free()
+	var chipped_id: int = rocks[1].get_meta("rock_id")
+	(rocks[1] as Rock).set_hp(1)
+	var ore := Ore.new()
+	main.add_child(ore)
+	ore.setup("copper", 0.15)
+	ore.global_position = lp + Vector3(0.8, 0, -0.8)
+	Game.owned["bp_crank"] = true
+	var mp := Vector3(-6.0, 0, 9.0)
+	mp.y = main.terrain.height_at(mp.x, mp.z)
+	var crank := Builds.finish("crank", main, Transform3D(Basis(), mp), 3.05, [], 1.0) as Crank
+	var lever := Builds.finish("lever", main, Transform3D(Basis(), mp + Vector3(1, 0, 0)), 3.05, [], 1.0) as Lever
+	Circuit.toggle_wire(main, crank, lever)
+	lever.set_on(true)
+	crank.charge = 40.0
 	var sp := Sapling.new()
 	main.add_child(sp)
 	sp.setup("pine")
@@ -112,6 +153,18 @@ func _ready() -> void:
 	check(get_tree().get_nodes_in_group("saplings").size() == 1, "and the sapling")
 	var ids := get_tree().get_nodes_in_group("bushes").map(func(b): return b.get_meta("bush_id"))
 	check(not ids.has(gone_id), "the bush you trimmed away stays gone")
+	var f2b := (mt[2] as ForestTree).find_children("*", "Foliage", true, false)
+	check(not f2b.is_empty() and (f2b[0] as Foliage).state() == crown2, "snipped leaves stay snipped")
+	check((mt[3] as ForestTree).find_children("*", "Foliage", true, false).is_empty(), "a crown snipped bare stays bare")
+	var ids2 := get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id")).map(func(r): return int(r.get_meta("rock_id")))
+	check(not ids2.has(mined_id), "a rock you mined away stays gone")
+	var ch := get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id") and int(r.get_meta("rock_id")) == chipped_id)
+	check(ch.size() == 1 and (ch[0] as Rock).hp == 1, "a chipped rock keeps its damage")
+	check(get_tree().get_nodes_in_group("ores").size() == 1, "the ore chunk is still lying there")
+	var lv := get_tree().get_nodes_in_group("machines").filter(func(m): return m is Lever)
+	var cr := get_tree().get_nodes_in_group("machines").filter(func(m): return m is Crank)
+	check(lv.size() == 1 and (lv[0] as Lever).on and cr.size() == 1 and (cr[0] as Crank).charge > 30.0, "machines keep their settings (lever on, crank wound)")
+	check(get_tree().get_nodes_in_group("wires").size() == 1, "and their wire")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.save_path))
 	print("SAVE RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()

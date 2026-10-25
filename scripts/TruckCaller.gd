@@ -22,4 +22,4 @@ func _power_on() -> void:
 
 
 func hint_text() -> String:
-	return "Sends the log truck when powered"
+	return "Truck Caller  ·  sends the log truck whenever it gets power"

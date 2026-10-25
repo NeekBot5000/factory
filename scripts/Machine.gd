@@ -77,6 +77,15 @@ func _power_off() -> void:
 	pass
 
 
+## What the HUD shows when you look at it: its name and whether it has power.
+func hint_text() -> String:
+	return "%s  ·  %s" % [display_name(), "powered" if powered else "no power"]
+
+
+func display_name() -> String:
+	return String(Builds.BUILDS[get_meta("build").id].name) if has_meta("build") else "Machine"
+
+
 ## Extra state for the save file (lever position, what's stuck to a rotator...).
 func save_state() -> Dictionary:
 	return {}

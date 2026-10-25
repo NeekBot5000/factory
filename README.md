@@ -71,8 +71,9 @@ carry, sell, or drop into a machine's hologram.
 
 Machines need their **blueprint** from TimberMart first (the build menu shows them greyed out until then). They
 always build on a 1 m grid facing one of four ways, so belts line up end to end; their front points away from
-you as you place them. Power comes from a **hand crank** (E winds it: 10 s per wind, up to a minute) and runs
-along wires; a switch that's off stops it there. Each machine has a small lamp that lights while it's powered.
+you as you place them. Power comes from a **hand crank** (E winds it: 15 s per wind, up to two minutes) and runs
+along wires; a switch that's off stops it there. Each machine has a small lamp that lights while it's powered, and looking at one tells you whether it has power.
+Mined-out rocks slowly grow back (one every minute or so, never right next to you).
 
 | Machine | Needs | What it does |
 |---|---|---|

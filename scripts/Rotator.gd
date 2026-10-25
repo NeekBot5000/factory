@@ -38,7 +38,7 @@ func terminal() -> Vector3:
 
 
 func hint_text() -> String:
-	return "[Hammer] let go" if not stuck.is_empty() else "[Hammer] stick what's on it"
+	return "%s    [Hammer] %s" % [super(), "let go" if not stuck.is_empty() else "stick what's on it"]
 
 
 ## The rotator something is sitting on (or stuck to), if any.

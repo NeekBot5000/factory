@@ -7,6 +7,9 @@ const LAYER := 32
 
 var _blob_of := {}      # CollisionShape3D -> MeshInstance3D
 var _hp := {}           # MeshInstance3D -> snips left
+var _cs_list: Array[CollisionShape3D] = []   # every blob in build order, for the save file
+var _left: Array[int] = []                   # snips left per blob (0 = gone), same order
+var _full: Array[int] = []
 
 
 func setup(crown: Node3D) -> void:
@@ -26,6 +29,9 @@ func setup(crown: Node3D) -> void:
 		add_child(cs)
 		_blob_of[cs] = mi
 		_hp[mi] = int(clampf(r * 7.0, 4.0, 16.0))
+		_cs_list.append(cs)
+		_left.append(int(_hp[mi]))
+		_full.append(int(_hp[mi]))
 
 
 static func blob_color(mi: MeshInstance3D) -> Color:
@@ -54,6 +60,7 @@ func snip(shape_idx: int, at: Vector3, out_dir: Vector3, world: Node) -> bool:
 		lf.angular_velocity = Vector3(randf_range(-3, 3), randf_range(-3, 3), randf_range(-3, 3))
 	Nature.burst(world, at, out_dir, col, 8, 1.2, 0.04, 3.0, 0.9, 80.0)
 	_hp[mi] = int(_hp[mi]) - 1
+	_left[_cs_list.find(cs)] = maxi(0, int(_hp[mi]))
 	mi.scale *= 0.9
 	(cs.shape as SphereShape3D).radius *= 0.9
 	if int(_hp[mi]) <= 0:
@@ -79,3 +86,35 @@ func snip(shape_idx: int, at: Vector3, out_dir: Vector3, world: Node) -> bool:
 			Sfx.play("reveal", 1.3, -6.0)
 			get_parent().queue_free()      # the crown is bare
 	return true
+
+
+func untouched() -> bool:
+	return _left == _full
+
+
+## Snips left on each blob, for the save file.
+func state() -> Array:
+	return _left.duplicate()
+
+
+## Puts a saved crown back: shrinks the snipped blobs and removes the gone ones (no saplings this time).
+func apply_state(st: Array) -> void:
+	for i in mini(st.size(), _cs_list.size()):
+		var v := int(st[i])
+		if v >= _left[i]:
+			continue
+		var cs := _cs_list[i]
+		var mi: MeshInstance3D = _blob_of[cs]
+		if v <= 0:
+			_blob_of.erase(cs)
+			_hp.erase(mi)
+			mi.queue_free()
+			cs.queue_free()
+		else:
+			var k := pow(0.9, _left[i] - v)
+			mi.scale *= k
+			(cs.shape as SphereShape3D).radius *= k
+			_hp[mi] = v
+		_left[i] = maxi(0, v)
+	if _blob_of.is_empty():
+		get_parent().queue_free()

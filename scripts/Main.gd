@@ -18,6 +18,7 @@ var ui_layer: CanvasLayer
 var shop_ui: Control          # whichever full-screen UI is open: the store (computer / phone) or the build menu
 var _dispatch_timer := -1.0
 var grass_mat: ShaderMaterial
+var rock_specs := {}             # rock_id -> where it stood, so mined rocks can slowly grow back
 var n_wild_trees := 0            # trees from world generation (saved by index); grown ones come after
 var _grass_hits: Array[Vector4] = []    # xyz = where something hit the ground, w = strength (decays)
 
@@ -68,6 +69,11 @@ func _ready() -> void:
 	autosave.autostart = true
 	autosave.timeout.connect(Game.save_game)
 	add_child(autosave)
+	var regrow := Timer.new()
+	regrow.wait_time = ROCK_REGROW
+	regrow.autostart = true
+	regrow.timeout.connect(regrow_rock)
+	add_child(regrow)
 
 
 func _notification(what: int) -> void:
@@ -176,7 +182,36 @@ func _quarry() -> void:
 		add_child(rock)
 		rock.position = Vector3(p.x, terrain.height_at(p.x, p.y) + s * 0.25, p.y)
 		rock.build(qr, s, "iron" if roll < 0.3 else ("copper" if roll < 0.7 else "stone"))
+		rock_specs[1000 + placed] = {"pos": rock.position, "s": s, "ore": rock.ore}
 		placed += 1
+
+
+## Every so often one mined-out rock pushes back up out of the ground (never right under your nose), so stone,
+## copper and iron don't run out for good.
+const ROCK_REGROW := 75.0
+
+
+func regrow_rock() -> bool:
+	var present := {}
+	for r in get_tree().get_nodes_in_group("rocks"):
+		if r.has_meta("rock_id"):
+			present[int(r.get_meta("rock_id"))] = true
+	var missing: Array = rock_specs.keys().filter(func(id): return not present.has(id))
+	missing.shuffle()
+	for id in missing:
+		var sp: Dictionary = rock_specs[id]
+		var pos: Vector3 = sp.pos
+		if player != null and player.global_position.distance_to(pos) < 8.0:
+			continue
+		var rr := RandomNumberGenerator.new()
+		rr.seed = int(id) * 7919 + 13
+		var rock := Rock.new()
+		rock.set_meta("rock_id", id)
+		add_child(rock)
+		rock.position = pos
+		rock.build(rr, float(sp.s), String(sp.ore))
+		return true
+	return false
 
 
 ## The truck parking spot and its turning loop.
@@ -201,6 +236,7 @@ func _decor() -> void:
 			rock.position = Vector3(p.x, y + s * 0.25, p.y)
 			# some wild rocks show a copper vein (decided by id, so the world layout stays the same)
 			rock.build(rng, s, "copper" if hash(i * 7919) % 100 < 18 else "stone")
+			rock_specs[i] = {"pos": rock.position, "s": s, "ore": rock.ore}
 		else:
 			var bush := Bush.new()
 			bush.set_meta("bush_id", i)

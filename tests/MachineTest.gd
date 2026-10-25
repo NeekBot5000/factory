@@ -100,6 +100,12 @@ func run() -> void:
 		if q.has_meta("rock_id") and int(q.get_meta("rock_id")) >= 1000:
 			kinds["quarry"] = true
 	check(kinds.has("quarry"), "there's a quarry out in the woods")
+	var n_rocks := get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id")).size()
+	var gone := get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id"))[3] as Rock
+	gone.remove_from_group("rocks")
+	gone.queue_free()
+	await frames(2)
+	check(main.regrow_rock() and get_tree().get_nodes_in_group("rocks").filter(func(r): return r.has_meta("rock_id")).size() == n_rocks, "mined-out rocks grow back over time")
 
 	# --- the last leaves of a crown always hold saplings
 	var t: ForestTree = main.trees[5]

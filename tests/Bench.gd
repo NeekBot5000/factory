@@ -1,5 +1,6 @@
 extends Node
-## Balance bench: how much bark money each stripping tool makes per minute of swinging, on fresh trees.
+## Balance bench: how fast each stripping tool clears 75% of the same fresh tree, as $ per minute of swinging.
+## Run: godot --headless --path . res://tests/Bench.tscn --fixed-fps 60
 var main: Node3D
 var player: Player
 

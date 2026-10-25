@@ -1,4 +1,5 @@
 extends Node
+## Machine screenshots. Run: xvfb-run -a godot --path . res://tests/MachineShot.tscn --rendering-driver opengl3
 var main: Node3D
 var player: Player
 var t := 0.0
