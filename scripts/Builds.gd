@@ -310,8 +310,9 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			var rb := RigidBody3D.new()
 			rb.collision_layer = 2
 			rb.collision_mask = 1 | 2
-			rb.mass = 1.5
+			rb.mass = 4.0
 			rb.angular_damp = 1.0
+			rb.continuous_cd = true
 			body = rb
 		"ball":
 			var ball := Basketball.new()
@@ -329,6 +330,8 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			body = Compost.new()
 		"catapult":
 			body = Catapult.new()
+		"hoop":
+			body = Hoop.new()
 		_:
 			body = StaticBody3D.new()
 	if body is StaticBody3D:
@@ -343,10 +346,11 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			k += 1
 	match id:
 		"basket":
-			_box_col(body, Vector3(BASKET_W, 0.04, BASKET_D), Vector3(0, 0.02, 0))
+			# a thick floor slab (top face level with the woven floor) and thick walls, so nothing tunnels through
+			_box_col(body, Vector3(BASKET_W + 0.1, 0.08, BASKET_D + 0.1), Vector3(0, 0.04, 0))
 			for s in [-1.0, 1.0]:
-				_box_col(body, Vector3(BASKET_W + 0.04, BASKET_H, 0.035), Vector3(0, BASKET_H * 0.5, s * BASKET_D * 0.5))
-				_box_col(body, Vector3(0.035, BASKET_H, BASKET_D), Vector3(s * BASKET_W * 0.5, BASKET_H * 0.5, 0))
+				_box_col(body, Vector3(BASKET_W + 0.14, BASKET_H, 0.1), Vector3(0, BASKET_H * 0.5, s * (BASKET_D * 0.5 + 0.03)))
+				_box_col(body, Vector3(0.1, BASKET_H, BASKET_D + 0.14), Vector3(s * (BASKET_W * 0.5 + 0.03), BASKET_H * 0.5, 0))
 			body.add_to_group("grabbable")
 			body.add_to_group("baskets")
 			body.set_meta("size", size)
@@ -371,11 +375,18 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			ncs.position = c + Vector3(0, -0.12, 0) * size
 			net.add_child(ncs)
 			body.add_child(net)
+			var hoop := body as Hoop
+			hoop.rim_center = c / size
+			hoop.scale_hint = size
+			for p in parts:
+				var col: Color = (p.real as StandardMaterial3D).albedo_color
+				if col.is_equal_approx(Color("f2efe6")):
+					hoop.net_parts.append(p.mi)
+				elif col.is_equal_approx(Color("e8642b")) and absf((p.mi as Node3D).position.y - hh) < 0.06:
+					hoop.rim_parts.append(p.mi)
 			net.body_entered.connect(func(b):
 				if b is Basketball and (b as RigidBody3D).linear_velocity.y < 0.0:
-					Sfx.play("reveal", 1.3)
-					Nature.burst(world, (b as Node3D).global_position, Vector3.UP, Color("ffcf6a"), 24, 2.5, 0.03, 3.0, 1.0, 140.0, 1.5)
-					Game.toast.emit("Swish!", Color("ffcf6a")))
+					hoop.score(b))
 			body.add_to_group("hoops")
 		"bench":
 			_box_col(body, Vector3(1.4, 0.06, 0.45), Vector3(0, 0.44, 0))

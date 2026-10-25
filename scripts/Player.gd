@@ -72,7 +72,9 @@ var _combo_t := 0.0
 const COMBO_MAX := 8
 var force_trigger := false       # tests: act as if the mouse button were held
 var lying: Node3D = null         # the hammock you're lying in, if any
-var _hold_yaw := 0.0             # extra turn you've given the thing in your hands (wheel / R)
+var _hold_yaw := 0.0             # the held thing keeps the turn it had relative to you when you picked it up
+var _pouring := false            # holding R with something in your hands: tip it forward to pour it out
+var _tilt := 0.0
 var _hold_dist := 0.0            # bigger things are held further away
 var _lie_t := 0.0
 
@@ -204,7 +206,7 @@ func _on_tools_changed() -> void:
 
 func cycle_tool(step: int) -> void:
 	if tool == "hammer" and builder.busy():
-		builder.rotate(-step)
+		builder.scroll(step)     # while placing a build, the wheel resizes it
 		return
 	var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.in_toolbar(t))
 	var i := owned.find(tool)
@@ -256,34 +258,26 @@ func _unhandled_input(event: InputEvent) -> void:
 				builder.cancel()
 			else:
 				interact()
-		elif (b.button_index == MOUSE_BUTTON_WHEEL_UP or b.button_index == MOUSE_BUTTON_WHEEL_DOWN) and builder.busy():
-			var st := 1 if b.button_index == MOUSE_BUTTON_WHEEL_UP else -1
-			if Input.is_key_pressed(KEY_SHIFT):
-				builder.scroll(-st)      # Shift + wheel: size
-			else:
-				builder.rotate(st)       # wheel: turn
 		elif b.button_index == MOUSE_BUTTON_WHEEL_UP:
-			if held != null:
-				_hold_yaw += deg_to_rad(15.0)      # turn what you're holding
-			else:
-				cycle_tool(-1)
+			cycle_tool(-1)
 		elif b.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			if held != null:
-				_hold_yaw -= deg_to_rad(15.0)
-			else:
-				cycle_tool(1)
-	elif event is InputEventKey and event.pressed and not event.echo:
+			cycle_tool(1)
+	elif event is InputEventKey and not event.pressed and (event as InputEventKey).keycode == KEY_R:
+		_pouring = false
+	elif event is InputEventKey and event.pressed and (not event.echo or (event as InputEventKey).keycode == KEY_R):
 		var k := (event as InputEventKey).keycode
 		if not controls_enabled:
 			return
-		if builder.busy() and (k == KEY_Q or k == KEY_E):
-			builder.rotate(-1 if k == KEY_Q else 1)
-		elif k == KEY_E or k == KEY_F:
+		if k == KEY_E or k == KEY_F:
 			interact()
 		elif k == KEY_Q:
 			drop_tool()
-		elif k == KEY_R and held != null:
-			_hold_yaw += PI * 0.5
+		elif k == KEY_R:
+			# R turns things: the build you're placing, or whatever is in your hands
+			if builder.busy():
+				builder.rotate(1)
+			elif held != null:
+				_pouring = true
 		elif k == KEY_ESCAPE:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		elif k == KEY_TAB:
@@ -353,7 +347,7 @@ func look_target_text() -> String:
 	if builder.busy():
 		return builder.hint_text()
 	if held != null:
-		return "[E] drop    [Scroll / R] turn"
+		return "[E] drop    [Hold R] tip it over"
 	var hit := look_ray(GRAB_REACH, 1 | 2 | Blueprint.LAYER)
 	if hit.is_empty():
 		return ""
@@ -573,9 +567,9 @@ func try_grab() -> bool:
 	held = b
 	add_collision_exception_with(held)
 	held.sleeping = false
-	if b.is_in_group("baskets"):
-		_pack_basket(b)
-	_hold_yaw = 0.0
+	_tilt = 0.0
+	_pouring = false
+	_hold_yaw = wrapf(b.global_basis.get_euler().y - _yaw, -PI, PI) if not (b is Log) else 0.0
 	_hold_dist = maxf(0.0, _body_radius(b) - 0.25) * 1.3
 	Sfx.play("pickup")
 	return true
@@ -593,36 +587,39 @@ func _basket_around(b: RigidBody3D) -> RigidBody3D:
 	return null
 
 
-## Picking up a basket: everything lying inside it rides along (frozen to the basket) instead of spilling out.
-func _pack_basket(basket: RigidBody3D) -> void:
+## Carrying a basket upright: things resting inside it ride along with it (so walking, turning and bumping can
+## never shake them out or through the floor). Tip it (hold R) or put it down and they're loose again.
+func _carry_contents(basket: RigidBody3D) -> void:
 	var s := float(basket.get_meta("size", 1.0))
 	var half := Vector3(Builds.BASKET_W * 0.5, 0.0, Builds.BASKET_D * 0.5) * s
-	var top := (Builds.BASKET_H + 0.25) * s
+	var top := (Builds.BASKET_H + 0.15) * s
 	var q := PhysicsShapeQueryParameters3D.new()
 	var sh := BoxShape3D.new()
 	sh.size = Vector3(half.x * 2.0, top, half.z * 2.0)
 	q.shape = sh
 	q.transform = basket.global_transform * Transform3D(Basis(), Vector3(0, top * 0.5, 0))
 	q.collision_mask = 2
-	q.exclude = [basket.get_rid()]
-	var packed: Array = []
+	q.exclude = [basket.get_rid(), get_rid()]
+	var packed: Array = basket.get_meta("packed", [])
 	for r in get_world_3d().direct_space_state.intersect_shape(q, 128):
 		var b := r.collider as RigidBody3D
 		if b == null or b.freeze or b == basket or b.is_in_group("baskets"):
 			continue
 		var lp := basket.to_local(b.global_position)
-		if absf(lp.x) > half.x or absf(lp.z) > half.z or lp.y < -0.05 or lp.y > top:
+		if absf(lp.x) > half.x or absf(lp.z) > half.z or lp.y < -0.02 or lp.y > top:
 			continue
 		b.set_meta("pack_layer", b.collision_layer)
+		b.set_meta("pack_mask", b.collision_mask)
 		b.collision_layer = 0
+		b.collision_mask = 0          # otherwise it would act as a fixed peg inside the basket and pin it
 		b.freeze = true
 		b.reparent(basket, true)
 		packed.append(b)
 	basket.set_meta("packed", packed)
 
 
-## Putting it down: the contents settle back in, moving with the basket.
-func _unpack_basket(basket: RigidBody3D) -> void:
+## Lets everything that was riding in the basket go: it keeps the basket's motion, so a flung basket spills.
+func _release_contents(basket: RigidBody3D) -> void:
 	if not basket.has_meta("packed"):
 		return
 	var world := get_parent()
@@ -632,8 +629,9 @@ func _unpack_basket(basket: RigidBody3D) -> void:
 		var rb := b as RigidBody3D
 		rb.reparent(world, true)
 		rb.collision_layer = int(rb.get_meta("pack_layer", 2))
+		rb.collision_mask = int(rb.get_meta("pack_mask", 3))
 		rb.freeze = false
-		rb.linear_velocity = basket.linear_velocity
+		rb.linear_velocity = basket.linear_velocity + basket.angular_velocity.cross(rb.global_position - basket.global_position)
 	basket.remove_meta("packed")
 
 
@@ -661,7 +659,8 @@ func drop_held() -> void:
 	if is_instance_valid(held):
 		remove_collision_exception_with(held)
 		# it keeps whatever momentum it had in your hands: spin round fast and let go to fling it
-		_unpack_basket(held)
+		if held.is_in_group("baskets"):
+			_release_contents(held)
 	held = null
 	Sfx.play("drop", 0.9, -6.0)
 
@@ -673,6 +672,9 @@ func _update_held(delta: float) -> void:
 		held = null
 		return
 	var target := cam.global_transform * (HOLD_OFFSET + (Vector3(0, -0.15, -0.4) if held is Log else Vector3.ZERO) + Vector3(0, -_hold_dist * 0.35, -_hold_dist))
+	if held.is_in_group("baskets"):
+		# hold a basket by its middle, so tipping it pivots around the middle (not its bottom edge)
+		target -= held.global_basis.y * Builds.BASKET_H * 0.5 * float(held.get_meta("size", 1.0))
 	var d := target - held.global_position
 	if d.length() > 1.8 + _hold_dist:
 		_snag += delta
@@ -681,13 +683,29 @@ func _update_held(delta: float) -> void:
 			return
 	else:
 		_snag = 0.0
+	held.sleeping = false
 	held.linear_velocity = (d * 16.0).limit_length(28.0)
-	held.angular_velocity = held.angular_velocity.lerp(Vector3.ZERO, minf(1.0, delta * 10.0))
-	var want := Basis(Vector3.UP, _yaw + _hold_yaw)
+	if held.is_in_group("baskets"):
+		if _tilt < 0.3:
+			_carry_contents(held)
+		else:
+			_release_contents(held)
+	# hold R to tip it forward (pour a basket out); let go and it rights itself
+	_tilt = move_toward(_tilt, deg_to_rad(165.0) if _pouring else 0.0, delta * 5.0)
+	var want := Basis(Vector3.UP, _yaw + _hold_yaw) * Basis(Vector3.RIGHT, -_tilt)
 	if held is Log:
 		want = want * Basis(Vector3.BACK, PI * 0.5)     # carry logs crosswise
-	var q := held.global_basis.get_rotation_quaternion().slerp(want.get_rotation_quaternion(), minf(1.0, delta * 6.0))
-	held.global_basis = Basis(q)
+	# turn it with angular velocity (not by snapping its rotation) so containers sweep their contents along
+	var cur := held.global_basis.get_rotation_quaternion()
+	var dq := want.get_rotation_quaternion() * cur.inverse()
+	if dq.w < 0.0:
+		dq = -dq
+	var ang := 2.0 * acos(clampf(dq.w, -1.0, 1.0))
+	var axis := Vector3(dq.x, dq.y, dq.z)
+	if axis.length() > 0.0001 and ang > 0.0005:
+		held.angular_velocity = axis.normalized() * minf(ang * 8.0, 12.0)
+	else:
+		held.angular_velocity = Vector3.ZERO
 
 
 # ------------------------------------------------------------------ frame

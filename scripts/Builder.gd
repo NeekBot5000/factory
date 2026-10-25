@@ -1,8 +1,7 @@
 class_name Builder
 extends Node
 ## The hammer's build mode. Click with the hammer to open the build menu, pick something, then a hologram follows
-## your aim: Q / E / scroll turn it, Shift + scroll makes it bigger or smaller (bigger costs more), click to set it
-## down, right-click to cancel. The placed plan becomes a Blueprint that you fill by dropping materials into it.
+## your aim: R turns it, scroll makes it bigger or smaller (bigger costs more), click to set it down, E to cancel. The placed plan becomes a Blueprint that you fill by dropping materials into it.
 
 const REACH := 9.0
 
@@ -11,7 +10,7 @@ var main: Node
 var build_id := "basket"
 var size_i := 2               # index into Builds.SIZES (1.0x)
 var state := "idle"           # idle | place
-var turn := 0.0               # extra rotation you've given the hologram (Q / E / scroll)
+var turn := 0.0               # extra rotation you've given the hologram (R)
 var _holo: Node3D
 var _holo_parts: Array = []
 var _holo_label: Label3D
@@ -57,15 +56,15 @@ func start(id: String) -> void:
 	Sfx.play("click")
 
 
-## Q / E / mouse wheel while placing: turn it in 15 degree steps.
+## R while placing: turn it in 45 degree steps (hold R to keep turning).
 func rotate(step: int) -> void:
 	if state != "place":
 		return
-	turn += deg_to_rad(15.0) * step
+	turn += deg_to_rad(45.0) * step
 	Sfx.play("click", 1.2, -6.0)
 
 
-## Shift + mouse wheel while placing: resize.
+## Mouse wheel while placing: resize.
 func scroll(step: int) -> void:
 	if state != "place":
 		return
@@ -92,7 +91,7 @@ func busy() -> bool:
 func hint_text() -> String:
 	match state:
 		"place":
-			return "[Q / E / Scroll] turn    [Shift+Scroll] size %sx    [Click] place    [Right-click] cancel" % str(size())
+			return "[R] turn    [Scroll] size %sx    [Click] place    [E] cancel" % str(size())
 	return ""
 
 

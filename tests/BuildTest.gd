@@ -251,13 +251,13 @@ func run() -> void:
 	await frames(3)
 	var y_before: float = player.builder._holo.global_basis.get_euler().y
 	var ev := InputEventKey.new()
-	ev.keycode = KEY_E
+	ev.keycode = KEY_R
 	ev.pressed = true
-	for k in 6:
+	for k in 2:
 		player._unhandled_input(ev)
 	await frames(3)
 	var turned := absf(wrapf(player.builder._holo.global_basis.get_euler().y - y_before, -PI, PI))
-	check(absf(turned - PI * 0.5) < 0.05, "E turns the hologram (6 presses = %.0f deg)" % rad_to_deg(turned))
+	check(absf(turned - PI * 0.5) < 0.05, "R turns the hologram (2 presses = %.0f deg)" % rad_to_deg(turned))
 	player.primary()
 	await frames(3)
 	bps = get_tree().get_nodes_in_group("blueprints")
@@ -336,7 +336,7 @@ func new_builds() -> void:
 	var fire := Builds.finish("campfire", main, spot(Vector3(-4, 0, -3)), 0.0, []) as Campfire
 	var lg := Log.new()
 	main.add_child(lg)
-	lg.setup_from(nearest_tree(), 0, 4, fire.global_transform * Transform3D(Basis(Vector3.BACK, PI * 0.5), Vector3(0.36, 0.3, 0)))
+	lg.setup_from(nearest_tree(), 0, 4, fire.global_transform * Transform3D(Basis(Vector3.BACK, PI * 0.5), Vector3(0.36, 0.35, 0)))
 	await secs(9.0)
 	check(not is_instance_valid(lg), "logs left on the campfire burn away")
 	# compost turns leaves into a sapling, which roots in the ground
@@ -384,17 +384,6 @@ func holding() -> void:
 		player.drop_held()
 		await frames(5)
 	check(dists[1] > dists[0] + 0.5, "bigger baskets are held further away (%.2f vs %.2f m)" % [dists[0], dists[1]])
-	player.held = small
-	player.set("_hold_yaw", 0.0)
-	await frames(40)
-	var y0 := small.global_basis.get_euler().y
-	var ev := InputEventKey.new()
-	ev.keycode = KEY_R
-	ev.pressed = true
-	player._unhandled_input(ev)
-	await frames(60)
-	var turned := absf(wrapf(small.global_basis.get_euler().y - y0, -PI, PI))
-	check(turned > 1.2, "R turns what you're holding (%.0f deg)" % rad_to_deg(turned))
 	player.drop_held()
 	await carry_full_basket()
 
@@ -414,11 +403,19 @@ func carry_full_basket() -> void:
 	await aim_at(bk.global_position + Vector3(0, 0.25, 0), 1.4)
 	var ok := player.try_grab()
 	check(ok and player.held == bk, "picked up the basket")
-	# walk off and spin round with it
+	player.set("_pitch", deg_to_rad(-10))      # look up ahead once it's in your hands
+	await frames(40)
+	# walk off and spin round with it; nothing may ever end up below the floor
+	var through := 0
 	for k in 90:
-		player.global_position += Vector3(0.03, 0, 0.02)
-		player.set("_yaw", player.get("_yaw") + 0.03)
+		player.global_position += Vector3(0.025, 0, 0.015)
+		player.set("_yaw", player.get("_yaw") + 0.01)
 		await frames(1)
+		for c in load:
+			var lp0 := bk.to_local(c.global_position)
+			if absf(lp0.x) < 0.35 and absf(lp0.z) < 0.25 and lp0.y < -0.1 and lp0.y > -0.6:
+				through += 1
+	check(through == 0, "nothing falls through the basket's floor while carrying it")
 	player.drop_held()
 	await frames(90)
 	var inside := 0
@@ -427,3 +424,55 @@ func carry_full_basket() -> void:
 		if absf(lp.x) < 0.4 and absf(lp.z) < 0.3 and lp.y > -0.05 and lp.y < 0.6:
 			inside += 1
 	check(inside >= load.size() - 1, "carrying a basket keeps its contents inside (%d/%d)" % [inside, load.size()])
+	await pour_test()
+
+
+func pour_test() -> void:
+	# a fresh basket on open ground with bark in it, in your hands; hold R to pour it out
+	var open := Vector3(Terrain.road_x(40.0) + 3.0, 0, 40.0)
+	open.y = main.terrain.height_at(open.x, open.z) + 0.05
+	player.global_position = open
+	player.velocity = Vector3.ZERO
+	player.set("_yaw", 0.0)
+	player.set("_pitch", deg_to_rad(-5))
+	await frames(5)
+	var bk := Builds.finish("basket", main, Transform3D(Basis(), open + Vector3(0, 0, -2.0)), 0.0, [], 1.0) as RigidBody3D
+	await frames(10)
+	var load: Array[Chip] = []
+	var tr := nearest_tree()
+	for i in 6:
+		var c: Chip = main.spawn_chip(tr.piece_data(1, [Vector2i(i, 2)]), "oak", Vector3.ZERO)
+		c.global_position = bk.global_transform * Vector3(randf_range(-0.2, 0.2), 0.2 + i * 0.05, randf_range(-0.1, 0.1))
+		c.linear_velocity = Vector3.ZERO
+		load.append(c)
+	await frames(60)
+	player.held = bk
+	player.add_collision_exception_with(bk)
+	player.set("_hold_yaw", 0.0)
+	player.set("_hold_dist", maxf(0.0, Player._body_radius(bk) - 0.25) * 1.3)
+	await frames(60)
+	var rd := InputEventKey.new()
+	rd.keycode = KEY_R
+	rd.pressed = true
+	player._unhandled_input(rd)
+	await frames(120)
+	var tipped := bk.global_basis.y.y
+	var still := _count_in(bk, load)
+	var ru := InputEventKey.new()
+	ru.keycode = KEY_R
+	ru.pressed = false
+	player._unhandled_input(ru)
+	await frames(150)
+	check(tipped < -0.3, "holding R tips the basket over (up-dot %.2f)" % tipped)
+	check(bk.global_basis.y.y > 0.7, "letting go of R rights it again")
+	player.drop_held()
+	check(still <= 1, "pouring spills what's inside (%d left in)" % still)
+
+
+func _count_in(bk: Node3D, load: Array) -> int:
+	var n := 0
+	for c in load:
+		var lp := bk.to_local((c as Node3D).global_position)
+		if absf(lp.x) < 0.4 and absf(lp.z) < 0.3 and lp.y > -0.05 and lp.y < 0.6:
+			n += 1
+	return n
