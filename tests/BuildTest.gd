@@ -174,8 +174,22 @@ func run() -> void:
 	check(near >= 4, "the vacuum holds the bark floating at the nozzle (%d/6)" % near)
 	player.force_trigger = false
 	await secs(2.0)
-	# every piece it was holding has dropped away from the nozzle (some land on the felled log, so no fixed height)
-	var fell_down := held_bits.filter(func(c): return c.global_position.distance_to(nozzle) > 0.6 and c.global_position.y < nozzle.y - 0.2).size()
+	# every piece it was holding has dropped: it's down near the ground, or resting on something solid (the felled
+	# log is often right there), not hanging where the nozzle held it
+	var space := get_viewport().world_3d.direct_space_state
+	var others: Array[RID] = []
+	for c in held_bits:
+		others.append((c as RigidBody3D).get_rid())
+	var fell_down := held_bits.filter(func(c):
+		var low: bool = c.global_position.y < main.terrain.height_at(c.global_position.x, c.global_position.z) + 0.5
+		var sq := PhysicsShapeQueryParameters3D.new()
+		var ball := SphereShape3D.new()
+		ball.radius = 0.25
+		sq.shape = ball
+		sq.transform = Transform3D(Basis(), c.global_position)
+		sq.collision_mask = 1 | 2
+		sq.exclude = others
+		return low or not space.intersect_shape(sq, 1).is_empty()).size()
 	check(fell_down == near, "letting go drops them (%d/%d fell)" % [fell_down, near])
 	# --- hammer: basket
 	player.equip("hammer")

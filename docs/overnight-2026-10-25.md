@@ -60,7 +60,10 @@ and what I need to do.
 * **Soak test** (`tests/SoakTest.tscn`, now in CI): one of every build, wired machines, 2 minutes of random
   inputs, then save + reload must bring back the same builds and wires. Clean on 6 seeds.
 * CI now fails if any test prints a script error (a test could previously print PASS after crashing part-way).
-* Fixed a flaky build test (the hammer click sometimes hit the felled log).
+* Fixed two flaky build tests, both caused by the felled log from earlier in the test: the hammer click
+  sometimes hit it, and bark released from the vacuum sometimes landed on it. Found by running every suite
+  6 times; the vacuum case looked like pieces hanging in mid-air until frame-by-frame diagnostics showed them
+  resting on the log, so the game code was left alone.
 * `SaveTest` covers snipped crowns, mined and chipped rocks, ore chunks, machines with settings, and wires.
 * **Performance:** game logic costs under 1.1 ms per frame even with 600 loose bark pieces and 20 running
   belts, so on weak machines graphics will be the limit. Added an **automatic graphics fallback** for exported
