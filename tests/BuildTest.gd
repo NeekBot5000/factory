@@ -243,23 +243,26 @@ func run() -> void:
 		check(sv > 20.0 and sv < 50.0 * 0.6 * 1.6, "the basket sells for a bit less than its bark ($%.2f)" % sv)
 	if baskets.size() == 1:
 		check((baskets[0] as Node).is_in_group("grabbable"), "the basket can be picked up")
-	# --- hammer: hoop with a custom height
+	# --- hammer: hoop, turned while placing
 	var g2 := player.global_position + player.global_basis.x * 3.0
 	g2.y = main.terrain.height_at(g2.x, g2.z)
 	await aim_at(g2, 3.0)
 	player.builder.start("hoop")
 	await frames(3)
-	player.primary()
+	var y_before: float = player.builder._holo.global_basis.get_euler().y
+	var ev := InputEventKey.new()
+	ev.keycode = KEY_E
+	ev.pressed = true
+	for k in 6:
+		player._unhandled_input(ev)
 	await frames(3)
-	check(player.builder.state == "height", "the hoop asks for a height")
-	player.set("_pitch", deg_to_rad(40.0))
-	player.head.rotation.x = deg_to_rad(40.0)
-	await frames(4)
+	var turned := absf(wrapf(player.builder._holo.global_basis.get_euler().y - y_before, -PI, PI))
+	check(absf(turned - PI * 0.5) < 0.05, "E turns the hologram (6 presses = %.0f deg)" % rad_to_deg(turned))
 	player.primary()
 	await frames(3)
 	bps = get_tree().get_nodes_in_group("blueprints")
 	bp = bps[0] if bps.size() > 0 else null
-	check(bp != null and bp.height > 3.4, "looking up makes a tall hoop (%.2f m)" % (bp.height if bp else 0.0))
+	check(bp != null and player.builder.state == "idle", "one click places the hoop")
 	if bp != null and short != null and is_instance_valid(short):
 		short.global_position = bp.global_position + Vector3(0, 1.2, 0)
 		short.linear_velocity = Vector3.ZERO

@@ -1,9 +1,8 @@
 class_name Builder
 extends Node
 ## The hammer's build mode. Click with the hammer to open the build menu, pick something, then a hologram follows
-## your aim: scroll to make it bigger or smaller (bigger costs more), click to set it down (the hoop then takes its
-## height from where you look - click again to lock it in). The placed plan becomes a Blueprint that you fill by
-## dropping materials into it.
+## your aim: Q / E / scroll turn it, Shift + scroll makes it bigger or smaller (bigger costs more), click to set it
+## down, right-click to cancel. The placed plan becomes a Blueprint that you fill by dropping materials into it.
 
 const REACH := 9.0
 
@@ -11,13 +10,12 @@ var player: Player
 var main: Node
 var build_id := "basket"
 var size_i := 2               # index into Builds.SIZES (1.0x)
-var state := "idle"           # idle | place | height
+var state := "idle"           # idle | place
+var turn := 0.0               # extra rotation you've given the hologram (Q / E / scroll)
 var _holo: Node3D
 var _holo_parts: Array = []
 var _holo_label: Label3D
-var _holo_h := Builds.HOOP_DEFAULT
 var _valid := false
-var _base := Transform3D.IDENTITY
 var _ok_mat: StandardMaterial3D
 var _bad_mat: StandardMaterial3D
 
@@ -46,13 +44,6 @@ func click() -> void:
 			if not _valid:
 				Sfx.play("thud", 1.4, -6.0)
 				return
-			_base = _holo.global_transform
-			if build_id == "hoop":
-				state = "height"
-				Sfx.play("click")
-			else:
-				_confirm()
-		"height":
 			_confirm()
 
 
@@ -61,12 +52,20 @@ func start(id: String) -> void:
 	build_id = id
 	size_i = Builds.SIZES.find(1.0)
 	state = "place"
-	_holo_h = Builds.HOOP_DEFAULT
+	turn = 0.0
 	_make_holo()
 	Sfx.play("click")
 
 
-## Mouse wheel while placing: resize.
+## Q / E / mouse wheel while placing: turn it in 15 degree steps.
+func rotate(step: int) -> void:
+	if state != "place":
+		return
+	turn += deg_to_rad(15.0) * step
+	Sfx.play("click", 1.2, -6.0)
+
+
+## Shift + mouse wheel while placing: resize.
 func scroll(step: int) -> void:
 	if state != "place":
 		return
@@ -93,9 +92,7 @@ func busy() -> bool:
 func hint_text() -> String:
 	match state:
 		"place":
-			return "Size %sx    [Scroll] size    [Click] place    [E] cancel" % str(size())
-		"height":
-			return "Look up / down for height    [Click] build    [E] cancel"
+			return "[Q / E / Scroll] turn    [Shift+Scroll] size %sx    [Click] place    [Right-click] cancel" % str(size())
 	return ""
 
 
@@ -104,7 +101,7 @@ func _make_holo() -> void:
 		_holo.queue_free()
 	_holo = Node3D.new()
 	main.add_child(_holo)
-	_holo_parts = Builds.make(build_id, _holo, _holo_h, size())
+	_holo_parts = Builds.make(build_id, _holo, Builds.HOOP_DEFAULT * size(), size())
 	var top := 0.5
 	for p in _holo_parts:
 		var mi := p.mi as MeshInstance3D
@@ -126,7 +123,7 @@ func _confirm() -> void:
 	var bp := Blueprint.new()
 	main.add_child(bp)
 	bp.global_transform = _holo.global_transform
-	bp.setup(build_id, _holo_h, main, size())
+	bp.setup(build_id, Builds.HOOP_DEFAULT * size(), main, size())
 	cancel()
 	player.start_swing()
 	Sfx.play("thud", 1.6)
@@ -157,21 +154,6 @@ func update(_delta: float) -> void:
 			_valid = (hit.normal as Vector3).y > 0.75 and not (hit.collider is ForestTree) and not (hit.collider is Truck)
 		else:
 			pos.y = main.terrain.height_at(pos.x, pos.z)
-		# front of the build faces you
-		_holo.global_transform = Transform3D(Basis.looking_at(flat, Vector3.UP), pos)
+		# front of the build faces you, plus however much you've turned it
+		_holo.global_transform = Transform3D(Basis.looking_at(flat, Vector3.UP).rotated(Vector3.UP, turn), pos)
 		_paint(_valid)
-	elif state == "height":
-		# rim height = where your view ray crosses the vertical plane through the hoop
-		var n := -flat
-		var o := cam.global_position
-		var denom := fwd.dot(n)
-		var h := _holo_h
-		if absf(denom) > 0.001:
-			var t := (_base.origin - o).dot(n) / denom
-			if t > 0.0:
-				h = clampf((o + fwd * t).y - _base.origin.y, Builds.HOOP_MIN * size(), Builds.HOOP_MAX * size())
-		if absf(h - _holo_h) > 0.04:
-			_holo_h = snappedf(h, 0.05)
-			var keep := _base
-			_make_holo()
-			_holo.global_transform = keep

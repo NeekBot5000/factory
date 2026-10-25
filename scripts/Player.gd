@@ -204,7 +204,7 @@ func _on_tools_changed() -> void:
 
 func cycle_tool(step: int) -> void:
 	if tool == "hammer" and builder.busy():
-		builder.scroll(step)     # while placing a build, the wheel resizes it
+		builder.rotate(-step)
 		return
 	var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.in_toolbar(t))
 	var i := owned.find(tool)
@@ -252,7 +252,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		if b.button_index == MOUSE_BUTTON_LEFT:
 			primary()
 		elif b.button_index == MOUSE_BUTTON_RIGHT:
-			interact()
+			if builder.busy():
+				builder.cancel()
+			else:
+				interact()
+		elif (b.button_index == MOUSE_BUTTON_WHEEL_UP or b.button_index == MOUSE_BUTTON_WHEEL_DOWN) and builder.busy():
+			var st := 1 if b.button_index == MOUSE_BUTTON_WHEEL_UP else -1
+			if Input.is_key_pressed(KEY_SHIFT):
+				builder.scroll(-st)      # Shift + wheel: size
+			else:
+				builder.rotate(st)       # wheel: turn
 		elif b.button_index == MOUSE_BUTTON_WHEEL_UP:
 			if held != null:
 				_hold_yaw += deg_to_rad(15.0)      # turn what you're holding
@@ -267,7 +276,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		var k := (event as InputEventKey).keycode
 		if not controls_enabled:
 			return
-		if k == KEY_E or k == KEY_F:
+		if builder.busy() and (k == KEY_Q or k == KEY_E):
+			builder.rotate(-1 if k == KEY_Q else 1)
+		elif k == KEY_E or k == KEY_F:
 			interact()
 		elif k == KEY_Q:
 			drop_tool()

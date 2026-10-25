@@ -29,8 +29,6 @@ const SIZES := [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
 static var _S := 1.0     # scale applied to colliders while finishing a sized build
 const RES_NAME := {"bark": "bark", "log": "log", "leaf": "leaves"}
 
-const HOOP_MIN := 1.8
-const HOOP_MAX := 4.5
 const HOOP_DEFAULT := 3.05
 
 

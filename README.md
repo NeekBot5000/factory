@@ -34,8 +34,8 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 Logs keep their bark, so you can still strip them; the mill pays for timber plus a little for bark left on.
 
 **Building:** take out the hammer and click to open the build menu (categories, previews). Pick a plan and its
-hologram follows your aim; scroll to make it bigger (bigger costs more), click to set it down (the hoop then
-takes its height from where you look). Drop materials into the hologram - it shows what it still needs - and each
+hologram follows your aim; Q / E / scroll turn it, Shift + scroll makes it bigger (bigger costs more), click to
+set it down, right-click to cancel. Drop materials into the hologram - it shows what it still needs - and each
 piece fills in; any kind of bark or wood counts, leaves too. E on a plan cancels it and gives everything back.
 Movable builds (baskets, balls) sell in the log truck for a bit less than their materials.
 
@@ -49,7 +49,7 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | Log Rack | 4 logs | V-cradles that hold logs |
 | Compost Pile | 40 leaves | feed it leaves and it sprouts saplings; plant one and it grows into a tree |
 | Basketball | 8 leaves | bouncy; drop it through the hoop to score |
-| Basketball Hoop | 12 bark + 1 log | height set by where you look |
+| Basketball Hoop | 12 bark + 1 log | a real rim to score on |
 | Catapult | 3 logs + 10 bark + 6 leaves | click it to launch whatever's in the cup |
 
 ## Play
@@ -68,7 +68,7 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | Q | drop your tool on the ground |
 | Spin and drop | things keep their momentum, so you can fling them |
 | Scroll or R while holding | turn what you are holding |
-| 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
+| 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build: wheel turns, Shift + wheel resizes) |
 | Tab | phone (once you own it) |
 
 Progress saves automatically.
