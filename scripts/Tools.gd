@@ -10,18 +10,25 @@ const TOOLS := {
 	"hatchet": {"name": "Trusty Hatchet", "radius": 0.18, "cooldown": 0.5, "impact": 0.45, "hurt": 0.0, "anim": "chop", "reach": 2.3},
 	"double_bit": {"name": "Double-Bit Axe", "radius": 0.25, "cooldown": 0.62, "impact": 0.5, "hurt": 0.0, "anim": "sweep", "reach": 2.5},
 	"labrys": {"name": "Crescent Labrys", "radius": 0.34, "cooldown": 0.85, "impact": 0.55, "hurt": 0.0, "anim": "slam", "reach": 2.6},
+	"scraper": {"name": "Bark Scraper", "radius": 0.3, "cooldown": 0.42, "impact": 0.45, "hurt": 0.0, "anim": "chop", "reach": 2.3, "layer": "outer"},
+	"gouge": {"name": "Inner Gouge", "radius": 0.13, "cooldown": 0.34, "impact": 0.45, "hurt": 0.0, "anim": "chop", "reach": 2.2, "layer": "inner", "value": 1.35},
+	"ringer": {"name": "Ringing Axe", "radius": 0.0, "cooldown": 0.95, "impact": 0.55, "hurt": 0.0, "anim": "sweep", "reach": 2.4, "ring": true},
+	"twins": {"name": "Twin Hatchets", "radius": 0.12, "cooldown": 0.24, "impact": 0.45, "hurt": 0.0, "anim": "twin", "reach": 2.2},
+	"greataxe": {"name": "Greataxe", "radius": 0.5, "cooldown": 1.35, "impact": 0.62, "hurt": 0.0, "anim": "slam", "reach": 2.7, "move": 0.55},
+	"combo": {"name": "Combo Axe", "radius": 0.1, "cooldown": 0.4, "impact": 0.45, "hurt": 0.0, "anim": "chop", "reach": 2.3},
 	"drill": {"name": "Timber Auger", "radius": 0.3, "cooldown": 0.16, "impact": 0.0, "hurt": 0.0, "anim": "drill", "reach": 2.2, "hold": true},
 	"saw": {"name": "Bow Saw", "radius": 0.0, "cooldown": 0.3, "impact": 0.0, "hurt": 0.0, "anim": "saw", "reach": 2.2, "hold": true},
 	"shears": {"name": "Pruning Shears", "radius": 0.0, "cooldown": 0.32, "impact": 0.45, "hurt": 0.0, "anim": "snip", "reach": 4.2},
 	"vacuum": {"name": "Leaf Vacuum", "radius": 0.0, "cooldown": 0.1, "impact": 0.0, "hurt": 0.0, "anim": "vacuum", "reach": 7.0, "hold": true},
 	"hammer": {"name": "Builder's Hammer", "radius": 0.0, "cooldown": 0.45, "impact": 0.5, "hurt": 0.0, "anim": "hammer", "reach": 2.2},
 }
-const TOOL_ORDER := ["hands", "hatchet", "double_bit", "labrys", "saw", "shears", "drill", "vacuum", "hammer"]
+const TOOL_ORDER := ["hands", "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "saw", "shears", "drill", "vacuum", "hammer"]
 
 const CATEGORIES := [
 	{"id": "all", "name": "All products"},
 	{"id": "hand_axes", "name": "Hand Axes"},
 	{"id": "heavy_axes", "name": "Heavy Axes"},
+	{"id": "bark_tools", "name": "Bark Specialists"},
 	{"id": "power", "name": "Power Tools"},
 	{"id": "saws", "name": "Saws & Shears"},
 	{"id": "building", "name": "Building"},
@@ -35,6 +42,18 @@ const SHOP := {
 		"desc": "Two balanced heads on a straight handle. Swing it sideways in a wide arc to peel off big strips of bark."},
 	"labrys": {"name": "Crescent Labrys", "price": 650.0, "cat": "heavy_axes", "tag": "Heavy",
 		"desc": "A two-handed axe with mirrored crescent blades. A spinning overhead slam strips a huge patch in one blow."},
+	"twins": {"name": "Twin Hatchets", "price": 300.0, "cat": "hand_axes", "tag": "Fast",
+		"desc": "One in each hand. Lightning-quick left and right chops, small strips each - keep up the rhythm."},
+	"combo": {"name": "Combo Axe", "price": 750.0, "cat": "hand_axes", "tag": "Rhythmic",
+		"desc": "Every hit in quick succession makes the next one bigger, up to huge patches. Stop swinging and it resets."},
+	"scraper": {"name": "Bark Scraper", "price": 220.0, "cat": "bark_tools", "tag": "Wide",
+		"desc": "A flat spud blade that lifts big clean sheets of outer bark only - it never digs into the inner layer."},
+	"gouge": {"name": "Inner Gouge", "price": 380.0, "cat": "bark_tools", "tag": "Precise",
+		"desc": "A curved gouge for the prized orange inner bark only. Small strips, but each sells for 35% more."},
+	"ringer": {"name": "Ringing Axe", "price": 520.0, "cat": "heavy_axes", "tag": "Sweeping",
+		"desc": "A long curved blade: every swing takes a whole ring of bark off all the way round the trunk. Slow."},
+	"greataxe": {"name": "Greataxe", "price": 900.0, "cat": "heavy_axes", "tag": "Massive",
+		"desc": "The biggest bite in the forest. A long windup, and you walk slowly while you lug it around."},
 	"drill": {"name": "Timber Auger", "price": 2400.0, "cat": "power", "tag": "Heavy",
 		"desc": "A cordless rotary debarker. Hold the trigger and sweep it across the trunk to strip bark continuously."},
 	"saw": {"name": "Bow Saw", "price": 450.0, "cat": "saws", "tag": "Long reach",
@@ -48,7 +67,7 @@ const SHOP := {
 	"phone": {"name": "TimberPhone", "price": 350.0, "cat": "gadgets", "tag": "Pocket-size",
 		"desc": "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it."},
 }
-const SHOP_ORDER := ["hatchet", "double_bit", "labrys", "saw", "shears", "drill", "hammer", "vacuum", "phone"]
+const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "saw", "shears", "drill", "hammer", "vacuum", "phone"]
 
 const WOOD := Color("a0703c")
 const STEEL := Color("c9ced6")
@@ -107,6 +126,12 @@ static func build_model(id: String, parent: Node3D) -> Node3D:
 		"vacuum": _vacuum(root)
 		"hammer": _hammer(root)
 		"shears": _shears(root)
+		"scraper": _scraper(root)
+		"gouge": _gouge(root)
+		"ringer": _ringer(root)
+		"twins": _twin(root)
+		"greataxe": _greataxe(root)
+		"combo": _combo(root)
 	for m in root.find_children("*", "MeshInstance3D", true, false):
 		(m as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return root
@@ -264,3 +289,79 @@ static func _shears(root: Node3D) -> void:
 		LowPoly.mesh_instance(half, LowPoly.box(Vector3(0.016, 0.02, 0.17)), red, Vector3(s * 0.012, -0.03, 0.09), Vector3(18, 0, 0))
 		LowPoly.mesh_instance(half, LowPoly.box(Vector3(0.02, 0.026, 0.05)), LowPoly.mat(Color("2b2d33"), 0.7), Vector3(s * 0.014, -0.058, 0.17), Vector3(18, 0, 0))
 	LowPoly.mesh_instance(root, LowPoly.cyl(0.01, 0.01, 0.03, 6), steel(Color("d4a52a"), 0.3), pivot, Vector3(0, 0, 90))
+
+
+## Bark spud: a flat, wide spade-like blade on a long handle; the straight edge faces -Z.
+static func _scraper(root: Node3D) -> void:
+	_handle(root, 0.5, 0.017, Color("8a6a45"))
+	var y := 0.48
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.02, 0.024, 0.06, 7), steel(DARK_STEEL), Vector3(0, y, 0))
+	var blade := PackedVector2Array([Vector2(y - 0.05, 0.0), Vector2(y + 0.05, 0.0), Vector2(y + 0.075, -0.13), Vector2(y - 0.075, -0.13)])
+	LowPoly.mesh_instance(root, prism(blade, 0.012, STEEL), steel(), Vector3.ZERO)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.014, 0.15, 0.006)), steel(Color("f2f5f8"), 0.1), Vector3(0, y, -0.131))
+
+
+## Gouge: a short handle with a brass ferrule and a curved U-channel blade.
+static func _gouge(root: Node3D) -> void:
+	_handle(root, 0.32, 0.018, Color("6b4428"))
+	var y := 0.3
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.022, 0.022, 0.03, 8), steel(Color("d4a52a"), 0.3), Vector3(0, y, 0))
+	for k in 7:
+		var a := lerpf(-1.3, 1.3, k / 6.0)
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.012, 0.02, 0.1)), steel(Color("e8b45a"), 0.25), Vector3(sin(a) * 0.028, y + 0.01 + cos(a) * 0.028 - 0.028, -0.05))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.06, 0.006, 0.006)), steel(Color("fff4d8"), 0.1), Vector3(0, y + 0.002, -0.1))
+
+
+## Ringing axe: a long red handle and one big sweeping crescent with a hole punched through it.
+static func _ringer(root: Node3D) -> void:
+	_handle(root, 0.68, 0.019, Color("a8322c"))
+	var y := 0.58
+	var pts := PackedVector2Array()
+	for i in 13:
+		var a := lerpf(-1.25, 1.25, i / 12.0)
+		pts.append(Vector2(y + sin(a) * 0.17, -0.02 - cos(a) * 0.17))
+	pts.append(Vector2(y + 0.08, -0.02))
+	pts.append(Vector2(y - 0.08, -0.02))
+	LowPoly.mesh_instance(root, prism(pts, 0.016, STEEL), steel(Color("dfe4ea"), 0.2), Vector3.ZERO)
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.035, 0.035, 0.02, 10), LowPoly.mat(Color("2b2d33")), Vector3(0, y, -0.1), Vector3(0, 0, 90))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.08, 0.05)), steel(DARK_STEEL), Vector3(0, y, 0))
+
+
+## One of the twin hatchets: small, green-handled.
+static func _twin(root: Node3D) -> void:
+	_handle(root, 0.34, 0.015, Color("3f7f4a"))
+	var y := 0.27
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.03, 0.05, 0.045)), steel(DARK_STEEL), Vector3(0, y, 0.0))
+	var blade := PackedVector2Array([Vector2(y - 0.025, -0.02), Vector2(y + 0.025, -0.02), Vector2(y + 0.045, -0.09), Vector2(y - 0.04, -0.09)])
+	LowPoly.mesh_instance(root, prism(blade, 0.018, STEEL), steel(), Vector3.ZERO)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.007, 0.085, 0.005)), steel(Color("f2f5f8"), 0.1), Vector3(0, y + 0.002, -0.091))
+
+
+## Greataxe: long dark handle, one enormous bearded blade, gold rivets.
+static func _greataxe(root: Node3D) -> void:
+	_handle(root, 0.95, 0.024, Color("3b2a22"), -0.2)
+	for k in 2:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.028, 0.028, 0.06, 7), LowPoly.mat(Color("7a4a2a"), 1.0), Vector3(0, -0.1 + k * 0.12, 0))
+	var y := 0.66
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.05, 0.12, 0.08)), steel(DARK_STEEL), Vector3(0, y, 0))
+	var blade := PackedVector2Array([Vector2(y - 0.05, -0.03), Vector2(y + 0.06, -0.03), Vector2(y + 0.16, -0.22), Vector2(y + 0.05, -0.27), Vector2(y - 0.14, -0.25), Vector2(y - 0.2, -0.16)])
+	LowPoly.mesh_instance(root, prism(blade, 0.026, Color("8d949e")), steel(Color("8d949e"), 0.35), Vector3.ZERO)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.01, 0.36, 0.008)), steel(Color("f2f5f8"), 0.1), Vector3(0, y - 0.02, -0.255), Vector3(-15, 0, 0))
+	for k in 2:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.012, 0.012, 0.03, 6), steel(Color("d4a52a"), 0.3), Vector3(0, y - 0.03 + k * 0.06, -0.06), Vector3(0, 0, 90))
+
+
+## Combo axe: a sleek hatchet with a glowing rune stripe ("Glow") that brightens as the combo builds.
+static func _combo(root: Node3D) -> void:
+	_handle(root, 0.44, 0.016, Color("2b2d33"))
+	var y := 0.35
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.034, 0.06, 0.055)), steel(DARK_STEEL), Vector3(0, y, 0.0))
+	var blade := PackedVector2Array([Vector2(y - 0.03, -0.025), Vector2(y + 0.035, -0.025), Vector2(y + 0.07, -0.12), Vector2(y - 0.06, -0.125)])
+	LowPoly.mesh_instance(root, prism(blade, 0.02, Color("b8c4d6")), steel(Color("b8c4d6"), 0.2), Vector3.ZERO)
+	var glow_mat := StandardMaterial3D.new()
+	glow_mat.albedo_color = Color("4fc3ff")
+	glow_mat.emission_enabled = true
+	glow_mat.emission = Color("4fc3ff")
+	glow_mat.emission_energy_multiplier = 0.4
+	var g := LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.024, 0.012, 0.08)), glow_mat, Vector3(0, y + 0.005, -0.06))
+	g.name = "Glow"

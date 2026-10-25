@@ -174,10 +174,12 @@ func _rebuild_toolbar() -> void:
 	for c in toolbar.get_children():
 		toolbar.remove_child(c)
 		c.queue_free()
+	var n := 0
 	for i in Tools.TOOL_ORDER.size():
 		var id: String = Tools.TOOL_ORDER[i]
 		if not Game.in_toolbar(id):
 			continue
+		n += 1
 		var sel := player.tool == id
 		var pc := PanelContainer.new()
 		pc.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.06, 0.1, 0.75 if sel else 0.5), 10, 6, Color("ffcf6a") if sel else Color(1, 1, 1, 0.15), 2 if sel else 1))
@@ -199,7 +201,9 @@ func _rebuild_toolbar() -> void:
 			hand.custom_minimum_size = Vector2(44, 44)
 			hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			v.add_child(hand)
-		var l := _label("%d  %s" % [i + 1, Tools.TOOLS[id].name], 11, Color("ffcf6a") if sel else Color(1, 1, 1, 0.8), font_bold)
+		# number keys pick the n-th tool you own; only the one in hand shows its name (keeps the bar short)
+		var key := str(n) if n <= 9 else ""
+		var l := _label(("%s  %s" % [key, Tools.TOOLS[id].name]).strip_edges() if sel else key, 11, Color("ffcf6a") if sel else Color(1, 1, 1, 0.8), font_bold)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(l)
 		toolbar.add_child(pc)

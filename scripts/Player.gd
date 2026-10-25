@@ -25,6 +25,9 @@ var hand_flat: Node3D
 var hand_fist: Node3D
 var tool_root: Node3D
 var tool_model: Node3D
+var arm_l: Node3D                # left arm, only out for the twin hatchets
+var tool_root_l: Node3D
+var tool_model_l: Node3D
 var tool := "hands"
 var held: RigidBody3D = null
 var spawn_xform := Transform3D.IDENTITY
@@ -64,6 +67,9 @@ var _vac_caught := {}            # RigidBody3D -> orbit phase
 var _vac_fx := 0.0
 var _vac_sound: AudioStreamPlayer
 var _backhand := false           # the double-bit axe alternates forehand / backhand swings
+var _combo_n := 0                # combo axe: hits in a row (each one grows the next)
+var _combo_t := 0.0
+const COMBO_MAX := 8
 var force_trigger := false       # tests: act as if the mouse button were held
 var lying: Node3D = null         # the hammock you're lying in, if any
 var _lie_t := 0.0
@@ -129,15 +135,31 @@ func _build_arm() -> void:
 	LowPoly.mesh_instance(hand_fist, LowPoly.box(Vector3(0.06, 0.075, 0.08)), skin, Vector3(0, 0.0, -0.12))
 	LowPoly.mesh_instance(hand_fist, LowPoly.box(Vector3(0.062, 0.03, 0.05)), skin, Vector3(0.0, -0.035, -0.15))
 	tool_root = Node3D.new()
+	tool_root.name = "ToolRoot"
 	tool_root.position = Vector3(0, -0.01, -0.13)
 	arm.add_child(tool_root)
+	hand_fist.name = "HandFist"
+	hand_flat.name = "HandFlat"
 	for m in arm.find_children("*", "MeshInstance3D", true, false):
 		(m as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	arm_l = arm.duplicate()
+	cam.add_child(arm_l)
+	arm_l.get_node("HandFlat").visible = false
+	tool_root_l = arm_l.get_node("ToolRoot")
+	arm_l.visible = false
 	_apply_tool_visuals()
 
 
 func tdef() -> Dictionary:
 	return Tools.TOOLS[tool]
+
+
+## The stripping circle right now (the combo axe grows with each hit in a row).
+func strip_radius() -> float:
+	var r := float(tdef().radius)
+	if tool == "combo":
+		r += 0.05 * _combo_n
+	return r
 
 
 func equip(id: String) -> void:
@@ -156,6 +178,12 @@ func _apply_tool_visuals() -> void:
 	if tool_model != null:
 		tool_model.queue_free()
 		tool_model = null
+	if tool_model_l != null:
+		tool_model_l.queue_free()
+		tool_model_l = null
+	arm_l.visible = tool == "twins"
+	if tool == "twins":
+		tool_model_l = Tools.build_model(tool, tool_root_l)
 	hand_flat.visible = tool == "hands"
 	hand_fist.visible = tool != "hands"
 	if tool != "hands":
@@ -242,10 +270,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_parent().call("open_phone")
 			else:
 				Game.toast.emit("No phone", Color("ffd27a"))
-		elif k >= KEY_1 and k <= KEY_9 and k - KEY_1 < Tools.TOOL_ORDER.size():
-			var id: String = Tools.TOOL_ORDER[k - KEY_1]
-			if Game.in_toolbar(id):
-				equip(id)
+		elif k >= KEY_1 and k <= KEY_9:
+			var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.in_toolbar(t))
+			if k - KEY_1 < owned.size():
+				equip(owned[k - KEY_1])
 
 
 ## Left click: click an object (box), throw what you hold, or swing the tool.
@@ -323,7 +351,7 @@ func aim_ring_px(viewport_h: float) -> float:
 	var dist := reach
 	if not hit.is_empty() and trunk_of(hit.collider) != null:
 		dist = cam.global_position.distance_to(hit.position)
-	var r := maxf(float(tdef().radius), 0.04)
+	var r := maxf(strip_radius(), 0.04)
 	return clampf(r / (maxf(dist, 0.3) * tan(deg_to_rad(cam.fov * 0.5))) * viewport_h * 0.5, 5.0, 400.0)
 
 
@@ -348,7 +376,7 @@ func start_swing() -> void:
 		return
 	_swing = 0.0
 	_impact_done = false
-	if tool == "double_bit":
+	if String(tdef().anim) in ["sweep", "twin"]:
 		_backhand = not _backhand
 	if tool != "hands":
 		Sfx.play("whoosh", 1.4 - float(tdef().radius), -8.0)
@@ -362,7 +390,10 @@ func _do_impact() -> void:
 		return
 	if tool == "hammer":
 		return
-	var hit := look_ray(float(d.reach), 1 | 2 | Bush.LAYER)
+	# swings pass through loose bark / leaves floating in front of the trunk (logs are on layer 1, so still hit)
+	var hit := look_ray(float(d.reach), 1 | Bush.LAYER)
+	if hit.is_empty():
+		hit = look_ray(float(d.reach), 2)
 	if hit.is_empty():
 		if tool == "hands":
 			Sfx.play("whoosh", 1.2, -6.0)
@@ -370,9 +401,21 @@ func _do_impact() -> void:
 	var c: Object = hit.collider
 	if trunk_of(c) != null:
 		var t := trunk_of(c)
-		var res := t.strip_circle(hit.position, float(d.radius))
+		var res := {}
+		if bool(d.get("ring", false)):
+			res = t.strip_ring(hit.position)
+		else:
+			var only := -1
+			match String(d.get("layer", "")):
+				"outer": only = ForestTree.OUTER
+				"inner": only = ForestTree.INNER
+			res = t.strip_circle(hit.position, strip_radius(), only)
+		if tool == "combo":
+			_combo_n = mini(_combo_n + 1, COMBO_MAX)     # any hit on the trunk keeps the rhythm going
+			_combo_t = 0.0
 		if not res.is_empty():
 			var data := t.piece_data(int(res.layer), res.panels)
+			data["value_mult"] = float(d.get("value", 1.0))
 			get_parent().call("spawn_chip", data, t.kind, -cam.global_transform.basis.z)
 			pieces_stripped += (res.panels as Array).size()
 			if tool == "drill":
@@ -385,7 +428,7 @@ func _do_impact() -> void:
 			_burst(hit.position, t.wood_color, 8)
 		if float(d.hurt) > 0.0:
 			take_damage(float(d.hurt))
-		t.shake_crown(-cam.global_transform.basis.z, 0.4 + float(d.radius))
+		t.shake_crown(-cam.global_transform.basis.z, 0.4 + strip_radius())
 		if c is Log:
 			(c as Log).apply_impulse(-cam.global_transform.basis.z * 0.6, hit.position - (c as Log).global_position)
 	elif c is RigidBody3D:
@@ -589,7 +632,7 @@ func _physics_process(delta: float) -> void:
 			input.x += 1
 	input = input.normalized()
 	var sprint := Input.is_key_pressed(KEY_SHIFT) and controls_enabled
-	var speed := SPRINT if sprint else WALK
+	var speed := (SPRINT if sprint else WALK) * float(tdef().get("move", 1.0))
 	var dir := (global_transform.basis * Vector3(input.x, 0, input.y))
 	var accel := 12.0 if is_on_floor() else 3.0
 	velocity.x = lerpf(velocity.x, dir.x * speed, minf(1.0, accel * delta))
@@ -613,6 +656,10 @@ func _physics_process(delta: float) -> void:
 		_bob = lerpf(_bob, round(_bob / PI) * PI, minf(1.0, delta * 6.0))
 	_update_held(delta)
 	_equip_t = minf(1.0, _equip_t + delta * 4.0)
+	_combo_t += delta
+	if _combo_t > 1.25 and _combo_n > 0:
+		_combo_n = 0
+		Sfx.play("click", 0.5, -8.0)
 	var d := tdef()
 	if _swing >= 0.0:
 		_swing += delta / float(d.cooldown)
@@ -667,10 +714,17 @@ const ARCS := {
 	"sweep": {"pivot": Vector3(-0.3, -0.65, -0.28), "axis": Vector3(-0.87, 0.5, 0.0), "r0": Vector3(0.5, 0.87, 0.0), "len": 0.32, "a": [-75.0, 36.0, 90.0]},
 	"sweep_back": {"pivot": Vector3(0.3, -0.65, -0.28), "axis": Vector3(-0.87, -0.5, 0.0), "r0": Vector3(-0.5, 0.87, 0.0), "len": 0.32, "a": [-75.0, 36.0, 90.0]},
 	"slam": {"pivot": Vector3(-0.3, -0.7, -0.25), "axis": Vector3(-0.87, 0.5, 0.0), "r0": Vector3(0.5, 0.87, 0.0), "len": 0.32, "a": [-85.0, 36.0, 90.0]},
+	"twin": {"pivot": Vector3(-0.15, -0.45, -0.35), "axis": Vector3(-0.87, 0.5, 0.0), "r0": Vector3(0.5, 0.87, 0.0), "len": 0.3, "a": [-60.0, 36.0, 85.0]},
 	"hammer": {"pivot": Vector3(0.1, -0.45, 0.0), "axis": Vector3(-1.0, 0.0, 0.0), "r0": Vector3(0.0, 1.0, 0.25), "len": 0.3, "a": [-30.0, 64.0, 78.0]},
 }
 # tool basis inside the arm: handle (+Y) along the forearm (-Z), cutting edge (-Z) along the arm's +X (the arc tangent)
 const TOOL_IN_ARM := Basis(Vector3(0, 1, 0), Vector3(0, 0, -1), Vector3(-1, 0, 0))
+const MIRROR := Basis(Vector3(-1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1))
+
+
+## Reflects a camera-space transform left <-> right.
+static func _mirror(t: Transform3D) -> Transform3D:
+	return Transform3D(MIRROR * t.basis * MIRROR, Vector3(-t.origin.x, t.origin.y, t.origin.z))
 
 
 func _arc_name() -> String:
@@ -729,28 +783,43 @@ func _animate_arm(delta: float) -> void:
 		var arc: Dictionary = ARCS[_arc_name()]
 		var ang: Array = arc.a
 		var rest := _rest_xform()
-		target = rest
+		var swing := rest
 		if _swing >= 0.0:
 			var t := _swing
 			var wind_end := impact * 0.55
 			var follow_end := minf(impact + 0.18, 0.95)
 			if t < wind_end:
-				target = _blend(rest, _arc_xform(arc, ang[0]), ease(t / wind_end, 0.5))
+				swing = _blend(rest, _arc_xform(arc, ang[0]), ease(t / wind_end, 0.5))
 			elif t < impact:
 				var k := ease((t - wind_end) / (impact - wind_end), 2.2)
-				target = _arc_xform(arc, lerpf(ang[0], ang[1], k))
-				if anim == "slam":
+				swing = _arc_xform(arc, lerpf(ang[0], ang[1], k))
+				if tool == "labrys":
 					spin = k * 360.0
 			elif t < follow_end:
-				target = _arc_xform(arc, lerpf(ang[1], ang[2], ease((t - impact) / (follow_end - impact), 0.5)))
+				swing = _arc_xform(arc, lerpf(ang[1], ang[2], ease((t - impact) / (follow_end - impact), 0.5)))
 			else:
-				target = _blend(_arc_xform(arc, ang[2]), rest, ease((t - follow_end) / (1.0 - follow_end), 0.7))
-		target.origin.y -= (1.0 - ease(_equip_t, 0.4)) * 0.35
+				swing = _blend(_arc_xform(arc, ang[2]), rest, ease((t - follow_end) / (1.0 - follow_end), 0.7))
+		var raise := (1.0 - ease(_equip_t, 0.4)) * 0.35
 		var k2 := 0.75 if _swing >= 0.0 else 0.3
-		arm.transform = _blend(arm.transform, target, k2)
+		# twin hatchets: the hands take turns (the left hand mirrors the right one's arc)
+		var right_t := swing if not (anim == "twin" and _backhand) else rest
+		right_t.origin.y -= raise
+		arm.transform = _blend(arm.transform, right_t, k2)
 		if tool_model != null:
 			tool_model.position = Vector3.ZERO
 			tool_model.basis = TOOL_IN_ARM * Basis(Vector3.UP, deg_to_rad(spin))
+		if anim == "twin":
+			var left_t := _mirror(swing if _backhand else rest)
+			left_t.origin.y -= raise
+			arm_l.transform = _blend(arm_l.transform, left_t, k2)
+			if tool_model_l != null:
+				tool_model_l.position = Vector3.ZERO
+				tool_model_l.basis = MIRROR * TOOL_IN_ARM * MIRROR
+		# combo axe: the rune glows brighter with the combo
+		if tool == "combo" and tool_model != null:
+			var g := tool_model.get_node_or_null("Glow") as MeshInstance3D
+			if g != null:
+				(g.material_override as StandardMaterial3D).emission_energy_multiplier = 0.4 + _combo_n * 0.7
 		return
 	var poses := _poses()
 	var rest_p: Vector3 = _arm_base + poses[0][0] + Vector3(0, sin(_bob * 0.5) * 0.01, 0)

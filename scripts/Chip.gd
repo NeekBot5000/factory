@@ -21,7 +21,7 @@ func setup(data: Dictionary, p_kind: String) -> void:
 	var per: float = PANEL_VALUE.outer if layer == 0 else PANEL_VALUE.inner
 	if kind == "birch" and layer == 0:
 		per *= 1.6
-	value = per * panels
+	value = per * panels * float(data.get("value_mult", 1.0))
 	collision_layer = 2
 	collision_mask = 1 | 2
 	mass = clampf(size.x * size.y * size.z * 600.0, 0.03, 4.0)

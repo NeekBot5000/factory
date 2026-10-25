@@ -273,12 +273,16 @@ func panel_at(world_point: Vector3) -> Vector2i:
 ## Strips every panel inside a circle (radius in metres) around the hit point - but only from the layer that
 ## is outermost at the hit point, never digging through to the layer below in the same hit.
 ## Returns {layer, panels: Array[Vector2i]} or {} if the spot is bare wood.
-func strip_circle(world_point: Vector3, circle_r: float) -> Dictionary:
+## `only` (OUTER / INNER) restricts a specialist tool to one layer: it takes only that layer's exposed panels in
+## the circle, wherever the hit lands.
+func strip_circle(world_point: Vector3, circle_r: float, only := -1) -> Dictionary:
 	var c := panel_at(world_point)
 	if c.x < 0:
 		return {}
 	var l := -1
-	if has_panel(OUTER, c.x, c.y):
+	if only >= 0:
+		l = only
+	elif has_panel(OUTER, c.x, c.y):
 		l = OUTER
 	elif has_panel(INNER, c.x, c.y):
 		l = INNER
@@ -286,7 +290,9 @@ func strip_circle(world_point: Vector3, circle_r: float) -> Dictionary:
 		return {}
 	var hit_local := to_local(world_point)
 	var ro := layer_radii(l).y
-	var panels: Array[Vector2i] = [c]
+	var panels: Array[Vector2i] = []
+	if _strippable(l, c.x, c.y):
+		panels.append(c)
 	var reach_j := int(ceil(circle_r / BAND_H)) + 1
 	var reach_i := int(ceil(circle_r / (TAU * ro / SECTORS))) + 1
 	for dj in range(-reach_j, reach_j + 1):
@@ -301,6 +307,29 @@ func strip_circle(world_point: Vector3, circle_r: float) -> Dictionary:
 				continue
 			if _panel_center(l, i, j).distance_to(hit_local) <= circle_r:
 				panels.append(Vector2i(i, j))
+	if panels.is_empty():
+		return {}
+	for p in panels:
+		layers[l][_idx(p.x, p.y)] = 0
+	_rebuild(l)
+	if l == OUTER:
+		_rebuild(INNER)
+	return {"layer": l, "panels": panels}
+
+
+## Ringing axe: the whole band at the hit height comes off all the way round (the outermost layer at the hit).
+func strip_ring(world_point: Vector3) -> Dictionary:
+	var c := panel_at(world_point)
+	if c.x < 0:
+		return {}
+	var l := OUTER if has_panel(OUTER, c.x, c.y) else (INNER if has_panel(INNER, c.x, c.y) else -1)
+	if l < 0:
+		return {}
+	var panels: Array[Vector2i] = []
+	for k in SECTORS:
+		var i := posmod(c.x + k, SECTORS)
+		if _strippable(l, i, c.y):
+			panels.append(Vector2i(i, c.y))
 	for p in panels:
 		layers[l][_idx(p.x, p.y)] = 0
 	_rebuild(l)

@@ -18,6 +18,12 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Trusty Hatchet | $30 | no more damage, bigger circle |
 | Double-Bit Axe | $160 | alternating diagonal chops from both sides |
 | Crescent Labrys | $650 | big spinning diagonal slam, huge patch |
+| Twin Hatchets | $300 | one in each hand: very fast alternating small chops |
+| Combo Axe | $750 | each hit in quick succession grows the next one; pause and it resets |
+| Bark Scraper | $220 | big sheets of outer bark only - never touches the inner layer |
+| Inner Gouge | $380 | inner bark only, small strips that sell for 35% more |
+| Ringing Axe | $520 | slow; every hit takes a full ring of bark all the way round |
+| Greataxe | $900 | the biggest patch of all, but a long windup and you walk slowly |
 | Bow Saw | $450 | hold on a trunk to fell the tree; hold on a log to cut it in two |
 | Pruning Shears | $90 | snip clumps of leaves off bushes and crowns (felled trees keep theirs) |
 | Timber Auger | $2400 | hold the mouse button and it bores bark off continuously |
@@ -61,7 +67,7 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | E or right click | pick up / drop, ship the truck, take an item, cancel a build |
 | Q | drop your tool on the ground |
 | Spin and drop | things keep their momentum, so you can fling them |
-| 1-9 / mouse wheel | switch tools (while placing a build, the wheel resizes it) |
+| 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 
 Progress saves automatically.

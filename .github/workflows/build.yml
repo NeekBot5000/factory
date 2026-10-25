@@ -63,6 +63,11 @@ jobs:
           ${GODOT_BIN} --headless --path . res://tests/BuildTest.tscn --fixed-fps 60 2>&1 | tee build.log
           grep -q "BUILD RESULT: PASS" build.log
 
+      - name: Gameplay test (axe variety)
+        run: |
+          ${GODOT_BIN} --headless --path . res://tests/AxeTest.tscn --fixed-fps 60 2>&1 | tee axe.log
+          grep -q "AXE RESULT: PASS" axe.log
+
       - name: Export Web, Windows and Linux
         run: |
           mkdir -p build/web build/windows build/linux
