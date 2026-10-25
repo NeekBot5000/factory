@@ -18,6 +18,8 @@ var ui_layer: CanvasLayer
 var shop_ui: Control          # whichever full-screen UI is open: the store (computer / phone) or the build menu
 var _dispatch_timer := -1.0
 var grass_mat: ShaderMaterial
+var sun: DirectionalLight3D
+var grass_mmi: MultiMeshInstance3D
 var rock_specs := {}             # rock_id -> where it stood, so mined rocks can slowly grow back
 var n_wild_trees := 0            # trees from world generation (saved by index); grown ones come after
 var _grass_hits: Array[Vector4] = []    # xyz = where something hit the ground, w = strength (decays)
@@ -69,6 +71,10 @@ func _ready() -> void:
 	autosave.autostart = true
 	autosave.timeout.connect(Game.save_game)
 	add_child(autosave)
+	var quality := Quality.new()
+	quality.name = "Quality"
+	add_child(quality)
+	quality.setup(self, sun, grass_mmi)
 	var regrow := Timer.new()
 	regrow.wait_time = ROCK_REGROW
 	regrow.autostart = true
@@ -107,7 +113,7 @@ func _environment() -> void:
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
-	var sun := DirectionalLight3D.new()
+	sun = DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-48, -35, 0)
 	sun.light_energy = 1.05
 	sun.light_color = Color("fff2dc")
@@ -279,6 +285,7 @@ func _decor() -> void:
 			c = [Color("f5e05a"), Color("f2f2f2"), Color("d06ad6")][rng.randi() % 3]
 		mm.set_instance_color(i, c)
 	grass.multimesh = mm
+	grass_mmi = grass
 	grass_mat = Nature.grass_mat()
 	grass.material_override = grass_mat
 	grass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

@@ -265,4 +265,10 @@ func run() -> void:
 	check(not is_instance_valid(tl) and is_equal_approx(Game.money, m0 + 5.0), "hammer + X takes a build down and gives back what it's worth")
 	check(w == "added" and get_tree().get_nodes_in_group("wires").all(func(x): return is_instance_valid(x.a) and is_instance_valid(x.b)), "and its wires go with it")
 	check(Player.build_of(on_it) == null, "loose things aren't builds")
+	# graphics fallback levels apply cleanly (only real builds step down on their own)
+	var qn := main.get_node("Quality") as Quality
+	qn.apply(3)
+	check(not main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count < main.grass_mmi.multimesh.instance_count and player.cam.far < 200.0, "the lowest graphics level drops shadows, grass and view distance")
+	qn.apply(0)
+	check(main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count == -1 and Game.quality == 0, "and full quality puts them back")
 	finished = true

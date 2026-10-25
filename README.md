@@ -113,6 +113,9 @@ five minutes to grow.
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 
+On a slow computer the game turns down its own graphics after a few seconds of low frame rate (softer shadows,
+then no shadows and less grass, then a shorter view distance), and remembers that for next time.
+
 Progress autosaves every 15 seconds (a little white hammer taps in the corner): money, tools, everything you've
 built (machines, their settings and wires too), plans in progress, bark you've stripped, felled and grown trees,
 trimmed bushes, mined rocks, and every log, bark sheet, leaf, ore chunk, sapling and dropped tool lying around.
