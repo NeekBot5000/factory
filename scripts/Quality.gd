@@ -44,8 +44,10 @@ func _process(delta: float) -> void:
 	# only real builds (the web page, the downloads) adapt; editor runs, tests and screenshots stay at full
 	if not OS.has_feature("template") or _t < WAIT or Game.quality >= MAX_LEVEL:
 		return
-	# a background tab or a minimised window is throttled by the browser / OS - that's not a slow computer
-	if not get_window().has_focus():
+	# a background tab or a minimised window is throttled by the browser / OS - that's not a slow computer;
+	# nor is the burst of work while the shop icons are still being drawn at startup
+	var icons: Node = main.get("icons")
+	if not get_window().has_focus() or (icons != null and icons.call("busy")):
 		_slow = 0.0
 		return
 	if Engine.get_frames_per_second() < LOW_FPS:

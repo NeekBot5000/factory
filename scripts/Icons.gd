@@ -49,6 +49,11 @@ func _ready() -> void:
 		_queue.append("build:" + id)
 
 
+## Still drawing icons (a short burst of extra work after the game starts).
+func busy() -> bool:
+	return not _queue.is_empty() or _current != null
+
+
 func get_icon(id: String) -> Texture2D:
 	return icons.get(id)
 
