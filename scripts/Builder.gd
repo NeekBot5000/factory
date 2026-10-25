@@ -56,17 +56,17 @@ func start(id: String) -> void:
 	Sfx.play("click")
 
 
-## R while placing: turn it in 45 degree steps (hold R to keep turning).
+## R while placing: turn it in 45 degree steps (machines: 90, so they line up on the grid).
 func rotate(step: int) -> void:
 	if state != "place":
 		return
-	turn += deg_to_rad(45.0) * step
+	turn += deg_to_rad(90.0 if Builds.fixed(build_id) else 45.0) * step
 	Sfx.play("click", 1.2, -6.0)
 
 
 ## Mouse wheel while placing: resize.
 func scroll(step: int) -> void:
-	if state != "place":
+	if state != "place" or Builds.fixed(build_id):
 		return
 	var ni := clampi(size_i - step, 0, Builds.SIZES.size() - 1)
 	if ni != size_i:
@@ -91,6 +91,8 @@ func busy() -> bool:
 func hint_text() -> String:
 	match state:
 		"place":
+			if Builds.fixed(build_id):
+				return "[R] turn    [Click] place    [E] cancel"
 			return "[R] turn    [Scroll] size %sx    [Click] place    [E] cancel" % str(size())
 	return ""
 
@@ -154,6 +156,33 @@ func update(_delta: float) -> void:
 			_valid = (hit.normal as Vector3).y > 0.75 and not (hit.collider is ForestTree) and not (hit.collider is Truck)
 		else:
 			pos.y = main.terrain.height_at(pos.x, pos.z)
+		if Builds.fixed(build_id):
+			# machines sit on a 1 m grid and face one of the four directions, so belts line up end to end
+			var cell := _grid_snap(pos)
+			if cell.is_empty():
+				_valid = false
+			else:
+				pos = cell.pos
+				_valid = bool(cell.ok)
+			var a := snappedf(atan2(flat.x, flat.z), PI * 0.5)
+			flat = Vector3(sin(a), 0, cos(a))
 		# front of the build faces you, plus however much you've turned it
 		_holo.global_transform = Transform3D(Basis.looking_at(flat, Vector3.UP).rotated(Vector3.UP, turn), pos)
 		_paint(_valid)
+
+
+## The grid cell under `p`: its centre, dropped onto whatever is below (ground, or the top of another machine).
+func _grid_snap(p: Vector3) -> Dictionary:
+	var g := Vector3(snappedf(p.x, 1.0), p.y, snappedf(p.z, 1.0))
+	var q := PhysicsRayQueryParameters3D.create(g + Vector3.UP * 1.5, g + Vector3.DOWN * 2.5, 1)
+	q.exclude = [player.get_rid()]
+	var space := player.get_world_3d().direct_space_state
+	var hit := space.intersect_ray(q)
+	for k in 4:
+		if hit.is_empty() or not (hit.collider is RigidBody3D):
+			break
+		q.exclude = q.exclude + [hit.rid]
+		hit = space.intersect_ray(q)
+	if hit.is_empty():
+		return {}
+	return {"pos": hit.position, "ok": (hit.normal as Vector3).y > 0.75 and not (hit.collider is ForestTree) and not (hit.collider is Truck)}

@@ -79,6 +79,8 @@ var _pouring := false            # holding R with something in your hands: tip i
 var _tilt := 0.0
 var _hold_dist := 0.0            # bigger things are held further away
 var _lie_t := 0.0
+var wire_from: Machine = null     # wire spool: the machine you clicked first
+var _wire_preview: MeshInstance3D
 
 
 func _ready() -> void:
@@ -303,7 +305,19 @@ func primary() -> void:
 	if not hit.is_empty() and hit.collider.has_method("on_click"):
 		hit.collider.call("on_click", self)
 		return
+	if tool == "wires":
+		wire_click(Machine.of(hit.collider) if not hit.is_empty() else null)
+		return
 	if tool == "hammer":
+		# hammer on a rotator (or something sitting on one): stick it on / let go
+		if not builder.busy() and not hit.is_empty():
+			var rot := Machine.of(hit.collider) as Rotator
+			if rot == null and hit.collider is RigidBody3D:
+				rot = Rotator.holding(hit.collider)
+			if rot != null:
+				rot.on_hammer()
+				start_swing()
+				return
 		# hammer on a log: lock it in place / unlock it; anywhere else: the build menu
 		if not builder.busy() and not hit.is_empty() and hit.collider is Log:
 			var lg := hit.collider as Log
@@ -358,6 +372,14 @@ func look_target_text() -> String:
 		return builder.hint_text()
 	if held != null:
 		return "[E] drop    [Hold R] tip it over"
+	if tool == "wires":
+		var wm := Machine.of(look_ray(float(tdef().reach), 1 | 2).get("collider"))
+		if wire_from != null and is_instance_valid(wire_from):
+			if wm != null and wm != wire_from:
+				return "[Click] connect / disconnect %s" % Builds.BUILDS[wm.get_meta("build").id].name
+			return "[Click] a second machine    [Click empty] cancel"
+		if wm != null:
+			return "[Click] start a wire from %s" % Builds.BUILDS[wm.get_meta("build").id].name
 	var hit := look_ray(GRAB_REACH, 1 | 2 | Blueprint.LAYER)
 	if hit.is_empty():
 		return ""
@@ -414,7 +436,7 @@ func _do_impact() -> void:
 	if tool == "shears":
 		_snip()
 		return
-	if tool == "hammer":
+	if tool == "hammer" or tool == "wires":
 		return
 	# swings pass through loose bark / leaves floating in front of the trunk (logs are on layer 1, so still hit)
 	var hit := look_ray(float(d.reach), 1 | Bush.LAYER)
@@ -845,6 +867,65 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 
 
+## Wire spool click: first click picks a machine, the second runs a wire to another (or takes it down again).
+func wire_click(m: Machine) -> String:
+	start_swing()
+	if m == null:
+		if wire_from != null:
+			wire_from = null
+			Sfx.play("click", 0.6, -6.0)
+		return ""
+	if wire_from == null or not is_instance_valid(wire_from) or wire_from == m:
+		wire_from = m
+		Sfx.play("clink", 1.5, -6.0)
+		return "picked"
+	var r := Circuit.toggle_wire(get_parent(), wire_from, m)
+	match r:
+		"added":
+			Sfx.play("clink", 1.2)
+			Sfx.play("pickup", 1.4, -6.0)
+		"removed":
+			Sfx.play("clink", 0.8)
+		_:
+			Game.toast.emit("Too far for a wire (%dm max)" % int(Wire.MAX_LEN), Color("ffd27a"))
+			Sfx.play("thud", 1.4, -6.0)
+	wire_from = null
+	return r
+
+
+## A loose length of wire from the machine you picked to where you're looking.
+func _update_wire_preview() -> void:
+	var on := tool == "wires" and wire_from != null and is_instance_valid(wire_from)
+	if not on:
+		if _wire_preview != null:
+			_wire_preview.visible = false
+		if tool != "wires":
+			wire_from = null
+		return
+	if _wire_preview == null:
+		_wire_preview = MeshInstance3D.new()
+		_wire_preview.mesh = LowPoly.box(Vector3(0.02, 0.02, 1.0))
+		_wire_preview.material_override = LowPoly.mat(Color("d9783a"), 0.4, 0.4)
+		_wire_preview.top_level = true
+		_wire_preview.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_wire_preview)
+	var a := wire_from.terminal_world()
+	var hit := look_ray(float(tdef().reach), 1 | 2)
+	var b: Vector3 = hit.position if not hit.is_empty() else cam.global_position - cam.global_transform.basis.z * 2.0
+	var tm := Machine.of(hit.get("collider"))
+	if tm != null:
+		b = tm.terminal_world()
+	var d := b - a
+	if d.length() < 0.01:
+		_wire_preview.visible = false
+		return
+	_wire_preview.visible = true
+	var up := Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT
+	_wire_preview.global_transform = Transform3D(Basis.looking_at(d.normalized(), up).scaled(Vector3(1, 1, d.length())), (a + b) * 0.5)
+	var too_far := d.length() > Wire.MAX_LEN
+	(_wire_preview.material_override as StandardMaterial3D).albedo_color = Color("ff5a4a") if too_far else Color("d9783a")
+
+
 ## Used by tests to drive the drill without a mouse.
 func drill_once() -> void:
 	if aiming_at_tree():
@@ -858,6 +939,7 @@ func _process(delta: float) -> void:
 	_kick = move_toward(_kick, 0.0, delta * 0.35)
 	cam.rotation.x = -_kick * 0.6
 	_animate_arm(delta)
+	_update_wire_preview()
 
 
 # ------------------------------------------------------------------ animation

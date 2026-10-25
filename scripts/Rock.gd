@@ -1,20 +1,44 @@
 class_name Rock
 extends StaticBody3D
-## A boulder. Hitting it kicks up dust and stone chips; metal tools also throw sparks.
+## A boulder. Plain stone, or with a vein of copper or iron showing through. Pickaxes knock chunks off it until it
+## crumbles away; iron needs a steel pickaxe. Other tools just kick up dust and sparks.
 
 var _color := Color("8a8780")
+var ore := "stone"
+var hp := 6
+var max_hp := 6
+var size := 0.6
+var _mesh: Node3D
 
 
-func build(rng: RandomNumberGenerator, s: float) -> void:
+func build(rng: RandomNumberGenerator, s: float, p_ore := "stone") -> void:
 	collision_layer = 1
 	collision_mask = 0
+	size = s
+	ore = p_ore
+	max_hp = int(clampf(s * 10.0, 3.0, 12.0))
+	hp = max_hp
 	_color = Color("8a8780").lerp(Color("a39f95"), rng.randf())
-	LowPoly.mesh_instance(self, LowPoly.blob(1.0, 0.3, rng.randi() % 40), LowPoly.mat(_color, 1.0), Vector3.ZERO, Vector3(0, rng.randf() * 360.0, 0), Vector3(s * 1.3, s * 0.7, s))
+	_mesh = Node3D.new()
+	add_child(_mesh)
+	LowPoly.mesh_instance(_mesh, LowPoly.blob(1.0, 0.3, rng.randi() % 40), LowPoly.mat(_color, 1.0), Vector3.ZERO, Vector3(0, rng.randf() * 360.0, 0), Vector3(s * 1.3, s * 0.7, s))
+	if ore != "stone":
+		# a vein of glinting ore lumps poking out of the rock
+		var fm := LowPoly.mat(Ore.KINDS[ore].fleck, 0.35, 0.35)
+		# its own dice, so veins don't shift the rest of the world's layout
+		var vr := RandomNumberGenerator.new()
+		vr.seed = hash(s) ^ hash(ore)
+		for k in 7:
+			var a := vr.randf() * TAU
+			var e := vr.randf_range(-0.2, 0.5)
+			var dir := Vector3(cos(a) * 1.25, e, sin(a)).normalized()
+			LowPoly.mesh_instance(_mesh, LowPoly.box(Vector3.ONE * s * 0.22), fm, Vector3(dir.x * s * 1.15, dir.y * s * 0.62, dir.z * s * 0.9), Vector3(vr.randf() * 90.0, vr.randf() * 90.0, 0))
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
 	sh.size = Vector3(s * 2.0, s * 0.9, s * 1.6)
 	cs.shape = sh
 	add_child(cs)
+	add_to_group("rocks")
 
 
 func hint_text() -> String:
@@ -25,8 +49,47 @@ func on_hit(pos: Vector3, normal: Vector3, tool: String) -> void:
 	var parent := get_parent()
 	Nature.burst(parent, pos, normal, _color.darkened(0.15), 14, 2.8, 0.05, 9.0, 0.8, 55.0)
 	Nature.burst(parent, pos, normal + Vector3.UP, Color("d8d2c4"), 18, 1.0, 0.07, -0.5, 1.2, 80.0)   # dust drifting up
-	if tool == "hands":
-		Sfx.play("thud", 1.3, -2.0)
-	else:
-		Nature.burst(parent, pos, normal, Color("ffd36a"), 12, 4.5, 0.015, 6.0, 0.35, 40.0, 3.0)  # sparks
-		Sfx.play("clink", randf_range(0.9, 1.15))
+	var d: Dictionary = Tools.TOOLS.get(tool, {})
+	var power := int(d.get("mine", 0))
+	if power <= 0:
+		if tool == "hands":
+			Sfx.play("thud", 1.3, -2.0)
+		else:
+			Nature.burst(parent, pos, normal, Color("ffd36a"), 12, 4.5, 0.015, 6.0, 0.35, 40.0, 3.0)  # sparks
+			Sfx.play("clink", randf_range(0.9, 1.15))
+		return
+	Sfx.play("clink", randf_range(0.7, 0.85))
+	Sfx.play("thud", 1.1, -4.0)
+	var tier := int(d.get("tier", 1))
+	if ore == "iron" and tier < 2:
+		# too hard for a basic pick: sparks fly but nothing comes off
+		Nature.burst(parent, pos, normal, Color("ffd36a"), 18, 4.5, 0.015, 6.0, 0.35, 40.0, 3.0)
+		Game.toast.emit("Too hard - needs a steel pickaxe", Color("ffd27a"))
+		return
+	hp -= power
+	# a chunk breaks off: mostly the vein's ore, sometimes plain stone
+	var got := ore if ore == "stone" or randf() < 0.7 else "stone"
+	_spawn_chunk(got, pos, normal)
+	var k := clampf(float(hp) / float(max_hp), 0.0, 1.0)
+	_mesh.scale = Vector3.ONE * lerpf(0.45, 1.0, k)
+	if hp <= 0:
+		for i in 2:
+			_spawn_chunk(ore if i == 0 else "stone", global_position + Vector3(0, size * 0.3, 0), Vector3.UP)
+		Nature.burst(parent, global_position, Vector3.UP, _color, 30, 3.0, 0.09, 9.0, 1.0, 120.0)
+		Sfx.play("thud", 0.6, 4.0)
+		queue_free()
+
+
+func _spawn_chunk(kind: String, pos: Vector3, normal: Vector3) -> void:
+	var o := Ore.new()
+	get_parent().add_child(o)
+	o.setup(kind, randf_range(0.11, 0.17))
+	o.global_position = pos + normal * 0.2
+	o.linear_velocity = normal * randf_range(1.5, 2.5) + Vector3.UP * 1.5 + Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6))
+	o.angular_velocity = Vector3(randf_range(-6, 6), randf_range(-6, 6), randf_range(-6, 6))
+
+
+## For the save file.
+func set_hp(v: int) -> void:
+	hp = v
+	_mesh.scale = Vector3.ONE * lerpf(0.45, 1.0, clampf(float(hp) / float(max_hp), 0.0, 1.0))

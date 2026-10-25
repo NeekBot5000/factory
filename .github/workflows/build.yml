@@ -78,6 +78,11 @@ jobs:
           ${GODOT_BIN} --headless --path . res://tests/GearTest.tscn --fixed-fps 60 2>&1 | tee gear.log
           grep -q "GEAR RESULT: PASS" gear.log
 
+      - name: Gameplay test (mining, wires, machines)
+        run: |
+          ${GODOT_BIN} --headless --path . res://tests/MachineTest.tscn --fixed-fps 60 2>&1 | tee machine.log
+          grep -q "MACHINE RESULT: PASS" machine.log
+
       - name: Export Web, Windows and Linux
         run: |
           mkdir -p build/web build/windows build/linux

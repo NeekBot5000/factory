@@ -37,6 +37,9 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Builder's Hammer | $120 | build things from what you gather |
 | Leaf Vacuum | $1200 | sucks loose bark/leaves/boxes into a floating clump; let go to drop |
 | TimberPhone | $350 | the store and the truck, from anywhere (Tab) |
+| Pickaxe | $80 | knocks chunks of stone and copper ore off rocks |
+| Steel Pickaxe | $900 | hits twice as hard and gets through iron veins |
+| Wire Spool | $200 | click one machine, then another, to wire them together (again to unwire) |
 
 Logs keep their bark, so you can still strip them. The mill pays well for clean timber, but bark left on drags
 the price down: a log in full bark fetches only 15% of what it would stripped bare.
@@ -60,6 +63,31 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | Basketball Hoop | 12 bark + 1 log | a real rim; baskets set off a celebration and count streaks |
 | Catapult | 3 logs + 10 bark + 6 leaves | click it to launch whatever's in the cup |
 
+## Mining and machines
+
+Rocks around the forest are stone; some show orange **copper** veins, and the **quarry** in the woods
+(south-west of the cabin) is full of copper and silvery **iron**. Every pickaxe hit knocks off a chunk you can
+carry, sell, or drop into a machine's hologram.
+
+Machines need their **blueprint** from TimberMart first (the build menu shows them greyed out until then). They
+always build on a 1 m grid facing one of four ways, so belts line up end to end; their front points away from
+you as you place them. Power comes from a **hand crank** (E winds it: 10 s per wind, up to a minute) and runs
+along wires; a switch that's off stops it there. Each machine has a small lamp that lights while it's powered.
+
+| Machine | Needs | What it does |
+|---|---|---|
+| Hand Crank | 4 stone + 1 log + 1 copper | power source: E to wind |
+| Lever | 2 stone + 1 copper | E flips it; passes power while on |
+| Push Button | 1 log + 2 stone + 1 copper | E presses it; passes power for 1.5 s |
+| Conveyor | 5 bark + 2 stone | powered belt that carries things forward |
+| Ramp Conveyor | 8 bark + 2 stone | carries things up a metre over two cells |
+| Piston | 8 stone + 2 copper + 1 log | shoves its plate out a metre while powered |
+| Rotator | 4 stone + 1 copper + 1 log | turntable: hammer it to stick what's on it, then it spins it round |
+| Truck Caller | 3 stone + 1 log + 3 copper | sends the log truck to the mill when it gets power |
+
+The last clump of leaves on any crown always drops one or two saplings, so every tree can be replaced; they take
+five minutes to grow.
+
 ## Play
 
 * **Download a build:** open the latest successful run under the repo's *Actions* tab, scroll to *Artifacts*
@@ -78,12 +106,13 @@ Movable builds (baskets, balls) sell in the log truck for a bit less than their 
 | Hold R while holding something | tip it over (pour a basket out) |
 | R while placing a build | turn it |
 | Hammer click on a log | lock it in place (iron bands); click again to unlock |
+| Hammer click on a rotator | stick what's on it to the table / let go |
 | 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 
 Progress autosaves every 15 seconds (a little white hammer taps in the corner): money, tools, everything you've
-built, plans in progress, bark you've stripped, felled and grown trees, trimmed bushes, and every log, bark sheet,
-leaf, sapling and dropped tool lying around.
+built (machines, their settings and wires too), plans in progress, bark you've stripped, felled and grown trees,
+trimmed bushes, mined rocks, and every log, bark sheet, leaf, ore chunk, sapling and dropped tool lying around.
 
 ## Roadmap
 
@@ -106,7 +135,10 @@ scripts/ShopUI.gd      TimberMart store (computer and phone)
 scripts/Icons.gd       renders item thumbnails and the box line art
 scripts/Cabin.gd       procedural log cabin       scripts/Terrain.gd  forest floor and road
 scripts/Hud.gd         crosshair, health, money, toolbar   scripts/Sfx.gd  procedural sounds
-tests/ChopTest.tscn, tests/LoopTest.tscn  headless gameplay tests
+scripts/Machine.gd     base for powered machines; Circuit.gd works out power, Wire.gd draws cables
+scripts/Machines.gd    machine models and finishing (Crank, Lever, PushButton, Piston, Rotator, Conveyor, TruckCaller)
+scripts/Rock.gd, Ore.gd  mineable rocks and the chunks they drop
+tests/*Test.tscn       headless gameplay tests (MachineTest covers mining, wires and machines)
 tests/Shot.tscn        screenshots (xvfb)
 ```
 All models and sounds are generated in code. The only external assets are two SIL OFL fonts.

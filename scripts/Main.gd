@@ -55,6 +55,9 @@ func _ready() -> void:
 	if not Game.pending_orders().is_empty():
 		_dispatch_timer = 4.0
 	n_wild_trees = trees.size()
+	var circuit := Circuit.new()
+	circuit.name = "Circuit"
+	add_child(circuit)
 	# the world as you left it, and what you built
 	WorldSave.load(self, Game.world_state)
 	Builds.load_world(self, Game.world_builds)
@@ -147,6 +150,35 @@ func _forest() -> void:
 			trees.append(tree)
 
 
+## A rocky outcrop out in the woods, thick with copper and iron.
+const QUARRY := Vector2(-28.0, -20.0)
+
+
+func _quarry() -> void:
+	var qr := RandomNumberGenerator.new()
+	qr.seed = 4242
+	var placed := 0
+	var tries := 0
+	while placed < 26 and tries < 400:
+		tries += 1
+		var p := QUARRY + Vector2(qr.randf_range(-9, 9), qr.randf_range(-9, 9))
+		var clear := true
+		for t in trees:
+			if Vector2(t.position.x, t.position.z).distance_to(p) < t.radius + 1.6:
+				clear = false
+				break
+		if not clear:
+			continue
+		var s := qr.randf_range(0.5, 1.1)
+		var roll := qr.randf()
+		var rock := Rock.new()
+		rock.set_meta("rock_id", 1000 + placed)
+		add_child(rock)
+		rock.position = Vector3(p.x, terrain.height_at(p.x, p.y) + s * 0.25, p.y)
+		rock.build(qr, s, "iron" if roll < 0.3 else ("copper" if roll < 0.7 else "stone"))
+		placed += 1
+
+
 ## The truck parking spot and its turning loop.
 func _in_lot(p: Vector2) -> bool:
 	return p.x > 2.5 and p.x < 13.0 and p.y > 2.0 and p.y < 20.0
@@ -164,15 +196,18 @@ func _decor() -> void:
 		if i % 2 == 0:
 			var s := rng.randf_range(0.3, 0.9)
 			var rock := Rock.new()
+			rock.set_meta("rock_id", i)
 			add_child(rock)
 			rock.position = Vector3(p.x, y + s * 0.25, p.y)
-			rock.build(rng, s)
+			# some wild rocks show a copper vein (decided by id, so the world layout stays the same)
+			rock.build(rng, s, "copper" if hash(i * 7919) % 100 < 18 else "stone")
 		else:
 			var bush := Bush.new()
 			bush.set_meta("bush_id", i)
 			add_child(bush)
 			bush.position = Vector3(p.x, y, p.y)
 			bush.build(rng, rng.randf_range(0.7, 1.4))
+	_quarry()
 	# grass tufts + flowers via MultiMesh
 	var grass := MultiMeshInstance3D.new()
 	var mm := MultiMesh.new()

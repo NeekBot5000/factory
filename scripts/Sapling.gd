@@ -3,7 +3,7 @@ extends RigidBody3D
 ## A little tree from the compost pile. Put it down on open ground and leave it: it roots, grows, and becomes a
 ## full-size tree you can strip and saw like any other.
 
-const GROW_TIME := 45.0
+const GROW_TIME := 300.0     # five minutes to a full tree
 
 var kind := "oak"
 var _rest := 0.0

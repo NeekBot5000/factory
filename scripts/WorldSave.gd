@@ -18,13 +18,14 @@ static func _loose(b: Node3D, world: Node) -> bool:
 		return false
 	var p := b.get_parent()
 	if p == world:
-		return not ((b is RigidBody3D) and (b as RigidBody3D).freeze and not (b is Log and (b as Log).locked))
+		# frozen means it's in a plan or the truck - unless it's a locked log or stuck to a rotator
+		return not ((b is RigidBody3D) and (b as RigidBody3D).freeze and not (b is Log and (b as Log).locked) and not b.has_meta("stuck"))
 	# things riding in a carried basket count as being in the world
 	return p is RigidBody3D and p.is_in_group("baskets")
 
 
 static func save(world: Node) -> Dictionary:
-	var out := {"trees": [], "grown": [], "bushes": [], "chips": [], "leaves": [], "logs": [], "saplings": [], "tools": []}
+	var out := {"trees": [], "grown": [], "bushes": [], "chips": [], "leaves": [], "logs": [], "saplings": [], "tools": [], "ores": [], "rocks": []}
 	var n_wild: int = world.get("n_wild_trees")
 	var trees: Array = world.get("trees")
 	for i in trees.size():
@@ -40,6 +41,14 @@ static func save(world: Node) -> Dictionary:
 		if b.has_meta("bush_id"):
 			out.bushes.append({"id": b.get_meta("bush_id"), "snips": b.get("_snips_left"), "trim": b.get("_trim")})
 	out["bush_ids_known"] = true
+	for r in world.get_tree().get_nodes_in_group("rocks"):
+		if r.has_meta("rock_id") and not r.is_queued_for_deletion():
+			out.rocks.append({"id": r.get_meta("rock_id"), "hp": (r as Rock).hp})
+	out["rock_ids_known"] = true
+	for o in world.get_tree().get_nodes_in_group("ores"):
+		var ore := o as Ore
+		if _loose(ore, world):
+			out.ores.append({"xf": _xf(ore.global_transform), "kind": ore.kind, "s": ore.size})
 	for c in world.get_tree().get_nodes_in_group("chips"):
 		var chip := c as Chip
 		if _loose(chip, world) and not chip.src.is_empty():
@@ -98,6 +107,24 @@ static func load(world: Node, d: Dictionary) -> void:
 				b.set("_snips_left", int(keep[id].snips))
 				b.set("_trim", float(keep[id].trim))
 				(b.get("_leaves") as Node3D).scale = Vector3.ONE * float(keep[id].trim)
+	if d.has("rock_ids_known"):
+		var hp := {}
+		for e in d.get("rocks", []):
+			hp[int(e.id)] = int(e.hp)
+		for r in world.get_tree().get_nodes_in_group("rocks"):
+			if not r.has_meta("rock_id"):
+				continue
+			var id := int(r.get_meta("rock_id"))
+			if not hp.has(id):
+				r.queue_free()            # mined away
+				r.remove_from_group("rocks")
+			else:
+				(r as Rock).set_hp(int(hp[id]))
+	for e in d.get("ores", []):
+		var ore := Ore.new()
+		world.add_child(ore)
+		ore.setup(String(e.kind), float(e.s))
+		ore.global_transform = _unxf(e.xf)
 	for e in d.get("chips", []):
 		var src: Dictionary = e.src
 		var panels: Array = []

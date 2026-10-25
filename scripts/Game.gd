@@ -122,7 +122,7 @@ func load_game() -> void:
 	money = float(d.get("money", 0.0))
 	owned = {"hands": true}
 	for k in d.get("owned", []):
-		if Tools.TOOLS.has(k):
+		if Tools.TOOLS.has(k) or String(k).begins_with("bp_"):
 			owned[k] = true
 	has_phone = bool(d.get("phone", false))
 	orders = []

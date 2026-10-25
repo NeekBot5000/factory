@@ -52,6 +52,8 @@ func take(player: Node) -> void:
 	if Tools.TOOLS.has(item):
 		player.call("equip", item)
 		Game.toast.emit("%s  [%d]" % [Tools.SHOP[item].name, Tools.TOOL_ORDER.find(item) + 1], Color("7aff9a"))
+	elif item.begins_with("bp_"):
+		Game.toast.emit("Blueprint learned: %s - build it with the hammer" % Tools.SHOP[item].name.replace(" Blueprint", ""), Color("8fd0ff"))
 	else:
 		Game.toast.emit("TimberPhone  [Tab]", Color("7aff9a"))
 	queue_free()

@@ -27,15 +27,20 @@ const TOOLS := {
 	"holesaw": {"name": "Hole Saw", "radius": 0.12, "cooldown": 0.22, "impact": 0.0, "hurt": 0.0, "anim": "drill", "reach": 2.2, "hold": true, "kind": "drill", "through": true},
 	"twinvac": {"name": "Twin-Nozzle Vac", "radius": 0.0, "cooldown": 0.1, "impact": 0.0, "hurt": 0.0, "anim": "vacuum", "reach": 9.0, "hold": true, "kind": "vacuum", "nozzles": [Vector3(-0.32, 0, 0), Vector3(0.32, 0, 0)], "cone": 0.62, "cap": 70, "range": 9.0},
 	"cyclone": {"name": "Cyclone Vac", "radius": 0.0, "cooldown": 0.1, "impact": 0.0, "hurt": 0.0, "anim": "vacuum", "reach": 12.0, "hold": true, "kind": "vacuum", "range": 12.0, "cone": 0.93, "cap": 25, "launch": true},
+	"pickaxe": {"name": "Pickaxe", "radius": 0.05, "cooldown": 0.6, "impact": 0.5, "hurt": 0.0, "anim": "chop", "reach": 2.5, "mine": 1, "tier": 1},
+	"steel_pick": {"name": "Steel Pickaxe", "radius": 0.05, "cooldown": 0.5, "impact": 0.5, "hurt": 0.0, "anim": "chop", "reach": 2.6, "mine": 2, "tier": 2},
+	"wires": {"name": "Wire Spool", "radius": 0.0, "cooldown": 0.3, "impact": 0.5, "hurt": 0.0, "anim": "snip", "reach": 4.0},
 	"hammer": {"name": "Builder's Hammer", "radius": 0.0, "cooldown": 0.45, "impact": 0.5, "hurt": 0.0, "anim": "hammer", "reach": 2.2},
 }
-const TOOL_ORDER := ["hands", "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "vacuum", "twinvac", "cyclone", "hammer"]
+const TOOL_ORDER := ["hands", "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "wires", "hammer"]
 
 const CATEGORIES := [
 	{"id": "all", "name": "Everything"},
 	{"id": "axes", "name": "Axes"},
 	{"id": "saws", "name": "Saws"},
 	{"id": "specialty", "name": "Specialty Tools"},
+	{"id": "mining", "name": "Mining"},
+	{"id": "blueprints", "name": "Machine Blueprints"},
 	{"id": "other", "name": "Other"},
 ]
 
@@ -78,6 +83,28 @@ const SHOP := {
 		"desc": "Two intakes on a forked tube. A much wider pull, and it holds twice as much in two swirling clumps."},
 	"cyclone": {"name": "Cyclone Vac", "price": 3400.0, "cat": "specialty", "tag": "Powerful",
 		"desc": "A long-range cyclone with a narrow, strong pull. Let go of the trigger and it fires everything it caught straight ahead."},
+	"pickaxe": {"name": "Pickaxe", "price": 80.0, "cat": "mining", "tag": "Sturdy",
+		"desc": "Knocks chunks of stone off rocks, and copper ore out of copper veins. Iron is too hard for it."},
+	"steel_pick": {"name": "Steel Pickaxe", "price": 900.0, "cat": "mining", "tag": "Hardened",
+		"desc": "Hits twice as hard and cuts through iron veins. The quarry in the woods is full of them."},
+	"wires": {"name": "Wire Spool", "price": 200.0, "cat": "specialty", "tag": "Electric",
+		"desc": "Click one machine, then another, to run a wire between them. Do it again to take the wire down."},
+	"bp_crank": {"name": "Hand Crank Blueprint", "price": 150.0, "cat": "blueprints", "tag": "Power",
+		"desc": "Plans for a hand crank: wind it with E and it powers everything wired to it for a few seconds."},
+	"bp_lever": {"name": "Lever Blueprint", "price": 80.0, "cat": "blueprints", "tag": "Switch",
+		"desc": "Plans for a lever: flip it to let power through to the machines beyond it, or cut them off."},
+	"bp_button": {"name": "Button Blueprint", "price": 60.0, "cat": "blueprints", "tag": "Switch",
+		"desc": "Plans for a big push button: lets power through for a moment when pressed."},
+	"bp_conveyor": {"name": "Conveyor Blueprint", "price": 250.0, "cat": "blueprints", "tag": "Machine",
+		"desc": "Plans for a powered conveyor belt section. Chain them up to move logs, bark and anything else."},
+	"bp_ramp": {"name": "Ramp Conveyor Blueprint", "price": 200.0, "cat": "blueprints", "tag": "Machine",
+		"desc": "Plans for a sloped conveyor that carries things up (or down) a level."},
+	"bp_piston": {"name": "Piston Blueprint", "price": 600.0, "cat": "blueprints", "tag": "Machine",
+		"desc": "Plans for a piston: when powered it shoves its plate out a metre, pushing whatever's in front."},
+	"bp_rotator": {"name": "Rotator Blueprint", "price": 500.0, "cat": "blueprints", "tag": "Machine",
+		"desc": "Plans for a powered turntable. Stick something on it with the hammer and it spins it round."},
+	"bp_truck_caller": {"name": "Truck Caller Blueprint", "price": 900.0, "cat": "blueprints", "tag": "Machine",
+		"desc": "Plans for a signal post that sends the log truck off to the mill whenever it gets power."},
 	"hammer": {"name": "Builder's Hammer", "price": 120.0, "cat": "other", "tag": "Compact",
 		"desc": "Build things out of what you gather: pick a plan, set it down, then drop the materials into it."},
 	"vacuum": {"name": "Leaf Vacuum", "price": 1200.0, "cat": "specialty", "tag": "Bulky",
@@ -85,7 +112,7 @@ const SHOP := {
 	"phone": {"name": "TimberPhone", "price": 350.0, "cat": "other", "tag": "Pocket-size",
 		"desc": "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it."},
 }
-const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "drill", "twin_auger", "holesaw", "shears", "vacuum", "twinvac", "cyclone", "hammer", "phone"]
+const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "drill", "twin_auger", "holesaw", "shears", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "wires", "hammer", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_truck_caller", "phone"]
 
 const WOOD := Color("a0703c")
 const STEEL := Color("c9ced6")
@@ -157,6 +184,12 @@ static func build_model(id: String, parent: Node3D) -> Node3D:
 		"holesaw": _holesaw(root)
 		"twinvac": _twinvac(root)
 		"cyclone": _cyclone(root)
+		"pickaxe": _pickaxe(root, false)
+		"steel_pick": _pickaxe(root, true)
+		"wires": _wires(root)
+		_:
+			if id.begins_with("bp_"):
+				_blueprint(root, id)
 	for m in root.find_children("*", "MeshInstance3D", true, false):
 		(m as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return root
@@ -527,3 +560,38 @@ static func _cyclone(root: Node3D) -> void:
 		LowPoly.mesh_instance(swirl, LowPoly.box(Vector3(0.012, 0.012, 0.12)), _glow(Color("c79bff"), 1.2), Vector3(cos(a) * 0.035, sin(a) * 0.035, 0), Vector3(0, 0, rad_to_deg(a)))
 	LowPoly.mesh_instance(root, LowPoly.cyl(0.022, 0.03, 0.6, 8), LowPoly.mat(Color("c9ced6"), 0.35), Vector3(0, 0.1, -0.4), Vector3(90, 0, 0))
 	LowPoly.mesh_instance(root, LowPoly.cyl(0.04, 0.022, 0.06, 8), purple, Vector3(0, 0.1, -0.72), Vector3(90, 0, 0))
+
+
+## Pickaxe: a long handle and a double-pointed pick head lying across it (point toward -Z).
+static func _pickaxe(root: Node3D, steel_head: bool) -> void:
+	_handle(root, 0.6, 0.018, Color("8a6a45") if not steel_head else Color("3b2a22"))
+	var y := 0.52
+	var col := Color("8d949e") if not steel_head else Color("c9d3e0")
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.05, 0.06)), steel(DARK_STEEL), Vector3(0, y, 0))
+	var pts := PackedVector2Array([Vector2(y + 0.02, 0.03), Vector2(y + 0.0, 0.2), Vector2(y - 0.03, 0.22), Vector2(y - 0.02, 0.03),
+		Vector2(y - 0.02, -0.03), Vector2(y - 0.03, -0.22), Vector2(y + 0.0, -0.2), Vector2(y + 0.02, -0.03)])
+	LowPoly.mesh_instance(root, prism(pts, 0.028, col), steel(col, 0.3), Vector3.ZERO)
+	if steel_head:
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.042, 0.02, 0.062)), steel(Color("d4a52a"), 0.3), Vector3(0, y + 0.03, 0))
+
+
+## Wire spool: a drum of copper wire on a handle with a loose end.
+static func _wires(root: Node3D) -> void:
+	var copper := LowPoly.mat(Color("d9783a"), 0.35, 0.15)
+	var dark := LowPoly.mat(Color("2b2d33"), 0.7)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.11, 0.04)), dark, Vector3(0, 0.0, 0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.07, 0.07, 0.07, 12), copper, Vector3(0, 0.1, -0.04), Vector3(0, 0, 90))
+	for sx in [-1.0, 1.0]:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.085, 0.085, 0.01, 12), dark, Vector3(sx * 0.04, 0.1, -0.04), Vector3(0, 0, 90))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.008, 0.008, 0.16)), copper, Vector3(0.02, 0.15, -0.14), Vector3(20, 0, 0))
+
+
+## A rolled-up blueprint: blue paper with white lines, tied with string.
+static func _blueprint(root: Node3D, _id: String) -> void:
+	var blue := LowPoly.mat(Color("2e5fa8"), 0.8)
+	var white := LowPoly.mat(Color("e8f0ff"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.045, 0.045, 0.32, 10), blue, Vector3(0, 0.16, 0))
+	for k in 5:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.0455, 0.0455, 0.006, 10), white, Vector3(0, 0.04 + k * 0.06, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.002, 0.2, 0.14)), blue, Vector3(0.05, 0.18, -0.07))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.047, 0.047, 0.015, 10), LowPoly.mat(Color("c9b48a"), 0.9), Vector3(0, 0.16, 0))

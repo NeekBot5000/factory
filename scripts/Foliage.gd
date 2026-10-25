@@ -63,5 +63,19 @@ func snip(shape_idx: int, at: Vector3, out_dir: Vector3, world: Node) -> bool:
 		mi.queue_free()
 		cs.queue_free()
 		if _blob_of.is_empty():
+			# the very last clump always holds a sapling or two, so a tree can always be replaced
+			var tree_kind := "oak"
+			var crown_owner := get_parent().get_parent()
+			if crown_owner is ForestTree:
+				tree_kind = (crown_owner as ForestTree).kind
+			elif crown_owner is Log:
+				tree_kind = (crown_owner as Log).kind
+			for k in randi_range(1, 2):
+				var sp := Sapling.new()
+				world.add_child(sp)
+				sp.setup(tree_kind)
+				sp.global_position = at + Vector3(randf_range(-0.2, 0.2), 0.1, randf_range(-0.2, 0.2))
+				sp.linear_velocity = out_dir * 1.0 + Vector3.UP * 1.5
+			Sfx.play("reveal", 1.3, -6.0)
 			get_parent().queue_free()      # the crown is bare
 	return true

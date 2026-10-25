@@ -9,7 +9,8 @@ const BG := Color(0.08, 0.09, 0.12, 0.94)
 const CARD := Color(1, 1, 1, 0.06)
 const CARD_HOVER := Color(1, 0.81, 0.42, 0.22)
 const ACCENT := Color("ffcf6a")
-const RES_COLOR := {"bark": Color("a0703c"), "log": Color("6b4a32"), "leaf": Color("4f9a3c")}
+const RES_COLOR := {"bark": Color("a0703c"), "log": Color("6b4a32"), "leaf": Color("4f9a3c"), "stone": Color("7d7a73"),
+	"copper": Color("c8703a"), "iron": Color("6d7180")}
 
 var main: Node
 var cat := -1         # index into Builds.CATEGORIES, -1 = all
@@ -155,7 +156,10 @@ func _card(id: String) -> Control:
 	b.add_theme_stylebox_override("hover", _flat(CARD_HOVER, 14, 12))
 	b.add_theme_stylebox_override("pressed", _flat(CARD_HOVER.lightened(0.2), 14, 12))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.pressed.connect(func(): _pick(id))
+	var open := Builds.unlocked(id)
+	b.pressed.connect(func(): _pick(id) if open else Sfx.play("thud", 1.4, -6.0))
+	if not open:
+		b.modulate = Color(1, 1, 1, 0.45)
 	var v := VBoxContainer.new()
 	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 12)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -175,6 +179,9 @@ func _card(id: String) -> Control:
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		pv.add_child(tr)
 	v.add_child(_label(Builds.BUILDS[id].name, 19, Color.WHITE, font_bold))
+	if not open:
+		v.add_child(_label("Blueprint at TimberMart", 13, ACCENT, font_bold))
+		return b
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -15,24 +15,47 @@ const BUILDS := {
 	"ball": {"name": "Basketball", "needs": {"leaf": 8}},
 	"hoop": {"name": "Basketball Hoop", "needs": {"bark": 12, "log": 1}},
 	"catapult": {"name": "Catapult", "needs": {"log": 3, "bark": 10, "leaf": 6}},
+	# machines: you need the blueprint from TimberMart first ("bp"); they build at 1x on a grid
+	"crank": {"name": "Hand Crank", "needs": {"stone": 4, "log": 1, "copper": 1}, "bp": "bp_crank"},
+	"lever": {"name": "Lever", "needs": {"stone": 2, "copper": 1}, "bp": "bp_lever"},
+	"button": {"name": "Push Button", "needs": {"log": 1, "stone": 2, "copper": 1}, "bp": "bp_button"},
+	"piston": {"name": "Piston", "needs": {"stone": 8, "copper": 2, "log": 1}, "bp": "bp_piston"},
+	"rotator": {"name": "Rotator", "needs": {"stone": 4, "copper": 1, "log": 1}, "bp": "bp_rotator"},
+	"conveyor": {"name": "Conveyor", "needs": {"bark": 5, "stone": 2}, "bp": "bp_conveyor"},
+	"ramp": {"name": "Ramp Conveyor", "needs": {"bark": 8, "stone": 2}, "bp": "bp_ramp"},
+	"truck_caller": {"name": "Truck Caller", "needs": {"stone": 3, "log": 1, "copper": 3}, "bp": "bp_truck_caller"},
 }
-const ORDER := ["basket", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult"]
+const ORDER := ["basket", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult",
+	"crank", "lever", "button", "conveyor", "ramp", "piston", "rotator", "truck_caller"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock"]},
 	{"name": "Fire & Garden", "items": ["campfire", "compost"]},
 	{"name": "Workshop", "items": ["chute", "catapult"]},
 	{"name": "Fun", "items": ["ball", "hoop"]},
+	{"name": "Power & Switches", "items": ["crank", "lever", "button"]},
+	{"name": "Machines", "items": ["conveyor", "ramp", "piston", "rotator", "truck_caller"]},
 ]
 const SIZES := [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
 
 static var _S := 1.0     # scale applied to colliders while finishing a sized build
-const RES_NAME := {"bark": "bark", "log": "log", "leaf": "leaves"}
+const RES_NAME := {"bark": "bark", "log": "log", "leaf": "leaves", "stone": "stone", "copper": "copper ore", "iron": "iron ore"}
 
 const HOOP_DEFAULT := 3.05
 
 
 ## Bigger builds cost more: materials scale with the footprint (size squared), at least 1 of each.
+## Machines always build at 1x, on the grid.
+static func fixed(id: String) -> bool:
+	return Machines.is_machine(id)
+
+
+## Whether you have the plans for it (machines need a blueprint from the shop).
+static func unlocked(id: String) -> bool:
+	var bp := String(BUILDS[id].get("bp", ""))
+	return bp == "" or Game.is_owned(bp)
+
+
 static func needs_for(id: String, size: float = 1.0) -> Dictionary:
 	var out := {}
 	var n: Dictionary = BUILDS[id].needs
@@ -57,6 +80,9 @@ static func resource_of(body: Node) -> Dictionary:
 		return {"res": "log", "amount": 1, "color": (body as Log).trunk.bark_color}
 	if body is Leaf:
 		return {"res": "leaf", "amount": 1, "color": (body as Leaf).color}
+	if body is Ore:
+		var o := body as Ore
+		return {"res": o.kind, "amount": 1, "color": Machines.COPPER if o.kind == "copper" else (Machines.IRON if o.kind == "iron" else Ore.KINDS.stone.color)}
 	return {}
 
 
@@ -81,6 +107,7 @@ static func make(id: String, root: Node3D, height: float = HOOP_DEFAULT, size: f
 		"compost": _compost(parent, parts)
 		"ball": _ball(parent, parts)
 		"catapult": _catapult(parent, parts)
+		_: Machines.model(id, parent, parts)
 	for p in parts:
 		(p.mi as MeshInstance3D).material_override = p.real
 	return parts
@@ -333,7 +360,7 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 		"hoop":
 			body = Hoop.new()
 		_:
-			body = StaticBody3D.new()
+			body = Machines.new_body(id) if Machines.is_machine(id) else StaticBody3D.new()
 	if body is StaticBody3D:
 		(body as StaticBody3D).collision_layer = 1
 	world.add_child(body)
@@ -428,6 +455,9 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			_box_col(body, Vector3(0.42, 0.04, 0.42), cup + Vector3(0, 0.03, 0))
 			_box_col(body, Vector3(0.42, 0.18, 0.04), cup + Vector3(0, 0.12, 0.2))
 			(body as Catapult).setup_arm(body.get_node("Model/Arm"), cup * size, size)
+		_:
+			if body is Machine:
+				Machines.finish(id, body as Machine)
 	body.add_to_group("builds")
 	body.set_meta("build", {"id": id, "height": height, "size": size, "colors": colors})
 	return body
@@ -463,17 +493,31 @@ static func save_world(world: Node) -> Array:
 		if b is RigidBody3D and (b as RigidBody3D).freeze:
 			continue
 		var m: Dictionary = b.get_meta("build")
-		out.append({"kind": "build", "id": m.id, "xf": xf_to_array(b.global_transform), "height": m.height,
-			"size": m.size, "colors": colors_to_array(m.colors), "value": float(b.get_meta("sale_value", 0.0))})
+		var e := {"kind": "build", "id": m.id, "xf": xf_to_array(b.global_transform), "height": m.height,
+			"size": m.size, "colors": colors_to_array(m.colors), "value": float(b.get_meta("sale_value", 0.0))}
+		if b is Machine:
+			e["uid"] = (b as Machine).uid
+			e["state"] = (b as Machine).save_state()
+		out.append(e)
 	for n in world.get_tree().get_nodes_in_group("blueprints"):
 		var bp := n as Blueprint
 		if bp != null and is_instance_valid(bp):
 			out.append(bp.save_data())
+	for n in world.get_tree().get_nodes_in_group("wires"):
+		var w := n as Wire
+		if w != null and is_instance_valid(w.a) and is_instance_valid(w.b) and not w.is_queued_for_deletion():
+			out.append({"kind": "wire", "a": w.a.uid, "b": w.b.uid})
 	return out
 
 
 static func load_world(world: Node, data: Array) -> void:
+	var by_uid := {}
+	var states := []
 	for d in data:
+		if typeof(d) == TYPE_DICTIONARY and d.get("kind", "") == "wire" and by_uid.has(int(d.get("a", -1))) and by_uid.has(int(d.get("b", -1))):
+			var nw := Wire.new()
+			world.add_child(nw)
+			nw.setup(by_uid[int(d.a)], by_uid[int(d.b)])
 		if typeof(d) != TYPE_DICTIONARY or not BUILDS.has(String(d.get("id", ""))):
 			continue
 		var xf := xf_from_array(d.xf)
@@ -484,12 +528,20 @@ static func load_world(world: Node, data: Array) -> void:
 				obj.set_meta("sale_value", float(d.value))
 			if obj is Basketball:
 				obj.global_transform = xf
+			if obj is Machine:
+				var mc := obj as Machine
+				if d.has("uid"):
+					mc.set_uid(int(d.uid))
+				by_uid[mc.uid] = mc
+				states.append([mc, d.get("state", {})])
 		elif d.get("kind", "") == "plan":
 			var bp := Blueprint.new()
 			world.add_child(bp)
 			bp.global_transform = xf
 			bp.setup(String(d.id), float(d.height), world, float(d.size))
 			bp.restore(d)
+	for st in states:
+		(st[0] as Machine).load_state(st[1])
 
 
 static func _rot_col(body: Node3D, size: Vector3, pos: Vector3, basis: Basis) -> void:
