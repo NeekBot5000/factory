@@ -161,6 +161,33 @@ func play_at(name: String, pos: Vector3, pitch: float = 1.0, volume_db: float = 
 	p.play()
 
 
+var _chainsaw: AudioStreamWAV
+var _vacuum: AudioStreamWAV
+
+
+func _loop(dur: float, f: Callable) -> AudioStreamWAV:
+	var w := _make(dur, f)
+	w.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	w.loop_end = int(RATE * dur)
+	return w
+
+
+## Two-stroke chainsaw engine (loops; pitch it up when it's cutting).
+func chainsaw_stream() -> AudioStreamWAV:
+	if _chainsaw == null:
+		_chainsaw = _loop(1.0, func(t):
+			var ph := fmod(t * 120.0, 1.0)
+			return (ph * 2.0 - 1.0) * 0.3 + sin(TAU * 240.0 * t) * 0.15 + sin(TAU * 360.0 * t) * 0.06 + _soft(0.6) * 0.18 * (0.6 + 0.4 * sin(TAU * 30.0 * t)))
+	return _chainsaw
+
+
+## The leaf vacuum's airy rush with a faint motor whine (loops).
+func vacuum_stream() -> AudioStreamWAV:
+	if _vacuum == null:
+		_vacuum = _loop(1.0, func(t): return _soft(0.55) * 0.5 + _soft(0.2) * 0.25 + sin(TAU * 1100.0 * t) * 0.03 + sin(TAU * 220.0 * t) * 0.05)
+	return _vacuum
+
+
 ## Low mechanical hum for running belts (loops).
 func hum_stream() -> AudioStreamWAV:
 	if _hum == null:

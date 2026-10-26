@@ -66,6 +66,7 @@ var _vacuuming := false
 var _vac_caught := {}            # RigidBody3D -> orbit phase
 var _vac_fx := 0.0
 var _vac_sound: AudioStreamPlayer
+var _chain_sound: AudioStreamPlayer   # the chainsaw idles while you hold it and revs while it cuts
 var _backhand := false           # the double-bit axe alternates forehand / backhand swings
 var _combo_n := 0                # combo axe: hits in a row (each one grows the next)
 var _combo_t := 0.0
@@ -112,10 +113,12 @@ func _ready() -> void:
 	add_child(builder)
 	builder.setup(self, get_parent())
 	_vac_sound = AudioStreamPlayer.new()
-	_vac_sound.stream = Sfx.engine_stream()
-	_vac_sound.pitch_scale = 2.6
-	_vac_sound.volume_db = -14.0
+	_vac_sound.stream = Sfx.vacuum_stream()
+	_vac_sound.volume_db = -10.0
 	add_child(_vac_sound)
+	_chain_sound = AudioStreamPlayer.new()
+	_chain_sound.stream = Sfx.chainsaw_stream()
+	add_child(_chain_sound)
 	spawn_xform = global_transform
 	_yaw = rotation.y
 	rotation.y = 0.0
@@ -866,6 +869,7 @@ func _physics_process(delta: float) -> void:
 	var kind := String(d.get("kind", ""))
 	_drilling = trigger and (kind == "drill" or kind == "rockdrill")
 	_saw_step(delta, trigger and kind == "saw")
+	_update_chainsaw(trigger)
 	_vacuum_step(delta, trigger and kind == "vacuum")
 	builder.update(delta)
 	if _drilling:
@@ -1240,7 +1244,8 @@ func _saw_step(delta: float, on: bool) -> void:
 		var chain := tool == "chainsaw"
 		_saw_fx = 0.05 if chain else 0.09
 		Nature.burst(get_parent(), hit.position, hit.normal + Vector3.DOWN * 0.3, t.wood_color.lightened(0.1), 10 if chain else 6, 2.6 if chain else 1.4, 0.018, 6.0, 0.5, 60.0)
-		Sfx.play("drill" if chain else "saw", randf_range(0.6, 0.7) if chain else randf_range(0.9, 1.1), -6.0)
+		if not chain:
+			Sfx.play("saw", randf_range(0.9, 1.1), -6.0)
 		if chain:
 			_shake = maxf(_shake, 0.05)
 	if saw_progress >= 1.0:
@@ -1259,6 +1264,18 @@ func _saw_step(delta: float, on: bool) -> void:
 			(c as Log).cut_at(hit.position)
 			Sfx.play("thud", 1.2)
 		Nature.burst(get_parent(), hit.position, Vector3.UP, t.wood_color, 24, 2.0, 0.03, 6.0, 0.8, 120.0)
+
+
+func _update_chainsaw(trigger: bool) -> void:
+	if tool != "chainsaw":
+		if _chain_sound.playing:
+			_chain_sound.stop()
+		return
+	if not _chain_sound.playing:
+		_chain_sound.play()
+	var rev := 1.0 if _sawing else (0.55 if trigger else 0.0)
+	_chain_sound.pitch_scale = lerpf(_chain_sound.pitch_scale, lerpf(0.75, 1.35, rev), 0.15)
+	_chain_sound.volume_db = lerpf(_chain_sound.volume_db, lerpf(-20.0, -7.0, rev), 0.15)
 
 
 ## Shears: one snip per click. Leaves come off crowns (incl. felled ones) and bushes.
