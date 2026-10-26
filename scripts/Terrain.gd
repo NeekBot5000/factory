@@ -38,7 +38,7 @@ func build() -> void:
 	var mesh := st.commit()
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
-	mi.material_override = LowPoly.vcol_mat(1.0)
+	mi.material_override = Ground.terrain_mat()
 	add_child(mi)
 	var cs := CollisionShape3D.new()
 	cs.shape = mesh.create_trimesh_shape()

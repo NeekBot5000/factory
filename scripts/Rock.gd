@@ -22,7 +22,7 @@ func build(rng: RandomNumberGenerator, s: float, p_ore := "stone") -> void:
 	_color = Color("8a8780").lerp(Color("a39f95"), rng.randf())
 	_mesh = Node3D.new()
 	add_child(_mesh)
-	LowPoly.mesh_instance(_mesh, LowPoly.blob(1.0, 0.3, rng.randi() % 40), LowPoly.mat(_color, 1.0), Vector3.ZERO, Vector3(0, rng.randf() * 360.0, 0), Vector3(s * 1.3, s * 0.7, s))
+	LowPoly.mesh_instance(_mesh, LowPoly.blob(1.0, 0.3, rng.randi() % 40), Ground.stone_mat(Color(snappedf(_color.r, 0.02), snappedf(_color.g, 0.02), snappedf(_color.b, 0.02))), Vector3.ZERO, Vector3(0, rng.randf() * 360.0, 0), Vector3(s * 1.3, s * 0.7, s))
 	if ore != "stone":
 		# a vein of glinting ore lumps poking out of the rock
 		var fm := LowPoly.mat(Ore.KINDS[ore].fleck, 0.35, 0.35)
