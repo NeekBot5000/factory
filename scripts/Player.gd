@@ -74,6 +74,8 @@ var _kick := 0.0                 # view kick on impact (heavier tools kick harde
 var _impacts := 0                # impacts done this swing (the double-bit hits twice)
 const COMBO_MAX := 8
 var force_trigger := false       # tests: act as if the mouse button were held
+var invert_y := false            # settings
+var head_bob := 1.0
 var assume_captured := false     # tests: headless runs can't capture the mouse; treat clicks as if it were
 var lying: Node3D = null         # the hammock you're lying in, if any
 var _hold_yaw := 0.0             # the held thing keeps the turn it had relative to you when you picked it up
@@ -253,7 +255,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		_mouse_avg = lerpf(_mouse_avg, len, 0.2)
 		_yaw -= m.relative.x * mouse_sens
-		_pitch = clampf(_pitch - m.relative.y * mouse_sens, deg_to_rad(-88.0), deg_to_rad(88.0))
+		_pitch = clampf(_pitch - m.relative.y * mouse_sens * (-1.0 if invert_y else 1.0), deg_to_rad(-88.0), deg_to_rad(88.0))
 	elif event is InputEventMouseButton and event.pressed:
 		var b := event as InputEventMouseButton
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not assume_captured:
@@ -297,9 +299,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				Game.toast.emit("No phone", Color("ffd27a"))
 		elif k >= KEY_1 and k <= KEY_9:
+			# 1-9 pick your first nine tools; with Shift held, the next nine
 			var owned: Array = Tools.TOOL_ORDER.filter(func(t): return Game.in_toolbar(t))
-			if k - KEY_1 < owned.size():
-				equip(owned[k - KEY_1])
+			var n := (k - KEY_1) + (9 if (event as InputEventKey).shift_pressed else 0)
+			if n < owned.size():
+				equip(owned[n])
 
 
 ## Left click: click an object (box), throw what you hold, or swing the tool.
@@ -1022,7 +1026,7 @@ func drill_once() -> void:
 func _process(delta: float) -> void:
 	_shake = maxf(0.0, _shake - delta)
 	var sh := Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * _shake * 0.15
-	cam.position = Vector3(0, sin(_bob) * 0.035, 0) + sh
+	cam.position = Vector3(0, sin(_bob) * 0.035 * head_bob, 0) + sh
 	_kick = move_toward(_kick, 0.0, delta * 0.35)
 	cam.rotation.x = -_kick * 0.6
 	_animate_arm(delta)

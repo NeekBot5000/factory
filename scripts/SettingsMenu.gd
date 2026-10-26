@@ -33,8 +33,8 @@ func setup(p_main: Node) -> void:
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -270
 	panel.offset_right = 270
-	panel.offset_top = -230
-	panel.offset_bottom = 230
+	panel.offset_top = -255
+	panel.offset_bottom = 255
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = BG
 	sb.set_corner_radius_all(18)
@@ -75,6 +75,12 @@ func setup(p_main: Node) -> void:
 	row.add_child(opt)
 	v.add_child(row)
 	v.add_child(_label("Auto turns graphics down by itself if the game runs slowly.", 13, Color(1, 1, 1, 0.5)))
+	var toggles := HBoxContainer.new()
+	toggles.add_theme_constant_override("separation", 10)
+	toggles.add_child(_toggle("Invert mouse", "invert"))
+	toggles.add_child(_toggle("Head bob", "bob"))
+	toggles.add_child(_toggle("Show FPS", "fps"))
+	v.add_child(toggles)
 	var resume := Button.new()
 	resume.text = "Resume"
 	resume.focus_mode = Control.FOCUS_NONE
@@ -102,6 +108,8 @@ static func apply_all(p_main: Node) -> void:
 	if player != null:
 		player.mouse_sens = 0.0025 * float(s.sens)
 		player.cam.fov = float(s.fov)
+		player.invert_y = bool(s.get("invert", false))
+		player.head_bob = 1.0 if bool(s.get("bob", true)) else 0.0
 	Sfx.set_volume(float(s.volume))
 
 
@@ -114,6 +122,36 @@ func _quality(level: int) -> void:
 	var q := main.get_node_or_null("Quality") as Quality
 	if q != null:
 		q.apply(level)
+
+
+## An on/off pill: lights up in the accent colour when it's on.
+func _toggle(title: String, k: String) -> Button:
+	var c := Button.new()
+	c.text = title
+	c.toggle_mode = true
+	c.focus_mode = Control.FOCUS_NONE
+	c.button_pressed = bool(Game.settings.get(k, false))
+	c.add_theme_font_override("font", font_bold)
+	c.add_theme_font_size_override("font_size", 15)
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	c.custom_minimum_size.y = 36
+	for st in ["normal", "hover", "pressed", "hover_pressed"]:
+		var bs := StyleBoxFlat.new()
+		var on: bool = String(st).contains("pressed")
+		bs.bg_color = ACCENT if on else Color(1, 1, 1, 0.08 if st == "normal" else 0.16)
+		bs.set_corner_radius_all(18)
+		c.add_theme_stylebox_override(st, bs)
+	c.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	c.add_theme_color_override("font_color", Color.WHITE)
+	c.add_theme_color_override("font_hover_color", Color.WHITE)
+	c.add_theme_color_override("font_pressed_color", Color("2b2118"))
+	c.add_theme_color_override("font_hover_pressed_color", Color("2b2118"))
+	c.toggled.connect(func(on):
+		Game.settings[k] = on
+		apply_all(main)
+		Sfx.play("click")
+		Game.save_game())
+	return c
 
 
 func _slider(title: String, lo: float, hi: float, val: float, cb: Callable, fmt: String, show_scale := 1.0) -> Control:

@@ -22,7 +22,7 @@ var world_saver := Callable()   # set by the scene: returns the current world_bu
 var world_state := {}           # trees stripped/felled/grown, bushes, loose bark, leaves, logs, saplings, dropped tools
 var world_state_saver := Callable()
 var quality := 0                # graphics level picked by Quality.gd (0 = full); remembered between sessions
-var settings := {"sens": 1.0, "fov": 75.0, "volume": 0.8, "auto_quality": true}   # the Esc menu
+var settings := {"sens": 1.0, "fov": 75.0, "volume": 0.8, "auto_quality": true, "invert": false, "bob": true, "fps": false}   # the Esc menu
 
 
 func _ready() -> void:

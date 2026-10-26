@@ -46,8 +46,9 @@ func mouse(button: MouseButton) -> void:
 func _ready() -> void:
 	Game.save_enabled = false
 	Game.reset()
-	for id in ["hatchet", "saw", "hammer", "wires"]:
-		Game.owned[id] = true
+	for id in Tools.SHOP_ORDER:
+		if Tools.TOOLS.has(id):
+			Game.owned[id] = true
 	Game.has_phone = true
 	main = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
@@ -70,6 +71,19 @@ func run() -> void:
 	check(player.tool == owned[1], "2 picks the second tool you own (%s)" % player.tool)
 	await key(KEY_1)
 	check(player.tool == owned[0], "1 picks the first (%s)" % player.tool)
+	var sk := InputEventKey.new()
+	sk.keycode = KEY_3
+	sk.physical_keycode = KEY_3
+	sk.shift_pressed = true
+	sk.pressed = true
+	Input.parse_input_event(sk)
+	await frames(2)
+	var sku := sk.duplicate() as InputEventKey
+	sku.pressed = false
+	Input.parse_input_event(sku)
+	await frames(10)
+	check(player.tool == owned[11], "Shift+3 picks the twelfth tool (%s)" % player.tool)
+	await key(KEY_1)
 	# mouse wheel
 	var before := player.tool
 	await mouse(MOUSE_BUTTON_WHEEL_DOWN)
@@ -179,6 +193,16 @@ func run() -> void:
 	Game.settings.fov = 90.0
 	SettingsMenu.apply_all(main)
 	check(is_equal_approx(player.mouse_sens, 0.005) and is_equal_approx(player.cam.fov, 90.0), "settings apply to the game (sensitivity, field of view)")
+	Game.settings.invert = true
+	Game.settings.bob = false
+	Game.settings.fps = true
+	SettingsMenu.apply_all(main)
+	await frames(2)
+	check(player.invert_y and player.head_bob == 0.0 and main.hud.fps_lbl.visible, "toggles apply (invert mouse, head bob off, FPS shown)")
+	Game.settings.invert = false
+	Game.settings.bob = true
+	Game.settings.fps = false
+	SettingsMenu.apply_all(main)
 	await key(KEY_ESCAPE)
 	await frames(3)
 	check(main.shop_ui == null and player.controls_enabled, "Esc again resumes")

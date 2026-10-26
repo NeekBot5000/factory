@@ -105,7 +105,7 @@ five minutes to grow.
 |---|---|
 | WASD / arrows | move |
 | Mouse | look (click the window to capture the mouse) |
-| Esc | pause: mouse sensitivity, field of view, volume, graphics (saved) |
+| Esc | pause: mouse sensitivity, field of view, volume, graphics, invert mouse, head bob, FPS counter (saved) |
 | Shift / Space | sprint / jump |
 | Left click | swing / hold for saw, auger, vacuum / open a box / use the computer / build |
 | E or right click | pick up / drop, ship the truck, take an item, cancel a build |
@@ -116,7 +116,7 @@ five minutes to grow.
 | Hammer click on a log | lock it in place (iron bands); click again to unlock |
 | Hammer click on a rotator | stick what's on it to the table / let go |
 | Hammer + X on a build | take it down (you get back what it would sell for); on a plan, knocks it down and drops the materials |
-| 1-9 / mouse wheel | the 1st-9th tool you own (while placing a build, the wheel resizes it) |
+| 1-9 / mouse wheel | the 1st-9th tool you own; Shift + 1-9 for the 10th-18th (while placing a build, the wheel resizes it) |
 | Tab | phone (once you own it) |
 
 On a slow computer the game turns down its own graphics after a few seconds of low frame rate (softer shadows,

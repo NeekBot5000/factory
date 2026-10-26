@@ -9,6 +9,7 @@ var root: Control
 var health_bar: ProgressBar
 var health_lbl: Label
 var money_lbl: Label
+var fps_lbl: Label
 var hint: Label
 var crosshair: Control
 var flash: ColorRect
@@ -86,6 +87,10 @@ void fragment() {
 	mp.offset_top = 18
 	mp.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	root.add_child(mp)
+	fps_lbl = _label("", 13, Color(1, 1, 1, 0.75), font_bold)
+	fps_lbl.position = Vector2(14, 10)
+	fps_lbl.visible = false
+	root.add_child(fps_lbl)
 	money_lbl = _label("$0.00", 28, Color("7aff9a"), font_title)
 	mp.add_child(money_lbl)
 	# tool bar (bottom centre)
@@ -223,7 +228,7 @@ func _rebuild_toolbar() -> void:
 			hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			v.add_child(hand)
 		# number keys pick the n-th tool you own; only the one in hand shows its name (keeps the bar short)
-		var key := str(n) if n <= 9 else ""
+		var key := str(n) if n <= 9 else ("S+%d" % (n - 9) if n <= 18 else "")
 		var l := _label(("%s  %s" % [key, Tools.TOOLS[id].name]).strip_edges() if sel else key, 11, Color("ffcf6a") if sel else Color(1, 1, 1, 0.8), font_bold)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(l)
@@ -311,6 +316,9 @@ func _on_revive() -> void:
 
 func _process(delta: float) -> void:
 	_flash_a = maxf(0.0, _flash_a - delta * 2.5)
+	fps_lbl.visible = bool(Game.settings.get("fps", false))
+	if fps_lbl.visible:
+		fps_lbl.text = "%d FPS" % Engine.get_frames_per_second()
 	var low := clampf(1.0 - player.health / 40.0, 0.0, 1.0) * 0.45
 	(flash.material as ShaderMaterial).set_shader_parameter("strength", maxf(_flash_a, low))
 	var ui_open: bool = main.shop_ui != null
