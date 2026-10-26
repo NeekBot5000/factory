@@ -146,14 +146,18 @@ scripts/ItemPickup.gd  the revealed item          scripts/Computer.gd  cabin PC
 scripts/ShopUI.gd      TimberMart store (computer and phone)
 scripts/Icons.gd       renders item thumbnails and the box line art
 scripts/Cabin.gd       procedural log cabin       scripts/Terrain.gd  forest floor and road
-scripts/Hud.gd         crosshair, health, money, toolbar   scripts/Sfx.gd  procedural sounds
+scripts/Hud.gd         crosshair, health, money, toolbar   scripts/Sfx.gd  procedural sounds, wind, positional sounds
 scripts/Machine.gd     base for powered machines; Circuit.gd works out power, Wire.gd draws cables
 scripts/Machines.gd    machine models and finishing (Crank, Lever, PushButton, Piston, Rotator, Conveyor, TruckCaller)
 scripts/Rock.gd, Ore.gd  mineable rocks and the chunks they drop (mined rocks regrow, see Main.regrow_rock)
 scripts/Quality.gd     steps graphics down on slow computers (exported builds only)
+scripts/Ground.gd      surface detail shaders for the forest floor and stone (no texture files)
+scripts/SettingsMenu.gd  the Esc pause / settings menu
+scripts/ImpactSound.gd clunks and thuds when ore and logs hit something hard
 scripts/Builds.gd, Builder.gd, Blueprint.gd, BuildMenu.gd  hammer builds: catalogue + models, placement, plans, menu
 scripts/WorldSave.gd   everything you've done to the world, for the save file
-tests/*Test.tscn       headless gameplay tests (MachineTest: mining, wires, machines; SoakTest: random inputs + reload)
+tests/*Test.tscn       headless gameplay tests (MachineTest: mining, wires, machines; InputTest: every control through
+                       real input events; SoakTest: random inputs, then save + reload)
 tests/Bench.tscn       balance bench: $/minute for every stripping tool
 tests/Shot.tscn        screenshots (xvfb)
 ```
