@@ -41,6 +41,8 @@ func setup_from(src: ForestTree, j0: int, j1: int, base: Transform3D) -> void:
 	add_to_group("logs")
 	if length <= CARRY_MAX:
 		add_to_group("grabbable")
+	# heavier, longer logs thud lower
+	ImpactSound.attach(self, "thud", clampf(1.3 - length * 0.15, 0.5, 1.2), 4.0, 2.0)
 
 
 func attach_crown(c: Node3D) -> void:
@@ -97,7 +99,6 @@ func _landed(_b: Node) -> void:
 	if angular_velocity.length() < 0.4 and linear_velocity.length() < 1.0:
 		return      # just settling
 	body_entered.disconnect(_landed)
-	set_deferred("contact_monitor", false)
 	var at := global_position
 	Sfx.play_at("crumble", at, 0.55, 6.0)
 	Sfx.play_at("rustle", at + global_basis.y * length * 0.4, 0.7, 4.0)

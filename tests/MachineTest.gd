@@ -357,6 +357,11 @@ func run() -> void:
 	check(not main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count < main.grass_mmi.multimesh.instance_count and player.cam.far < 200.0, "the lowest graphics level drops shadows, grass and view distance")
 	qn.apply(0)
 	check(main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count == -1 and Game.quality == 0, "and full quality puts them back")
+	# things that hit the ground hard make a sound
+	var g0 := int(Sfx.played.get("gravel", 0))
+	spawn_ore(BASE + Vector3(-10, 3.0, -10))
+	await secs(1.5)
+	check(int(Sfx.played.get("gravel", 0)) > g0, "an ore chunk clunks when it lands")
 	# anything that slips through the ground is put back on top
 	var sunk := spawn_ore(Vector3(20, main.terrain.height_at(20, 20) - 4.0, 20))
 	sunk.freeze = false

@@ -42,6 +42,7 @@ func setup(p_kind: String, p_size: float = 0.14) -> void:
 	add_child(cs)
 	add_to_group("grabbable")
 	add_to_group("ores")
+	ImpactSound.attach(self, "gravel", 1.2 - size, 2.0)
 
 
 func hint_text() -> String:

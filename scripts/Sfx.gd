@@ -149,9 +149,13 @@ func _make(dur: float, f: Callable) -> AudioStreamWAV:
 
 
 ## A sound that comes from a place in the world: louder close by, quieter (and gone) far away.
+var played := {}      # name -> times played (tests check sounds actually fire)
+
+
 func play_at(name: String, pos: Vector3, pitch: float = 1.0, volume_db: float = 0.0) -> void:
 	if not _sounds.has(name):
 		return
+	played[name] = int(played.get(name, 0)) + 1
 	var p := _players3d[_next3d]
 	_next3d = (_next3d + 1) % _players3d.size()
 	p.stream = _sounds[name]
