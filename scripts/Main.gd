@@ -17,6 +17,7 @@ var computer: Computer
 var ui_layer: CanvasLayer
 var shop_ui: Control          # whichever full-screen UI is open: the store (computer / phone) or the build menu
 var _dispatch_timer := -1.0
+var _was_captured := false
 var grass_mat: ShaderMaterial
 var sun: DirectionalLight3D
 var grass_mmi: MultiMeshInstance3D
@@ -71,6 +72,7 @@ func _ready() -> void:
 	autosave.autostart = true
 	autosave.timeout.connect(Game.save_game)
 	add_child(autosave)
+	SettingsMenu.apply_all(self)
 	var quality := Quality.new()
 	quality.name = "Quality"
 	add_child(quality)
@@ -441,6 +443,11 @@ func _update_grass(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_update_grass(delta)
+	# in a browser, Esc releases the mouse before the game ever sees the key: treat losing it mid-play as Esc
+	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if _was_captured and not captured and shop_ui == null and player.controls_enabled and player.lying == null:
+		open_settings()
+	_was_captured = captured
 	if _dispatch_timer >= 0.0:
 		_dispatch_timer -= delta
 		if _dispatch_timer < 0.0:
@@ -474,6 +481,20 @@ func open_build_menu() -> void:
 	ui_layer.add_child(bm)
 	bm.setup(self)
 	bm.closed.connect(close_ui)
+	Sfx.play("click")
+
+
+## Esc while playing: the settings / pause menu.
+func open_settings() -> void:
+	if shop_ui != null:
+		return
+	player.controls_enabled = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var sm := SettingsMenu.new()
+	shop_ui = sm
+	ui_layer.add_child(sm)
+	sm.setup(self)
+	sm.closed.connect(close_ui)
 	Sfx.play("click")
 
 

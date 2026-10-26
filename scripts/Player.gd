@@ -287,7 +287,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif held != null:
 				_pouring = true
 		elif k == KEY_ESCAPE:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			get_parent().call("open_settings")
 		elif k == KEY_TAB:
 			if Game.has_phone:
 				get_parent().call("open_phone")

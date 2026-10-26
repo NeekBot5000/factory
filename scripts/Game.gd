@@ -22,6 +22,7 @@ var world_saver := Callable()   # set by the scene: returns the current world_bu
 var world_state := {}           # trees stripped/felled/grown, bushes, loose bark, leaves, logs, saplings, dropped tools
 var world_state_saver := Callable()
 var quality := 0                # graphics level picked by Quality.gd (0 = full); remembered between sessions
+var settings := {"sens": 1.0, "fov": 75.0, "volume": 0.8, "auto_quality": true}   # the Esc menu
 
 
 func _ready() -> void:
@@ -110,7 +111,7 @@ func save_game() -> void:
 	if world_state_saver.is_valid():
 		world_state = world_state_saver.call()
 	# orders still in transit are refunded into "processing" so they get re-delivered next session
-	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality}))
+	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings}))
 	saved.emit()
 
 
@@ -136,6 +137,10 @@ func load_game() -> void:
 	world_builds = d.get("builds", [])
 	world_state = d.get("world", {})
 	quality = int(d.get("quality", 0))
+	var st: Dictionary = d.get("settings", {})
+	for k in settings:
+		if st.has(k):
+			settings[k] = st[k]
 
 
 ## Clears the in-memory state without touching the save file (tests use this to simulate a restart).

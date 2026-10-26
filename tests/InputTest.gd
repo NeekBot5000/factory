@@ -160,8 +160,15 @@ func run() -> void:
 	await key(KEY_TAB)
 	await frames(3)
 	check(main.shop_ui == null, "Tab again closes it")
-	# Esc releases the mouse
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# Esc: the settings menu (and the mouse is free to use it); sliders apply straight away; Esc resumes
 	await key(KEY_ESCAPE)
-	check(Input.mouse_mode != Input.MOUSE_MODE_CAPTURED, "Esc frees the mouse")
+	await frames(3)
+	check(main.shop_ui is SettingsMenu and not player.controls_enabled, "Esc opens the settings menu")
+	Game.settings.sens = 2.0
+	Game.settings.fov = 90.0
+	SettingsMenu.apply_all(main)
+	check(is_equal_approx(player.mouse_sens, 0.005) and is_equal_approx(player.cam.fov, 90.0), "settings apply to the game (sensitivity, field of view)")
+	await key(KEY_ESCAPE)
+	await frames(3)
+	check(main.shop_ui == null and player.controls_enabled, "Esc again resumes")
 	finished = true

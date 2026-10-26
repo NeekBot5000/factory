@@ -42,7 +42,7 @@ func apply(level: int) -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	# only real builds (the web page, the downloads) adapt; editor runs, tests and screenshots stay at full
-	if not OS.has_feature("template") or _t < WAIT or Game.quality >= MAX_LEVEL:
+	if not OS.has_feature("template") or not bool(Game.settings.auto_quality) or _t < WAIT or Game.quality >= MAX_LEVEL:
 		return
 	# a background tab or a minimised window is throttled by the browser / OS - that's not a slow computer;
 	# nor is the burst of work while the shop icons are still being drawn at startup

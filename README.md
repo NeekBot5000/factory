@@ -104,7 +104,8 @@ five minutes to grow.
 | Control | Action |
 |---|---|
 | WASD / arrows | move |
-| Mouse | look (click the window to capture the mouse, Esc to release) |
+| Mouse | look (click the window to capture the mouse) |
+| Esc | pause: mouse sensitivity, field of view, volume, graphics (saved) |
 | Shift / Space | sprint / jump |
 | Left click | swing / hold for saw, auger, vacuum / open a box / use the computer / build |
 | E or right click | pick up / drop, ship the truck, take an item, cancel a build |
