@@ -354,9 +354,9 @@ func run() -> void:
 	# graphics fallback levels apply cleanly (only real builds step down on their own)
 	var qn := main.get_node("Quality") as Quality
 	qn.apply(3)
-	check(not main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count < main.grass_mmi.multimesh.instance_count and player.cam.far < 200.0, "the lowest graphics level drops shadows, grass and view distance")
+	check(not main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count < main.grass_mmi.multimesh.instance_count and player.cam.far < 200.0 and Ground._detail == 0.0, "the lowest graphics level drops shadows, grass, ground detail and view distance")
 	qn.apply(0)
-	check(main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count == -1 and Game.quality == 0, "and full quality puts them back")
+	check(main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count == -1 and Game.quality == 0 and Ground._detail == 1.0, "and full quality puts them back")
 	# things that hit the ground hard make a sound
 	var g0 := int(Sfx.played.get("gravel", 0))
 	spawn_ore(BASE + Vector3(-10, 3.0, -10))

@@ -23,7 +23,8 @@ func setup(p_main: Node, p_sun: DirectionalLight3D, p_grass: MultiMeshInstance3D
 	apply(Game.quality)
 
 
-## 0 = full, 1 = lighter shadows + no MSAA, 2 = no shadows + a third of the grass, 3 = also a shorter view.
+## 0 = full, 1 = lighter shadows + no MSAA, 2 = no shadows, a third of the grass and plain ground/stone colours,
+## 3 = also a shorter view.
 func apply(level: int) -> void:
 	Game.quality = clampi(level, 0, MAX_LEVEL)
 	var q := Game.quality
@@ -34,6 +35,7 @@ func apply(level: int) -> void:
 	get_viewport().msaa_3d = Viewport.MSAA_2X if q == 0 else Viewport.MSAA_DISABLED
 	if grass != null and grass.multimesh != null:
 		grass.multimesh.visible_instance_count = -1 if q < 2 else int(grass.multimesh.instance_count / 3.0)
+	Ground.set_detail(q < 2)
 	var player: Node = main.get("player")
 	if player != null and player.get("cam") != null:
 		(player.cam as Camera3D).far = 400.0 if q < 3 else 140.0

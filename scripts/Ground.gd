@@ -18,6 +18,7 @@ float fbm(vec2 p) { return vnoise(p) * 0.6 + vnoise(p * 2.03 + 17.0) * 0.3 + vno
 const TERRAIN := """
 shader_type spatial;
 render_mode diffuse_lambert;
+uniform float detail = 1.0;      // 0 on the low graphics levels: plain colours, no noise work
 varying vec3 wpos;
 %s
 void vertex() {
@@ -25,6 +26,10 @@ void vertex() {
 }
 void fragment() {
 	vec3 base = COLOR.rgb;
+	if (detail < 0.5) {
+		ALBEDO = base;
+		ROUGHNESS = 0.96;
+	} else {
 	float dist = length(wpos - INV_VIEW_MATRIX[3].xyz);
 	float near = 1.0 - smoothstep(18.0, 55.0, dist);      // fine detail fades out with distance (no shimmer)
 	float grass = clamp((base.g - base.r) * 5.0, 0.0, 1.0); // green ground vs dirt
@@ -43,6 +48,7 @@ void fragment() {
 	c = mix(c, c * 0.8, (1.0 - grass) * smoothstep(0.55, 0.78, mid) * 0.55);
 	ALBEDO = c;
 	ROUGHNESS = 0.96;
+	}
 }
 """
 
@@ -50,6 +56,7 @@ const STONE := """
 shader_type spatial;
 render_mode diffuse_lambert;
 uniform vec4 albedo : source_color = vec4(0.54, 0.53, 0.5, 1.0);
+uniform float detail = 1.0;
 varying vec3 wpos;
 varying vec3 wnrm;
 %s
@@ -58,6 +65,10 @@ void vertex() {
 	wnrm = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
 void fragment() {
+	if (detail < 0.5) {
+		ALBEDO = albedo.rgb;
+		ROUGHNESS = 0.92;
+	} else {
 	// project the grain from whichever side the face points (so it never stretches)
 	vec3 an = abs(wnrm);
 	vec2 uv = an.y > max(an.x, an.z) ? wpos.xz : (an.x > an.z ? wpos.zy : wpos.xy);
@@ -67,10 +78,13 @@ void fragment() {
 	c = mix(c, c * 0.72, pits * 0.55);      // small dark pits and flecks, like weathered granite
 	ALBEDO = c;
 	ROUGHNESS = 0.92;
+	}
 }
 """
 
 static var _terrain_shader: Shader
+static var _terrain_mats: Array[ShaderMaterial] = []
+static var _detail := 1.0
 static var _stone_shader: Shader
 static var _stone_mats := {}
 
@@ -81,6 +95,9 @@ static func terrain_mat() -> ShaderMaterial:
 		_terrain_shader.code = TERRAIN % NOISE
 	var m := ShaderMaterial.new()
 	m.shader = _terrain_shader
+	m.set_shader_parameter("detail", _detail)
+	_terrain_mats = _terrain_mats.filter(func(x): return is_instance_valid(x))
+	_terrain_mats.append(m)
 	return m
 
 
@@ -95,5 +112,16 @@ static func stone_mat(color: Color) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = _stone_shader
 	m.set_shader_parameter("albedo", color)
+	m.set_shader_parameter("detail", _detail)
 	_stone_mats[key] = m
 	return m
+
+
+## Graphics levels: surface detail on (High/Medium) or off (Low/Lowest).
+static func set_detail(on: bool) -> void:
+	_detail = 1.0 if on else 0.0
+	for m in _terrain_mats:
+		if is_instance_valid(m):
+			m.set_shader_parameter("detail", _detail)
+	for k in _stone_mats:
+		(_stone_mats[k] as ShaderMaterial).set_shader_parameter("detail", _detail)
