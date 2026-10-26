@@ -920,6 +920,14 @@ func hammer_take_down() -> bool:
 
 ## Hammer + X: knock a build down. It's gone, and you get back what it would have sold for.
 func take_down(b: Node3D) -> void:
+	# anything built on top of a pillar comes down with it (it would hang in the air otherwise)
+	if b.has_meta("build") and String(b.get_meta("build").id) == "pillar":
+		var top := b.global_position + Vector3.UP
+		for o in get_tree().get_nodes_in_group("builds"):
+			var on := o as Node3D
+			if on != b and is_instance_valid(on) and not (on is RigidBody3D) and absf(on.global_position.y - top.y) < 0.15 \
+					and Vector2(on.global_position.x - top.x, on.global_position.z - top.z).length() < 0.6:
+				take_down(on)
 	if b is Rotator:
 		(b as Rotator).unstick_all()
 	var v := float(b.get_meta("sale_value", 0.0))

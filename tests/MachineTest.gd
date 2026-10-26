@@ -357,6 +357,12 @@ func run() -> void:
 	check(not main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count < main.grass_mmi.multimesh.instance_count and player.cam.far < 200.0 and Ground._detail == 0.0, "the lowest graphics level drops shadows, grass, ground detail and view distance")
 	qn.apply(0)
 	check(main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count == -1 and Game.quality == 0 and Ground._detail == 1.0, "and full quality puts them back")
+	# a pillar takes whatever stands on it down with it
+	var pil2 := place("pillar", Vector3(-12, 0, 12))
+	var up := place("conveyor", Vector3(-12, 1, 12))
+	player.take_down(pil2)
+	await frames(3)
+	check(not is_instance_valid(up) or up.is_queued_for_deletion(), "taking down a pillar takes down what's built on it")
 	# things that hit the ground hard make a sound
 	var g0 := int(Sfx.played.get("gravel", 0))
 	spawn_ore(BASE + Vector3(-10, 3.0, -10))
