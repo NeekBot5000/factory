@@ -115,11 +115,9 @@ func _ready() -> void:
 	add_child(builder)
 	builder.setup(self, get_parent())
 	_vac_sound = AudioStreamPlayer.new()
-	_vac_sound.stream = Sfx.vacuum_stream()
-	_vac_sound.volume_db = -10.0
+	_vac_sound.volume_db = -10.0      # its sound is built the first time the vacuum runs
 	add_child(_vac_sound)
 	_chain_sound = AudioStreamPlayer.new()
-	_chain_sound.stream = Sfx.chainsaw_stream()
 	add_child(_chain_sound)
 	spawn_xform = global_transform
 	_yaw = rotation.y
@@ -1284,6 +1282,8 @@ func _update_chainsaw(trigger: bool) -> void:
 			_chain_sound.stop()
 		return
 	if not _chain_sound.playing:
+		if _chain_sound.stream == null:
+			_chain_sound.stream = Sfx.chainsaw_stream()
 		_chain_sound.play()
 	var rev := 1.0 if _sawing else (0.55 if trigger else 0.0)
 	_chain_sound.pitch_scale = lerpf(_chain_sound.pitch_scale, lerpf(0.75, 1.35, rev), 0.15)
@@ -1323,6 +1323,8 @@ func _vacuum_step(delta: float, on: bool) -> void:
 		return
 	_vacuuming = true
 	if not _vac_sound.playing:
+		if _vac_sound.stream == null:
+			_vac_sound.stream = Sfx.vacuum_stream()
 		_vac_sound.play()
 	var reach := float(d.get("range", VAC_RANGE))
 	var cone := float(d.get("cone", 0.8))
