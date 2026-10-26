@@ -29,6 +29,7 @@ var _grass_hits: Array[Vector4] = []    # xyz = where something hit the ground, 
 func _ready() -> void:
 	rng.seed = 2024
 	_environment()
+	_make_clouds()
 	terrain = Terrain.new()
 	add_child(terrain)
 	terrain.build()
@@ -91,6 +92,44 @@ func _notification(what: int) -> void:
 	elif what == NOTIFICATION_PREDELETE or what == NOTIFICATION_EXIT_TREE:
 		Game.world_saver = Callable()
 		Game.world_state_saver = Callable()
+
+
+## A handful of soft low-poly clouds drifting slowly across the sky.
+var _clouds: Node3D
+
+
+func _make_clouds() -> void:
+	_clouds = Node3D.new()
+	_clouds.name = "Clouds"
+	add_child(_clouds)
+	var cr := RandomNumberGenerator.new()
+	cr.seed = 99
+	var m := StandardMaterial3D.new()
+	# unlit: lit from below by the green sky-ground colour and through the greenish haze they turned olive
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(0.96, 0.97, 1.0)
+	m.disable_fog = true
+	for i in 16:
+		var c := Node3D.new()
+		var a := cr.randf() * TAU
+		var r := cr.randf_range(60.0, 170.0)
+		c.position = Vector3(cos(a) * r, cr.randf_range(55.0, 80.0), sin(a) * r)
+		_clouds.add_child(c)
+		for k in cr.randi_range(3, 6):
+			var mi := LowPoly.mesh_instance(c, LowPoly.blob(1.0, 0.25, cr.randi() % 50), m,
+				Vector3(cr.randf_range(-7, 7), cr.randf_range(-0.8, 1.2), cr.randf_range(-3, 3)), Vector3(0, cr.randf() * 360.0, 0),
+				Vector3(cr.randf_range(5, 9), cr.randf_range(2, 3.2), cr.randf_range(4, 6)))
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+func _drift_clouds(delta: float) -> void:
+	if _clouds == null:
+		return
+	for c in _clouds.get_children():
+		var n := c as Node3D
+		n.position.x += delta * 1.2
+		if n.position.x > 190.0:
+			n.position.x -= 380.0
 
 
 func _environment() -> void:
@@ -443,6 +482,7 @@ func _update_grass(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_update_grass(delta)
+	_drift_clouds(delta)
 	# in a browser, Esc releases the mouse before the game ever sees the key: treat losing it mid-play as Esc
 	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	if _was_captured and not captured and shop_ui == null and player.controls_enabled and player.lying == null:
