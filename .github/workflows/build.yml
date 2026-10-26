@@ -90,6 +90,12 @@ jobs:
           grep -q "MACHINE RESULT: PASS" machine.log
           ! grep -q "SCRIPT ERROR" machine.log
 
+      - name: Controls test (every key and mouse binding through real input events)
+        run: |
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/InputTest.tscn --fixed-fps 60 2>&1 | tee input.log
+          grep -q "INPUT RESULT: PASS" input.log
+          ! grep -q "SCRIPT ERROR" input.log
+
       - name: Soak test (random inputs, save + reload)
         run: |
           timeout 900 ${GODOT_BIN} --headless --path . res://tests/SoakTest.tscn --fixed-fps 60 2>&1 | tee soak.log

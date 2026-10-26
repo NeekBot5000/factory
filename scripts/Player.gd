@@ -73,6 +73,7 @@ var _kick := 0.0                 # view kick on impact (heavier tools kick harde
 var _impacts := 0                # impacts done this swing (the double-bit hits twice)
 const COMBO_MAX := 8
 var force_trigger := false       # tests: act as if the mouse button were held
+var assume_captured := false     # tests: headless runs can't capture the mouse; treat clicks as if it were
 var lying: Node3D = null         # the hammock you're lying in, if any
 var _hold_yaw := 0.0             # the held thing keeps the turn it had relative to you when you picked it up
 var _pouring := false            # holding R with something in your hands: tip it forward to pour it out
@@ -252,7 +253,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pitch = clampf(_pitch - m.relative.y * mouse_sens, deg_to_rad(-88.0), deg_to_rad(88.0))
 	elif event is InputEventMouseButton and event.pressed:
 		var b := event as InputEventMouseButton
-		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not assume_captured:
 			if controls_enabled:
 				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			return
