@@ -49,11 +49,19 @@ static func save(world: Node) -> Dictionary:
 		var ore := o as Ore
 		if _loose(ore, world):
 			out.ores.append({"xf": _xf(ore.global_transform), "kind": ore.kind, "s": ore.size})
+	# bark pieces share their tree's description through a table instead of each repeating it
+	var srcs: Array = []
+	var src_index := {}
 	for c in world.get_tree().get_nodes_in_group("chips"):
 		var chip := c as Chip
 		if _loose(chip, world) and not chip.src.is_empty():
-			out.chips.append({"xf": _xf(chip.global_transform), "layer": chip.layer, "kind": chip.kind, "src": chip.src,
+			var key := "%s|%s|%s" % [chip.src.get("kind", ""), chip.src.get("seed", 0), chip.src.get("radius", 0)]
+			if not src_index.has(key):
+				src_index[key] = srcs.size()
+				srcs.append(chip.src)
+			out.chips.append({"xf": _xf(chip.global_transform), "layer": chip.layer, "kind": chip.kind, "si": src_index[key],
 				"panels": chip.panel_list, "mult": chip.value_mult})
+	out["srcs"] = srcs
 	for l in world.get_tree().get_nodes_in_group("leaves"):
 		var lf := l as Leaf
 		if _loose(lf, world):
@@ -125,8 +133,11 @@ static func load(world: Node, d: Dictionary) -> void:
 		world.add_child(ore)
 		ore.setup(String(e.kind), float(e.s))
 		ore.global_transform = _unxf(e.xf)
+	var srcs: Array = d.get("srcs", [])
 	for e in d.get("chips", []):
-		var src: Dictionary = e.src
+		var src: Dictionary = e.src if e.has("src") else (srcs[int(e.si)] if int(e.get("si", -1)) >= 0 and int(e.si) < srcs.size() else {})
+		if src.is_empty():
+			continue
 		var panels: Array = []
 		for p in e.panels:
 			panels.append(Vector2i(int(p[0]), int(p[1])))

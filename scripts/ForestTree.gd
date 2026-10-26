@@ -27,7 +27,8 @@ var _layer_mi: Array[MeshInstance3D] = [null, null]
 var _seed := 0
 var _crown: Node3D
 var _fol: Foliage
-var _had_fol := false       # (a freed Foliage compares equal to null, so remember there was one)
+var _had_fol := false
+var _stripped := false      # any bark taken off yet (so saving doesn't have to scan every panel of every tree)       # (a freed Foliage compares equal to null, so remember there was one)
 var _shake_tw: Tween
 var _core_mi: MeshInstance3D
 var _col: CollisionShape3D
@@ -160,14 +161,10 @@ func layer_state() -> Dictionary:
 
 
 func is_untouched() -> bool:
-	if felled:
+	if felled or _stripped:
 		return false
 	if _had_fol and (not is_instance_valid(_fol) or not _fol.untouched()):
 		return false
-	for l in 2:
-		for b in layers[l]:
-			if b == 0:
-				return false
 	return true
 
 
@@ -187,6 +184,7 @@ func apply_layer_state(d: Dictionary) -> void:
 	if o.size() == SECTORS * bands and i.size() == SECTORS * bands:
 		layers[OUTER] = o
 		layers[INNER] = i
+		_stripped = o.has(0) or i.has(0)
 		_rebuild(OUTER)
 		_rebuild(INNER)
 
@@ -399,6 +397,7 @@ func strip_circle(world_point: Vector3, circle_r: float, only := -1) -> Dictiona
 		return {}
 	for p in panels:
 		layers[l][_idx(p.x, p.y)] = 0
+		_stripped = true
 	_rebuild(l)
 	if l == OUTER:
 		_rebuild(INNER)
@@ -443,6 +442,7 @@ func strip_through(world_point: Vector3, circle_r: float, grid := 0) -> Array:
 			continue
 		for p in got:
 			layers[l][_idx(p.x, p.y)] = 0
+		_stripped = true
 		out.append({"layer": l, "panels": got})
 	if not out.is_empty():
 		_rebuild(OUTER)
@@ -465,6 +465,7 @@ func strip_ring(world_point: Vector3) -> Dictionary:
 			panels.append(Vector2i(i, c.y))
 	for p in panels:
 		layers[l][_idx(p.x, p.y)] = 0
+		_stripped = true
 	_rebuild(l)
 	if l == OUTER:
 		_rebuild(INNER)

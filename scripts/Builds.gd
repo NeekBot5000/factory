@@ -469,13 +469,18 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 
 # ------------------------------------------------------------------ saving
 
+## Positions to the millimetre and rotations to 4 decimals: plenty, and it keeps the save file (and the
+## autosave hitch) small.
 static func xf_to_array(t: Transform3D) -> Array:
 	var q := t.basis.get_rotation_quaternion()
-	return [t.origin.x, t.origin.y, t.origin.z, q.x, q.y, q.z, q.w]
+	return [snappedf(t.origin.x, 0.001), snappedf(t.origin.y, 0.001), snappedf(t.origin.z, 0.001),
+		snappedf(q.x, 0.0001), snappedf(q.y, 0.0001), snappedf(q.z, 0.0001), snappedf(q.w, 0.0001)]
 
 
 static func xf_from_array(a: Array) -> Transform3D:
-	return Transform3D(Basis(Quaternion(a[3], a[4], a[5], a[6])), Vector3(a[0], a[1], a[2]))
+	var q := Quaternion(a[3], a[4], a[5], a[6])
+	q = q.normalized() if q.length_squared() > 0.000001 else Quaternion.IDENTITY
+	return Transform3D(Basis(q), Vector3(a[0], a[1], a[2]))
 
 
 static func colors_to_array(cols: Array) -> Array:

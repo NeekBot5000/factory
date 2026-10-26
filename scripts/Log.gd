@@ -97,7 +97,7 @@ func _landed(_b: Node) -> void:
 	if angular_velocity.length() < 0.4 and linear_velocity.length() < 1.0:
 		return      # just settling
 	body_entered.disconnect(_landed)
-	contact_monitor = false
+	set_deferred("contact_monitor", false)
 	var at := global_position
 	Sfx.play_at("crumble", at, 0.55, 6.0)
 	Sfx.play_at("rustle", at + global_basis.y * length * 0.4, 0.7, 4.0)
