@@ -13,6 +13,7 @@ var _slat_list: Array[Node3D] = []
 var _area_xf := Transform3D.IDENTITY
 var _area_size := Vector3.ONE
 var _query: PhysicsShapeQueryParameters3D
+var _hum: AudioStreamPlayer3D
 
 
 func setup_belt(slats: Node3D, dir: Vector3, center: Vector3, run: float, tilt: float) -> void:
@@ -37,11 +38,24 @@ func terminal() -> Vector3:
 
 func _power_on() -> void:
 	constant_linear_velocity = global_basis * _dir * SPEED
-	Sfx.play("click", 0.6, -10.0)
+	Sfx.play_at("click", global_position, 0.6, -6.0)
+	# a quiet hum while it runs (only nearby: lots of belts shouldn't drone across the map)
+	if _hum == null:
+		_hum = AudioStreamPlayer3D.new()
+		_hum.stream = Sfx.hum_stream()
+		_hum.volume_db = -16.0
+		_hum.unit_size = 1.5
+		_hum.max_distance = 14.0
+		_hum.position = Vector3(0, 0.4, 0)
+		add_child(_hum)
+	_hum.pitch_scale = randf_range(0.95, 1.05)
+	_hum.play()
 
 
 func _power_off() -> void:
 	constant_linear_velocity = Vector3.ZERO
+	if _hum != null:
+		_hum.stop()
 
 
 func _physics_process(delta: float) -> void:

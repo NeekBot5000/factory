@@ -212,7 +212,7 @@ func ship() -> bool:
 			c.remove_from_group("grabbable")
 			c.reparent(self, true)
 			cargo.append(c)
-	Sfx.play("horn")
+	Sfx.play_at("horn", global_position + Vector3.UP * 1.5, 1.0, 4.0)
 	state = "leaving"
 	sign.visible = false
 	_drive(route_out, func():

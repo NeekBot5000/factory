@@ -10,6 +10,9 @@ var _bird_timer := 3.0
 var _lp := 0.0        # low-pass state for warmer noise (reset at the start of every sound)
 var _lp2 := 0.0
 var _wind: AudioStreamPlayer
+var _players3d: Array[AudioStreamPlayer3D] = []
+var _next3d := 0
+var _hum: AudioStreamWAV
 
 
 func _ready() -> void:
@@ -51,12 +54,18 @@ func _ready() -> void:
 	_sounds["thunk"] = _make(0.3, func(t): return sin(TAU * (80.0 - t * 60.0) * t) * exp(-t * 14.0) * 0.6 + _soft(0.3) * exp(-t * 40.0) * 0.25 + sin(TAU * 1800.0 * t) * exp(-t * 60.0) * 0.06)
 	_sounds["hiss"] = _make(0.35, func(t): return _soft(0.85) * sin(PI * t / 0.35) * 0.18)
 	_sounds["snip"] = _make(0.08, func(t): return sin(TAU * 2600.0 * t) * exp(-t * 90.0) * 0.25 + _soft(0.8) * exp(-t * 120.0) * 0.2)
-	_sounds["timber"] = _make(0.9, func(t): return (_noise() * exp(-t * 6.0) * 0.6 + sin(TAU * (120.0 - t * 60.0) * t) * exp(-t * 3.0) * 0.4) * minf(1.0, t * 40.0))
+	_sounds["timber"] = _make(0.9, func(t): return (_soft(0.5) * exp(-t * 6.0) * 0.7 + sin(TAU * (120.0 - t * 60.0) * t) * exp(-t * 3.0) * 0.4) * minf(1.0, t * 40.0))
 	_sounds["click"] = _make(0.04, func(t): return sin(TAU * 900.0 * t) * exp(-t * 80.0) * 0.3)
 	_sounds["boot"] = _make(0.5, func(t): return sin(TAU * (300.0 + t * 600.0) * t) * exp(-t * 4.0) * 0.25)
 	for k in 3:
 		var base := 2200.0 + k * 500.0
 		_sounds["bird%d" % k] = _make(0.35, func(t): return sin(TAU * (base + sin(t * 60.0) * 300.0) * t) * sin(PI * clampf(t / 0.35, 0.0, 1.0)) * 0.08 * (1.0 if fmod(t, 0.12) < 0.08 else 0.0))
+	for i in 12:
+		var p3 := AudioStreamPlayer3D.new()
+		p3.unit_size = 4.0
+		p3.max_distance = 45.0
+		add_child(p3)
+		_players3d.append(p3)
 	# the breeze plays under everything, quietly
 	_wind = AudioStreamPlayer.new()
 	_wind.stream = _make_wind()
@@ -137,6 +146,29 @@ func _make(dur: float, f: Callable) -> AudioStreamWAV:
 	w.mix_rate = RATE
 	w.data = bytes
 	return w
+
+
+## A sound that comes from a place in the world: louder close by, quieter (and gone) far away.
+func play_at(name: String, pos: Vector3, pitch: float = 1.0, volume_db: float = 0.0) -> void:
+	if not _sounds.has(name):
+		return
+	var p := _players3d[_next3d]
+	_next3d = (_next3d + 1) % _players3d.size()
+	p.stream = _sounds[name]
+	p.global_position = pos
+	p.pitch_scale = pitch * randf_range(0.94, 1.06)
+	p.volume_db = volume_db
+	p.play()
+
+
+## Low mechanical hum for running belts (loops).
+func hum_stream() -> AudioStreamWAV:
+	if _hum == null:
+		var dur := 1.0
+		_hum = _make(dur, func(t): return sin(TAU * 100.0 * t) * 0.25 + sin(TAU * 200.0 * t) * 0.08 + _soft(0.3) * 0.12 + signf(sin(TAU * 8.0 * t)) * sin(TAU * 400.0 * t) * 0.02)
+		_hum.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		_hum.loop_end = int(RATE * dur)
+	return _hum
 
 
 func play(name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:

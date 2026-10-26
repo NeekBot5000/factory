@@ -39,12 +39,12 @@ func terminal() -> Vector3:
 
 
 func _power_on() -> void:
-	Sfx.play("thunk", 1.0, -2.0)
-	Sfx.play("hiss", 1.2, -10.0)
+	Sfx.play_at("thunk", global_position, 1.0, 2.0)
+	Sfx.play_at("hiss", global_position, 1.2, -6.0)
 
 
 func _power_off() -> void:
-	Sfx.play("hiss", 0.8, -12.0)
+	Sfx.play_at("hiss", global_position, 0.8, -8.0)
 
 
 func _physics_process(delta: float) -> void:

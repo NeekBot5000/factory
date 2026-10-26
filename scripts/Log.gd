@@ -87,6 +87,20 @@ func topple(dir: Vector3) -> void:
 	dir.y = 0.0
 	dir = dir.normalized() if dir.length() > 0.01 else Vector3.FORWARD
 	apply_impulse(dir * mass * 0.9, global_basis.y * length * 0.45)
+	# a falling tree lands with a deep thump and a rush of leaves (once)
+	contact_monitor = true
+	max_contacts_reported = 4
+	body_entered.connect(_landed)
+
+
+func _landed(_b: Node) -> void:
+	if angular_velocity.length() < 0.4 and linear_velocity.length() < 1.0:
+		return      # just settling
+	body_entered.disconnect(_landed)
+	contact_monitor = false
+	var at := global_position
+	Sfx.play_at("crumble", at, 0.55, 6.0)
+	Sfx.play_at("rustle", at + global_basis.y * length * 0.4, 0.7, 4.0)
 
 
 ## Saws the log in two at the band nearest `world_point`. Returns the two new logs (or [] if too close to an end).

@@ -16,9 +16,9 @@ func _power_on() -> void:
 	var main := get_parent()
 	var truck: Truck = main.get("ship_truck") if "ship_truck" in main else null
 	if truck != null and truck.ship():
-		Sfx.play("clink", 1.4, -2.0)
+		Sfx.play_at("clink", global_position, 1.4)
 	else:
-		Sfx.play("click", 0.5, -4.0)
+		Sfx.play_at("click", global_position, 0.5)
 
 
 func hint_text() -> String:
