@@ -357,4 +357,8 @@ func run() -> void:
 	check(not main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count < main.grass_mmi.multimesh.instance_count and player.cam.far < 200.0, "the lowest graphics level drops shadows, grass and view distance")
 	qn.apply(0)
 	check(main.sun.shadow_enabled and main.grass_mmi.multimesh.visible_instance_count == -1 and Game.quality == 0, "and full quality puts them back")
+	# anything that slips through the ground is put back on top
+	var sunk := spawn_ore(Vector3(20, main.terrain.height_at(20, 20) - 4.0, 20))
+	sunk.freeze = false
+	check(main.rescue_fallen() >= 1 and sunk.global_position.y > main.terrain.height_at(20, 20), "things that fell through the ground pop back up")
 	finished = true

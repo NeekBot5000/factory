@@ -18,6 +18,7 @@ var ui_layer: CanvasLayer
 var shop_ui: Control          # whichever full-screen UI is open: the store (computer / phone) or the build menu
 var _dispatch_timer := -1.0
 var _was_captured := false
+var _rescue_t := 1.0
 var grass_mat: ShaderMaterial
 var sun: DirectionalLight3D
 var grass_mmi: MultiMeshInstance3D
@@ -278,6 +279,24 @@ func _occupied(pos: Vector3, s: float) -> bool:
 	return false
 
 
+## Safety net: anything loose that slipped through the ground (a fast spin can tunnel a thin piece through)
+## pops back up on top where it fell, instead of being lost forever.
+func rescue_fallen() -> int:
+	var n := 0
+	for b in get_tree().get_nodes_in_group("grabbable"):
+		var rb := b as RigidBody3D
+		if rb == null or rb.freeze or rb.get_parent() != self:
+			continue
+		var p := rb.global_position
+		var ground := terrain.height_at(p.x, p.z)
+		if p.y < ground - 1.5:
+			rb.global_position = Vector3(p.x, ground + 0.6, p.z)
+			rb.linear_velocity = Vector3.ZERO
+			rb.angular_velocity = Vector3.ZERO
+			n += 1
+	return n
+
+
 ## The truck parking spot and its turning loop.
 func _in_lot(p: Vector2) -> bool:
 	return p.x > 2.5 and p.x < 13.0 and p.y > 2.0 and p.y < 20.0
@@ -483,6 +502,10 @@ func _update_grass(delta: float) -> void:
 func _process(delta: float) -> void:
 	_update_grass(delta)
 	_drift_clouds(delta)
+	_rescue_t -= delta
+	if _rescue_t <= 0.0:
+		_rescue_t = 1.0
+		rescue_fallen()
 	# in a browser, Esc releases the mouse before the game ever sees the key: treat losing it mid-play as Esc
 	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	if _was_captured and not captured and shop_ui == null and player.controls_enabled and player.lying == null:

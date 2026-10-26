@@ -11,6 +11,7 @@ func setup(p_tool: String) -> void:
 	collision_mask = 1 | 2
 	mass = 1.2
 	angular_damp = 0.8
+	continuous_cd = true
 	var holder := Node3D.new()
 	add_child(holder)
 	var model := Tools.build_model(tool, holder)
@@ -26,7 +27,7 @@ func setup(p_tool: String) -> void:
 	holder.position = -aabb.get_center()
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = aabb.size.max(Vector3.ONE * 0.04)
+	sh.size = aabb.size.max(Vector3.ONE * 0.08)      # thin blades tunnelled through the ground when spun
 	cs.shape = sh
 	add_child(cs)
 	add_to_group("tool_items")

@@ -104,6 +104,12 @@ func run() -> void:
 	var items := get_tree().get_nodes_in_group("tool_items")
 	if not items.is_empty():
 		var it := items[0] as Node3D
+		await frames(60)        # it's thrown with your momentum and a spin: let it settle, then walk over
+		var stand := it.global_position + Vector3(0, 0, 1.4)
+		stand.y = main.terrain.height_at(stand.x, stand.z) + 0.05
+		player.global_position = stand
+		player.velocity = Vector3.ZERO
+		await frames(3)
 		var to := it.global_position - (player.global_position + Vector3(0, 1.58, 0))
 		player.set("_yaw", atan2(-to.x, -to.z))
 		player.set("_pitch", atan2(to.y, Vector2(to.x, to.z).length()))
@@ -134,7 +140,12 @@ func run() -> void:
 	check(not bool(player.get("_pouring")), "letting go of R stops")
 	await key(KEY_E)
 	check(player.held == null, "E drops it")
-	# hammer: click opens the build menu, Esc closes it; R turns a placement, right click cancels it
+	# hammer: click opens the build menu, Esc closes it; R turns a placement, right click cancels it.
+	# (back on the porch, looking at its floor: a hammer click on a log would lock the log instead)
+	log.queue_free()
+	player.global_transform = player.spawn_xform
+	player.velocity = Vector3.ZERO
+	player.set("_yaw", PI)
 	player.equip("hammer")
 	await frames(20)
 	player.set("_pitch", -0.6)
