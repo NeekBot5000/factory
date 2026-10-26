@@ -836,7 +836,7 @@ func _physics_process(delta: float) -> void:
 		_step_acc += hspeed * delta
 		if _step_acc > (0.9 if sprint else 0.7):
 			_step_acc = 0.0
-			Sfx.play("step", randf_range(0.8, 1.1), -10.0)
+			Sfx.play(_step_sound(), randf_range(0.85, 1.1), -8.0)
 	else:
 		_bob = lerpf(_bob, round(_bob / PI) * PI, minf(1.0, delta * 6.0))
 	_update_held(delta)
@@ -941,10 +941,10 @@ func wire_click(m: Machine) -> String:
 	var r := Circuit.toggle_wire(get_parent(), wire_from, m)
 	match r:
 		"added":
-			Sfx.play("clink", 1.2)
-			Sfx.play("pickup", 1.4, -6.0)
+			Sfx.play("snip", 1.0)
+			Sfx.play("pickup", 1.4, -8.0)
 		"removed":
-			Sfx.play("clink", 0.8)
+			Sfx.play("snip", 0.7)
 		_:
 			Game.toast.emit("Too far for a wire (%dm max)" % int(Wire.MAX_LEN), Color("ffd27a"))
 			Sfx.play("thud", 1.4, -6.0)
@@ -991,8 +991,21 @@ func drill_rock() -> bool:
 	if hit.is_empty() or not hit.collider.has_method("on_hit") or not (hit.collider is Rock):
 		return false
 	hit.collider.call("on_hit", hit.position, hit.normal, tool)
+	Sfx.play("grind", randf_range(0.9, 1.1), -6.0)
 	_shake = 0.05
 	return true
+
+
+## Footsteps sound like what you're walking on: grass and dirt, wooden floors (cabin, porch, dock, builds), stone.
+func _step_sound() -> String:
+	var q := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 0.2, global_position + Vector3.DOWN * 0.4, 1)
+	q.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if hit.is_empty() or hit.collider is Terrain:
+		return "step"
+	if hit.collider is Rock or (hit.collider as Node).get_meta("build", {}).get("id", "") == "pillar":
+		return "step_stone"
+	return "step_wood"
 
 
 ## Used by tests to drive the drill without a mouse.

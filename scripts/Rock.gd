@@ -62,8 +62,7 @@ func on_hit(pos: Vector3, normal: Vector3, tool: String) -> void:
 			Nature.burst(parent, pos, normal, Color("ffd36a"), 12, 4.5, 0.015, 6.0, 0.35, 40.0, 3.0)  # sparks
 			Sfx.play("clink", randf_range(0.9, 1.15))
 		return
-	Sfx.play("clink", randf_range(0.7, 0.85))
-	Sfx.play("thud", 1.1, -4.0)
+	Sfx.play("crack", randf_range(0.85, 1.1))
 	var tier := int(d.get("tier", 1))
 	if ore == "iron" and tier < 2:
 		# too hard for a basic pick: sparks fly but nothing comes off
@@ -83,7 +82,7 @@ func on_hit(pos: Vector3, normal: Vector3, tool: String) -> void:
 		for i in 2:
 			_spawn_chunk(ore if i == 0 else "stone", global_position + Vector3(0, size * 0.3, 0), Vector3.UP)
 		Nature.burst(parent, global_position, Vector3.UP, _color, 30, 3.0, 0.09, 9.0, 1.0, 120.0)
-		Sfx.play("thud", 0.6, 4.0)
+		Sfx.play("crumble", 1.0, 2.0)
 		queue_free()
 
 
