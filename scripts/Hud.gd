@@ -131,7 +131,7 @@ void fragment() {
 	player.fainted.connect(_on_faint)
 	player.revived.connect(_on_revive)
 	player.tool_changed.connect(func(_t): _rebuild_toolbar())
-	Game.money_changed.connect(func(m): money_lbl.text = "$%.2f" % m)
+	Game.money_changed.connect(_on_money)
 	Game.tools_changed.connect(_rebuild_toolbar)
 	Game.toast.connect(show_toast)
 	# autosave indicator: a little white hammer in the corner that taps while the game saves
@@ -151,6 +151,7 @@ void fragment() {
 	if main.icons != null:
 		main.icons.icon_ready.connect(func(_id): _rebuild_toolbar())
 	money_lbl.text = "$%.2f" % Game.money
+	_shown_money = Game.money
 	_rebuild_toolbar()
 
 
@@ -263,6 +264,32 @@ func _draw_crosshair() -> void:
 	var on_tree := player.aiming_at_tree()
 	var col := Color(1, 0.85, 0.4, 0.8) if on_tree else Color(1, 1, 1, 0.35)
 	crosshair.draw_arc(Vector2.ZERO, _ring_px, 0, TAU, 40, col, 1.6, true)
+
+
+## Money counts up to the new total (a quick roll, so a big sale feels big) and the counter gives a little pop.
+var _shown_money := -1.0
+var _money_tw: Tween
+
+
+func _on_money(m: float) -> void:
+	if _shown_money < 0.0:
+		_shown_money = m
+	var gain := m - _shown_money
+	if _money_tw != null:
+		_money_tw.kill()
+	if gain <= 0.0:
+		_shown_money = m
+		money_lbl.text = "$%.2f" % m
+		return
+	_money_tw = create_tween()
+	_money_tw.tween_method(func(v: float):
+		_shown_money = v
+		money_lbl.text = "$%.2f" % v, _shown_money, m, clampf(0.25 + gain / 400.0, 0.25, 1.4)).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	var box := money_lbl.get_parent() as Control
+	box.pivot_offset = box.size * 0.5
+	var pop := create_tween()
+	pop.tween_property(box, "scale", Vector2.ONE * (1.06 + minf(gain / 1500.0, 0.14)), 0.08)
+	pop.tween_property(box, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
 
 
 func _on_health(h: float, m: float) -> void:
