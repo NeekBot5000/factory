@@ -1,13 +1,14 @@
 class_name Rotator
 extends Machine
 ## A powered turntable. Hit it (or what's sitting on it) with the hammer to stick everything on the table to it;
-## hit it again to let go. While powered it spins, carrying whatever is stuck on round with it.
+## hit it again to let go. A piston pushed out against the table clamps whatever is between them the same way,
+## until the piston pulls back. While powered it spins, carrying whatever is stuck on round with it.
 
 const SPIN := 1.2          # radians per second at full speed
 
 var _table: AnimatableBody3D
 var _speed := 0.0
-var stuck: Array = []      # [{body, off}] - offsets relative to the table
+var stuck: Array = []      # [{body, off, clamp}] - offsets relative to the table; clamp = the piston holding it, or null
 
 
 func setup_table(model_table: Node3D) -> void:
@@ -58,7 +59,8 @@ func is_stuck(b: Node) -> bool:
 
 
 func on_hammer() -> void:
-	if stuck.is_empty():
+	# (things a piston is clamping stay clamped either way)
+	if not stuck.any(func(s): return s.get("clamp") == null):
 		var n := stick_all()
 		if n > 0:
 			Sfx.play("clink", 0.8)
@@ -66,7 +68,10 @@ func on_hammer() -> void:
 		else:
 			Sfx.play("thud", 1.4, -6.0)
 	else:
-		unstick_all()
+		for i in range(stuck.size() - 1, -1, -1):
+			if stuck[i].get("clamp") == null:
+				_let_go(stuck[i].body)
+				stuck.remove_at(i)
 		Sfx.play("clink", 1.2)
 
 
@@ -75,25 +80,57 @@ func stick_all() -> int:
 	for b in _on_table():
 		if b == held or is_stuck(b):
 			continue
-		var rb := b as RigidBody3D
-		rb.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
-		rb.freeze = true
-		rb.set_meta("stuck", true)
-		rb.remove_from_group("grabbable")
-		stuck.append({"body": rb, "off": _table.global_transform.affine_inverse() * rb.global_transform})
+		_stick(b as RigidBody3D, null)
 	return stuck.size()
+
+
+func _stick(rb: RigidBody3D, piston: Piston) -> void:
+	rb.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
+	rb.freeze = true
+	rb.set_meta("stuck", true)
+	rb.remove_from_group("grabbable")
+	stuck.append({"body": rb, "off": _table.global_transform.affine_inverse() * rb.global_transform, "clamp": piston})
+
+
+func _let_go(rb: RigidBody3D) -> void:
+	if not is_instance_valid(rb):
+		return
+	rb.remove_meta("stuck")
+	if rb is Log and (rb as Log).locked:
+		return
+	rb.freeze = false
+	rb.add_to_group("grabbable")
+
+
+## Pistons pushed out against the table pin what's between them to it; when a piston pulls back, it lets go.
+func _check_clamps() -> void:
+	for i in range(stuck.size() - 1, -1, -1):
+		var p: Variant = stuck[i].get("clamp")
+		if p == null:
+			continue
+		if not is_instance_valid(p) or not (p as Piston).clamping():
+			_let_go(stuck[i].body)
+			stuck.remove_at(i)
+	var on: Array = []
+	for pn in get_tree().get_nodes_in_group("pistons"):
+		var ps := pn as Piston
+		if not ps.clamping() or ps.global_position.distance_to(_table.global_position) > 3.5:
+			continue
+		if on.is_empty():
+			on = _on_table()
+			if on.is_empty():
+				return
+		var held: Node = get_parent().player.held if "player" in get_parent() else null
+		for b in ps.call("_touching", 0.25):
+			# pinned: right up against the table (not just somewhere in front of it)
+			if on.has(b) and b != held and not is_stuck(b) and not (b as RigidBody3D).freeze and _table.to_local(b.global_position).y < 0.4:
+				_stick(b, ps)
+				Sfx.play_at("clink", b.global_position, 0.7, -6.0)
 
 
 func unstick_all() -> void:
 	for s in stuck:
-		var rb := s.body as RigidBody3D
-		if not is_instance_valid(rb):
-			continue
-		rb.remove_meta("stuck")
-		if rb is Log and (rb as Log).locked:
-			continue
-		rb.freeze = false
-		rb.add_to_group("grabbable")
+		_let_go(s.body)
 	stuck.clear()
 
 
@@ -116,6 +153,7 @@ func _on_table() -> Array:
 
 
 func _physics_process(delta: float) -> void:
+	_check_clamps()      # every tick: a piston closes fast, and has to catch what it's pinning
 	_speed = move_toward(_speed, SPIN if powered else 0.0, delta * 1.5)
 	if _speed > 0.0:
 		_table.rotation.y += _speed * delta
@@ -130,7 +168,8 @@ func _physics_process(delta: float) -> void:
 
 
 func save_state() -> Dictionary:
-	return {"angle": _table.rotation.y if _table != null else 0.0, "stuck": not stuck.is_empty()}
+	# clamped things aren't saved as stuck: the piston simply clamps them again after loading
+	return {"angle": _table.rotation.y if _table != null else 0.0, "stuck": stuck.any(func(s): return s.get("clamp") == null)}
 
 
 func load_state(d: Dictionary) -> void:

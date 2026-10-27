@@ -309,6 +309,29 @@ func run() -> void:
 	await secs(2.0)
 	check(absf(spoke.global_position.y - sp0.y) > 0.15 and absf(spoke.global_position.z - sp0.z) < 0.05, "powered, it turns them round in an upright circle (%s)" % str(spoke.global_position - sp0))
 	c3.charge = 0.0
+	await secs(1.0)
+	side.on_hammer()
+	await frames(2)
+	spoke.queue_free()
+
+	# a piston pushed out against the rotator clamps what's between them, until it pulls back
+	var press := place("piston", Vector3(14, 0, -4)) as Piston
+	var c4 := place("crank", Vector3(12, 0, -3)) as Crank
+	Circuit.toggle_wire(main, c4, press)
+	await frames(2)
+	var pinned := spawn_ore(BASE + Vector3(14, 0.62, -4.95))
+	c4.charge = 30.0
+	await secs(0.6)
+	check(pinned.freeze and side.is_stuck(pinned), "the piston pins the ore against the rotator and it's held there")
+	check(press.ext < 0.95, "the piston stops where it meets it (out %.2f)" % press.ext)
+	var pp0 := pinned.global_position
+	c3.charge = 30.0
+	await secs(1.5)
+	check(pinned.global_position.distance_to(pp0) > 0.15, "and the rotator turns it while it's clamped (%.2f m)" % pinned.global_position.distance_to(pp0))
+	c4.charge = 0.0
+	await secs(1.0)
+	check(not pinned.freeze and not side.is_stuck(pinned), "when the piston pulls back, it lets go")
+	c3.charge = 0.0
 
 	# --- truck caller
 	var truck: Truck = main.ship_truck

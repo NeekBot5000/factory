@@ -31,6 +31,7 @@ func setup_plate(model_plate: Node3D) -> void:
 
 func activate(p_size: float) -> void:
 	super(p_size)
+	add_to_group("pistons")
 	add_lamp(Vector3(0, 0.83, 0.3))
 
 
@@ -51,6 +52,9 @@ func _physics_process(delta: float) -> void:
 	var target := 1.0 if powered else 0.0
 	if is_equal_approx(ext, target):
 		return
+	# pushing out against something a rotator has clamped: it holds there, pressing on it
+	if powered and _pressing_clamped():
+		return
 	ext = move_toward(ext, target, delta * (OUT_SPEED if powered else IN_SPEED))
 	_plate.position = _home + Vector3(0, 0, -ext * REACH)
 	# wake up anything the plate is about to push
@@ -58,13 +62,26 @@ func _physics_process(delta: float) -> void:
 		b.sleeping = false
 
 
-func _touching() -> Array[RigidBody3D]:
+## Pushed out against something: what's pinned between the plate and a rotator's table gets clamped to the table.
+func clamping() -> bool:
+	return powered and ext > 0.05
+
+
+func _pressing_clamped() -> bool:
+	for b in _touching(0.14):
+		if b.has_meta("stuck"):
+			return true
+	return false
+
+
+## Loose things just in front of the plate (within `depth`).
+func _touching(depth := 0.5) -> Array[RigidBody3D]:
 	var out: Array[RigidBody3D] = []
 	var q := PhysicsShapeQueryParameters3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(0.9, 0.9, 0.5)
+	sh.size = Vector3(0.9, 0.9, depth)
 	q.shape = sh
-	q.transform = _plate.global_transform * Transform3D(Basis(), Vector3(0, 0, -0.25))
+	q.transform = _plate.global_transform * Transform3D(Basis(), Vector3(0, 0, -depth * 0.5))
 	q.collision_mask = 2
 	for r in get_world_3d().direct_space_state.intersect_shape(q, 16):
 		if r.collider is RigidBody3D:
