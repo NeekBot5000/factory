@@ -140,6 +140,14 @@ static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Mat
 		for sx in [-0.3, 0.3]:
 			_p(parts, root, LowPoly.box(Vector3(0.06, h, 0.06)), Vector3(sx, h * 0.5, at.z), "", iron)
 		_p(parts, root, LowPoly.cyl(0.05, 0.05, 0.64, 8), at + Vector3(0, -0.01, 0), "", iron, Vector3(0, 0, 90))
+	# painted arrows on the belt bed show which way it runs (they glow on the hologram while you place it)
+	var paint := LowPoly.mat(Color("f2c12e"), 0.6)
+	var chevron := Tools.prism(PackedVector2Array([Vector2(0.0, -0.11), Vector2(0.19, 0.05), Vector2(0.12, 0.09), Vector2(0.0, -0.02), Vector2(-0.12, 0.09), Vector2(-0.19, 0.05)]), 0.006, Color("f2c12e"))
+	var na := int(round(run * 2.0))
+	for k in na:
+		var mi := _p(parts, root, chevron, c + dir * (-run * 0.5 + run * (k + 0.5) / na) + nrm * 0.036, "", paint)
+		mi.basis = Basis.from_euler(Vector3(tilt, 0, 0)) * Basis(Vector3.BACK, -PI * 0.5)
+		mi.set_meta("arrow", true)
 	# belt cleats: these slide along while the belt runs
 	var slats := _node(root, "Slats")
 	for k in int(ceil(run * 4.0)):
@@ -148,6 +156,19 @@ static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Mat
 	slats.set_meta("run", run)
 	slats.set_meta("dir", dir)
 	slats.set_meta("start", c - dir * run * 0.5 + nrm * 0.04)
+
+
+static var _arrow: StandardMaterial3D
+
+
+## The bright, unlit yellow the direction arrows have on a hologram (so you can see which way a belt will run).
+static func arrow_mat() -> StandardMaterial3D:
+	if _arrow == null:
+		_arrow = StandardMaterial3D.new()
+		_arrow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_arrow.albedo_color = Color("ffd84a")
+		_arrow.render_priority = 1
+	return _arrow
 
 
 ## A fresh body for a machine build.

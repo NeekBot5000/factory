@@ -117,7 +117,8 @@ func _make_holo() -> void:
 
 func _paint(ok: bool) -> void:
 	for p in _holo_parts:
-		(p.mi as MeshInstance3D).material_override = _ok_mat if ok else _bad_mat
+		var mi := p.mi as MeshInstance3D
+		mi.material_override = Machines.arrow_mat() if mi.has_meta("arrow") else (_ok_mat if ok else _bad_mat)
 
 
 func _confirm() -> void:

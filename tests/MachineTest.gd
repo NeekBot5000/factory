@@ -372,4 +372,20 @@ func run() -> void:
 	var sunk := spawn_ore(Vector3(20, main.terrain.height_at(20, 20) - 4.0, 20))
 	sunk.freeze = false
 	check(main.rescue_fallen() >= 1 and sunk.global_position.y > main.terrain.height_at(20, 20), "things that fell through the ground pop back up")
+	# --- belts that touch share power: wire one, and the whole line (round the turn) runs
+	var c2 := place("crank", Vector3(-17, 0, -12)) as Crank
+	var line: Array = [place("conveyor", Vector3(-16, 0, -12)), place("conveyor", Vector3(-16, 0, -13)), place("conveyor", Vector3(-16, 0, -14))]
+	line.append(place("conveyor", Vector3(-16, 0, -15), -90.0))      # the corner cell, turned: the line runs into its side
+	line.append(place("conveyor", Vector3(-15, 0, -15), -90.0))
+	var apart := place("conveyor", Vector3(-17, 0, -14))               # a belt next to the line, side by side: not connected
+	Circuit.toggle_wire(main, c2, line[0])
+	c2.charge = 30.0
+	await secs(0.3)
+	var on := line.filter(func(b): return b.powered).size()
+	check(on == line.size(), "one wired belt powers every belt touching it, round the turn (%d of %d running)" % [on, line.size()])
+	check(not apart.powered, "a belt only standing next to the line stays off")
+	c2.charge = 0.0
+	await secs(0.3)
+	check(line.filter(func(b): return b.powered).is_empty(), "and they all stop together")
+
 	finished = true

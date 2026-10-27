@@ -50,7 +50,7 @@ func setup(p_id: String, p_height: float, main: Node, p_size: float = 1.0) -> vo
 	var inv := global_transform.affine_inverse()
 	for p in _parts:
 		var mi: MeshInstance3D = p.mi
-		mi.material_override = _ghost
+		mi.material_override = Machines.arrow_mat() if mi.has_meta("arrow") else _ghost
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_filled.append(null)
 		var a: AABB = (inv * mi.global_transform) * mi.get_aabb()

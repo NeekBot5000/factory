@@ -14,6 +14,7 @@ var _area_xf := Transform3D.IDENTITY
 var _area_size := Vector3.ONE
 var _query: PhysicsShapeQueryParameters3D
 var _hum: AudioStreamPlayer3D
+var _center := Vector3.ZERO
 
 
 func setup_belt(slats: Node3D, dir: Vector3, center: Vector3, run: float, tilt: float) -> void:
@@ -21,10 +22,35 @@ func setup_belt(slats: Node3D, dir: Vector3, center: Vector3, run: float, tilt: 
 	_dir = dir
 	_run = run
 	_start = slats.get_meta("start")
+	_center = center
 	for c in slats.get_children():
 		_slat_list.append(c)
 	_area_xf = Transform3D(Basis(Vector3.RIGHT, tilt), center + Basis(Vector3.RIGHT, tilt) * Vector3(0, 0.25, 0))
 	_area_size = Vector3(0.66, 0.45, run)
+
+
+## The two ends of the belt (world space): where things come on, and where they go off.
+func ends() -> Array:
+	return [global_transform * (_center - _dir * _run * 0.5), global_transform * (_center + _dir * _run * 0.5)]
+
+
+## Belts touching end to end (or one running into the side of another, a turn) share power, no wire needed.
+func touches(o: Conveyor) -> bool:
+	var a: Array = ends()
+	var b: Array = o.ends()
+	for e in a:
+		if _seg_dist(e, b[0], b[1]) < 0.56:
+			return true
+	for e in b:
+		if _seg_dist(e, a[0], a[1]) < 0.56:
+			return true
+	return false
+
+
+static func _seg_dist(p: Vector3, s0: Vector3, s1: Vector3) -> float:
+	var d := s1 - s0
+	var t := clampf((p - s0).dot(d) / maxf(d.length_squared(), 0.0001), 0.0, 1.0)
+	return p.distance_to(s0 + d * t)
 
 
 func activate(p_size: float) -> void:
