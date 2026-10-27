@@ -76,6 +76,13 @@ jobs:
           ! grep -q "SCRIPT ERROR" axe.log
           ! grep -q "^ERROR" axe.log
 
+      - name: Gameplay test (second wave of items)
+        run: |
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/ItemTest.tscn --fixed-fps 60 2>&1 | tee item.log
+          grep -q "ITEM RESULT: PASS" item.log
+          ! grep -q "SCRIPT ERROR" item.log
+          ! grep -q "^ERROR" item.log
+
       - name: Save test (builds survive a restart)
         run: |
           timeout 900 ${GODOT_BIN} --headless --path . res://tests/SaveTest.tscn --fixed-fps 60 2>&1 | tee save.log

@@ -34,13 +34,16 @@ var _core_mi: MeshInstance3D
 var _col: CollisionShape3D
 var is_section := false     # a piece of trunk inside a Log: closed at both ends, no crown, no collision of its own
 var felled := false         # sawn down: just a stump now
+var giant := false          # an ancient tree deep in the woods: too thick for most saws
+const GIANT_R := 0.6
 
 
-func setup(rng: RandomNumberGenerator, p_kind: String) -> void:
+func setup(rng: RandomNumberGenerator, p_kind: String, p_giant := false) -> void:
 	kind = p_kind
 	_seed = rng.randi()
-	radius = rng.randf_range(0.3, 0.46)
-	bands = rng.randi_range(26, 40)
+	giant = p_giant
+	radius = rng.randf_range(0.3, 0.46) if not giant else rng.randf_range(0.68, 0.82)
+	bands = rng.randi_range(26, 40) if not giant else rng.randi_range(46, 56)
 	trunk_h = bands * BAND_H
 	r_mid = radius - OUTER_T
 	r_core = r_mid - INNER_T
@@ -263,6 +266,9 @@ func _build_static() -> void:
 			for k in 3:
 				var off2 := Vector3(rng.randf_range(-1.3, 1.3), trunk_h + rng.randf_range(0.2, 1.6), rng.randf_range(-1.3, 1.3))
 				LowPoly.mesh_instance(_crown, LowPoly.blob(1.2, 0.25, rng.randi() % 50), Nature.wind_mat(Color("5aab44").lightened(snappedf(rng.randf() * 0.08, 0.02)), 0.09, 2.4, -1.2), off2)
+	if giant:
+		for c in _crown.get_children():
+			(c as Node3D).scale *= 1.7
 	var fol := Foliage.new()
 	_crown.add_child(fol)
 	fol.setup(_crown)
@@ -470,6 +476,123 @@ func strip_ring(world_point: Vector3) -> Dictionary:
 	if l == OUTER:
 		_rebuild(INNER)
 	return {"layer": l, "panels": panels}
+
+
+## Strips the given panels, each from whichever layer is outermost there. Returns [{layer, panels}] per layer.
+func strip_panels(list: Array) -> Array:
+	var got: Array = [[], []]
+	for p in list:
+		var c := Vector2i(posmod((p as Vector2i).x, SECTORS), (p as Vector2i).y)
+		if c.y < 0 or c.y >= bands:
+			continue
+		var l := OUTER if has_panel(OUTER, c.x, c.y) else (INNER if has_panel(INNER, c.x, c.y) else -1)
+		if l < 0 or (got[l] as Array).has(c):
+			continue
+		(got[l] as Array).append(c)
+	var out: Array = []
+	for l in [OUTER, INNER]:
+		var panels: Array[Vector2i] = []
+		panels.assign(got[l])
+		if panels.is_empty():
+			continue
+		for c in panels:
+			layers[l][_idx(c.x, c.y)] = 0
+		_stripped = true
+		out.append({"layer": l, "panels": panels})
+	if not out.is_empty():
+		_rebuild(OUTER)
+		_rebuild(INNER)
+	return out
+
+
+## Pressure washer: the `most` nearest panels inside the circle that still have bark, each losing its outermost layer.
+## Unlike an axe it doesn't care whether the exact spot is already bare - it eats away at the whole patch.
+func strip_soft(world_point: Vector3, circle_r: float, most: int) -> Array:
+	var c := panel_at(world_point)
+	if c.x < 0:
+		return []
+	var hit_local := to_local(world_point)
+	var reach_j := int(ceil(circle_r / BAND_H)) + 1
+	var reach_i := int(ceil(circle_r / (TAU * radius / SECTORS))) + 1
+	var cand: Array = []
+	for dj in range(-reach_j, reach_j + 1):
+		for di in range(-reach_i, reach_i + 1):
+			var i := posmod(c.x + di, SECTORS)
+			var j := c.y + dj
+			if j < 0 or j >= bands or not (has_panel(OUTER, i, j) or has_panel(INNER, i, j)):
+				continue
+			var d := _panel_center(OUTER, i, j).distance_to(hit_local)
+			if d <= circle_r:
+				cand.append([d, Vector2i(i, j)])
+	cand.sort_custom(func(a, b): return a[0] < b[0])
+	return strip_panels(cand.slice(0, most).map(func(e): return e[1]))
+
+
+## Electric planer: the whole length of one column of the outermost layer at the hit, as one long sheet.
+func strip_column(world_point: Vector3) -> Dictionary:
+	var c := panel_at(world_point)
+	if c.x < 0:
+		return {}
+	var l := OUTER if has_panel(OUTER, c.x, c.y) else (INNER if has_panel(INNER, c.x, c.y) else -1)
+	if l < 0:
+		# bare here: take the next column round that still has bark
+		for k in [1, -1, 2, -2]:
+			if has_panel(OUTER, c.x + k, c.y) or has_panel(INNER, c.x + k, c.y):
+				c.x = posmod(c.x + k, SECTORS)
+				l = OUTER if has_panel(OUTER, c.x, c.y) else INNER
+				break
+	if l < 0:
+		return {}
+	# the run of panels in this layer that touches the hit, top to bottom
+	var panels: Array[Vector2i] = []
+	var j0 := c.y
+	while j0 > 0 and _strippable(l, c.x, j0 - 1):
+		j0 -= 1
+	var j := j0
+	while j < bands and _strippable(l, c.x, j):
+		panels.append(Vector2i(c.x, j))
+		j += 1
+	if panels.is_empty():
+		return {}
+	for p in panels:
+		layers[l][_idx(p.x, p.y)] = 0
+	_stripped = true
+	_rebuild(l)
+	if l == OUTER:
+		_rebuild(INNER)
+	return {"layer": l, "panels": panels}
+
+
+## Thunder axe: every last panel of bark (both layers) comes off, as sheets of up to `block` x `block` panels.
+func strip_all(block: int = 4) -> Array:
+	var out: Array = []
+	for l in [OUTER, INNER]:
+		for j0 in range(0, bands, block):
+			for i0 in range(0, SECTORS, block):
+				var panels: Array[Vector2i] = []
+				for j in range(j0, mini(j0 + block, bands)):
+					for i in range(i0, i0 + block):
+						if has_panel(l, i, j):
+							panels.append(Vector2i(i, j))
+				if panels.is_empty():
+					continue
+				for p in panels:
+					layers[l][_idx(p.x, p.y)] = 0
+				out.append({"layer": l, "panels": panels})
+	if not out.is_empty():
+		_stripped = true
+		_rebuild(OUTER)
+		_rebuild(INNER)
+	return out
+
+
+## Pole saw: the crown comes off a standing tree. Every leaf clump rains down, with a sapling or two.
+func cut_crown(world: Node) -> bool:
+	if felled or not is_instance_valid(_crown) or not is_instance_valid(_fol):
+		return false
+	_fol.drop_all(world, kind)
+	_crown = null
+	return true
 
 
 func _strippable(l: int, i: int, j: int) -> bool:

@@ -10,6 +10,8 @@ var _rest := 0.0
 var _rooted := false
 var _grow := 0.0
 var _sprout: Node3D
+var boost := 0.0           # seconds of watered (double-speed) growth left
+const WATER_TIME := 60.0
 
 
 func setup(p_kind := "") -> void:
@@ -41,7 +43,19 @@ func _build_sprout() -> void:
 
 
 func hint_text() -> String:
-	return "[E] grab" if not _rooted else "%d%%" % int(_grow / GROW_TIME * 100.0)
+	return "[E] grab" if not _rooted else "%d%%%s" % [int(_grow / GROW_TIME * 100.0), "  ·  watered" if boost > 0.0 else ""]
+
+
+func is_rooted() -> bool:
+	return _rooted
+
+
+## Watering can: it grows twice as fast for the next minute. Returns false if it hasn't taken root yet.
+func water() -> bool:
+	if not _rooted:
+		return false
+	boost = WATER_TIME
+	return true
 
 
 func _physics_process(delta: float) -> void:
@@ -55,7 +69,8 @@ func _physics_process(delta: float) -> void:
 		else:
 			_rest = 0.0
 		return
-	_grow += delta
+	_grow += delta * (2.0 if boost > 0.0 else 1.0)
+	boost = maxf(0.0, boost - delta)
 	var k := clampf(_grow / GROW_TIME, 0.0, 1.0)
 	_sprout.scale = Vector3.ONE * lerpf(1.0, 6.0, k)
 	if k >= 1.0:

@@ -69,11 +69,11 @@ static func save(world: Node) -> Dictionary:
 	for l in world.get_tree().get_nodes_in_group("logs"):
 		var lg := l as Log
 		if _loose(lg, world):
-			out.logs.append({"xf": _xf(lg.global_transform), "src": lg.trunk.src_info(), "state": lg.trunk.layer_state(), "locked": lg.locked})
+			out.logs.append({"xf": _xf(lg.global_transform), "src": lg.trunk.src_info(), "state": lg.trunk.layer_state(), "locked": lg.locked, "clean": lg.has_meta("clean")})
 	for s in world.get_tree().get_nodes_in_group("saplings"):
 		var sp := s as Sapling
 		if _loose(sp, world) or (sp.get("_rooted") and is_instance_valid(sp)):
-			out.saplings.append({"xf": _xf(sp.global_transform), "kind": sp.kind, "rooted": sp.get("_rooted"), "grow": sp.get("_grow")})
+			out.saplings.append({"xf": _xf(sp.global_transform), "kind": sp.kind, "rooted": sp.get("_rooted"), "grow": sp.get("_grow"), "boost": snappedf(sp.boost, 0.1)})
 	for t in world.get_tree().get_nodes_in_group("tool_items"):
 		var ti := t as ToolItem
 		if _loose(ti, world):
@@ -174,6 +174,8 @@ static func load(world: Node, d: Dictionary) -> void:
 		lg.global_transform = xf2
 		if bool(e.get("locked", false)):
 			lg.set_locked(true)
+		if bool(e.get("clean", false)):
+			lg.set_meta("clean", true)
 	for e in d.get("saplings", []):
 		var sp := Sapling.new()
 		world.add_child(sp)
@@ -182,6 +184,7 @@ static func load(world: Node, d: Dictionary) -> void:
 		if bool(e.get("rooted", false)):
 			sp.call("_root")
 			sp.set("_grow", float(e.get("grow", 0.0)))
+			sp.boost = float(e.get("boost", 0.0))
 	for e in d.get("tools", []):
 		var ti := ToolItem.new()
 		world.add_child(ti)

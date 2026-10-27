@@ -41,6 +41,22 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Steel Pickaxe | $900 | hits twice as hard and gets through iron veins |
 | Rock Drill | $650 | hold it on a rock: chunks come off about twice as fast as a pickaxe (stone and copper) |
 | Steel Core Drill | $2600 | faster, hits twice as hard, and bores through iron |
+| Leaf Rake | $40 | every pull drags loose bark, leaves and bits in front of you a step closer |
+| Watering Can | $70 | a rooted sapling grows twice as fast for a minute |
+| Log Scale | $90 | point it at a log, a sheet or a full basket: weight and value |
+| Sledgehammer | $220 | slow; one blow bursts a small rock into all its chunks |
+| Pole Saw | $380 | 5.5 m reach; hold it in a standing tree's crown to cut the whole crown off |
+| Throwing Hatchet | $450 | click to throw: it spins out up to 12 m, bites off bark, sticks for a moment and flies back to your hand |
+| Wheelbarrow Blueprint | $600 | build a wheelbarrow (hammer, Storage): grab it and push a big load along the ground |
+| Ore Detector | $750 | beeps faster near ore, including copper and iron hidden inside plain-looking rocks |
+| Leaf Blower | $900 | hold to blow everything in front of you away |
+| Bark Spud | $1100 | slow push tool; its sheets sell for 50% more |
+| Dynamite (box of 5) | $1200 | stick a charge on a rock, wire it to a powered switch, and set it off |
+| Electric Planer | $1300 | logs lying down only: one full-length strip per pass, as one long sheet |
+| Spiral Axe | $1400 | each hit carries a slanted stripe on from the last, winding a spiral up the trunk |
+| Two-Man Crosscut | $1600 | slow saw that fells the giant trees deep in the woods; its logs are worth 20% more |
+| Pressure Washer | $2200 | hold to strip bark with a jet of water from up to 6 m away |
+| Thunder Axe | $18000 | hold to charge, let go on a trunk: lightning cracks off every last sheet of bark (6 s recharge) |
 | Wire Spool | $200 | click one machine, then another, to wire them together (again to unwire) |
 
 Logs keep their bark, so you can still strip them. The mill pays well for clean timber, but bark left on drags

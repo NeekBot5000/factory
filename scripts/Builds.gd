@@ -6,6 +6,7 @@ extends RefCounted
 
 const BUILDS := {
 	"basket": {"name": "Bark Basket", "needs": {"bark": 50}},
+	"wheelbarrow": {"name": "Wheelbarrow", "needs": {"bark": 24, "log": 1, "stone": 2}, "bp": "bp_wheelbarrow"},
 	"bench": {"name": "Log Bench", "needs": {"log": 1, "bark": 6}},
 	"campfire": {"name": "Campfire", "needs": {"bark": 6, "leaf": 10}},
 	"hammock": {"name": "Leaf Hammock", "needs": {"log": 2, "leaf": 30}},
@@ -27,10 +28,10 @@ const BUILDS := {
 	"pillar": {"name": "Stone Pillar", "needs": {"stone": 4}},
 	"truck_caller": {"name": "Truck Caller", "needs": {"stone": 3, "log": 1, "copper": 3, "iron": 2}, "bp": "bp_truck_caller"},
 }
-const ORDER := ["basket", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult",
+const ORDER := ["basket", "wheelbarrow", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult",
 	"crank", "lever", "button", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]
 const CATEGORIES := [
-	{"name": "Storage", "items": ["basket", "rack"]},
+	{"name": "Storage", "items": ["basket", "wheelbarrow", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock"]},
 	{"name": "Fire & Garden", "items": ["campfire", "compost"]},
 	{"name": "Workshop", "items": ["chute", "catapult"]},
@@ -49,7 +50,7 @@ const HOOP_DEFAULT := 3.05
 ## Bigger builds cost more: materials scale with the footprint (size squared), at least 1 of each.
 ## Machines (and the pillar they stand on) always build at 1x, on the grid.
 static func fixed(id: String) -> bool:
-	return Machines.is_machine(id) or id == "pillar"
+	return Machines.is_machine(id) or id == "pillar" or id == "wheelbarrow"
 
 
 ## Whether you have the plans for it (machines need a blueprint from the shop).
@@ -100,6 +101,7 @@ static func make(id: String, root: Node3D, height: float = HOOP_DEFAULT, size: f
 		height = height / size
 	match id:
 		"basket": _basket(parent, parts)
+		"wheelbarrow": _wheelbarrow(parent, parts)
 		"hoop": _hoop(parent, parts, height)
 		"bench": _bench(parent, parts)
 		"campfire": _campfire(parent, parts)
@@ -149,6 +151,40 @@ static func _basket(root: Node3D, parts: Array) -> void:
 		_part(parts, root, LowPoly.box(Vector3(0.04, 0.12, 0.03)), Vector3(s * (BASKET_W * 0.5 + 0.03), BASKET_H + 0.06, -0.08), "", trim)
 		_part(parts, root, LowPoly.box(Vector3(0.04, 0.12, 0.03)), Vector3(s * (BASKET_W * 0.5 + 0.03), BASKET_H + 0.06, 0.08), "", trim)
 		_part(parts, root, LowPoly.box(Vector3(0.04, 0.03, 0.19)), Vector3(s * (BASKET_W * 0.5 + 0.03), BASKET_H + 0.125, 0), "", trim)
+
+
+## Wheelbarrow: a bark tray on two log rails, a stone wheel at the front (-Z), legs and handles at the back.
+const BARROW_TRAY := Vector3(0.31, 0.3, 0.4)       # tray half width, wall height, half length
+const BARROW_Y := 0.34                             # tray floor height
+const BARROW_WHEEL := 0.17
+
+
+static func _wheelbarrow(root: Node3D, parts: Array) -> void:
+	var bark := LowPoly.mat(Color("8a5a36"), 0.95)
+	var log_mat := LowPoly.mat(Color("6b4a32"), 0.9)
+	var stone := LowPoly.mat(Color("8a8780"), 0.9)
+	var trim := LowPoly.mat(Color("c9875a"), 0.9)
+	var dark := LowPoly.mat(Color("2b2d33"), 0.7)
+	var hw := BARROW_TRAY.x
+	var hd := BARROW_TRAY.z
+	var y := BARROW_Y
+	for k in 4:
+		_part(parts, root, LowPoly.box(Vector3(hw * 2.0, 0.035, hd * 0.5 - 0.006)), Vector3(0, y + 0.018, -hd + hd * 0.25 + k * hd * 0.5), "bark", bark)
+	var sh := (BARROW_TRAY.y - 0.04) / 2.0
+	for k in 2:
+		var wy := y + 0.04 + sh * (k + 0.5)
+		for s in [-1.0, 1.0]:
+			_part(parts, root, LowPoly.box(Vector3(0.03, sh - 0.01, hd * 2.0)), Vector3(s * (hw + k * 0.02), wy, 0), "bark", bark, Vector3(0, 0, s * -8.0))
+			_part(parts, root, LowPoly.box(Vector3(hw * 2.0 + 0.04, sh - 0.01, 0.03)), Vector3(0, wy, s * (hd + k * 0.02)), "bark", bark)
+	# two log rails from the wheel to the handles
+	for s in [-1.0, 1.0]:
+		_part(parts, root, LowPoly.cyl(0.03, 0.03, 1.35, 6), Vector3(s * 0.2, y - 0.04, 0.12), "log" if s < 0 else "", log_mat, Vector3(90, 0, 0))
+		_part(parts, root, LowPoly.box(Vector3(0.05, y - 0.05, 0.05)), Vector3(s * 0.2, (y - 0.05) * 0.5, 0.3), "", log_mat)
+		_part(parts, root, LowPoly.cyl(0.036, 0.036, 0.16, 7), Vector3(s * 0.2, y - 0.04, 0.74), "", trim, Vector3(90, 0, 0))
+	# the stone wheel
+	_part(parts, root, LowPoly.cyl(BARROW_WHEEL, BARROW_WHEEL, 0.05, 12), Vector3(-0.03, BARROW_WHEEL, -0.55), "stone", stone, Vector3(0, 0, 90))
+	_part(parts, root, LowPoly.cyl(BARROW_WHEEL, BARROW_WHEEL, 0.05, 12), Vector3(0.03, BARROW_WHEEL, -0.55), "stone", stone, Vector3(0, 0, 90))
+	_part(parts, root, LowPoly.cyl(0.02, 0.02, 0.44, 6), Vector3(0, BARROW_WHEEL, -0.55), "", dark, Vector3(0, 0, 90))
 
 
 ## Hoop facing +Z. `h` = rim height above the ground.
@@ -343,6 +379,14 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			rb.angular_damp = 1.0
 			rb.continuous_cd = true
 			body = rb
+		"wheelbarrow":
+			var wb := RigidBody3D.new()
+			wb.collision_layer = 2
+			wb.collision_mask = 1 | 2
+			wb.mass = 6.0
+			wb.angular_damp = 1.5
+			wb.continuous_cd = true
+			body = wb
 		"ball":
 			var ball := Basketball.new()
 			world.add_child(ball)
@@ -383,6 +427,24 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 			body.add_to_group("grabbable")
 			body.add_to_group("baskets")
 			body.set_meta("size", size)
+		"wheelbarrow":
+			var t := BARROW_TRAY
+			_box_col(body, Vector3(t.x * 2.0 + 0.1, 0.08, t.z * 2.0 + 0.1), Vector3(0, BARROW_Y + 0.0, 0))
+			for s in [-1.0, 1.0]:
+				_box_col(body, Vector3(0.1, t.y, t.z * 2.0 + 0.12), Vector3(s * (t.x + 0.04), BARROW_Y + t.y * 0.5, 0))
+				_box_col(body, Vector3(t.x * 2.0 + 0.12, t.y, 0.1), Vector3(0, BARROW_Y + t.y * 0.5, s * (t.z + 0.04)))
+				_box_col(body, Vector3(0.06, BARROW_Y, 0.06), Vector3(s * 0.2, BARROW_Y * 0.5, 0.3))
+			var wcs := CollisionShape3D.new()
+			var wsh := SphereShape3D.new()
+			wsh.radius = BARROW_WHEEL
+			wcs.shape = wsh
+			wcs.position = Vector3(0, BARROW_WHEEL, -0.55)
+			body.add_child(wcs)
+			body.add_to_group("grabbable")
+			body.add_to_group("baskets")
+			body.set_meta("barrow", true)
+			body.set_meta("tray_y", BARROW_Y)
+			body.set_meta("tray", BARROW_TRAY)
 		"hoop":
 			var hh := height / size
 			var top := hh + 0.6

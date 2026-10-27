@@ -202,6 +202,32 @@ func _forest() -> void:
 			tree.rotation.y = rng.randf() * TAU
 			tree.setup(rng, kinds[rng.randi() % kinds.size()])
 			trees.append(tree)
+	# a handful of ancient giants deep in the woods (their own dice, so the rest of the forest stays put)
+	var gr := RandomNumberGenerator.new()
+	gr.seed = 9091
+	var giants := 0
+	var gtries := 0
+	while giants < 6 and gtries < 600:
+		gtries += 1
+		var ga := gr.randf() * TAU
+		var p2 := Vector2(cos(ga), sin(ga)) * gr.randf_range(50.0, 85.0)
+		if (p2.y > 1.0 and p2.y < 118.0 and absf(p2.x - Terrain.road_x(p2.y)) < 6.0) or _in_lot(p2) or p2.distance_to(QUARRY) < 14.0:
+			continue
+		var free := true
+		for q in points:
+			if q.distance_squared_to(p2) < 4.2 * 4.2:
+				free = false
+				break
+		if not free:
+			continue
+		points.append(p2)
+		giants += 1
+		var gt := ForestTree.new()
+		add_child(gt)
+		gt.position = Vector3(p2.x, terrain.height_at(p2.x, p2.y) - 0.08, p2.y)
+		gt.rotation.y = gr.randf() * TAU
+		gt.setup(gr, ["oak", "pine"][giants % 2], true)
+		trees.append(gt)
 
 
 ## A rocky outcrop out in the woods, thick with copper and iron.
@@ -229,8 +255,8 @@ func _quarry() -> void:
 		rock.set_meta("rock_id", 1000 + placed)
 		add_child(rock)
 		rock.position = Vector3(p.x, terrain.height_at(p.x, p.y) + s * 0.25, p.y)
-		rock.build(qr, s, "iron" if roll < 0.3 else ("copper" if roll < 0.7 else "stone"))
-		rock_specs[1000 + placed] = {"pos": rock.position, "s": s, "ore": rock.ore}
+		rock.build(qr, s, "iron" if roll < 0.3 else ("copper" if roll < 0.7 else "stone"), "copper" if roll > 0.85 else "")
+		rock_specs[1000 + placed] = {"pos": rock.position, "s": s, "ore": rock.ore, "hidden": rock.hidden}
 		placed += 1
 
 
@@ -259,7 +285,7 @@ func regrow_rock() -> bool:
 		rock.set_meta("rock_id", id)
 		add_child(rock)
 		rock.position = pos
-		rock.build(rr, float(sp.s), String(sp.ore))
+		rock.build(rr, float(sp.s), String(sp.ore), String(sp.get("hidden", "")))
 		return true
 	return false
 
@@ -318,8 +344,12 @@ func _decor() -> void:
 			add_child(rock)
 			rock.position = Vector3(p.x, y + s * 0.25, p.y)
 			# some wild rocks show a copper vein (decided by id, so the world layout stays the same)
-			rock.build(rng, s, "copper" if hash(i * 7919) % 100 < 18 else "stone")
-			rock_specs[i] = {"pos": rock.position, "s": s, "ore": rock.ore}
+			# ...and some plain ones hide copper (or, deep in the woods, iron) inside
+			var inside := ""
+			if hash(i * 31337) % 100 < 25:
+				inside = "iron" if r > 45.0 and hash(i * 17) % 3 == 0 else "copper"
+			rock.build(rng, s, "copper" if hash(i * 7919) % 100 < 18 else "stone", inside)
+			rock_specs[i] = {"pos": rock.position, "s": s, "ore": rock.ore, "hidden": rock.hidden}
 		else:
 			var bush := Bush.new()
 			bush.set_meta("bush_id", i)

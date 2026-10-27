@@ -22,6 +22,8 @@ var font_title: FontVariation
 var hide_start := false
 var save_icon: SaveIcon
 var _flash_a := 0.0
+var white: ColorRect          # lightning flash
+var _white_a := 0.0
 var _ring_px := 10.0
 
 
@@ -52,6 +54,11 @@ void fragment() {
 	sm.shader = sh
 	flash.material = sm
 	root.add_child(flash)
+	white = ColorRect.new()
+	white.set_anchors_preset(Control.PRESET_FULL_RECT)
+	white.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	white.color = Color(0.9, 0.95, 1.0, 0.0)
+	root.add_child(white)
 	crosshair = Control.new()
 	crosshair.set_anchors_preset(Control.PRESET_CENTER)
 	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -314,8 +321,15 @@ func _on_revive() -> void:
 	tw.tween_property(fade, "color:a", 0.0, 1.2)
 
 
+## A white flash over the whole screen (lightning).
+func lightning(a: float) -> void:
+	_white_a = maxf(_white_a, a)
+
+
 func _process(delta: float) -> void:
 	_flash_a = maxf(0.0, _flash_a - delta * 2.5)
+	_white_a = maxf(0.0, _white_a - delta * 3.0)
+	white.color.a = _white_a
 	fps_lbl.visible = bool(Game.settings.get("fps", false))
 	if fps_lbl.visible:
 		fps_lbl.text = "%d FPS" % Engine.get_frames_per_second()

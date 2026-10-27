@@ -8,15 +8,18 @@ var ore := "stone"
 var hp := 6
 var max_hp := 6
 var size := 0.6
+var hidden := ""          # some plain-looking stone has copper or iron inside (the ore detector finds it)
+var revealed := false
 var _mesh: Node3D
 static var _last_told := -100000
 
 
-func build(rng: RandomNumberGenerator, s: float, p_ore := "stone") -> void:
+func build(rng: RandomNumberGenerator, s: float, p_ore := "stone", p_hidden := "") -> void:
 	collision_layer = 1
 	collision_mask = 0
 	size = s
 	ore = p_ore
+	hidden = p_hidden if ore == "stone" else ""
 	max_hp = int(clampf(s * 10.0, 3.0, 12.0))
 	hp = max_hp
 	_color = Color("8a8780").lerp(Color("a39f95"), rng.randf())
@@ -42,7 +45,14 @@ func build(rng: RandomNumberGenerator, s: float, p_ore := "stone") -> void:
 	add_to_group("rocks")
 
 
+## The ore you'd get out of it: its vein, or what's hidden inside.
+func inner_ore() -> String:
+	return hidden if hidden != "" else ore
+
+
 func hint_text() -> String:
+	if revealed:
+		return "Stone with %s inside  ·  %s" % ["copper" if hidden == "copper" else "iron", "any pickaxe" if hidden == "copper" else "needs a steel pickaxe or core drill"]
 	match ore:
 		"copper": return "Copper vein  ·  any pickaxe"
 		"iron": return "Iron vein  ·  needs a steel pickaxe or core drill"
@@ -72,18 +82,53 @@ func on_hit(pos: Vector3, normal: Vector3, tool: String) -> void:
 			_last_told = Time.get_ticks_msec()
 			Game.toast.emit("Too hard - needs a steel pickaxe or core drill", Color("ffd27a"))
 		return
+	# a sledgehammer bursts a small rock in one blow
+	if float(d.get("smash", 0.0)) >= size:
+		shatter(tier)
+		return
 	hp -= power
 	# a chunk breaks off: mostly the vein's ore, sometimes plain stone
-	var got := ore if ore == "stone" or randf() < 0.7 else "stone"
-	_spawn_chunk(got, pos, normal)
+	_spawn_chunk(_chunk_kind(tier), pos, normal)
 	var k := clampf(float(hp) / float(max_hp), 0.0, 1.0)
 	_mesh.scale = Vector3.ONE * lerpf(0.45, 1.0, k)
 	if hp <= 0:
 		for i in 2:
-			_spawn_chunk(ore if i == 0 else "stone", global_position + Vector3(0, size * 0.3, 0), Vector3.UP)
+			_spawn_chunk(_chunk_kind(tier) if i == 0 else "stone", global_position + Vector3(0, size * 0.3, 0), Vector3.UP)
 		Nature.burst(parent, global_position, Vector3.UP, _color, 30, 3.0, 0.09, 9.0, 1.0, 120.0)
 		Sfx.play("crumble", 1.0, 2.0)
 		queue_free()
+
+
+func _chunk_kind(tier: int) -> String:
+	if hidden != "":
+		if hidden == "iron" and tier < 2:
+			return "stone"      # the iron inside is too hard for this tool
+		if randf() < 0.5:
+			if not revealed:
+				revealed = true
+				Game.toast.emit("There was %s hiding in that rock!" % ("copper" if hidden == "copper" else "iron"), Color("ffd27a"))
+			return hidden
+		return "stone"
+	return ore if ore == "stone" or randf() < 0.7 else "stone"
+
+
+## The whole rock bursts at once (sledgehammer, dynamite): every chunk left in it flies out.
+func shatter(tier: int = 2, from := Vector3.ZERO) -> void:
+	if is_queued_for_deletion():
+		return
+	var parent := get_parent()
+	var n := clampi(hp + 1, 2, 10)
+	for i in n:
+		var a := TAU * i / n + randf() * 0.5
+		var dir := Vector3(cos(a), randf_range(0.4, 1.0), sin(a)).normalized()
+		if from != Vector3.ZERO:
+			dir = (dir + (global_position - from).normalized() * 0.8).normalized()
+		_spawn_chunk(_chunk_kind(tier), global_position + dir * size * 0.5 + Vector3.UP * size * 0.2, dir)
+	Nature.burst(parent, global_position, Vector3.UP, _color, 40, 4.0, 0.09, 9.0, 1.1, 160.0)
+	Nature.burst(parent, global_position, Vector3.UP, Color("d8d2c4"), 30, 1.4, 0.12, -0.5, 1.6, 120.0)
+	Sfx.play_at("crumble", global_position, 0.9, 4.0)
+	hp = 0
+	queue_free()
 
 
 func _spawn_chunk(kind: String, pos: Vector3, normal: Vector3) -> void:

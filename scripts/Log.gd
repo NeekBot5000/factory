@@ -121,9 +121,11 @@ func cut_at(world_point: Vector3) -> Array[Log]:
 		out.append(lg)
 	if is_instance_valid(_crown):
 		out[1].attach_crown(_crown)      # the leafy top stays with the top piece
-	if locked:
-		for lg in out:
+	for lg in out:
+		if locked:
 			lg.set_locked(true)
+		if has_meta("clean"):
+			lg.set_meta("clean", true)
 	queue_free()
 	return out
 
@@ -148,9 +150,11 @@ func buck(section: int) -> Array[Log]:
 		j = j1
 	if is_instance_valid(_crown):
 		out[out.size() - 1].attach_crown(_crown)
-	if locked:
-		for lg in out:
+	for lg in out:
+		if locked:
 			lg.set_locked(true)
+		if has_meta("clean"):
+			lg.set_meta("clean", true)
 	queue_free()
 	return out
 
@@ -166,7 +170,7 @@ func value() -> float:
 		for b in trunk.layers[l]:
 			left += b
 	var bark := float(left) / float(maxi(total, 1))
-	return clean * (1.0 - 0.85 * bark)
+	return clean * (1.0 - 0.85 * bark) * (1.2 if has_meta("clean") else 1.0)
 
 
 ## What the HUD says when you look at it: what you can do with it, and what the mill would pay for it.

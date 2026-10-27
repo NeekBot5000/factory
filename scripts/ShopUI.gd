@@ -304,6 +304,8 @@ func _items_in(cid: String) -> Array:
 
 
 func _status_of(id: String) -> String:
+	if int(Tools.SHOP[id].get("consumable", 0)) > 0 and not Game.is_ordered(id):
+		return "buy"       # restock any time
 	if Game.is_owned(id):
 		return "owned"
 	if Game.is_ordered(id):
@@ -447,6 +449,8 @@ func _p_product() -> void:
 		v.add_child(_label("Strips a %d cm circle per hit, %.1f hits per second%s." % [int(float(td.radius) * 200.0), 1.0 / float(td.cooldown), " (hold to drill)" if td.get("hold", false) else ""], 14, INK))
 	v.add_child(_label("$%s" % _price(float(it.price)), 30, GREEN, font_title))
 	var st := _status_of(id)
+	if int(it.get("consumable", 0)) > 0 and Game.is_owned(id):
+		v.add_child(_label("You have %d left." % int(Game.charges.get(id, 0)), 16, GREEN, font_bold))
 	match st:
 		"owned":
 			v.add_child(_label("You own this.", 16, GREEN, font_bold))

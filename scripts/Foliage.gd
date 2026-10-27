@@ -88,6 +88,36 @@ func snip(shape_idx: int, at: Vector3, out_dir: Vector3, world: Node) -> bool:
 	return true
 
 
+## Pole saw: the whole crown comes down at once. Each clump falls as a few leaves, and there are saplings in it.
+func drop_all(world: Node, tree_kind: String) -> void:
+	for cs in _cs_list:
+		if not _blob_of.has(cs):
+			continue
+		var mi: MeshInstance3D = _blob_of[cs]
+		var col := blob_color(mi)
+		var at := mi.global_position
+		for k in clampi(int(_hp[mi]) / 2 + 1, 2, 6):
+			var lf := Leaf.new()
+			world.add_child(lf)
+			lf.setup(col, randf_range(0.12, 0.2))
+			lf.global_position = at + Vector3(randf_range(-0.8, 0.8), randf_range(-0.5, 0.5), randf_range(-0.8, 0.8))
+			lf.linear_velocity = Vector3(randf_range(-1, 1), randf_range(-0.5, 0.5), randf_range(-1, 1))
+			lf.angular_velocity = Vector3(randf_range(-3, 3), randf_range(-3, 3), randf_range(-3, 3))
+		Nature.burst(world, at, Vector3.UP, col, 24, 1.6, 0.1, 3.0, 1.6, 160.0)
+	_blob_of.clear()
+	_hp.clear()
+	for i in _left.size():
+		_left[i] = 0
+	for k in randi_range(1, 2):
+		var sp := Sapling.new()
+		world.add_child(sp)
+		sp.setup(tree_kind)
+		var a := randf() * TAU
+		sp.global_position = global_position + Vector3(cos(a) * 1.4, 2.5, sin(a) * 1.4)
+	Sfx.play("rustle", 0.7, 2.0)
+	get_parent().queue_free()
+
+
 func untouched() -> bool:
 	return _left == _full
 

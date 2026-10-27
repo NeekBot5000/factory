@@ -33,8 +33,27 @@ const TOOLS := {
 	"core_drill": {"name": "Steel Core Drill", "radius": 0.05, "cooldown": 0.25, "impact": 0.0, "hurt": 0.0, "anim": "drill", "reach": 2.5, "hold": true, "kind": "rockdrill", "mine": 2, "tier": 2},
 	"wires": {"name": "Wire Spool", "radius": 0.0, "cooldown": 0.3, "impact": 0.5, "hurt": 0.0, "anim": "snip", "reach": 4.0},
 	"hammer": {"name": "Builder's Hammer", "radius": 0.0, "cooldown": 0.45, "impact": 0.5, "hurt": 0.0, "anim": "hammer", "reach": 2.2},
+	# the second wave: reach, patterns, quality, hauling, finding, blasting
+	"throwing": {"name": "Throwing Hatchet", "radius": 0.2, "cooldown": 0.62, "impact": 0.42, "hurt": 0.0, "anim": "throw", "reach": 12.0},
+	"spiral": {"name": "Spiral Axe", "radius": 0.1, "cooldown": 0.45, "impact": 0.45, "hurt": 0.0, "anim": "chop", "reach": 2.4, "spiral": true},
+	"spud": {"name": "Bark Spud", "radius": 0.22, "cooldown": 1.05, "impact": 0.55, "hurt": 0.0, "anim": "thrust", "reach": 2.4, "value": 1.5},
+	"thunder": {"name": "Thunder Axe", "radius": 0.24, "cooldown": 0.6, "impact": 0.45, "hurt": 0.0, "anim": "chop", "reach": 2.5, "charge": 1.2, "rest": 6.0},
+	"pole_saw": {"name": "Pole Saw", "radius": 0.0, "cooldown": 0.3, "impact": 0.0, "hurt": 0.0, "anim": "polesaw", "reach": 5.5, "hold": true, "kind": "polesaw"},
+	"crosscut": {"name": "Two-Man Crosscut", "radius": 0.0, "cooldown": 0.3, "impact": 0.0, "hurt": 0.0, "anim": "saw", "reach": 2.5, "hold": true, "kind": "saw", "speed": 0.9, "big": true, "clean": 1.2},
+	"planer": {"name": "Electric Planer", "radius": 0.0, "cooldown": 0.45, "impact": 0.0, "hurt": 0.0, "anim": "planer", "reach": 2.3, "hold": true, "kind": "planer"},
+	"washer": {"name": "Pressure Washer", "radius": 0.2, "cooldown": 0.07, "impact": 0.0, "hurt": 0.0, "anim": "washer", "reach": 6.0, "hold": true, "kind": "washer"},
+	"rake": {"name": "Leaf Rake", "radius": 0.0, "cooldown": 0.62, "impact": 0.55, "hurt": 0.0, "anim": "rake", "reach": 3.4},
+	"blower": {"name": "Leaf Blower", "radius": 0.0, "cooldown": 0.1, "impact": 0.0, "hurt": 0.0, "anim": "vacuum", "reach": 8.0, "hold": true, "kind": "blower"},
+	"sledge": {"name": "Sledgehammer", "radius": 0.08, "cooldown": 1.25, "impact": 0.6, "hurt": 0.0, "anim": "slam", "reach": 2.5, "mine": 3, "tier": 1, "smash": 0.8, "move": 0.8},
+	"detector": {"name": "Ore Detector", "radius": 0.0, "cooldown": 0.4, "impact": 0.5, "hurt": 0.0, "anim": "detector", "reach": 2.0},
+	"dynamite": {"name": "Dynamite", "radius": 0.0, "cooldown": 0.5, "impact": 0.5, "hurt": 0.0, "anim": "plant", "reach": 2.8},
+	"can": {"name": "Watering Can", "radius": 0.0, "cooldown": 1.0, "impact": 0.35, "hurt": 0.0, "anim": "pour", "reach": 2.8},
+	"scale": {"name": "Log Scale", "radius": 0.0, "cooldown": 0.4, "impact": 0.5, "hurt": 0.0, "anim": "scale", "reach": 3.0},
 }
-const TOOL_ORDER := ["hands", "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "rock_drill", "core_drill", "wires", "hammer"]
+const TOOL_ORDER := ["hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys",
+	"greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "planer",
+	"washer", "rake", "vacuum", "twinvac", "cyclone", "blower", "pickaxe", "sledge", "steel_pick", "rock_drill", "core_drill", "detector",
+	"dynamite", "wires", "hammer", "can", "scale"]
 
 const CATEGORIES := [
 	{"id": "all", "name": "Everything"},
@@ -115,10 +134,46 @@ const SHOP := {
 		"desc": "Build things out of what you gather: pick a plan, set it down, then drop the materials into it."},
 	"vacuum": {"name": "Leaf Vacuum", "price": 1200.0, "cat": "specialty", "tag": "Bulky",
 		"desc": "Hold the trigger to suck up loose bark and boxes. They float in front of the nozzle until you let go."},
+	"throwing": {"name": "Throwing Hatchet", "price": 450.0, "cat": "axes", "tag": "Reach",
+		"desc": "A balanced little tomahawk. Click to throw it: it spins out to whatever you're aiming at, bites off a patch of bark (even at the top of a tall trunk) and flies back to your hand."},
+	"spiral": {"name": "Spiral Axe", "price": 1400.0, "cat": "axes", "tag": "Pattern",
+		"desc": "Every hit takes a slanted stripe that carries on from where the last one ended. Keep hitting the same trunk and the stripe winds round and up it in a spiral."},
+	"spud": {"name": "Bark Spud", "price": 1100.0, "cat": "axes", "tag": "Careful",
+		"desc": "The proper tool for peeling bark: a spoon-shaped blade you push under it. Slow, but the sheets come off clean and sell for 50% more."},
+	"thunder": {"name": "Thunder Axe", "price": 18000.0, "cat": "axes", "tag": "Legendary",
+		"desc": "Hold the button to charge it. Let go on a trunk and lightning cracks every last sheet of bark off the whole tree at once. Needs a few seconds to recharge."},
+	"pole_saw": {"name": "Pole Saw", "price": 380.0, "cat": "saws", "tag": "Long reach",
+		"desc": "A curved saw on a long pole. Hold it up in the leaves of a standing tree to cut the whole crown off: the leaves, and a sapling or two, come raining down."},
+	"crosscut": {"name": "Two-Man Crosscut", "price": 1600.0, "cat": "saws", "tag": "Huge",
+		"desc": "A giant old-fashioned blade, slow but steady: the only hand saw that gets through the ancient trees deep in the woods. Its clean cut makes logs worth 20% more."},
+	"planer": {"name": "Electric Planer", "price": 1300.0, "cat": "specialty", "tag": "Long strips",
+		"desc": "For logs lying down. Hold it on one and it planes a strip off the whole length of the log at once, in one long sheet."},
+	"washer": {"name": "Pressure Washer", "price": 2200.0, "cat": "specialty", "tag": "Satisfying",
+		"desc": "Hold the trigger to blast a jet of water from a good distance away. Bark flakes off wherever the spray lands."},
+	"rake": {"name": "Leaf Rake", "price": 40.0, "cat": "other", "tag": "Cheap",
+		"desc": "Every pull drags the bark, leaves and bits lying in front of you a step closer. Makes a pile in no time."},
+	"blower": {"name": "Leaf Blower", "price": 900.0, "cat": "specialty", "tag": "Pushy",
+		"desc": "Hold the trigger to blow everything in front of you away. Herd a whole pile across the clearing, onto a belt or into the truck."},
+	"sledge": {"name": "Sledgehammer", "price": 220.0, "cat": "mining", "tag": "Smashing",
+		"desc": "Slow and heavy. Small rocks burst into all their chunks in one blow; big ones lose a few at a time. Iron is still too hard for it."},
+	"detector": {"name": "Ore Detector", "price": 750.0, "cat": "mining", "tag": "Beeping",
+		"desc": "Beeps faster the closer you get to ore - including the copper and iron hiding inside ordinary-looking rocks."},
+	"dynamite": {"name": "Dynamite (box of 5)", "price": 1200.0, "cat": "mining", "tag": "Explosive", "consumable": 5,
+		"desc": "Stick a charge on a rock, run a wire from it to a switch with power (a button and a crank, say), and set it off from a safe distance. The rock bursts into every chunk."},
+	"can": {"name": "Watering Can", "price": 70.0, "cat": "other", "tag": "Green",
+		"desc": "Water a sapling that has taken root and it grows twice as fast for the next minute."},
+	"scale": {"name": "Log Scale", "price": 90.0, "cat": "other", "tag": "Handy",
+		"desc": "Point it at a log, a piece of bark or a full basket: the dial shows how heavy it is, and the hint tells you what the mill would pay for it."},
+	"bp_wheelbarrow": {"name": "Wheelbarrow Blueprint", "price": 600.0, "cat": "blueprints", "tag": "Hauling",
+		"desc": "Plans for a wheelbarrow: grab its handles and push it along the ground. It carries a big load of bark, ore or short logs."},
 	"phone": {"name": "TimberPhone", "price": 350.0, "cat": "other", "tag": "Pocket-size",
 		"desc": "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it."},
 }
-const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw", "drill", "twin_auger", "holesaw", "shears", "vacuum", "twinvac", "cyclone", "pickaxe", "steel_pick", "rock_drill", "core_drill", "wires", "hammer", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_truck_caller", "phone"]
+const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral",
+	"robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears",
+	"vacuum", "blower", "twinvac", "cyclone", "pickaxe", "sledge", "steel_pick", "rock_drill", "detector", "core_drill", "dynamite", "wires",
+	"hammer", "rake", "can", "scale", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_wheelbarrow",
+	"bp_truck_caller", "phone"]
 
 const WOOD := Color("a0703c")
 const STEEL := Color("c9ced6")
@@ -195,6 +250,21 @@ static func build_model(id: String, parent: Node3D) -> Node3D:
 		"rock_drill": _rock_drill(root, false)
 		"core_drill": _rock_drill(root, true)
 		"wires": _wires(root)
+		"throwing": _throwing(root)
+		"spiral": _spiral(root)
+		"spud": _spud(root)
+		"thunder": _thunder(root)
+		"pole_saw": _pole_saw(root)
+		"crosscut": _crosscut(root)
+		"planer": _planer(root)
+		"washer": _washer(root)
+		"rake": _rake(root)
+		"blower": _blower(root)
+		"sledge": _sledge(root)
+		"detector": _detector(root)
+		"dynamite": _dynamite(root)
+		"can": _can(root)
+		"scale": _scale(root)
 		_:
 			if id.begins_with("bp_"):
 				_blueprint(root, id)
@@ -627,3 +697,273 @@ static func _rock_drill(root: Node3D, hardened: bool) -> void:
 	LowPoly.mesh_instance(bit, LowPoly.cyl(0.0, 0.022, 0.05, 6), tip, Vector3(0, 0, -0.165), Vector3(-90, 0, 0))
 	if hardened:
 		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.074, 0.012, 0.12)), LowPoly.mat(Color("ff8a3d"), 0.4, 0.6), Vector3(0, 0.1, -0.06))
+
+
+## A straight rod (cylinder) from a to b.
+static func _rod(root: Node3D, a: Vector3, b: Vector3, r: float, m: Material, sides: int = 6) -> MeshInstance3D:
+	var d := b - a
+	var mi := LowPoly.mesh_instance(root, LowPoly.cyl(r, r, d.length(), sides), m, (a + b) * 0.5)
+	var n := d.normalized()
+	var ax := Vector3.UP.cross(n)
+	if ax.length() > 0.001:
+		mi.basis = Basis(ax.normalized(), Vector3.UP.angle_to(n))
+	elif n.y < 0.0:
+		mi.basis = Basis(Vector3.RIGHT, PI)
+	return mi
+
+
+## Throwing hatchet: a slim tomahawk, leather-wrapped grip, a long narrow bit and a short spike behind.
+static func _throwing(root: Node3D) -> void:
+	_handle(root, 0.4, 0.014, Color("6b4428"))
+	var leather := LowPoly.mat(Color("8a5a3a"), 0.9)
+	for k in 4:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.017, 0.017, 0.022, 7), leather, Vector3(0, 0.02 + k * 0.03, 0), Vector3(0, k * 20.0, 6.0 if k % 2 == 0 else -6.0))
+	var y := 0.34
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.02, 0.02, 0.05, 8), steel(DARK_STEEL), Vector3(0, y, 0))
+	var blade := PackedVector2Array([Vector2(y - 0.018, -0.02), Vector2(y + 0.018, -0.02), Vector2(y + 0.05, -0.13), Vector2(y + 0.035, -0.14), Vector2(y - 0.06, -0.135), Vector2(y - 0.055, -0.12)])
+	LowPoly.mesh_instance(root, prism(blade, 0.016, STEEL), steel(), Vector3.ZERO)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.006, 0.1, 0.006)), steel(Color("f2f5f8"), 0.1), Vector3(0, y - 0.005, -0.138), Vector3(-10, 0, 0))
+	var spike := PackedVector2Array([Vector2(y - 0.014, 0.02), Vector2(y + 0.014, 0.02), Vector2(y + 0.004, 0.08), Vector2(y - 0.004, 0.08)])
+	LowPoly.mesh_instance(root, prism(spike, 0.014, DARK_STEEL), steel(DARK_STEEL), Vector3.ZERO)
+	# a tuft of red cord under the head, so you can follow it in the air
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.012, 0.05, 0.012)), LowPoly.mat(Color("c0392b"), 0.8), Vector3(0.0, y - 0.05, 0.022), Vector3(15, 0, 0))
+
+
+## Spiral axe: teal handle with a twisted head; the edge has a groove that winds around it.
+static func _spiral(root: Node3D) -> void:
+	_handle(root, 0.5, 0.016, Color("2f6f6a"))
+	var y := 0.41
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.034, 0.06, 0.055)), steel(DARK_STEEL), Vector3(0, y, 0.0))
+	var blade := PackedVector2Array([Vector2(y - 0.03, -0.025), Vector2(y + 0.035, -0.025), Vector2(y + 0.08, -0.13), Vector2(y - 0.04, -0.13)])
+	LowPoly.mesh_instance(root, prism(blade, 0.02, Color("c7d2da")), steel(Color("c7d2da"), 0.2), Vector3.ZERO)
+	var gold := steel(Color("d4a52a"), 0.3)
+	for k in 5:
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.024, 0.008, 0.022)), gold, Vector3(0, y - 0.02 + k * 0.022, -0.04 - k * 0.018), Vector3(0, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.008, 0.125, 0.006)), steel(Color("f2f5f8"), 0.1), Vector3(0, y + 0.02, -0.131), Vector3(-24, 0, 0))
+	for k in 6:
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.035, 0.008, 0.035)), LowPoly.mat(Color("d9c08a"), 0.8), Vector3(0, 0.05 + k * 0.05, 0), Vector3(0, k * 30.0, 18))
+
+
+## Bark spud: a long ash handle pointing forward and a flat, rounded spoon of a blade at the tip.
+static func _spud(root: Node3D) -> void:
+	var wood := LowPoly.mat(Color("c69a62"), 0.75)
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.017, 0.019, 0.8, 7), wood, Vector3(0, 0, -0.25), Vector3(90, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.022, 0.022, 0.05, 7), steel(Color("d4a52a"), 0.3), Vector3(0, 0, -0.65), Vector3(90, 0, 0))
+	var blade := PackedVector2Array([Vector2(-0.035, -0.67), Vector2(0.035, -0.67), Vector2(0.06, -0.74), Vector2(0.05, -0.81), Vector2(0.0, -0.84), Vector2(-0.05, -0.81), Vector2(-0.06, -0.74)])
+	# the blade lies flat (in the XZ plane): build the prism on its side
+	var mi := LowPoly.mesh_instance(root, prism(blade, 0.008, STEEL), steel(), Vector3.ZERO)
+	mi.basis = Basis(Vector3.FORWARD, PI * 0.5)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.1, 0.004, 0.006)), steel(Color("f2f5f8"), 0.1), Vector3(0, 0, -0.838))
+
+
+## Thunder axe: a heavy dark head with glowing blue cracks ("Glow"), gold bands, a storm-grey handle.
+static func _thunder(root: Node3D) -> void:
+	_handle(root, 0.7, 0.02, Color("3a3f4a"), -0.1)
+	for k in 3:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.025, 0.025, 0.025, 8), steel(Color("d4a52a"), 0.3), Vector3(0, 0.0 + k * 0.2, 0))
+	var y := 0.55
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.05, 0.1, 0.07)), steel(Color("2b2f3a"), 0.3), Vector3(0, y, 0))
+	var blade := PackedVector2Array([Vector2(y - 0.045, -0.03), Vector2(y + 0.05, -0.03), Vector2(y + 0.13, -0.2), Vector2(y + 0.02, -0.22), Vector2(y - 0.1, -0.21), Vector2(y - 0.13, -0.12)])
+	LowPoly.mesh_instance(root, prism(blade, 0.024, Color("39404f")), steel(Color("39404f"), 0.3), Vector3.ZERO)
+	var back := PackedVector2Array([Vector2(y - 0.03, 0.03), Vector2(y + 0.03, 0.03), Vector2(y + 0.05, 0.1), Vector2(y - 0.05, 0.1)])
+	LowPoly.mesh_instance(root, prism(back, 0.022, Color("39404f")), steel(Color("39404f"), 0.3), Vector3.ZERO)
+	var glow := Node3D.new()
+	glow.name = "Glow"
+	root.add_child(glow)
+	var m := _glow(Color("7fd4ff"), 0.6)
+	for seg in [[Vector3(0, y + 0.03, -0.04), Vector3(0, y - 0.02, -0.11)], [Vector3(0, y - 0.02, -0.11), Vector3(0, y + 0.05, -0.17)], [Vector3(0, y + 0.05, -0.17), Vector3(0, y - 0.04, -0.21)], [Vector3(0, y - 0.02, -0.11), Vector3(0, y - 0.09, -0.15)]]:
+		var a: Vector3 = seg[0]
+		var b: Vector3 = seg[1]
+		for sx in [-0.013, 0.013]:
+			var mi := _rod(glow, a + Vector3(sx, 0, 0), b + Vector3(sx, 0, 0), 0.005, m, 4)
+			mi.material_override = m
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.01, 0.3, 0.008)), _glow(Color("bfe9ff"), 0.8), Vector3(0, y - 0.04, -0.212), Vector3(-6, 0, 0))
+
+
+## Pole saw: a long fibreglass pole running forward and up, a curved pruning blade and a hook at the end.
+static func _pole_saw(root: Node3D) -> void:
+	var yellow := LowPoly.mat(Color("e8b923"), 0.5)
+	var black := LowPoly.mat(Color("222428"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.09, 0.05)), black, Vector3(0, -0.01, 0.0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.017, 0.02, 1.6, 7), yellow, Vector3(0, 0, -0.78), Vector3(90, 0, 0))
+	for k in 3:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.022, 0.022, 0.03, 7), black, Vector3(0, 0, -0.3 - k * 0.5), Vector3(90, 0, 0))
+	var head := Node3D.new()
+	head.position = Vector3(0, 0, -1.58)
+	root.add_child(head)
+	# curved blade going on forward, teeth on the underside
+	var pts := PackedVector2Array()
+	for i in 9:
+		var t := i / 8.0
+		pts.append(Vector2(0.03 + sin(t * 1.2) * 0.06, -t * 0.42))
+	for i in range(8, -1, -1):
+		var t2 := i / 8.0
+		pts.append(Vector2(-0.01 + sin(t2 * 1.2) * 0.06 - (0.012 if i % 2 == 0 else 0.0), -t2 * 0.42))
+	LowPoly.mesh_instance(head, prism(pts, 0.005, STEEL), steel(Color("dfe3e8"), 0.25), Vector3.ZERO)
+	# a hook above it for pulling branches
+	var hook := PackedVector2Array([Vector2(0.02, 0.0), Vector2(0.12, -0.06), Vector2(0.14, -0.14), Vector2(0.11, -0.16), Vector2(0.1, -0.09), Vector2(0.02, -0.05)])
+	LowPoly.mesh_instance(head, prism(hook, 0.008, DARK_STEEL), steel(DARK_STEEL), Vector3.ZERO)
+	LowPoly.mesh_instance(head, LowPoly.cyl(0.026, 0.026, 0.06, 7), black, Vector3(0, 0, 0.02), Vector3(90, 0, 0))
+
+
+## Two-man crosscut: a huge bellied blade running forward with an upright wooden handle at each end.
+static func _crosscut(root: Node3D) -> void:
+	var wood := LowPoly.mat(Color("b98a52"), 0.8)
+	var len := 1.4
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.02, 0.02, 0.2, 7), wood, Vector3(0, 0.06, 0.0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.02, 0.02, 0.2, 7), wood, Vector3(0, 0.06, -len))
+	var pts := PackedVector2Array()
+	var n := 30
+	for i in n + 1:
+		var t := float(i) / n
+		var belly := sin(t * PI) * 0.06
+		pts.append(Vector2(-0.07 - belly - (0.018 if i % 2 == 0 else 0.0), -0.02 - t * (len - 0.04)))
+	pts.append(Vector2(0.0, -len + 0.02))
+	pts.append(Vector2(0.0, -0.02))
+	LowPoly.mesh_instance(root, prism(pts, 0.004, STEEL), steel(Color("cfd4da"), 0.3), Vector3(0, 0.02, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.012, 0.03, 0.05)), steel(DARK_STEEL), Vector3(0, 0.0, -0.02))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.012, 0.03, 0.05)), steel(DARK_STEEL), Vector3(0, 0.0, -len + 0.02))
+
+
+## Electric planer: a low blue body with a handle on top, a front knob, and a spinning cutter drum underneath ("Bit").
+static func _planer(root: Node3D) -> void:
+	var blue := LowPoly.mat(Color("2e6fb3"), 0.45)
+	var black := LowPoly.mat(Color("222428"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.1, 0.045)), black, Vector3(0, 0.0, 0), Vector3(-8, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.09, 0.08, 0.3)), blue, Vector3(0, 0.0, -0.17))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.1, 0.012, 0.3)), LowPoly.mat(Color("c9ced6"), 0.3), Vector3(0, -0.046, -0.17))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.025, 0.03, 0.05, 8), black, Vector3(0, 0.06, -0.29))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.092, 0.03, 0.1)), LowPoly.mat(Color("d4a52a"), 0.4), Vector3(0, 0.03, -0.06))
+	var bit := Node3D.new()
+	bit.name = "Bit"
+	bit.position = Vector3(0, -0.04, -0.2)
+	root.add_child(bit)
+	LowPoly.mesh_instance(bit, LowPoly.cyl(0.022, 0.022, 0.095, 8), steel(STEEL, 0.25), Vector3.ZERO, Vector3(0, 0, 90))
+	for k in 3:
+		LowPoly.mesh_instance(bit, LowPoly.box(Vector3(0.096, 0.006, 0.05)), steel(Color("f2f5f8"), 0.15), Vector3.ZERO, Vector3(k * 60.0, 0, 0))
+
+
+## Pressure washer gun: a pistol grip, a yellow body, a long steel wand forward and a black nozzle tip.
+static func _washer(root: Node3D) -> void:
+	var yellow := LowPoly.mat(Color("f2c12e"), 0.45)
+	var black := LowPoly.mat(Color("222428"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.11, 0.045)), black, Vector3(0, 0.0, 0), Vector3(-12, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.05, 0.06, 0.16)), yellow, Vector3(0, 0.07, -0.04))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.012, 0.035, 0.02)), black, Vector3(0, 0.025, -0.04))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.009, 0.009, 0.7, 6), steel(STEEL, 0.25), Vector3(0, 0.07, -0.47), Vector3(90, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.03, 0.04, 0.06)), black, Vector3(0, 0.05, -0.36))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.016, 0.012, 0.06, 6), black, Vector3(0, 0.07, -0.84), Vector3(90, 0, 0))
+	# the hose trailing back past your hand
+	_rod(root, Vector3(0, -0.04, 0.02), Vector3(0.02, -0.12, 0.2), 0.012, black)
+
+
+## Leaf rake: a long wooden handle reaching forward and down, a fan of springy steel tines at the end.
+static func _rake(root: Node3D) -> void:
+	var wood := LowPoly.mat(Color("c69a62"), 0.75)
+	var len := 1.0
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.016, 0.018, len + 0.2, 7), wood, Vector3(0, 0, -len * 0.5 + 0.1), Vector3(90, 0, 0))
+	var head := Vector3(0, 0, -len)
+	var red := LowPoly.mat(Color("c0392b"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.09, 0.05, 0.12)), red, head)
+	var tine := steel(Color("c9ced6"), 0.3)
+	for k in 11:
+		var a := lerpf(-0.75, 0.75, k / 10.0)
+		var dir := Vector3(sin(a), -0.18, -cos(a)).normalized()
+		var tip := head + dir * 0.34
+		_rod(root, head, tip, 0.009, tine, 4)
+		_rod(root, tip, tip + Vector3(0, -0.07, 0.02), 0.009, tine, 4)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.5, 0.02, 0.025)), red, head + Vector3(0, -0.04, -0.2))
+
+
+## Leaf blower: an orange motor housing with a fan ("Bit") and a straight, flared tube forward.
+static func _blower(root: Node3D) -> void:
+	var orange := LowPoly.mat(Color("e8642b"), 0.45)
+	var black := LowPoly.mat(Color("222428"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.11, 0.045)), black, Vector3(0, 0.0, 0), Vector3(-10, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.085, 0.085, 0.14, 12), orange, Vector3(0, 0.1, 0.04), Vector3(90, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.07, 0.07, 0.01, 12), black, Vector3(0, 0.1, 0.112), Vector3(90, 0, 0))
+	var fan := Node3D.new()
+	fan.name = "Bit"
+	fan.position = Vector3(0, 0.1, 0.118)
+	root.add_child(fan)
+	for k in 5:
+		LowPoly.mesh_instance(fan, LowPoly.box(Vector3(0.012, 0.06, 0.004)), LowPoly.mat(Color("c9ced6"), 0.4), Vector3(0, 0.03, 0).rotated(Vector3.BACK, TAU * k / 5.0), Vector3(0, 0, rad_to_deg(TAU * k / 5.0)))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.04, 0.045, 0.6, 10), orange.duplicate(), Vector3(0, 0.08, -0.32), Vector3(90, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.04, 0.04, 0.02, 10), black, Vector3(0, 0.08, -0.62), Vector3(90, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.012, 0.012, 0.13, 6), black, Vector3(0, 0.2, 0.0), Vector3(90, 0, 0))
+
+
+## Sledgehammer: a long handle and a big square steel head (both faces flat).
+static func _sledge(root: Node3D) -> void:
+	_handle(root, 0.78, 0.019, Color("c69a62"), -0.12)
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.022, 0.022, 0.12, 7), LowPoly.mat(Color("2b2d33"), 0.8), Vector3(0, -0.05, 0))
+	var y := 0.6
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.075, 0.075, 0.22)), steel(Color("5d646e"), 0.4), Vector3(0, y, 0))
+	for s in [-1.0, 1.0]:
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.082, 0.082, 0.02)), steel(Color("b9c0c9"), 0.25), Vector3(0, y, s * 0.115))
+
+
+## Ore detector: an arm cuff and grip on a shaft down to a flat search coil; a lamp ("Glow") blinks with each beep.
+static func _detector(root: Node3D) -> void:
+	var grey := LowPoly.mat(Color("4a505a"), 0.5)
+	var black := LowPoly.mat(Color("222428"), 0.6)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.036, 0.1, 0.04)), black, Vector3(0, 0.0, 0), Vector3(-10, 0, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.07, 0.05, 0.11)), LowPoly.mat(Color("2f7d4a"), 0.45), Vector3(0, 0.06, -0.06))
+	var lamp := LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.03, 0.012, 0.03)), _glow(Color("ff5a4a"), 0.0), Vector3(0, 0.09, -0.06))
+	lamp.name = "Glow"
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.06, 0.04, 0.012)), LowPoly.mat(Color("1c1f26"), 0.4), Vector3(0, 0.085, -0.02), Vector3(-30, 0, 0))
+	_rod(root, Vector3(0, 0.03, -0.1), Vector3(0, -0.25, -0.9), 0.012, grey)
+	var coil := Node3D.new()
+	coil.position = Vector3(0, -0.27, -0.95)
+	root.add_child(coil)
+	LowPoly.mesh_instance(coil, LowPoly.cyl(0.13, 0.13, 0.025, 14), black, Vector3.ZERO, Vector3(-18, 0, 0))
+	LowPoly.mesh_instance(coil, LowPoly.cyl(0.09, 0.09, 0.03, 14), LowPoly.mat(Color("2f7d4a"), 0.45), Vector3.ZERO, Vector3(-18, 0, 0))
+
+
+## Dynamite: three red sticks taped together with a fuse.
+static func _dynamite(root: Node3D) -> void:
+	var red := LowPoly.mat(Color("c0392b"), 0.6)
+	for k in 3:
+		var off := Vector3((k - 1) * 0.032, 0.0 if k != 1 else 0.012, 0)
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.016, 0.016, 0.2, 8), red, Vector3(0, 0.08, -0.03) + off, Vector3(90, 0, 0))
+	var tape := LowPoly.mat(Color("2b2d33"), 0.8)
+	for z in [-0.08, 0.02]:
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.1, 0.035, 0.02)), tape, Vector3(0, 0.084, z))
+	_rod(root, Vector3(0, 0.1, -0.13), Vector3(0.01, 0.15, -0.17), 0.003, LowPoly.mat(Color("d9c08a"), 0.9), 4)
+
+
+## Watering can: a round green body, a long spout forward with a rose on the end, a handle over the top.
+static func _can(root: Node3D) -> void:
+	var green := LowPoly.mat(Color("3f8f4a"), 0.45)
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.075, 0.08, 0.15, 10), green, Vector3(0, 0.04, -0.12))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.076, 0.076, 0.01, 10), steel(Color("c9ced6"), 0.3), Vector3(0, 0.12, -0.12))
+	_rod(root, Vector3(0, 0.0, -0.18), Vector3(0, 0.12, -0.42), 0.012, green)
+	var rose := LowPoly.mesh_instance(root, LowPoly.cyl(0.03, 0.015, 0.03, 8), steel(Color("c9ced6"), 0.3), Vector3(0, 0.13, -0.44))
+	rose.basis = Basis(Vector3.RIGHT, deg_to_rad(-62))
+	# the handle arching over the top from the grip
+	var pts: Array[Vector3] = []
+	for i in 6:
+		var t := i / 5.0
+		pts.append(Vector3(0, 0.0 + sin(t * PI) * 0.1 + t * 0.08, 0.0 - t * 0.17))
+	for i in 5:
+		_rod(root, pts[i], pts[i + 1], 0.011, green)
+
+
+## Log scale: a brass spring scale with a hook below and a round dial; the "Needle" turns with the weight.
+static func _scale(root: Node3D) -> void:
+	var brass := steel(Color("d4a52a"), 0.3)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.04, 0.1, 0.04)), LowPoly.mat(Color("2b2d33"), 0.7), Vector3(0, 0.0, 0))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.05, 0.2, 0.03)), brass, Vector3(0, 0.14, -0.03))
+	var face := LowPoly.mesh_instance(root, LowPoly.cyl(0.055, 0.055, 0.012, 14), LowPoly.mat(Color("f2ede0"), 0.6), Vector3(0, 0.17, -0.012), Vector3(90, 0, 0))
+	face.name = "Face"
+	for k in 9:
+		var a := lerpf(-2.2, 2.2, k / 8.0)
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.004, 0.012, 0.004)), LowPoly.mat(Color("2b2d33"), 0.7), Vector3(sin(a) * 0.045, 0.17 + cos(a) * 0.045, -0.005), Vector3(0, 0, -rad_to_deg(a)))
+	var needle := Node3D.new()
+	needle.name = "Needle"
+	needle.position = Vector3(0, 0.17, -0.003)
+	root.add_child(needle)
+	LowPoly.mesh_instance(needle, LowPoly.box(Vector3(0.005, 0.042, 0.003)), LowPoly.mat(Color("c0392b"), 0.5), Vector3(0, 0.019, 0))
+	LowPoly.mesh_instance(root, LowPoly.cyl(0.006, 0.006, 0.006, 6), brass, Vector3(0, 0.17, 0.0), Vector3(90, 0, 0))
+	_rod(root, Vector3(0, 0.04, -0.03), Vector3(0, -0.02, -0.06), 0.006, brass, 4)
+	_rod(root, Vector3(0, -0.02, -0.06), Vector3(0, -0.03, -0.1), 0.006, brass, 4)

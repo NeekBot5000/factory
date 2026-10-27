@@ -59,6 +59,14 @@ func _ready() -> void:
 	_recipe("timber", 0.9, func(t): return (_soft(0.5) * exp(-t * 6.0) * 0.7 + sin(TAU * (120.0 - t * 60.0) * t) * exp(-t * 3.0) * 0.4) * minf(1.0, t * 40.0))
 	_recipe("click", 0.04, func(t): return sin(TAU * 900.0 * t) * exp(-t * 80.0) * 0.3)
 	_recipe("boot", 0.5, func(t): return sin(TAU * (300.0 + t * 600.0) * t) * exp(-t * 4.0) * 0.25)
+	# the second wave of tools
+	_recipe("beep", 0.07, func(t): return sin(TAU * 1500.0 * t) * minf(1.0, t * 400.0) * minf(1.0, (0.07 - t) * 200.0) * 0.28)
+	_recipe("boom", 1.6, func(t): return (_soft(0.25) * 0.9 + sin(TAU * (55.0 - t * 20.0) * t) * 0.6) * exp(-t * 2.6) * minf(1.0, t * 300.0) + _soft(0.8) * exp(-t * 18.0) * 0.5)
+	_recipe("thunder", 2.0, func(t): return _soft(0.9) * exp(-t * 14.0) * 0.8 + (_soft(0.12) * 1.1 + sin(TAU * (48.0 - t * 10.0) * t) * 0.3) * exp(-t * 1.6) * (0.7 + 0.3 * sin(t * 23.0)) * minf(1.0, t * 30.0))
+	_recipe("crackle", 0.2, func(t): return _soft(0.95) * (1.0 if fmod(t * 37.0, 1.0) < 0.3 else 0.15) * sin(PI * t / 0.2) * 0.25)
+	_recipe("pour", 0.9, func(t): return (_soft(0.5) * 0.35 + sin(TAU * (380.0 + sin(t * 70.0) * 90.0) * t) * 0.05) * minf(1.0, t * 12.0) * minf(1.0, (0.9 - t) * 6.0))
+	_recipe("rake", 0.3, func(t): return _soft(0.55) * (0.5 + 0.5 * sin(t * 160.0)) * sin(PI * t / 0.3) * 0.4)
+	_recipe("catch", 0.12, func(t): return sin(TAU * 180.0 * t) * exp(-t * 45.0) * 0.45 + _soft(0.4) * exp(-t * 60.0) * 0.3)
 	for k in 3:
 		var base := 2200.0 + k * 500.0
 		_recipe("bird%d" % k, 0.35, func(t): return sin(TAU * (base + sin(t * 60.0) * 300.0) * t) * sin(PI * clampf(t / 0.35, 0.0, 1.0)) * 0.08 * (1.0 if fmod(t, 0.12) < 0.08 else 0.0))
@@ -187,6 +195,14 @@ func play_at(name: String, pos: Vector3, pitch: float = 1.0, volume_db: float = 
 
 var _chainsaw: AudioStreamWAV
 var _vacuum: AudioStreamWAV
+var _washer: AudioStreamWAV
+
+
+## The pressure washer: a hard hiss of spray over a pump's buzz (loops).
+func washer_stream() -> AudioStreamWAV:
+	if _washer == null:
+		_washer = _loop(1.0, func(t): return _soft(0.9) * 0.4 + _soft(0.6) * 0.15 + signf(sin(TAU * 50.0 * t)) * sin(TAU * 100.0 * t) * 0.06)
+	return _washer
 
 
 func _loop(dur: float, f: Callable) -> AudioStreamWAV:
@@ -226,6 +242,7 @@ func play(name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:
 	var st := stream(name)
 	if st == null:
 		return
+	played[name] = int(played.get(name, 0)) + 1
 	var p := _players[_next]
 	_next = (_next + 1) % _players.size()
 	p.stream = st

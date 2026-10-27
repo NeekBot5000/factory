@@ -16,6 +16,7 @@ var orders: Array = []          # {id, item, status: "processing"|"shipping"|"de
 var next_order := 1
 var total_earned := 0.0
 var save_enabled := true
+var charges := {}               # consumables left: dynamite sticks
 var dropped := {}               # tools lying on the ground (owned, but not in your hands); not saved
 var world_builds: Array = []    # things built with the hammer (and plans in progress), as saved data
 var world_saver := Callable()   # set by the scene: returns the current world_builds
@@ -68,7 +69,8 @@ func is_ordered(id: String) -> bool:
 
 func buy(id: String) -> bool:
 	var it: Dictionary = Tools.SHOP[id]
-	if is_owned(id) or is_ordered(id):
+	var restock := int(it.get("consumable", 0)) > 0      # boxes of dynamite: buy as many as you like
+	if (is_owned(id) and not restock) or is_ordered(id):
 		return false
 	if not can_afford(float(it.price)):
 		toast.emit("Not enough money", Color("ff7a7a"))
@@ -88,6 +90,9 @@ func receive(id: String) -> void:
 		has_phone = true
 	else:
 		owned[id] = true
+	var n := int(Tools.SHOP.get(id, {}).get("consumable", 0))
+	if n > 0:
+		charges[id] = int(charges.get(id, 0)) + n
 	for o in orders:
 		if o.item == id and o.status != "delivered":
 			o.status = "delivered"
@@ -111,7 +116,7 @@ func save_game() -> void:
 	if world_state_saver.is_valid():
 		world_state = world_state_saver.call()
 	# orders still in transit are refunded into "processing" so they get re-delivered next session
-	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings}))
+	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings, "charges": charges}))
 	saved.emit()
 
 
@@ -137,6 +142,10 @@ func load_game() -> void:
 	world_builds = d.get("builds", [])
 	world_state = d.get("world", {})
 	quality = int(d.get("quality", 0))
+	charges = {}
+	var ch: Dictionary = d.get("charges", {})
+	for k in ch:
+		charges[k] = int(ch[k])
 	var st: Dictionary = d.get("settings", {})
 	for k in settings:
 		if st.has(k):
@@ -157,6 +166,7 @@ func reset() -> void:
 	world_state = {}
 	money = 0.0
 	owned = {"hands": true}
+	charges = {}
 	has_phone = false
 	orders = []
 	total_earned = 0.0
