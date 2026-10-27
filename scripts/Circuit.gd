@@ -79,6 +79,9 @@ func _belt_neighbours(machines: Array) -> Dictionary:
 			if a.global_position.distance_to(c.global_position) < 3.2 and a.touches(c):
 				_belt_links[a].append(c)
 				_belt_links[c].append(a)
+	for b in belts:
+		var fed: Array = (b as Conveyor).fed_sides(_belt_links[b])
+		(b as Conveyor).set_sides_open(fed[0], fed[1])
 	return _belt_links
 
 

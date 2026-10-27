@@ -13,6 +13,7 @@ const DARK := Color("2b2d33")
 const RED := Color("d64034")
 
 const BELT_Y := 0.5         # top of a conveyor belt
+const BELT_W := 1.0         # a belt fills its whole grid square, border to border
 const RAMP_LEN := 2.0       # horizontal length of a ramp conveyor
 const RAMP_RISE := 1.0
 const RAMP_Z := -0.5        # a ramp covers its own grid cell and the one in front, so it lines up with belts
@@ -129,17 +130,19 @@ static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Mat
 	var n := int(round(run * 3.0))
 	for k in n:
 		var p := c + dir * (-run * 0.5 + run * (k + 0.5) / n)
-		_p(parts, root, LowPoly.box(Vector3(0.62, 0.07, run / n - 0.01)), p, "bark", bark, rot)
+		_p(parts, root, LowPoly.box(Vector3(BELT_W - 0.08, 0.07, run / n - 0.01)), p, "bark", bark, rot)
+	# low borders along both edges, so the belt fills its whole grid square and neighbours butt up against it
 	for sx in [-1.0, 1.0]:
-		_p(parts, root, LowPoly.box(Vector3(0.05, 0.14, run)), c + Vector3(sx * 0.35, 0, 0) + nrm * 0.06, "bark", bark, rot)
+		var border := _p(parts, root, LowPoly.box(Vector3(0.04, 0.1, run)), c + Vector3(sx * (BELT_W * 0.5 - 0.02), 0, 0) + nrm * 0.05, "bark", bark, rot)
+		border.name = "BorderL" if sx < 0 else "BorderR"
 	# legs at each end, longer at the high end
 	for e in [-1.0, 1.0]:
 		var at: Vector3 = c + dir * run * 0.5 * e
 		var h: float = at.y - 0.04
-		_p(parts, root, LowPoly.box(Vector3(0.66, 0.1, 0.12)), Vector3(0, 0.05, at.z), "stone", stone)
-		for sx in [-0.3, 0.3]:
+		_p(parts, root, LowPoly.box(Vector3(BELT_W - 0.04, 0.1, 0.12)), Vector3(0, 0.05, at.z), "stone", stone)
+		for sx in [-0.42, 0.42]:
 			_p(parts, root, LowPoly.box(Vector3(0.06, h, 0.06)), Vector3(sx, h * 0.5, at.z), "", iron)
-		_p(parts, root, LowPoly.cyl(0.05, 0.05, 0.64, 8), at + Vector3(0, -0.01, 0), "", iron, Vector3(0, 0, 90))
+		_p(parts, root, LowPoly.cyl(0.05, 0.05, BELT_W - 0.1, 8), at + Vector3(0, -0.01, 0), "", iron, Vector3(0, 0, 90))
 	# painted arrows on the belt bed show which way it runs (they glow on the hologram while you place it)
 	var paint := LowPoly.mat(Color("f2c12e"), 0.6)
 	var chevron := Tools.prism(PackedVector2Array([Vector2(0.0, -0.11), Vector2(0.19, 0.05), Vector2(0.12, 0.09), Vector2(0.0, -0.02), Vector2(-0.12, 0.09), Vector2(-0.19, 0.05)]), 0.006, Color("f2c12e"))
@@ -151,7 +154,7 @@ static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Mat
 	# belt cleats: these slide along while the belt runs
 	var slats := _node(root, "Slats")
 	for k in int(ceil(run * 4.0)):
-		var mi := LowPoly.mesh_instance(slats, LowPoly.box(Vector3(0.6, 0.012, 0.03)), dark, c + dir * (-run * 0.5 + (k + 0.5) / 4.0) + nrm * 0.04, rot)
+		var mi := LowPoly.mesh_instance(slats, LowPoly.box(Vector3(BELT_W - 0.1, 0.012, 0.03)), dark, c + dir * (-run * 0.5 + (k + 0.5) / 4.0) + nrm * 0.04, rot)
 		parts.append({"mi": mi, "res": "", "real": dark})
 	slats.set_meta("run", run)
 	slats.set_meta("dir", dir)
@@ -210,12 +213,14 @@ static func finish(id: String, body: Machine) -> void:
 			var run := Vector3(0, rise, -len).length()
 			var c := Vector3(0, BELT_Y - 0.04 + rise * 0.5, RAMP_Z if id == "ramp" else 0.0)
 			var b := Basis(Vector3.RIGHT, tilt)
-			Builds._rot_col(body, Vector3(0.64, 0.08, run), c, b)
+			Builds._rot_col(body, Vector3(BELT_W - 0.06, 0.08, run), c, b)
+			# the borders look low, but their colliders stand a little taller so things don't tip off the edge
 			for sx in [-1.0, 1.0]:
-				Builds._rot_col(body, Vector3(0.05, 0.3, run), c + Vector3(sx * 0.35, 0.08, 0), b)
+				var bcs := Builds._rot_col(body, Vector3(0.04, 0.24, run), c + Vector3(sx * (BELT_W * 0.5 - 0.02), 0.08, 0), b)
+				bcs.name = "BorderColL" if sx < 0 else "BorderColR"
 			for e in [-1.0, 1.0]:
 				var at: Vector3 = c + Vector3(0, rise, -len).normalized() * run * 0.5 * e
-				Builds._box_col(body, Vector3(0.66, maxf(0.1, at.y - 0.08), 0.12), Vector3(0, maxf(0.1, at.y - 0.08) * 0.5, at.z))
+				Builds._box_col(body, Vector3(BELT_W - 0.04, maxf(0.1, at.y - 0.08), 0.12), Vector3(0, maxf(0.1, at.y - 0.08) * 0.5, at.z))
 			var pm := PhysicsMaterial.new()
 			pm.friction = 1.0
 			body.physics_material_override = pm

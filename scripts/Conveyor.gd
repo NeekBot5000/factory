@@ -26,7 +26,7 @@ func setup_belt(slats: Node3D, dir: Vector3, center: Vector3, run: float, tilt: 
 	for c in slats.get_children():
 		_slat_list.append(c)
 	_area_xf = Transform3D(Basis(Vector3.RIGHT, tilt), center + Basis(Vector3.RIGHT, tilt) * Vector3(0, 0.25, 0))
-	_area_size = Vector3(0.66, 0.45, run)
+	_area_size = Vector3(Machines.BELT_W - 0.06, 0.45, run)
 
 
 ## The two ends of the belt (world space): where things come on, and where they go off.
@@ -51,6 +51,29 @@ static func _seg_dist(p: Vector3, s0: Vector3, s1: Vector3) -> float:
 	var d := s1 - s0
 	var t := clampf((p - s0).dot(d) / maxf(d.length_squared(), 0.0001), 0.0, 1.0)
 	return p.distance_to(s0 + d * t)
+
+
+## A border opens up where another belt runs into this one's side (a turn), so things can come across onto it.
+func set_sides_open(left: bool, right: bool) -> void:
+	for side in [["L", left], ["R", right]]:
+		var mi := get_node_or_null("Model/Border%s" % side[0]) as Node3D
+		if mi != null:
+			mi.visible = not side[1]
+		var cs := get_node_or_null("BorderCol%s" % side[0]) as CollisionShape3D
+		if cs != null:
+			cs.disabled = side[1]
+
+
+## Which of this belt's sides another belt's end feeds into: [left, right].
+func fed_sides(others: Array) -> Array:
+	var out := [false, false]
+	for o in others:
+		for e in (o as Conveyor).ends():
+			var lp := to_local(e) - _center
+			var along := lp.dot(_dir)
+			if absf(lp.x) > 0.3 and absf(lp.x) < 0.75 and absf(along) < _run * 0.5 - 0.15:
+				out[0 if lp.x < 0.0 else 1] = true
+	return out
 
 
 func activate(p_size: float) -> void:

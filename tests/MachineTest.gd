@@ -286,6 +286,30 @@ func run() -> void:
 	check(on_it.global_position.distance_to(p0) > 0.2, "powered, it turns them round (%.2f m)" % on_it.global_position.distance_to(p0))
 	check(Rotator.holding(on_it) == rot, "the hammer finds the rotator from the thing stuck on it")
 
+	# a rotator can go on the side of something, its table facing out, spinning like a wheel
+	var wall := place("pillar", Vector3(14, 0, -6))
+	place("pillar", Vector3(14, 1, -6))
+	await frames(2)
+	await face(BASE + Vector3(14, 1.1, -5.5), 2.5, true)
+	bld.start("rotator")
+	bld.update(0.016)
+	var hx: Transform3D = bld.get("_holo").global_transform
+	check(hx.basis.y.dot(Vector3.BACK) > 0.99 and bool(bld.get("_valid")), "aiming at a pillar's side, the rotator goes on sideways, facing out")
+	check(absf(hx.origin.z - (BASE.z - 5.5)) < 0.05 and absf(hx.origin.x - (BASE.x + 14)) < 0.05, "flat against the face, lined up with it")
+	bld.cancel()
+	var side := Builds.finish("rotator", main, hx, Builds.HOOP_DEFAULT, [], 1.0) as Rotator
+	var c3 := place("crank", Vector3(16, 0, -4)) as Crank
+	Circuit.toggle_wire(main, c3, side)
+	var spoke := spawn_ore(hx * Vector3(0.35, 0.45, 0.0))
+	await frames(2)
+	side.on_hammer()
+	check(side.stuck.size() == 1, "the hammer sticks things to its face")
+	var sp0 := spoke.global_position
+	c3.charge = 30.0
+	await secs(2.0)
+	check(absf(spoke.global_position.y - sp0.y) > 0.15 and absf(spoke.global_position.z - sp0.z) < 0.05, "powered, it turns them round in an upright circle (%s)" % str(spoke.global_position - sp0))
+	c3.charge = 0.0
+
 	# --- truck caller
 	var truck: Truck = main.ship_truck
 	var sale := spawn_ore(truck.global_transform * Vector3(0, 1.6, 1.0), "iron")
@@ -384,6 +408,12 @@ func run() -> void:
 	var on := line.filter(func(b): return b.powered).size()
 	check(on == line.size(), "one wired belt powers every belt touching it, round the turn (%d of %d running)" % [on, line.size()])
 	check(not apart.powered, "a belt only standing next to the line stays off")
+	var corner: Node3D = line[3]
+	check(not corner.get_node("BorderColL").disabled != not corner.get_node("BorderColR").disabled and not (line[1] as Node).get_node("BorderColL").disabled, "the corner belt opens its border where the line runs in (and only there)")
+	var traveller := spawn_ore(BASE + Vector3(-16, 0.75, -12))
+	await secs(4.0)
+	check(traveller.global_position.x > BASE.x - 15.6 and absf(traveller.global_position.z - (BASE.z - 15)) < 0.5, "things ride round the turn onto the next belt (%s)" % str(traveller.global_position - BASE))
+	traveller.queue_free()
 	c2.charge = 0.0
 	await secs(0.3)
 	check(line.filter(func(b): return b.powered).is_empty(), "and they all stop together")

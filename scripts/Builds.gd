@@ -615,13 +615,14 @@ static func load_world(world: Node, data: Array) -> void:
 		(st[0] as Machine).load_state(st[1])
 
 
-static func _rot_col(body: Node3D, size: Vector3, pos: Vector3, basis: Basis) -> void:
+static func _rot_col(body: Node3D, size: Vector3, pos: Vector3, basis: Basis) -> CollisionShape3D:
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
 	sh.size = size * _S
 	cs.shape = sh
 	cs.transform = Transform3D(basis, pos * _S)
 	body.add_child(cs)
+	return cs
 
 
 static func _box_col(body: Node3D, size: Vector3, pos: Vector3) -> void:

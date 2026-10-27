@@ -150,6 +150,11 @@ func update(_delta: float) -> void:
 				break
 			q.exclude = q.exclude + [hit.rid]
 			hit = player.get_world_3d().direct_space_state.intersect_ray(q)
+		# a rotator can also go on the side of something (a pillar, a machine, a rock...), its table facing out
+		if build_id == "rotator" and not hit.is_empty() and absf((hit.normal as Vector3).y) < 0.3 \
+				and not (hit.collider is RigidBody3D) and not (hit.collider is Truck):
+			_place_on_side(hit)
+			return
 		var pos := from + fwd * 4.0
 		_valid = false
 		if not hit.is_empty():
@@ -170,6 +175,32 @@ func update(_delta: float) -> void:
 		# front of the build faces you, plus however much you've turned it
 		_holo.global_transform = Transform3D(Basis.looking_at(flat, Vector3.UP).rotated(Vector3.UP, turn), pos)
 		_paint(_valid)
+
+
+## Side-mounted rotator: flat against the face you're aiming at, lined up with the grid along it, and high
+## enough off the ground for the table to turn.
+func _place_on_side(hit: Dictionary) -> void:
+	var n: Vector3 = hit.normal
+	n.y = 0.0
+	var a := snappedf(atan2(n.x, n.z), PI * 0.5)
+	n = Vector3(sin(a), 0, cos(a))
+	var p: Vector3 = hit.position
+	var along_axis := Vector3(n.z, 0, -n.x)
+	var along := p.dot(along_axis)
+	p += along_axis * (snappedf(along, 1.0) - along)
+	p.y = maxf(snappedf(p.y, 0.25), main.terrain.height_at(p.x, p.z) + 0.65)
+	var basis := Basis(Vector3.UP.cross(n).normalized(), PI * 0.5)     # its up (the spin axis) points out of the face
+	# room in front of the face for the base and the table
+	var q := PhysicsShapeQueryParameters3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(0.8, 0.36, 0.8)
+	q.shape = sh
+	q.transform = Transform3D(basis, p + n * 0.24)
+	q.collision_mask = 1 | Blueprint.LAYER
+	q.exclude = [player.get_rid()]
+	_valid = player.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+	_holo.global_transform = Transform3D(basis, p)
+	_paint(_valid)
 
 
 ## The grid cell under `p`: its centre, dropped onto whatever is below (ground, or the top of another machine).
