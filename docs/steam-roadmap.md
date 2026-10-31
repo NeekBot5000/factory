@@ -632,6 +632,102 @@ These are extra items/products/props that could slot into the categories above. 
 449. Tool tips (on the tools, not text): tiny stickers/labels on tool handles showing their tier colour. ★ S
 450. A "first tree" plaque on the stump of the first tree you ever felled. ★★ S
 
+### AB. Lessons borrowed from other hits
+
+**From The Planet Crafter** (one visible progress index that changes the world; tech unlocks at milestones; "the first
+time the sky turns purple" moments). [Wikipedia](https://en.wikipedia.org/wiki/The_Planet_Crafter),
+[TheSixthAxis review](https://www.thesixthaxis.com/2026/08/03/the-planet-crafter-review/)
+
+451. **A "Timber Co. growth" index** that rises with everything you sell and plant, shown physically (a big painted sign at the cabin gate that gets bigger, a flag pole with more flags), not as a UI number. ★★★ M
+452. **Milestones change the world you see**: the dirt road gets gravel, then a paved section; the town gets a new building; your cabin chimney gets a second stack; street lamps appear along the road. ★★★ M
+453. **Milestone mail**: a letter arrives in the cabin mailbox at each milestone with a blueprint or a rare seed inside (physical mail, no pop-up). ★★ S
+454. **Shop stock unlocks with growth**, so new tools appear in the catalogue over time instead of all at once (keeps discovery going without a checklist). ★★ S
+455. **A "first time" moment per milestone**: the first time the mill whistle sounds, the first night the factory lights come on. ★★★ S
+
+**From Supermarket Simulator** (licenses unlock product lines, staff arrive one role at a time, the store expands,
+10+ big updates during Early Access, multiplayer added later). [press release](https://gamespress.westeu-v2.propressroom.com/Supermarket-Simulator-Exits-Early-Access-and-Launches-V10-on-PC),
+[employee guide](https://commonsensegamer.com/supermarket-simulator-employee-guide-how-to-hire-workers-hcfe/)
+
+456. **Harvest permits** for new areas and species (buy the cedar permit, the giant grove permit): a clear "next thing to save for". ★★★ S
+457. **Product licences** for new goods (furniture licence, paper licence) that let you sell new products to new customers. ★★ S
+458. **Staff one role at a time**: first a hauler who carries bark to the truck, then a feller, then a machine operator. ★★ L
+459. **Yard expansion**: buy the next strip of land to grow the sawmill yard. ★★ S
+460. **Ship a big update every month or so in Early Access** and say so on the store page. ★★★ —
+461. **Plan for co-op even if it ships later**: Supermarket Simulator announced multiplayer with 1.0; architecting saves and physics for it early saves rewrites. ★★ (design)
+
+**From Schedule I** (watching numbers rise; employees take over the routine work while you do the fun part; players
+complained that automation felt incomplete: no logistics roles, no upgrades, workers getting stuck, micromanagement
+burnout). [FullCleared first impressions](https://fullcleared.com/features/schedule-i-first-impressions/),
+[Steam discussion](https://steamcommunity.com/app/3164500/discussions/0/599651305036763457)
+
+462. **Hand off the boring part, keep the fun part**: helpers or machines take over hauling and sorting; the player keeps peeling, felling and building. ★★★ (design)
+463. **Logistics roles from day one of staff**: a "mover" who carries things between your sites (Schedule I players asked for exactly this). ★★ M
+464. **Upgrades for workers and workstations** (faster hauler, sharper saw blade), so automation also has a progression. ★★ M
+465. **Stuck-worker safety**: workers who get stuck teleport back to their station after a few seconds. ★★ S
+466. **Low-micromanagement automation**: assign a worker to a zone once and they keep going; no daily re-assigning. ★★ (design)
+467. **Numbers that rise visibly**: a mill counter that ticks up with every plank produced (a physical flip-counter on the mill wall). ★★ S
+468. **Co-op role split** like cook/dealer: one friend runs the forest, another runs the mill, and they meet at the truck. ★★★ (design)
+
+**From House Flipper 2** (sandbox mode *is* the developers' own level editor; land sculpting; players can turn their
+creations into jobs for others and share them through mod.io; but reviewers found it overwhelming for non-builders).
+[Shacknews review](https://www.shacknews.com/article/138062/house-flipper-2-review-score),
+[TechRaptor](https://techraptor.net/gaming/news/house-flipper-2-sandbox-mode-trailer)
+
+469. **Ship the tools you build the world with** as the sandbox editor (place trees, rocks, terrain paint). ★★★ L
+470. **Terrain sculpting** in sandbox (raise/lower ground, dig a pond). ★★ L
+471. **Turn a sandbox map into a "job"** for others: "strip every tree on my island", shared on the Workshop. ★★★ L
+472. **Prefab packs for non-builders**: ready-made cabins, sheds and factory layouts you can drop in and tweak. ★★ M
+473. **Workshop or mod.io sharing** of maps, jobs and builds (pick one; Workshop is simplest on Steam). ★★★ L
+
+**From Hydroneer and Chop Chop Inc.** (physical items are the inventory; machines are physical objects you feed by hand;
+odd materials need better tools).
+
+474. **Tool tiers by material**, Chop Chop-style but grounded: frozen bark needs a sledge first, petrified wood needs a pickaxe, crystal bark needs the thunder axe. ★★ S
+475. **Everything stays physical**, including currency at the end: the truck brings back a cash box you open at the cabin (a satisfying "payday" ritual). ★★ S
+476. **A physical shopping cart at the hardware store** in town, for players who drive there instead of using the phone. ★ M
+
+**From PowerWash Simulator** (special themed jobs; free crossover first, paid ones later; relaxing music optional).
+
+477. **Special themed jobs**: strip a famous giant tree for a festival, clean up after a storm, debark a historic log cabin wall. ★★ M
+478. **Free crossover content** with another cozy indie (see 433). ★★ M
+479. **"Zen mode"**: no money, no contracts, just trees and music. ★★ S
+
+**From Lumber Tycoon 2**
+
+480. **Hard-to-reach secret wood** that needs a vehicle, a bridge or a puzzle to get to (its legendary "end-game wood" hunts). ★★★ M
+481. **Wood that only exists at night or in one season** (see 54, 58). ★★ S
+482. **A big land plot purchase as a milestone** (the moment your base moves from a clearing to "your land"). ★★ S
+483. **Physical planks you carry to customers by hand early on** before you can afford trucks (a humble start). ★ S
+
+**From R.E.P.O. and Lethal Company**
+
+484. **Group "quota" nights** in co-op: a big contract the whole crew races to fill before the truck leaves at dawn (optional mode, cozy-tense, no monsters). ★★★ M
+485. **Proximity voice that muffles inside the cabin and echoes in caves**. ★★ M
+486. **Silly physics props on purpose** (a piano-sized log that's a nightmare to carry through the door). ★★ S
+
+**From Valheim** (simple, readable structural support; better materials let you build higher).
+
+487. **Support colour overlay while placing builds** (blue strong → red weak). ★★ M
+488. **Stone and iron beams** unlock taller builds (towers, multi-storey mills). ★★ M
+
+**From Satisfactory**
+
+489. **Experimental branch** for big updates (see 309). ★★ S
+490. **"Somersloop"-style rare finds**: a rare artefact that doubles one machine's output when you insert it (fits "machines need items inserted by hand"). ★★★ S
+491. **A long-term space-elevator-style goal** made of your products, delivered in phases, that unlocks the next tier (see 170, 421). ★★★ M
+
+**Small extras**
+
+492. **A guestbook in the cabin** co-op friends sign (draw a doodle) when they visit. ★★ S
+493. **A photo wall** where your photo-mode shots appear as framed pictures. ★★ M
+494. **Postcards** from customers with pictures of what they built with your wood. ★★ S
+495. **A truck horn tune picker** (choose the jingle your truck plays). ★ S
+496. **A seasonal tree-of-the-year** in town that you're asked to supply. ★★ S
+497. **Retro "radio ad" for your company** after a reputation milestone (voice line). ★ S
+498. **A secret golden chainsaw** found in an old wreck. ★★ S
+499. **Credits roll after felling the legendary tree** (see 403), then the game continues. ★★ S
+500. **A thank-you sign with community names** in town for Early Access supporters (from the Discord, opt-in). ★★ S
+
 ---
 
 ## Part 3: Who Timber competes with, and how it wins
