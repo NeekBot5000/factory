@@ -69,6 +69,21 @@ inserted by hand, rotation only with R. Where an idea brushes against one of the
 12. **Godot can do Steam co-op.** GodotSteam plus add-ons like LinkUx (Steam lobbies, relay, room codes, Godot 4.4+)
     make 2-4 player co-op realistic for this engine. [Godot asset library: LinkUx](https://godotengine.org/asset-library/asset/5085)
 
+13. **Job sims die from thin content.** A typical complaint: "about 10 hrs of fun... you upgrade your station a bit and
+    that's it", and most job sims just turn into an endless mode once the goals run out. Timber needs long-term goals
+    and an automation layer so it doesn't stall at hour ten.
+    [Steam discussion](https://steamcommunity.com/app/1149620/discussions/0/3270183784611878537),
+    [r/gamedev thread](https://redlib.hackliberty.org/r/gamedev/comments/1leavrr/how_should_job_simulators_end)
+14. **Short satisfying loops are the best social content.** Guides recommend short, minimally edited clips of a
+    satisfying mechanic, ideally looping seamlessly (TikTok counts replays). One developer's TikTok views tracked their
+    daily wishlists (120M views, 60k wishlists). A publisher estimates influencers' vertical videos bring ~35% of
+    wishlists. [presskit.gg TikTok guide](https://presskit.gg/field-guides/tiktok-indie-game-marketing),
+    [GameDiscoverCo](https://newsletter.gamediscover.co/p/this-game-used-tiktok-to-get-120m),
+    [wnhub on Polden Publishing](https://wnhub.io/news/stores-and-publishing/item-51014)
+15. **Accessibility basics show up in reviews**: subtitles, key remapping and legible text are what players actually
+    mention; don't rely on colour alone. [DiGRA study](https://dl.digra.org/index.php/dl/article/view/2833),
+    [Game Accessibility Guidelines](https://gameaccessibilityguidelines.com/basic/)
+
 **The pitch this all points to:** *"PowerWash Simulator meets Lumber Tycoon, in co-op."* Peel, fell, saw, haul and
 automate a forest business with up to 4 friends, where every piece of bark is a real physics object.
 
@@ -309,7 +324,7 @@ Numbered straight through so you can refer to items by number ("do 14, 52 and 23
 201. **Hand-held tool sway and inertia** when turning quickly. ★★ S
 202. **Unique sound per tool** (layered: impact + material + tail). ★★★ M
 203. **Material-aware impacts**: wet bark, dry bark, frozen bark, rotten wood all sound different. ★★ M
-204. **Ambient soundscape by biome** (keep the bird chirps; add creek, wind in pines, swamp frogs... no: frogs are animals, so instead water drips, reeds rustling). ★★ M
+204. **Ambient soundscape by biome** (keep the bird chirps; add a creek, wind in the pines, dripping water and rustling reeds in the swamp). ★★ M
 205. **Music**: a soft acoustic guitar/folk soundtrack that fades in on sunrise, after a big tree falls, and while relaxing at the cabin. A strong soundtrack lifts reviews. ★★★ M (commission it)
 206. **Radio in the cabin/truck** with a few stations (folk, lo-fi, country), music as a physical object you switch on. ★★★ M
 207. **Satisfying UI sounds** for money, unlocks, deliveries (already partly). ★ S
@@ -433,7 +448,7 @@ You said players should learn it themselves. These teach through the world, not 
 296. **Press kit** page (logo, screenshots, GIFs, fact sheet). ★★ S
 297. **Discord server** for players and testers; run playtests there. ★★★ S
 298. **Steam Playtest** (free sign-up beta) before the demo to collect feedback and wishlists. ★★ S
-299. **Reddit posts** in r/incremental_games? no: r/factorygames, r/CozyGamers, r/IndieGaming, r/godot (devlog). ★★ S
+299. **Reddit posts** in r/factorygames, r/CozyGamers, r/IndieGaming and r/godot (devlog). ★★ S
 300. **Festival submissions**: Steam's themed fests (Automation Fest, Simulation Fest, Cozy Fest), PC Gaming Show, Wholesome Direct. ★★★ S
 301. **Localise the store page** first (Simplified Chinese, German, French, Spanish, Portuguese-BR, Russian, Japanese, Korean). ★★★ S
 302. **Name check**: "Timber" alone is hard to search on Steam and Google; consider a more searchable title or subtitle ("Timber: Lumber Co.", "Bark & Barrow", "Peel Mill"). ★★ S (decision)
@@ -464,7 +479,7 @@ These are extra items/products/props that could slot into the categories above. 
 319. Shingles from cedar. ★ S
 320. Wooden toys made on a lathe (new machine: lathe). ★★ M
 321. Lathe: spin a log, carve bowls and spindles by hand. ★★★ M
-322. Chainsaw carving: carve a bear-free... a totem/statue from a stump by "painting" the shape with the saw. ★★★ L
+322. Chainsaw carving: carve a totem or statue from a stump by "painting" the shape with the saw. ★★★ L
 323. Wood slices/cookies (round cross-sections) sold as decor. ★★ S
 324. Live-edge tables (premium furniture from big slabs). ★★ M
 325. Bark mulch bags. ★ S
@@ -475,7 +490,7 @@ These are extra items/products/props that could slot into the categories above. 
 330. Cork stoppers and boards from cork oak. ★ S
 331. Maple syrup jars (see 106). ★★ S
 332. Amber with a leaf inside (rare). ★★ S
-333. Bird... no: **wind chimes** made of wood and copper. ★ S
+333. **Wind chimes** made of wood and copper. ★ S
 334. Wooden signs carved with a router (symbols only). ★ S
 335. Boat building: canoe from a single log. ★★ L
 336. Log cabin kits sold to a customer (a big order). ★★ M
@@ -491,7 +506,7 @@ These are extra items/products/props that could slot into the categories above. 
 346. Basketball (exists!) plus more physics toys: football, frisbee, see-saw. ★★ S
 347. Tire swing. ★ S
 348. Golf with a stick and a pine cone. ★ M
-349. Fishing... no (animals). Instead: **gold panning** in the creek. ★★ M
+349. **Gold panning** in the creek (instead of fishing, which would mean animals). ★★ M
 350. Geodes you crack open with the sledgehammer. ★★ S
 351. Fossils in the quarry (no living animals; museum wall item). ★ S
 352. Old locked chests needing a crowbar. ★★ S
@@ -523,3 +538,213 @@ These are extra items/products/props that could slot into the categories above. 
 378. Mutations: one sapling in 50 grows into a rare variant. ★★★ S
 379. Seed pods you collect from crowns with the pole saw. ★★ S
 380. Exotic seeds bought from the shop (imported species). ★★ S
+381. **Rainbow eucalyptus with living colour**: freshly peeled bark on real rainbow eucalyptus starts bright green and shifts through blue, purple, orange and red as it ages. In game, a peeled patch slowly changes colour over in-game days, so an old stripped tree becomes a rainbow, and the bark sheets age too (older = rarer colours = worth more). A unique, very screenshot-able mechanic. [Science Friday](https://www.sciencefriday.com/articles/rainbow-in-a-tree/), [Explorersweb](https://explorersweb.com/rainbow-eucalyptus/) ★★★ M
+382. **Bark ageing in general**: loose bark sheets darken and dry over time (dry bark weighs less, sells for a bit more), which rewards storage sheds. ★ M
+383. **Halloween update timed for Steam Scream Fest** (late October every year; 2026's ran 26 Oct-2 Nov). Spooky trees, carved pumpkins, fog nights. ★★ M
+384. **Winter update timed for the Winter Sale** (mid-December). ★★ M
+385. **Physics toy shelf in the shop**: cheap silly things (bouncy ball, wobbly sculpture, a bell) bought just for fun and clips. ★★ S
+386. **"Lumberjack's notebook" photos**: snap a picture of each species with the camera tool to fill the notebook (a physical collection book). ★★ M
+387. **Golden hatchet for 100% completion** (all species, all rare finds). ★★ S
+388. **Wood-grain reveal on fully stripped logs** (shader pattern per species, rings at the ends). ★★★ M
+389. **Log end rings show age** (count the rings; old giants have hundreds, worth more). ★★ S
+390. **Hollow logs** that sometimes contain an old item (a lost tool, a coin pouch). ★★ S
+
+### V. People and the town (humans only, no animals)
+
+391. **A small town down the road** you drive to: mill, hardware store, furniture shop, diner. Gives the world life and a place to sell. ★★★ L
+392. **Shopkeepers with portraits on the phone** (Thom-style characters): the hardware guy, the mill boss, the collector. ★★ M
+393. **The town grows as you supply it**: new buildings appear made from the wood you sold (Chop Chop Inc. does city upgrades; make it physical: you see your planks become a new bridge). ★★★ L
+394. **Requests from townsfolk** via notes pinned to a board at the diner (physical paper, no quest log). ★★ M
+395. **Rival lumber company** whose trucks you see on the road; a friendly price competition. ★ M
+396. **Hire-able helpers** (see 159) who wear your company colours. ★★ L
+397. **Town festival** once a season (lumberjack games, see 345). ★★ M
+398. **Radio host** who mentions your company when you hit milestones (voice lines, optional). ★ M
+
+### W. Career and story (optional, light, no checklist)
+
+399. **A reason to be here**: you inherit grandpa's run-down lumber camp; the cabin starts dusty and broken. Fixing it up *is* the progression. ★★★ M
+400. **Grandpa's letters** found as you explore (physical letters, they hint at secrets and old groves). ★★ S
+401. **An old abandoned sawmill** you restore piece by piece (an early big goal). ★★★ M
+402. **Restore the old logging railway** as a mid-game goal. ★★ L
+403. **The legendary tree**: rumours of one enormous ancient tree deep in the misty valley; reaching and felling it is the "ending" (the game continues after). ★★★ M
+404. **No fail states, no timers** in career mode except optional contracts. ★★ (design)
+
+### X. More production chains (for automation players)
+
+405. **Log → planks → furniture** (chairs, tables, cabinets) with a carpentry bench. ★★★ L
+406. **Log → veneer** (peeled thin sheets on a rotary lathe) → plywood. ★★ M
+407. **Chips → pulp → paper → cardboard boxes**. ★★ L
+408. **Bark → tannin → leather-free dye** for paint. ★ M
+409. **Branches → firewood bundles → gas station customer**. ★★ S
+410. **Resin → varnish → finished furniture** (worth more). ★★ M
+411. **Sawdust → pellets → pellet stove fuel**. ★ M
+412. **Copper/iron ore → ingots → nails, saw blades, machine parts** (closing the loop: you make your own machines). ★★★ L
+413. **Stone → cut blocks → foundations and chimneys** for your buildings. ★★ M
+414. **Charcoal → smelter fuel**. ★★ S
+415. **Sap → syrup → candy** (maple taffy on snow in winter). ★★ S
+416. **Cork → bottle stoppers and pinboards**. ★ S
+417. **Moss → garden decor product**. ★ S
+418. **Pine cones → seeds → nursery saplings**. ★★ S
+419. **Crystal bark → glass ornaments** (endgame luxury). ★★ M
+420. **Recipe book** as a physical binder showing chains with pictures (no text walls). ★★ M
+
+### Y. Endgame and long-term goals
+
+421. **Mega-projects** the town commissions (a covered bridge, a timber stadium, a giant treehouse village) that eat thousands of planks. ★★★ L
+422. **Fully automated forest**: harvester robots that fell, debark and deliver on their own (the Satisfactory payoff). ★★★ L
+423. **Seed bank**: collect every species' seeds and grow a "world arboretum" park. ★★ M
+424. **Visitors** come to see your arboretum and pay entry (humans, low-poly tourists). ★★ L
+425. **Prestige / new region** with a harder climate (see 163). ★★ M
+426. **Rare variant hunting** (mutations, see 378) as the long tail. ★★ S
+427. **Hall of fame** in town for your biggest feats. ★ S
+
+### Z. Business: price, editions, DLC (decisions for later)
+
+428. **Price** around $15-20 for Early Access, rising slightly at 1.0. ★★ (decision)
+429. **Free demo** that stays up after launch (Simon Carless argues long demos can help discoverability). [wnhub](https://wnhub.io/news/stores-and-publishing/item-44846) ★★ —
+430. **Supporter pack**: soundtrack + golden axe skin + name in the credits. ★ S
+431. **Cosmetic DLC** (plaid shirt packs, truck paint jobs): cheap to make, optional. ★ S
+432. **Big paid expansions only after 1.0**: a new biome region (tropical, snow), each with species and machines. ★★ L
+433. **Free crossover packs** with other indie games (PowerWash Simulator's first DLC, Tomb Raider, was free; later licensed packs were $7.99). A crossover with another cozy indie gets both audiences talking. [VGC](https://www.videogameschronicle.com/news/powerwash-simulator-adds-paid-back-to-the-future-dlc/) ★★ M
+434. **Bundles** with similar games on Steam (Hydroneer-likes, cozy sims). ★ S
+435. **Console ports** after 1.0, maybe Game Pass (PowerWash, Planet Crafter, Hydroneer all grew there). ★★ L
+436. **Merch** later (plaid shirts, axe pins) if a community forms. ★ S
+
+### AA. Small polish ideas that reviewers love (quick wins)
+
+437. Tools make a satisfying sound when you pick them up from the tool wall. ★ S
+438. The truck honks twice when it's full. ★ S
+439. Money counter "ka-ching" pitch rises on big sales. ★ S
+440. Bark sheets make different sounds landing on wood, stone, grass, metal. ★★ S
+441. Your breath fogs in winter mornings. ★ S
+442. Raindrops on the camera are *off* by default (looks bad in FP), but rain on tools glistens. ★ S
+443. Sawdust sticks to your gloves for a while after sawing. ★ S
+444. Coffee steam rising from a mug on the cabin table. ★ S
+445. The cabin fireplace crackles and lights the room at night. ★★ S
+446. A porch rocking chair you can sit in to watch the sunset (sit = skip time). ★★ S
+447. Wind chimes on the porch that ring with the weather. ★ S
+448. A wall calendar in the cabin showing the day/season (diegetic, not UI). ★ S
+449. Tool tips (on the tools, not text): tiny stickers/labels on tool handles showing their tier colour. ★ S
+450. A "first tree" plaque on the stump of the first tree you ever felled. ★★ S
+
+---
+
+## Part 3: Who Timber competes with, and how it wins
+
+| Game | What it proves | Where Timber can beat it |
+|---|---|---|
+| **PowerWash Simulator** (12M+ players incl. Game Pass) | One relaxing, satisfying verb plus upgrades is enough | Timber adds felling, hauling, automation and a world to own |
+| **Lumber Tycoon 2** (Roblox) | The lumber-business fantasy has a huge, young audience | A real PC game: better physics, art, co-op, no Roblox limits |
+| **Lumberjack's Dynasty** (~71% positive) | There's demand for forestry on Steam | Polish, physics-first fun, co-op; it's held back by bugs and dated visuals |
+| **Hydroneer** (~500k sold, ~85% positive) | First-person physical-item automation sells, mostly via YouTube | Online co-op it never fully got (it settled for Remote Play split-screen), a forest instead of a mine |
+| **Satisfactory / shapez 2** (millions / 150k in 3 days) | Automation players buy and stay for years | Much lower barrier to entry, cozy, physical and tactile |
+| **Supermarket Simulator** (~2.15M copies) | "Job sim" + streamers + low barrier = hits | Deeper loop (automation) so players stay after the novelty |
+| **Schedule I / R.E.P.O. / Lethal Company** | Co-op, voice chat and physics chaos make viral clips | Timber can be the cozy, non-horror version of "chaos with friends" |
+| **The Planet Crafter** (2M+ sold) | Clear progression milestones and a long Early Access tail work | Same pacing lessons apply |
+| **Chop Chop Inc.** (Aug 2026, "Very Positive", single-player) | **The closest rival.** First-person crafting and automation of a comedic furniture business, with odd tree types (stone, metal, electric) needing better tools | Co-op (it has none), the physical peeling verb, a calmer, cozier forest instead of a joke city |
+| **Lumberhill** (2021, ~77% of ~150 reviews) | "Overcooked with lumberjacks" co-op party game; weak controls hurt it | Good controls and depth; party-chaos as a side effect, not the whole game |
+| **Timberline Factory / Woodcutter Simulator** | Realistic sawmill sims exist but are small | Timber is friendlier and more tactile |
+
+---
+
+**What to watch:** Chop Chop Inc. launched in August 2026 to good reviews and reportedly 150k+ wishlists before launch.
+It proves the space is hot. It also means Timber needs a clearly different pitch: *co-op forest work with real
+physics*, not *wacky furniture factory*. [gaming.net review](https://www.gaming.net/reviews/chop-chop-inc-review-pc/),
+[GameGrin](https://www.gamegrin.com/news/chop-chop-inc-announces-release-date-check-out-the-trailer/),
+[Game*Spark](https://www.gamespark.jp/article/2026/05/22/166756.html),
+[Co-Optimus on Lumberhill](https://www.co-optimus.com/amparticle/16750/delightful-co-op-lumberjack-game-lumberhill-comes-to-steam.html)
+
+---
+
+## Part 4: If you only do 30 things (recommended order)
+
+Ordered by impact for the effort, and by what has to come first. Numbers refer to the list above.
+
+**Phase 1: make it a real PC game (before any marketing push)**
+1. Native desktop build with the better renderer (276, 277)
+2. Main menu, save slots, Steam Cloud, key rebinding, controller support (211, 212, 227, 214, 215)
+3. Achievements and Rich Presence (243, 247)
+4. Signature art and audio pass: palette, god rays, wind, a real soundtrack (191, 192, 194, 205)
+5. Peel-strip mechanic with tearing sound and curling sheets (22, 23, 21)
+6. "TIMBER!" moment and directional felling (38, 37)
+7. 5-6 more striking species including rainbow eucalyptus and cedar (41, 45, 47, 381)
+8. Contracts on the phone, so sessions have a goal without a checklist (152)
+9. Sawmill + planks + debarker drum as the first proper production chain (95, 96, 97)
+10. Photo mode (209)
+
+**Phase 2: co-op (the multiplier)**
+11. Remote Play Together, as a quick win (2)
+12. Then real 2-4 player online co-op, designed so the player holding an item controls it and the host owns the rest of the physics (1, 282)
+13. Visible player bodies, emotes, ping, proximity voice (10, 9, 8, 7)
+14. Two-person jobs: carry long logs together, two-man saw (5, 4)
+
+**Phase 3: Steam page, demo, wishlists**
+15. Steam page live with a sharp hook, pro capsule art, 8-12 screenshots, GIFs (286-291)
+16. Daily short clips of satisfying moments (294)
+17. Discord + Steam Playtest (297, 298)
+18. Demo: 20-30 minutes of the best stuff, released well before Next Fest (236, 292)
+19. YouTuber outreach to Hydroneer / PowerWash / Lumber Tycoon creators (295)
+20. Store page localised into Simplified Chinese and 6-7 more languages (301)
+
+**Phase 4: depth for Early Access launch**
+21. Drivable truck and log trailer (181, 182)
+22. Land plots and a bigger map unlocked in steps, with biomes (140, 60, 59)
+23. Weather and day/night (62, 63)
+24. Building system for sheds and cabin upgrades, furniture from your own wood (131, 133, 134)
+25. Belts that split/sort, sorter with physical filter, a few logic parts (112, 113, 118)
+26. Sandbox mode (255)
+27. Museum wall and collection book (167, 168)
+28. Seasonal event #1 (177)
+
+**Phase 5: after launch**
+29. Workshop for builds and layouts (271)
+30. Regular themed updates, an experimental branch, and a 1.0 moment (308, 309, 315)
+
+---
+
+## Part 5: Risks and honest notes
+
+* **Online physics co-op is the hardest item on this list.** Hydroneer's developer said true server/client multiplayer
+  was too complicated with physics and shipped Steam Remote Play split-screen instead. Roadside Research made 4-player
+  physics co-op work by designing for it from the start, giving the player holding an item control of it. Timber has a
+  *lot* of loose physics objects (up to 600 bark pieces), so plan for: host-owned physics, the holder controls held
+  items, and far-away loose pieces sleeping or merging. Do Remote Play first; it costs almost nothing.
+  [TechRaptor](https://techraptor.net/gaming/news/hydroneer-20-multiplayer-update-is-out-now),
+  [gamedev.net](https://gamedev.net/news/3414-chaos-in-sync-how-roadside-research-became-a-physics-driven-co-op-hit-with/)
+* **The web build vs a Steam game.** Players on Steam expect native performance, settings, controller support and saves.
+  The browser version is a great free teaser but shouldn't be the product.
+* **The name.** "Timber" is a common word; it will be hard to find on Steam search and social media. Worth deciding
+  early (302).
+* **Scope.** This list is far more than one person can do. The 30 above are already a year-plus of work for a solo
+  developer. Cut freely.
+* **Numbers in this doc** come from press coverage, developer statements and marketing blogs; third-party sales
+  estimates vary wildly. Wishlist thresholds (2k/3k/7k) are rules of thumb from marketers, not Valve rules.
+* **Things I couldn't reach**: this session can search the web but not open most pages (howtomarketagame.com,
+  gamedeveloper.com, the Steam store, vaporlens were all blocked), so most facts come from search-result summaries
+  of those pages and are quoted second-hand. Allow those domains in the environment's network settings if you want a
+  deeper pass.
+* **GodotSteam** (4.19.x for Godot 4.4+) covers achievements, stats, lobbies and networking; I couldn't confirm its
+  cloud-save and rich-presence API from here (Steam Auto-Cloud can sync save files without code).
+
+---
+
+## Sources
+
+Gathered during the session; each claim above links its own source. Main ones:
+[GameDiscoverCo on Hydroneer](https://newsletter.gamediscover.co/p/this-game-sold-nearly-500k-copies) ·
+[GameDiscoverCo on The Planet Crafter](https://newsletter.gamediscover.co/p/how-the-planet-crafter-hit-1-million) ·
+[Alinea Analytics on co-op revenue](https://alineaanalytics.substack.com/p/games-with-co-op-generated-over-4) ·
+[wnhub on Supermarket Simulator](https://wnhub.io/news/stores-and-publishing/item-43033) ·
+[wnhub on Chinese on Steam](https://wnhub.io/news/stores-and-publishing/item-47433) ·
+[Wikipedia: R.E.P.O.](https://en.wikipedia.org/wiki/R.E.P.O.) ·
+[exputer on Lethal Company](https://exputer.com/features/lethal-company-standard-for-horror/) ·
+[OpenCritic: Lumberjack's Dynasty](https://opencritic.com/game/11467/-) ·
+[PC Gamer on cozy](https://www.pcgamer.com/games/life-sim/are-we-in-the-cozy-gaming-gold-rush-era-cozy-has-grown-over-250-percent-on-steam-and-200-percent-in-my-inbox-since-2024/) ·
+[cinevva Next Fest guide](https://app.cinevva.com/guides/steam-next-fest-strategy.html) ·
+[wnhub: Zukowski's Steam page tips](https://wnhub.io/news/stores-and-publishing/item-47311) ·
+[Steam Page Analyzer: demo best practices](https://www.steampageanalyzer.com/blog/steam-demo-best-practices) ·
+[games.gg on UGC revenue](https://games.gg/de/news/ugc-bleibt-ein-zentraler-treiber-in-spielen/) ·
+[Godot asset library: LinkUx](https://godotengine.org/asset-library/asset/5085) ·
+[TechRaptor: Hydroneer multiplayer](https://techraptor.net/gaming/news/hydroneer-20-multiplayer-update-is-out-now) ·
+[gamedev.net: Roadside Research](https://gamedev.net/news/3414-chaos-in-sync-how-roadside-research-became-a-physics-driven-co-op-hit-with/) ·
+[Science Friday: rainbow eucalyptus](https://www.sciencefriday.com/articles/rainbow-in-a-tree/)
