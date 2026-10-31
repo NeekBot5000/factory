@@ -230,3 +230,50 @@ customers with portraits and personalities. Accept or ignore; nothing is ever re
 - Delivery is physical: load the right items into the truck (or a marked crate) and send it.
 - Contracts surface the new mechanics naturally (a cedar order nudges you to the lakeshore), which is your "learn it
   yourself" rule done through the world rather than a tutorial.
+
+---
+
+## 7. A dated launch timeline (a suggestion)
+
+Built around Valve's published dates. **Recommendation: aim the demo at the June 2027 Next Fest**, not February. That
+leaves time for the "real PC game" work and co-op first, and still gets the Steam page collecting wishlists for months.
+
+| When | What | Why |
+|---|---|---|
+| **Nov 2026** | Decide the name (roadmap 302), make the Steam page "Coming Soon" with a placeholder capsule and 5+ screenshots | Wishlists start the day the page goes up |
+| **Nov 2026 - Jan 2027** | Native build, main menu, saves, Steam Cloud, achievements, controller support (Phase 1 of the top 30) | Steam players expect these |
+| **from Dec 2026** | A short clip every day or two on TikTok/Shorts (peels, tree falls, factory at night) | Builds an audience early |
+| **Jan - Mar 2027** | Co-op stages 1-2 (lobbies, players, host-owned physics); Discord; **Steam Playtest** for co-op testing | Playtest needs no keys, players sign up on the store page, and it doesn't touch the main game's reviews or wishlists |
+| **10 Jan 2027** | (February Next Fest registration closes; skip it unless the demo is already great) | |
+| **Mar 2027** | Pro capsule art and trailer (genre → hook → content, hook in 10-15 s) | The page has to convert the traffic Next Fest brings |
+| **Apr 2027** | Store page localised: Simplified Chinese, Russian, Spanish, Brazilian Portuguese, German, Korean, French, Japanese | Valve's 2024 language shares, in that order |
+| **by 25 Apr 2027** | **Register for June Next Fest** | Registration deadline |
+| **early May 2027** | **Release the free demo** (20-30 min), send keys/demo links to YouTubers and TikTokers | Demos released well before the fest earned ~2.5x more wishlists from it |
+| **14-21 Jun 2027** | **Steam Next Fest** | Run a livestream on the store page; reply to every comment |
+| **late Jun - early Jul 2027** | (Steam Summer Sale; don't launch into it) | Your launch gets buried |
+| **Aug - Sep 2027** | **Early Access launch**, Tuesday-Thursday, 10-20% launch discount, public roadmap written as ranges | Gives 2 months to convert Next Fest wishlists |
+| **launch week** | Patch fast, reply to reviews, daily clips | Early reviews set the tone |
+| **Oct 2027** | Halloween update timed for Steam Scream Fest | A reason to come back and a second visibility bump |
+| **every 4-8 weeks** | Themed updates | |
+| **~2028** | 1.0 launch as a second big marketing moment | Planet Crafter sold 260k in its 1.0 month |
+
+**Design implication of Steam's refund rule:** anyone can refund within 14 days if they've played under 2 hours, no
+questions asked. So the first two hours must already show the best of the game (peeling, the first tree falling, the
+first truckload, first machines, a friend joining). One indie with a short game reported a 21% refund rate from people
+finishing inside the window; that's not Timber's risk (it's long), but it means a slow, confusing first hour costs real
+sales. [TweakTown](https://www.tweaktown.com/news/112505/indie-developer-asks-valve-to-change-its-2-hour-refund-policy-as-55000-players-refunded-his-game-after-finishing-it/images/applenews.png),
+[TechRadar](https://www.techradar.com/news/how-steam-refunds-are-a-blessing-and-a-curse&amp)
+
+**Steam Deck Verified checklist (official highlights):** text readable at 30 cm (9 px absolute minimum on the 1280x800
+screen, 12 px recommended); the default controller config must reach all content; no keyboard/mouse glyphs when using
+the controller; a controller-friendly text entry (or Steam's on-screen keyboard); a playable framerate by default; no
+launcher. Anything Verified on Deck is also Verified on the new Steam Machine.
+[Steamworks: Deck compatibility](https://partner.steamgames.com/doc/steamdeck/compat)
+
+**Sources for this section:**
+[Steamworks: Next Fest Feb 2027](https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/feb_2027) ·
+[Steamworks: Next Fest June 2027](https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/june_2027) ·
+[PC Gamer: 2027 sale and fest dates](https://www.pcgamer.com/games/steam-reveals-all-the-sale-dates-and-themed-events-for-the-first-half-of-2027/) ·
+[Road to VR: Steam Playtest](https://roadtovr.com/steam-playtest-developers-beta-testing/) ·
+[Alconost: Steam language mix](https://alconost.com/en/blog/steam-language-mix-indies) ·
+[cinevva Next Fest guide](https://app.cinevva.com/guides/steam-next-fest-strategy.html)

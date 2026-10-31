@@ -384,7 +384,7 @@ You said players should learn it themselves. These teach through the world, not 
 
 243. **Steam Achievements** (50-80), including silly ones ("Timber!": fell 1 tree; "Bald Spot": strip a whole trunk; "Domino": fell a tree onto another). They're also free marketing in friends' feeds. ★★★ S
 244. **Steam Cloud** (see 227). ★★★ S
-245. **Steam Deck Verified**: controller, readable text at 800p, performance mode. Handheld players can be 10-20% of sales for some indie genres (unverified estimate). ★★★ M
+245. **Steam Deck Verified**: full controller support with controller glyphs, text at least 9 px (12 px recommended) on the 1280x800 screen, a playable framerate by default (checklist in the launch kit). Handheld players can be 10-20% of sales for some indie genres (unverified estimate). ★★★ M
 246. **Steam Trading Cards** (available once a game passes Valve's threshold). ★ S
 247. **Rich Presence** ("Felling a giant redwood with 3 friends"). ★★ S
 248. **Steam Workshop** (see Q). ★★★ L
@@ -455,7 +455,7 @@ You said players should learn it themselves. These teach through the world, not 
 298. **Steam Playtest** (free sign-up beta) before the demo to collect feedback and wishlists. ★★ S
 299. **Reddit posts** in r/factorygames, r/CozyGamers, r/IndieGaming and r/godot (devlog). ★★ S
 300. **Festival submissions**: Steam's themed fests (Automation Fest, Simulation Fest, Cozy Fest), PC Gaming Show, Wholesome Direct. ★★★ S
-301. **Localise the store page** first (Simplified Chinese, German, French, Spanish, Portuguese-BR, Russian, Japanese, Korean). ★★★ S
+301. **Localise the store page** first. Valve's 2024 language shares: Simplified Chinese 33.7%, English 33.5%, Russian 8.2%, Spanish 4.6%, Brazilian Portuguese 2.8%, German 2.5%, Korean 2.2%, French 2.1%, Japanese 1.7%. ★★★ S [Alconost](https://alconost.com/en/blog/steam-language-mix-indies)
 302. **Name check**: "Timber" alone is hard to search on Steam and Google; consider a more searchable title or subtitle ("Timber: Lumber Co.", "Bark & Barrow", "Peel Mill"). ★★ S (decision)
 303. **Early Access launch** with a public roadmap (written as ranges, not fixed dates) and a promise of regular updates. ★★★ S
 304. **Launch price around $15-20** with a 10-20% launch discount. For reference: Schedule I ~$17, Chop Chop Inc. €12.99 at launch, The Planet Crafter ~$24, Satisfactory $29.99 before a $10 rise. ★★ (decision) [PCGamesN](https://pcgamesn.com/satisfactory/price-increase), [Deku Deals](https://dekudeals.com/items/the-planet-crafter)
