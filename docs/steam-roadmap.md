@@ -95,7 +95,7 @@ Numbered straight through so you can refer to items by number ("do 14, 52 and 23
 ### A. Co-op and multiplayer (the single biggest lever)
 
 1. **2-4 player online co-op** with Steam lobbies, friends-list join and invite codes (GodotSteam + LinkUx or similar). ★★★ L
-2. **Remote Play Together support** as a cheap first step: one PC hosts, friends join over Steam with no networking code. Hydroneer saw engagement spikes from this. ★★★ S
+2. **Local split-screen + Remote Play Together**: Remote Play streams the host's screen to friends, so it only works once the game has local multiplayer (a second player and camera). Hydroneer built split-screen and used Remote Play as its online mode, and saw engagement spikes. Real work, but no network code. ★★ L
 3. **Shared money and shared world**, with each player's own tool bar. ★★★ M
 4. **Two-person jobs that feel great with a friend**: the Two-Man Crosscut needs two players (or one player very slowly); one holds the log steady while the other saws. ★★★ M
 5. **Carry things together**: long logs too heavy for one can be lifted by two players, one at each end. ★★★ M
@@ -110,7 +110,7 @@ Numbered straight through so you can refer to items by number ("do 14, 52 and 23
 14. **Friendly-fire comedy, not damage**: hitting a friend with a hatchet knocks their hat off and plays a bonk. ★★ S
 15. **Shared truck runs**: everyone loads the truck together and sees the payout roll up. ★★ S
 16. **Co-op roles that emerge naturally**: feller, peeler, hauler, builder, engineer (no class system, just different tools). ★★ S (it's design)
-17. **Split-screen on one PC/Steam Deck** (later; very hard in a first-person physics game). ★ L
+17. **Steam Deck split-screen couch co-op** (falls out of item 2 once it exists). ★ M
 18. **Dedicated server for persistent friend worlds** (only if the game takes off). ★ L
 19. **Spectator / photo camera for a downed friend** (you faint; you can still watch until you wake up at the cabin). ★ S
 20. **"Crew size" scaling**: trucks pay the same, but bigger crews unlock bigger contracts sooner. ★★ S
@@ -384,7 +384,7 @@ You said players should learn it themselves. These teach through the world, not 
 247. **Rich Presence** ("Felling a giant redwood with 3 friends"). ★★ S
 248. **Steam Workshop** (see Q). ★★★ L
 249. **Steam Timeline / game recording markers** for big moments (huge tree down, explosion). ★★ S
-250. **Remote Play Together** (see 2). ★★★ S
+250. **Remote Play Together** (needs local split-screen first, see 2). ★★ L
 251. **Steam Input** for controllers (see 215). ★★★ M
 252. **Linux and Steam Deck builds** tested (Godot makes this easy). ★★ S
 253. **Leaderboards** for weekly challenges (fastest strip, biggest truckload). ★★ M
@@ -673,8 +673,8 @@ Ordered by impact for the effort, and by what has to come first. Numbers refer t
 10. Photo mode (209)
 
 **Phase 2: co-op (the multiplier)**
-11. Remote Play Together, as a quick win (2)
-12. Then real 2-4 player online co-op, designed so the player holding an item controls it and the host owns the rest of the physics (1, 282)
+11. Real 2-4 player online co-op, designed so the player holding an item controls it and the host owns the rest of the physics (1, 282); see the staged plan in `docs/steam-launch-kit.md`
+12. Shared world, money and saves (3, 12, 13)
 13. Visible player bodies, emotes, ping, proximity voice (10, 9, 8, 7)
 14. Two-person jobs: carry long logs together, two-man saw (5, 4)
 
@@ -708,7 +708,8 @@ Ordered by impact for the effort, and by what has to come first. Numbers refer t
   was too complicated with physics and shipped Steam Remote Play split-screen instead. Roadside Research made 4-player
   physics co-op work by designing for it from the start, giving the player holding an item control of it. Timber has a
   *lot* of loose physics objects (up to 600 bark pieces), so plan for: host-owned physics, the holder controls held
-  items, and far-away loose pieces sleeping or merging. Do Remote Play first; it costs almost nothing.
+  items, and far-away loose pieces sleeping or merging. (Remote Play Together is *not* a shortcut here: it needs local
+split-screen first, because guests see the host's screen.) A staged plan is in `docs/steam-launch-kit.md`.
   [TechRaptor](https://techraptor.net/gaming/news/hydroneer-20-multiplayer-update-is-out-now),
   [gamedev.net](https://gamedev.net/news/3414-chaos-in-sync-how-roadside-research-became-a-physics-driven-co-op-hit-with/)
 * **The web build vs a Steam game.** Players on Steam expect native performance, settings, controller support and saves.
