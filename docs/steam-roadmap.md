@@ -8,6 +8,10 @@ This is a menu, not a plan: pick what fits. Every item has two tags:
 * **Impact** on how many people buy, play and talk about it: ★★★ big, ★★ solid, ★ nice.
 * **Size** of the work: **S** = a day or two, **M** = about a week, **L** = several weeks or a new system.
 
+Companion docs written in the same session: `docs/steam-launch-kit.md` (store page draft, trailer shot list, demo plan,
+co-op technical plan, achievements, contracts) and `docs/species-sheet.md` (19 tree species with real bark facts turned
+into mechanics).
+
 Your standing rules are respected throughout: no animals or wildlife, no goals checklist or tutorial hints, no floating
 3D text (except the truck value and hologram counters), physical items only (no inventory), machines need their tools
 inserted by hand, rotation only with R. Where an idea brushes against one of these, it says so.
@@ -44,13 +48,14 @@ inserted by hand, rotation only with R. Where an idea brushes against one of the
    2.15M copies, helped by the "Simulator" label, comedy potential and low barrier to entry; the *median* simulator on
    Steam grosses about $70k. The difference is polish, a hook that looks good in a thumbnail, and streamer appeal.
    [wnhub](https://wnhub.io/news/stores-and-publishing/item-43033)
-6. **The closest competitor is beatable.** Lumberjack's Dynasty (forestry life sim) sits around "Mostly Positive"/~71%
+6. **The established lumber game is beatable.** Lumberjack's Dynasty (forestry life sim) sits around "Mostly Positive"/~71%
    on Steam; critics praise the idea and atmosphere but knock bugs, AI, physics and dated visuals. The lumber niche is
-   open for a *polished, physics-first, co-op* game. [OpenCritic](https://opencritic.com/game/11467/-),
+   open for a *polished, physics-first, co-op* game. (A newer, closer rival, Chop Chop Inc., is covered in Part 3.)
+   [OpenCritic](https://opencritic.com/game/11467/-),
    [SteamPulse](https://steampulse.org/game/968970)
-7. **Lumber Tycoon 2 (Roblox) proves the fantasy has a huge young audience.** Players remember it for many wood types
-   scattered across biomes, owning land, building sawmills and conveyors, secret woods, and a patient,
-   planning-heavy loop. Many of today's Steam buyers grew up on it. [Roblox wiki](https://roblox.fandom.com/wiki/Tycoon),
+7. **Lumber Tycoon 2 (Roblox) shows the fantasy has a big young audience.** Guides highlight its many wood types
+   (20+) scattered across biomes, buying land, placing sawmills and conveyors, and a patient, planning-heavy loop.
+   Plenty of today's Steam players probably grew up on it (my guess; I found no numbers). [Roblox wiki](https://roblox.fandom.com/wiki/Tycoon),
    [allthings.how guide](https://allthings.how/roblox-lumber-tycoon-2-how-to-play-from-first-axe-to-first-sawmill/)
 8. **"Cozy" is the fastest-growing word on Steam**, but cozy games wishlist easily and convert less well. Timber can be
    cozy *and* have a strong mechanical hook (automation). [PC Gamer](https://www.pcgamer.com/games/life-sim/are-we-in-the-cozy-gaming-gold-rush-era-cozy-has-grown-over-250-percent-on-steam-and-200-percent-in-my-inbox-since-2024/),
@@ -68,7 +73,6 @@ inserted by hand, rotation only with R. Where an idea brushes against one of the
     8% more in year one and 31% more over five years. [games.gg](https://games.gg/de/news/ugc-bleibt-ein-zentraler-treiber-in-spielen/)
 12. **Godot can do Steam co-op.** GodotSteam plus add-ons like LinkUx (Steam lobbies, relay, room codes, Godot 4.4+)
     make 2-4 player co-op realistic for this engine. [Godot asset library: LinkUx](https://godotengine.org/asset-library/asset/5085)
-
 13. **Job sims die from thin content.** A typical complaint: "about 10 hrs of fun... you upgrade your station a bit and
     that's it", and most job sims just turn into an endless mode once the goals run out. Timber needs long-term goals
     and an automation layer so it doesn't stall at hour ten.
@@ -88,6 +92,7 @@ inserted by hand, rotation only with R. Where an idea brushes against one of the
 automate a forest business with up to 4 friends, where every piece of bark is a real physics object.
 
 ---
+
 ## Part 2: The list
 
 Numbered straight through so you can refer to items by number ("do 14, 52 and 230").
@@ -634,7 +639,7 @@ These are extra items/products/props that could slot into the categories above. 
 | Game | What it proves | Where Timber can beat it |
 |---|---|---|
 | **PowerWash Simulator** (12M+ players incl. Game Pass) | One relaxing, satisfying verb plus upgrades is enough | Timber adds felling, hauling, automation and a world to own |
-| **Lumber Tycoon 2** (Roblox) | The lumber-business fantasy has a huge, young audience | A real PC game: better physics, art, co-op, no Roblox limits |
+| **Lumber Tycoon 2** (Roblox) | The lumber-business fantasy has a big, young audience | A real PC game: better physics, art, co-op, no Roblox limits |
 | **Lumberjack's Dynasty** (~71% positive) | There's demand for forestry on Steam | Polish, physics-first fun, co-op; it's held back by bugs and dated visuals |
 | **Hydroneer** (~500k sold, ~85% positive) | First-person physical-item automation sells, mostly via YouTube | Online co-op it never fully got (it settled for Remote Play split-screen), a forest instead of a mine |
 | **Satisfactory / shapez 2** (millions / 150k in 3 days) | Automation players buy and stay for years | Much lower barrier to entry, cozy, physical and tactile |
@@ -644,8 +649,6 @@ These are extra items/products/props that could slot into the categories above. 
 | **Chop Chop Inc.** (Aug 2026, "Very Positive", single-player) | **The closest rival.** First-person crafting and automation of a comedic furniture business, with odd tree types (stone, metal, electric) needing better tools | Co-op (it has none), the physical peeling verb, a calmer, cozier forest instead of a joke city |
 | **Lumberhill** (2021, ~77% of ~150 reviews) | "Overcooked with lumberjacks" co-op party game; weak controls hurt it | Good controls and depth; party-chaos as a side effect, not the whole game |
 | **Timberline Factory / Woodcutter Simulator** | Realistic sawmill sims exist but are small | Timber is friendlier and more tactile |
-
----
 
 **What to watch:** Chop Chop Inc. launched in August 2026 to good reviews and reportedly 150k+ wishlists before launch.
 It proves the space is hot. It also means Timber needs a clearly different pitch: *co-op forest work with real
@@ -667,7 +670,7 @@ Ordered by impact for the effort, and by what has to come first. Numbers refer t
 4. Signature art and audio pass: palette, god rays, wind, a real soundtrack (191, 192, 194, 205)
 5. Peel-strip mechanic with tearing sound and curling sheets (22, 23, 21)
 6. "TIMBER!" moment and directional felling (38, 37)
-7. 5-6 more striking species including rainbow eucalyptus and cedar (41, 45, 47, 381)
+7. 5-6 more striking species, each with its own way of peeling (41, 45, 47, 381; see `docs/species-sheet.md`)
 8. Contracts on the phone, so sessions have a goal without a checklist (152)
 9. Sawmill + planks + debarker drum as the first proper production chain (95, 96, 97)
 10. Photo mode (209)
@@ -709,7 +712,7 @@ Ordered by impact for the effort, and by what has to come first. Numbers refer t
   physics co-op work by designing for it from the start, giving the player holding an item control of it. Timber has a
   *lot* of loose physics objects (up to 600 bark pieces), so plan for: host-owned physics, the holder controls held
   items, and far-away loose pieces sleeping or merging. (Remote Play Together is *not* a shortcut here: it needs local
-split-screen first, because guests see the host's screen.) A staged plan is in `docs/steam-launch-kit.md`.
+  split-screen first, because guests see the host's screen.) A staged plan is in `docs/steam-launch-kit.md`.
   [TechRaptor](https://techraptor.net/gaming/news/hydroneer-20-multiplayer-update-is-out-now),
   [gamedev.net](https://gamedev.net/news/3414-chaos-in-sync-how-roadside-research-became-a-physics-driven-co-op-hit-with/)
 * **The web build vs a Steam game.** Players on Steam expect native performance, settings, controller support and saves.
@@ -719,7 +722,7 @@ split-screen first, because guests see the host's screen.) A staged plan is in `
 * **Scope.** This list is far more than one person can do. The 30 above are already a year-plus of work for a solo
   developer. Cut freely.
 * **Numbers in this doc** come from press coverage, developer statements and marketing blogs; third-party sales
-  estimates vary wildly. Wishlist thresholds (2k/3k/7k) are rules of thumb from marketers, not Valve rules.
+  estimates vary wildly. Wishlist thresholds (2k/3k) are rules of thumb from marketers, not Valve rules.
 * **Things I couldn't reach**: this session can search the web but not open most pages (howtomarketagame.com,
   gamedeveloper.com, the Steam store, vaporlens were all blocked), so most facts come from search-result summaries
   of those pages and are quoted second-hand. Allow those domains in the environment's network settings if you want a
