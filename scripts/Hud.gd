@@ -339,6 +339,11 @@ func _process(delta: float) -> void:
 	crosshair.visible = not ui_open
 	toolbar.visible = not ui_open
 	money_lbl.get_parent().visible = not ui_open
+	# health only shows while you're hurt (bare-hand chopping, standing too close to dynamite)
+	var hb := health_bar.get_parent() as Control
+	var hurt := player.health < player.max_health - 0.5 and not (main.shop_ui is TitleMenu)
+	hb.modulate.a = move_toward(hb.modulate.a, 1.0 if hurt else 0.0, delta * (4.0 if hurt else 1.0))
+	hb.visible = hb.modulate.a > 0.01
 	if crosshair.visible:
 		crosshair.queue_redraw()
 		_ring_px = lerpf(_ring_px, player.aim_ring_px(root.get_viewport_rect().size.y), 0.35)

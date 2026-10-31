@@ -111,6 +111,20 @@ Mined-out rocks slowly grow back (one every minute or so, never right next to yo
 The last clump of leaves on any crown always drops one or two saplings, so every tree can be replaced; they take
 five minutes to grow.
 
+### Power, logic and the tree farm
+
+Blueprints from TimberMart; build them with the hammer like the other machines.
+
+* **Power:** Windmill (free while the wind is up), Generator (burns bark, leaves and wood dropped in its hopper),
+  Battery (charges from its network, takes over when the power goes).
+* **Logic Kit:** blocks with a back (input), sides (control or supply) and a front (output, the arrow):
+  One-Way, Relay (AND), Inverting Relay (NOT), Timer, Delay, Toggle Latch, Counter.
+* **Sensors:** Pressure Plate, Item Sensor. **Outputs:** Lamp, Bell.
+* **Production:** Sawmill (a log on its table becomes planks worth 1.5x), Chipper (bark and leaves become bags of mulch).
+* **Tree farm:** Planter (plants saplings from its hopper in a row), Sprinkler (saplings nearby grow twice as fast),
+  Tree Feller (put your saw in it; it fells the tree in front when powered).
+* **The Legendary Tree:** the golden giant on the far hill. Only the two-man crosscut gets through it.
+
 ## Play
 
 * **Download a build:** open the latest successful run under the repo's *Actions* tab, scroll to *Artifacts*

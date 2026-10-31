@@ -23,7 +23,7 @@ var world_saver := Callable()   # set by the scene: returns the current world_bu
 var world_state := {}           # trees stripped/felled/grown, bushes, loose bark, leaves, logs, saplings, dropped tools
 var world_state_saver := Callable()
 var quality := 0                # graphics level picked by Quality.gd (0 = full); remembered between sessions
-var settings := {"sens": 1.0, "fov": 75.0, "volume": 0.8, "auto_quality": true, "invert": false, "bob": true, "fps": false}   # the Esc menu
+var settings := {"sens": 1.0, "fov": 75.0, "volume": 0.8, "auto_quality": true, "invert": false, "bob": true, "fps": false, "music": 0.5}   # the Esc menu
 
 
 func _ready() -> void:
@@ -99,6 +99,11 @@ func receive(id: String) -> void:
 	orders_changed.emit()
 	tools_changed.emit()
 	save_game()
+
+
+## Nothing done yet: no money ever earned, nothing bought, nothing changed in the world.
+func is_fresh() -> bool:
+	return total_earned <= 0.0 and owned.size() <= 1 and orders.is_empty() and world_builds.is_empty() and world_state.is_empty()
 
 
 func pending_orders() -> Array:

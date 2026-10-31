@@ -84,6 +84,80 @@ func _ready() -> void:
 	regrow.autostart = true
 	regrow.timeout.connect(regrow_rock)
 	add_child(regrow)
+	# a brand-new world: the old hatchet lies on the porch, waiting for you
+	_chopping_block()
+	var fresh := Game.is_fresh()
+	if fresh and Game.save_enabled:
+		_porch_hatchet()
+	# the title screen (tests run without saving, and skip it)
+	if Game.save_enabled:
+		open_title(not fresh)
+
+
+const BLOCK_AT := Vector3(0.8, 0.0, Cabin.D * 0.5 + 2.6)
+
+
+## A chopping block just off the porch steps, right in front of where you wake up.
+func _chopping_block() -> void:
+	var at := BLOCK_AT
+	at.y = terrain.height_at(at.x, at.z)
+	var sb := StaticBody3D.new()
+	sb.collision_layer = 1
+	add_child(sb)
+	sb.position = at
+	LowPoly.mesh_instance(sb, LowPoly.cyl(0.3, 0.33, 0.45, 9), LowPoly.mat(Color("6b4a32"), 0.95), Vector3(0, 0.22, 0))
+	LowPoly.mesh_instance(sb, LowPoly.cyl(0.285, 0.285, 0.01, 9), LowPoly.mat(Color("d9b98a"), 0.9), Vector3(0, 0.455, 0))
+	var cs := CollisionShape3D.new()
+	var sh := CylinderShape3D.new()
+	sh.radius = 0.31
+	sh.height = 0.45
+	cs.shape = sh
+	cs.position.y = 0.22
+	sb.add_child(cs)
+
+
+## A new world: the old hatchet is stuck in the chopping block, waiting for you.
+func _porch_hatchet() -> void:
+	Game.owned["hatchet"] = true
+	var item := ToolItem.new()
+	add_child(item)
+	item.setup("hatchet")
+	item.freeze = true          # stays stuck in the block until you take it
+	# blade buried in the top of the block, handle sticking up at an angle
+	var head := BLOCK_AT
+	head.y = terrain.height_at(head.x, head.z) + 0.43
+	var b := Basis(Vector3.UP, 2.4) * Basis(Vector3.RIGHT, deg_to_rad(-60.0))
+	item.global_transform = Transform3D(b, head - b * Vector3(0, 0.15, -0.05))
+	Game.set_dropped("hatchet", true)
+
+
+var title: TitleMenu
+
+
+func open_title(has_save := true) -> void:
+	player.controls_enabled = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	title = TitleMenu.new()
+	shop_ui = title
+	ui_layer.add_child(title)
+	title.setup(has_save)
+	title.chosen.connect(_on_title)
+
+
+func _on_title(what: String) -> void:
+	match what:
+		"continue":
+			close_ui()
+		"new":
+			Game.reset()
+			get_tree().reload_current_scene()
+		"settings":
+			title.queue_free()
+			shop_ui = null
+			open_settings()
+			(shop_ui as SettingsMenu).closed.connect(func():
+				if title != null and not is_instance_valid(title):
+					call_deferred("open_title"), CONNECT_ONE_SHOT)
 
 
 func _notification(what: int) -> void:
@@ -228,6 +302,32 @@ func _forest() -> void:
 		gt.rotation.y = gr.randf() * TAU
 		gt.setup(gr, ["oak", "pine"][giants % 2], true)
 		trees.append(gt)
+	_legendary_tree(points)
+
+
+## The Legendary Tree: one enormous, golden-crowned ancient tree on the far hill, in view from the porch.
+func _legendary_tree(points: Array[Vector2]) -> void:
+	for d in [80.0, 76.0, 84.0]:
+		for deg in [8.0, -8.0, 12.0, -12.0, 16.0, -16.0, 24.0, -24.0]:
+			var a: float = deg_to_rad(deg)
+			var p: Vector2 = Vector2(sin(a), cos(a)) * float(d)
+			if absf(p.x - Terrain.road_x(p.y)) < 9.0 or _in_lot(p):
+				continue
+			var free := true
+			for q in points:
+				if q.distance_squared_to(p) < 6.0 * 6.0:
+					free = false
+					break
+			if not free:
+				continue
+			var lr := RandomNumberGenerator.new()
+			lr.seed = 777
+			var lt := ForestTree.new()
+			add_child(lt)
+			lt.position = Vector3(p.x, terrain.height_at(p.x, p.y) - 0.1, p.y)
+			lt.setup(lr, "oak", true, true)
+			trees.append(lt)
+			return
 
 
 ## A rocky outcrop out in the woods, thick with copper and iron.

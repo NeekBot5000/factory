@@ -8,6 +8,7 @@ signal closed
 const BG := Color(0.08, 0.09, 0.12, 0.94)
 const ACCENT := Color("ffcf6a")
 const QUALITY_NAMES := ["Auto", "High", "Medium", "Low", "Lowest"]
+const FEEDBACK_URL := "https://github.com/NeekBot5000/factory/issues"     # swap for the itch.io page or a Discord invite
 
 var main: Node
 var font_body: FontVariation
@@ -33,8 +34,8 @@ func setup(p_main: Node) -> void:
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -270
 	panel.offset_right = 270
-	panel.offset_top = -255
-	panel.offset_bottom = 255
+	panel.offset_top = -320
+	panel.offset_bottom = 320
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = BG
 	sb.set_corner_radius_all(18)
@@ -55,6 +56,7 @@ func setup(p_main: Node) -> void:
 	v.add_child(_slider("Mouse sensitivity", 0.2, 3.0, float(s.sens), func(x): _change("sens", x), "%.1fx"))
 	v.add_child(_slider("Field of view", 60.0, 100.0, float(s.fov), func(x): _change("fov", x), "%d°"))
 	v.add_child(_slider("Volume", 0.0, 1.0, float(s.volume), func(x): _change("volume", x), "%d%%", 100.0))
+	v.add_child(_slider("Music", 0.0, 1.0, float(s.get("music", 0.5)), func(x): _change("music", x), "%d%%", 100.0))
 	var row := HBoxContainer.new()
 	row.add_child(_label("Graphics", 17, Color.WHITE, font_bold))
 	var sp := Control.new()
@@ -99,6 +101,17 @@ func setup(p_main: Node) -> void:
 		Sfx.play("click")
 		closed.emit())
 	v.add_child(resume)
+	# found a bug, or have an idea? opens the feedback page in the browser
+	var fb := Button.new()
+	fb.text = "Send feedback / report a bug"
+	fb.flat = true
+	fb.focus_mode = Control.FOCUS_NONE
+	fb.add_theme_font_override("font", font_bold)
+	fb.add_theme_font_size_override("font_size", 15)
+	fb.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	fb.add_theme_color_override("font_hover_color", ACCENT)
+	fb.pressed.connect(func(): OS.shell_open(FEEDBACK_URL))
+	v.add_child(fb)
 
 
 ## Applies the saved settings to the game (on start and whenever one changes).
@@ -111,6 +124,7 @@ static func apply_all(p_main: Node) -> void:
 		player.invert_y = bool(s.get("invert", false))
 		player.head_bob = 1.0 if bool(s.get("bob", true)) else 0.0
 	Sfx.set_volume(float(s.volume))
+	Sfx.set_music_volume(float(s.get("music", 0.5)))
 
 
 func _change(k: String, x: float) -> void:

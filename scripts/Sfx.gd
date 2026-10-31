@@ -251,10 +251,116 @@ func play(name: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:
 	p.play()
 
 
+# ------------------------------------------------------------------ music
+# Short, quiet pieces of plucked guitar now and then, with long gaps of just the forest in between.
+
+const PROGRESSIONS := [
+	[[48, 55, 60, 64], [45, 52, 57, 60], [41, 48, 53, 57], [43, 50, 55, 59]],      # C  Am F  G
+	[[41, 48, 53, 57], [43, 50, 55, 59], [40, 47, 52, 55], [45, 52, 57, 60]],      # F  G  Em Am
+	[[48, 55, 60, 64], [43, 50, 55, 59], [45, 52, 57, 60], [41, 48, 53, 57]],      # C  G  Am F
+]
+const ARP := [0, 1, 2, 3, 2, 1, 2, 3]          # which chord note each eighth plays
+const MELODY := [72, 74, 76, 79, 81, 76, 74]
+const EIGHTH := 0.4
+
+var music_volume := 0.5
+var _mus_players: Array[AudioStreamPlayer] = []
+var _mus_next := 0
+var _mus_wait := 30.0          # quiet before the first piece
+var _mus_step := -1
+var _mus_t := 0.0
+var _mus_prog := 0
+var _mus_queue: Array = []     # notes still to build before a piece can start
+
+
+static func _midi_hz(m: int) -> float:
+	return 440.0 * pow(2.0, (m - 69) / 12.0)
+
+
+## A soft plucked string: a few harmonics dying away at different rates, and a tiny pick noise.
+func _note(m: int) -> AudioStreamWAV:
+	var key := "note%d" % m
+	if not _sounds.has(key):
+		var f := _midi_hz(m)
+		_sounds[key] = _make(1.5, func(t):
+			var v := sin(TAU * f * t) * exp(-t * 2.2) + sin(TAU * f * 2.0 * t) * 0.38 * exp(-t * 3.6) + sin(TAU * f * 3.0 * t) * 0.16 * exp(-t * 5.5)
+			return (v * minf(1.0, t * 250.0) + _soft(0.7) * exp(-t * 70.0) * 0.12) * 0.42)
+	return _sounds[key]
+
+
+func _music_notes(prog: int) -> Array:
+	var out: Array = []
+	for chord in PROGRESSIONS[prog]:
+		for m in chord:
+			if not out.has(m):
+				out.append(m)
+	for m in MELODY:
+		if not out.has(m):
+			out.append(m)
+	return out
+
+
+func _music(delta: float) -> void:
+	if music_volume <= 0.001:
+		return
+	if _mus_players.is_empty():
+		for i in 6:
+			var p := AudioStreamPlayer.new()
+			add_child(p)
+			_mus_players.append(p)
+	if _mus_step < 0:
+		_mus_wait -= delta
+		if _mus_wait > 0.0:
+			return
+		if _mus_queue.is_empty() and _mus_t == 0.0:
+			_mus_prog = randi() % PROGRESSIONS.size()
+			_mus_queue = _music_notes(_mus_prog).filter(func(m): return not _sounds.has("note%d" % m))
+			_mus_t = 0.001
+		# build the notes it needs one per frame, then start
+		if not _mus_queue.is_empty():
+			_note(_mus_queue.pop_front())
+			return
+		_mus_step = 0
+		_mus_t = 0.0
+	_mus_t -= delta
+	if _mus_t > 0.0:
+		return
+	_mus_t += EIGHTH * randf_range(0.97, 1.03)       # a little human timing
+	var bars := 8
+	if _mus_step >= bars * 8:
+		_mus_step = -1
+		_mus_t = 0.0
+		_mus_wait = randf_range(50.0, 110.0)
+		return
+	var chord: Array = PROGRESSIONS[_mus_prog][(_mus_step / 8) % 4]
+	var i: int = ARP[_mus_step % 8]
+	_pluck(int(chord[i]), -16.0 if i == 0 else -19.0)
+	# now and then a melody note on the first beat of a bar
+	if _mus_step % 8 == 0 and randf() < 0.6:
+		_pluck(int(MELODY[randi() % MELODY.size()]), -18.0)
+	# the last bar ends on the root, held
+	_mus_step += 1
+
+
+func _pluck(m: int, db: float) -> void:
+	var p := _mus_players[_mus_next]
+	_mus_next = (_mus_next + 1) % _mus_players.size()
+	p.stream = _note(m)
+	p.volume_db = db + linear_to_db(maxf(music_volume, 0.0001))
+	p.pitch_scale = 1.0
+	p.play()
+
+
+func set_music_volume(v: float) -> void:
+	music_volume = v
+
+
 func _process(delta: float) -> void:
 	# build the remaining sounds one per frame after startup, so loading isn't held up by them
 	if not _warm.is_empty():
 		stream(_warm.pop_front())
+	else:
+		_music(delta)
 	_bird_timer -= delta
 	if _bird_timer <= 0.0:
 		_bird_timer = randf_range(2.0, 7.0)

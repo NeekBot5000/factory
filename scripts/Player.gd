@@ -1165,7 +1165,7 @@ func spawn_bark(t: ForestTree, results: Array, at: Vector3, push: Vector3, mult 
 		if (res as Dictionary).is_empty():
 			continue
 		var data := t.piece_data(int(res.layer), res.panels)
-		data["value_mult"] = mult
+		data["value_mult"] = mult * t.bark_mult
 		var chip: Chip = get_parent().call("spawn_chip", data, t.kind, push)
 		if fling != 1.0 and chip != null:
 			chip.linear_velocity *= fling
@@ -1966,6 +1966,10 @@ func _saw_step(delta: float, on: bool) -> void:
 	if c == null or trunk_of(c) == null or (c is ForestTree and ((c as ForestTree).bands < 4 or not can_fell)):
 		saw_progress = maxf(0.0, saw_progress - delta * 2.0)
 		return
+	if c is ForestTree and (c as ForestTree).legendary and not bool(d.get("big", false)):
+		saw_progress = 0.0
+		tell("legend", "Only the two-man crosscut gets through the Legendary Tree")
+		return
 	if c is ForestTree and (c as ForestTree).giant and not bool(d.get("big", false)) and tool != "chainsaw":
 		# the ancient trees are too thick for an ordinary saw
 		saw_progress = 0.0
@@ -1976,7 +1980,7 @@ func _saw_step(delta: float, on: bool) -> void:
 		_saw_target = c
 		saw_progress = 0.0
 	var t := trunk_of(c)
-	var need := SAW_LOG_TIME if c is Log else SAW_TREE_TIME * (t.radius / 0.38)
+	var need := SAW_LOG_TIME if c is Log else SAW_TREE_TIME * (t.radius / 0.38) * (3.0 if t.legendary else 1.0)
 	saw_progress += delta / need * float(d.get("speed", 1.0))
 	_saw_fx -= delta
 	if _saw_fx <= 0.0:

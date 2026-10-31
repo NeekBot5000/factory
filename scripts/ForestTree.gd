@@ -35,15 +35,22 @@ var _col: CollisionShape3D
 var is_section := false     # a piece of trunk inside a Log: closed at both ends, no crown, no collision of its own
 var felled := false         # sawn down: just a stump now
 var giant := false          # an ancient tree deep in the woods: too thick for most saws
+var legendary := false      # the one enormous golden tree on the far hill: the long-term goal
+var bark_mult := 1.0        # its bark sells for more
 const GIANT_R := 0.6
 
 
-func setup(rng: RandomNumberGenerator, p_kind: String, p_giant := false) -> void:
+func setup(rng: RandomNumberGenerator, p_kind: String, p_giant := false, p_legend := false) -> void:
 	kind = p_kind
 	_seed = rng.randi()
-	giant = p_giant
+	legendary = p_legend
+	giant = p_giant or p_legend
 	radius = rng.randf_range(0.3, 0.46) if not giant else rng.randf_range(0.68, 0.82)
 	bands = rng.randi_range(26, 40) if not giant else rng.randi_range(46, 56)
+	if legendary:
+		radius = 1.35
+		bands = 100
+		bark_mult = 4.0
 	trunk_h = bands * BAND_H
 	r_mid = radius - OUTER_T
 	r_core = r_mid - INNER_T
@@ -112,6 +119,9 @@ func setup_section(src: ForestTree, j0: int, j1: int) -> void:
 ## tree is left as a stump.
 func fell(cut_j: int, push_dir: Vector3) -> Log:
 	cut_j = clampi(cut_j, 1, bands - 2)
+	if legendary:
+		Game.toast.emit("You felled the Legendary Tree!", Color("ffd27a"))
+		Sfx.play("reveal", 0.8, 4.0)
 	var lg := Log.new()
 	get_parent().add_child(lg)
 	lg.setup_from(self, cut_j, bands, global_transform * Transform3D(Basis(), Vector3(0, cut_j * BAND_H + 0.03, 0)))
@@ -143,6 +153,15 @@ func _make_stump(cut_j: int) -> void:
 	_col.position.y = trunk_h * 0.5
 	for l in 2:
 		_rebuild(l)
+
+
+## What the HUD says when you look at one of the big ones.
+func hint_text() -> String:
+	if legendary:
+		return "The Legendary Tree  ·  only a two-man crosscut gets through it"
+	if giant and not felled:
+		return "Ancient tree  ·  too thick for most saws"
+	return ""
 
 
 # ------------------------------------------------------------------ saving
@@ -268,7 +287,12 @@ func _build_static() -> void:
 				LowPoly.mesh_instance(_crown, LowPoly.blob(1.2, 0.25, rng.randi() % 50), Nature.wind_mat(Color("5aab44").lightened(snappedf(rng.randf() * 0.08, 0.02)), 0.09, 2.4, -1.2), off2)
 	if giant:
 		for c in _crown.get_children():
-			(c as Node3D).scale *= 1.7
+			(c as Node3D).scale *= 3.0 if legendary else 1.7
+			# the legendary tree's crown is gold, so you can pick it out from the porch
+			if legendary and c is MeshInstance3D and (c as MeshInstance3D).material_override is ShaderMaterial:
+				var m := ((c as MeshInstance3D).material_override as ShaderMaterial).duplicate() as ShaderMaterial
+				m.set_shader_parameter("albedo", Color("e0a43a"))
+				(c as MeshInstance3D).material_override = m
 	var fol := Foliage.new()
 	_crown.add_child(fol)
 	fol.setup(_crown)
