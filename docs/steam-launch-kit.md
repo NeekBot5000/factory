@@ -153,3 +153,70 @@ See `docs/steam-roadmap.md` (Part 1 and the source list). Additional for this do
 [Godot forum: syncing RigidBody3D](https://forum.godotengine.org/t/how-do-i-sync-rigidbody3d-properly-in-multiplayer/129584),
 [Steam Page Analyzer: simulation pages](https://www.steampageanalyzer.com/optimize/simulation),
 [presskit.gg: Steam page guide](https://presskit.gg/field-guides/steam-page-optimization-guide).
+
+---
+
+## 5. Achievements draft (60)
+
+Steam achievements show up in friends' activity feeds, so funny names are free marketing. Mix of easy, progression,
+silly and secret. Hidden ones marked (H).
+
+**First steps:** Timber! (fell a tree) · Bald Spot (strip a whole trunk bare) · Paper Trail (first truckload sold) ·
+Hands-On (strip 50 panels with bare hands) · Open Wide (open your first delivery box) · Phone Home (buy the phone) ·
+Lumberjack (own 5 tools) · Tool Wall (own 20 tools) · Full Shed (own every tool)
+
+**Peeling:** Sheet Happens (a single sheet of 30+ panels) · Inside Out (sell 1,000 panels of inner bark) · Clean Sweep
+(strip 100 trees bare) · Combo Breaker (max out the combo axe) · Spiral Staircase (a spiral round a whole trunk) ·
+Power Washed (strip 500 panels with the pressure washer) · Planed Sailing (plane a log end to end) · Thunderstruck (strip
+a tree with one thunder strike)
+
+**Felling and logs:** Domino (fell a tree onto another tree) · Giant Slayer (fell an ancient giant) · Clean Cut (sell a
+crosscut log) · Rounds on Me (buck a log into rounds) · Heavy Lifter (carry a 3 m log) · Locked In (lock a log with the
+hammer) · Crown Jewel (cut a crown off with the pole saw)
+
+**Throwing hatchet:** Boomerang (catch it 10 times) · Long Shot (strip bark 11+ m away) · Woodpecker (hit the same tree 5
+throws in a row) · (H) Nice Catch (catch it while jumping)
+
+**Money:** Pocket Change ($100) · Small Business ($1,000) · Lumber Baron ($10,000) · Tycoon ($100,000) · Big Haul (one
+truckload worth $500+) · Spend It All (drop to $0 after buying something)
+
+**Mining and blasting:** Rock On (break a rock) · Hidden Gem (find ore inside a plain rock) · Ironclad (mine iron) ·
+Sledge Fund (burst a rock in one blow) · Kaboom (set off dynamite) · Chain Reaction (set off 3 charges at once) · (H) Too
+Close (get hurt by your own dynamite)
+
+**Building and machines:** Basket Case (build a basket) · Barrow Boy (fill a wheelbarrow and push it 50 m) · Live Wire
+(power a machine) · Conveyor Belter (10 belts in one line) · Round the Bend (send something round a belt turn) · Clamp
+Down (clamp something with a piston against a rotator) · Push It (push something with a piston) · Truck Stop (send the
+truck with the truck caller)
+
+**Nature:** Green Thumb (plant a sapling that grows into a tree) · Watered Down (water 10 saplings) · Rake It In (rake 100
+things) · Leaf Peeper (snip 500 leaves) · Blown Away (blow something 15 m with the leaf blower)
+
+**Silly/secret:** (H) Ouch (faint from bare-hand chopping) · (H) Nap Time (lie in the hammock for a full minute) · (H)
+Slam Dunk (score with the basketball) · (H) Air Mail (fling a full basket 10 m) · (H) Weighed Down (weigh something over
+1,000 kg on the log scale)
+
+---
+
+## 6. Contracts and customers (design draft)
+
+Roadmap item 152: goals for a session without a checklist. Contracts arrive as messages on the phone from a few
+customers with portraits and personalities. Accept or ignore; nothing is ever required.
+
+| Customer | Wants | Pays | Personality |
+|---|---|---|---|
+| **The Mill** (Rosa) | Logs of a given species and minimum length | steady, +20% over truck price | brisk, practical |
+| **Furniture Workshop** (Ade) | Clean planks, dry wood, specific species | high for quality | picky, generous |
+| **Paper Plant** | Bulk chips/bark, lots of it | low per unit, big volume | corporate, terse |
+| **The Collector** (Mr. Vale) | Rare items: amber, aged rainbow sheets, petrified wood | very high | eccentric, mysterious |
+| **Gas Station** | Firewood and birch tinder bundles in winter | small, quick | friendly |
+| **The Town** | Big project orders (bridge, stadium) in stages | huge, plus the town grows | community |
+
+**Rules that keep it cozy:**
+- Deadlines measured in in-game days and generous; missing one just means a smaller bonus next time.
+- Always 2-3 open offers to pick from; new ones arrive each morning.
+- Each customer's offers get bigger as you complete theirs (a relationship without a UI meter: their messages get
+  warmer and they send small gifts, e.g. a tool skin).
+- Delivery is physical: load the right items into the truck (or a marked crate) and send it.
+- Contracts surface the new mechanics naturally (a cedar order nudges you to the lakeshore), which is your "learn it
+  yourself" rule done through the world rather than a tutorial.
