@@ -14,7 +14,13 @@ const KINDS := {
 	"lantern": {"name": "Lantern", "fuel": 0.0, "res": ""},
 	"cabinet": {"name": "Cabinet", "fuel": 40.0, "res": ""},
 	"toy_truck": {"name": "Toy Truck", "fuel": 10.0, "res": ""},
+	"battery_cell": {"name": "Battery Cell", "fuel": 0.0, "res": ""},
+	"rail": {"name": "Rail", "fuel": 0.0, "res": ""},
 }
+const RAIL_VALUE := 2.0
+
+var charge := 0.0               # battery cells: 0..1
+var _stripe: MeshInstance3D
 
 var kind := "plank"
 var value := 1.0
@@ -84,6 +90,22 @@ func setup(p_kind: String, p_value: float, p_color: Color) -> void:
 			_box(Vector3(0.02, 0.8, 0.005), LowPoly.mat(color.darkened(0.3), 0.8), Vector3(0, 0, -0.2))
 			for sx in [-0.06, 0.06]:
 				_box(Vector3(0.03, 0.08, 0.03), LowPoly.mat(Machines.COPPER, 0.3), Vector3(sx, 0.05, -0.215))
+		"battery_cell":
+			mass = 2.0
+			size = Vector3(0.2, 0.32, 0.2)
+			_box(size, LowPoly.mat(Color("2b2d33"), 0.6), Vector3.ZERO)
+			_box(Vector3(0.1, 0.05, 0.1), LowPoly.mat(Machines.COPPER, 0.35), Vector3(0, 0.18, 0))
+			_box(Vector3(0.205, 0.26, 0.04), LowPoly.mat(Color("15161a"), 0.8), Vector3(0, 0, -0.085))
+			_stripe = LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.21, 0.26, 0.03)), LowPoly.mat(Color("4be36b")), Vector3(0, 0, -0.09))
+			set_charge(charge)
+		"rail":
+			mass = 4.0
+			size = Vector3(0.6, 0.12, 0.76)
+			var iron := Tools.steel(Color("8d949e"), 0.4)
+			for k in 2:
+				_box(Vector3(0.6, 0.05, 0.12), LowPoly.mat(Color("6b4a32"), 0.95), Vector3(0, -0.035, -0.22 + k * 0.44))
+			for sx in [-0.2, 0.2]:
+				_box(Vector3(0.06, 0.07, 0.76), iron, Vector3(sx, 0.025, 0))
 		"toy_truck":
 			mass = 1.0
 			size = Vector3(0.18, 0.16, 0.36)
@@ -101,6 +123,15 @@ func setup(p_kind: String, p_value: float, p_color: Color) -> void:
 	ImpactSound.attach(self, "clink" if kind.ends_with("_bar") else "thud", 1.4, 2.0)
 
 
+## Battery cells: how full it is, 0..1. The green stripe on its side fills up with it (no numbers on it).
+func set_charge(v: float) -> void:
+	charge = clampf(v, 0.0, 1.0)
+	if _stripe != null:
+		_stripe.scale = Vector3(1, maxf(0.02, charge), 1)
+		_stripe.position.y = -0.13 + 0.13 * maxf(0.02, charge)
+		_stripe.visible = charge > 0.0
+
+
 func _box(s: Vector3, m: Material, at: Vector3) -> void:
 	LowPoly.mesh_instance(self, LowPoly.box(s), m, at)
 
@@ -114,4 +145,11 @@ func display_name() -> String:
 
 
 func hint_text() -> String:
+	if kind == "battery_cell":
+		return "[E] grab    Battery Cell  ·  %s" % ("empty - charge it in a charger" if charge <= 0.0 else "%d%% charged" % int(charge * 100.0))
+	if kind == "rail":
+		var p := get_tree().get_first_node_in_group("player")
+		if p != null and String(p.get("tool")) == "hammer":
+			return "[Click] lay it here    Rail"
+		return "[E] grab    Rail  ·  lay it with the hammer"
 	return "[E] grab    %s  ·  worth $%.2f" % [display_name(), value]

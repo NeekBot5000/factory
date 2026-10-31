@@ -60,6 +60,18 @@ const BUILDS := {
 	"drill_rig": {"name": "Drill Rig", "needs": {"stone": 6, "iron": 4, "copper": 2, "log": 2}, "bp": "bp_drill_rig"},
 	"transmitter": {"name": "Transmitter", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
 	"receiver": {"name": "Receiver", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
+	# rails and carts
+	"minecart_1": {"name": "Minecart (1 long)", "needs": {"iron_bar": 2, "plank": 2, "copper_bar": 1}, "bp": "bp_carts"},
+	"minecart_2": {"name": "Minecart (2 long)", "needs": {"iron_bar": 3, "plank": 4, "copper_bar": 1}, "bp": "bp_carts"},
+	"minecart_3": {"name": "Minecart (3 long)", "needs": {"iron_bar": 4, "plank": 6, "copper_bar": 2}, "bp": "bp_carts"},
+	"minecart_4": {"name": "Minecart (4 long)", "needs": {"iron_bar": 5, "plank": 8, "copper_bar": 2}, "bp": "bp_carts"},
+	"cart_go": {"name": "Go", "needs": {"stone": 1, "copper_bar": 1}, "bp": "bp_carts"},
+	"cart_back": {"name": "Reverse", "needs": {"stone": 1, "copper_bar": 1}, "bp": "bp_carts"},
+	"cart_sensor": {"name": "Cart Sensor", "needs": {"stone": 2, "copper_bar": 1}, "bp": "bp_carts"},
+	"rail_layer": {"name": "Rail Layer", "needs": {"stone": 2, "iron_bar": 2, "copper_bar": 1}, "bp": "bp_rail_tools"},
+	"rail_lifter": {"name": "Rail Lifter", "needs": {"stone": 2, "iron_bar": 2, "copper_bar": 1}, "bp": "bp_rail_tools"},
+	"charger": {"name": "Charger", "needs": {"stone": 3, "copper_bar": 2, "iron_bar": 1}, "bp": "bp_charger"},
+	"level_sensor": {"name": "Level Sensor", "needs": {"stone": 1, "log": 1, "copper": 2}, "bp": "bp_sensors"},
 	# decorations: worth far more than what goes into them ("sell" = sale value per $ of materials)
 	"bark_wreath": {"name": "Bark Wreath", "needs": {"bark": 12}, "sell": 2.5},
 	"lamppost": {"name": "Lamp Post", "needs": {"stone": 2, "iron_bar": 2, "copper_bar": 1}, "sell": 3.0},
@@ -71,7 +83,8 @@ const ORDER := ["basket", "wheelbarrow", "bench", "campfire", "hammock", "chute"
 	"crank", "lever", "button", "windmill", "generator", "battery", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller",
 	"gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor",
 	"lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller", "smelter", "kiln", "assembler", "grabber", "sorter",
-	"splitter", "crate", "transmitter", "receiver", "drill_rig", "bark_wreath", "lamppost", "garden_table", "statue", "fountain"]
+	"splitter", "crate", "transmitter", "receiver", "drill_rig", "minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "cart_sensor",
+	"rail_layer", "rail_lifter", "charger", "level_sensor", "bark_wreath", "lamppost", "garden_table", "statue", "fountain"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "wheelbarrow", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock", "garden_table"]},
@@ -79,10 +92,11 @@ const CATEGORIES := [
 	{"name": "Fire & Garden", "items": ["campfire", "compost"]},
 	{"name": "Workshop", "items": ["chute", "catapult"]},
 	{"name": "Fun", "items": ["ball", "hoop"]},
-	{"name": "Power & Switches", "items": ["crank", "windmill", "generator", "battery", "lever", "button"]},
-	{"name": "Logic & Sensors", "items": ["gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor", "lamp", "bell"]},
+	{"name": "Power & Switches", "items": ["crank", "windmill", "generator", "battery", "charger", "lever", "button"]},
+	{"name": "Logic & Sensors", "items": ["gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor", "level_sensor", "lamp", "bell"]},
 	{"name": "Production", "items": ["sawmill", "chipper", "smelter", "kiln", "assembler"]},
 	{"name": "Mining", "items": ["drill_rig"]},
+	{"name": "Rails & Carts", "items": ["minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "rail_layer", "rail_lifter", "cart_sensor"]},
 	{"name": "Logistics", "items": ["grabber", "sorter", "splitter", "crate", "transmitter", "receiver"]},
 	{"name": "Tree Farm", "items": ["planter", "sprinkler", "feller"]},
 	{"name": "Machines", "items": ["conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]},
@@ -679,6 +693,7 @@ static func load_world(world: Node, data: Array) -> void:
 			bp.restore(d)
 	for st in states:
 		(st[0] as Machine).load_state(st[1])
+	Minecart.adopt_all(world.get_tree())
 
 
 static func _rot_col(body: Node3D, size: Vector3, pos: Vector3, basis: Basis) -> CollisionShape3D:

@@ -28,8 +28,10 @@ func is_source() -> bool:
 	return false
 
 
+## Neither passes power through from a wire: a receiver is a source of its own (so on a cart it can't be fed by the
+## cart's battery and switch the cart by accident), and a transmitter is where a signal ends.
 func conducts() -> bool:
-	return kind == "receiver"
+	return false
 
 
 func terminal() -> Vector3:

@@ -12,8 +12,13 @@ const RECIPES := {
 	"lantern": {"copper_bar": 1, "plank": 1},
 	"cabinet": {"plank": 6, "copper_bar": 1},
 	"toy_truck": {"plank": 2, "iron_bar": 1},
+	"battery_cell": {"copper_bar": 1, "iron_bar": 1},
+	"rail": {"iron_bar": 1},
 }
-const RECIPE_ORDER := ["chair", "table", "lantern", "cabinet", "toy_truck"]
+const RECIPE_ORDER := ["chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail"]
+## Parts rather than furniture: they're for using, so they sell for little more than what went in.
+const PART_VALUE := {"battery_cell": 1.2, "rail": 0.7}
+const MAKES := {"rail": 2}
 const WORK_TIME := {"smelter": 3.0, "kiln": 4.0, "assembler": 3.0}
 
 var kind := "smelter"
@@ -54,7 +59,8 @@ func hint_text() -> String:
 	var parts: Array[String] = []
 	for res in RECIPES[r]:
 		parts.append("%d/%d %s" % [int(have.get(res, 0)), int(RECIPES[r][res]), Builds.RES_NAME.get(res, res)])
-	return "Assembler  ·  making a %s  ·  %s    [E] change" % [Product.KINDS[r].name.to_lower(), ", ".join(parts)]
+	var what := "2 rails" if r == "rail" else "a " + String(Product.KINDS[r].name).to_lower()
+	return "Assembler  ·  making %s  ·  %s    [E] change" % [what, ", ".join(parts)]
 
 
 func on_use(_player: Node) -> void:

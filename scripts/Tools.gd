@@ -177,7 +177,7 @@ const SHOP := {
 	"bp_logic": {"name": "Logic Kit", "price": 600.0, "cat": "blueprints", "tag": "Logic",
 		"desc": "Plans for seven logic blocks: one-way, relay, inverting relay, timer, delay, toggle latch and counter. Each has a back, sides and a front - the arrow shows which way power goes."},
 	"bp_sensors": {"name": "Sensors Blueprint", "price": 450.0, "cat": "blueprints", "tag": "Logic",
-		"desc": "Plans for a pressure plate and an item sensor: switches that the world flips for you."},
+		"desc": "Plans for a pressure plate, an item sensor and a level sensor (on when the crate in front holds enough): switches that the world flips for you."},
 	"bp_lamp": {"name": "Lamp & Bell Blueprint", "price": 120.0, "cat": "blueprints", "tag": "Decor",
 		"desc": "Plans for a lamp that lights while powered and a bell that rings when power arrives."},
 	"bp_sawmill": {"name": "Sawmill Blueprint", "price": 1500.0, "cat": "blueprints", "tag": "Production",
@@ -204,6 +204,12 @@ const SHOP := {
 		"desc": "Plans for a transmitter and receiver: power on one channel turns on every receiver on that channel, however far away."},
 	"bp_drill_rig": {"name": "Drill Rig Blueprint", "price": 2000.0, "cat": "blueprints", "tag": "Mining",
 		"desc": "Plans for a drill rig: put your rock drill (or steel core drill) in it and power it, and it drills straight down by itself, dropping what it digs out of its chute. It only goes so deep - then move it."},
+	"bp_charger": {"name": "Charger Blueprint", "price": 1200.0, "cat": "blueprints", "tag": "Power",
+		"desc": "Plans for a charger: drop battery cells (made in the assembler from a copper bar and an iron bar) into it and power it to charge them. Anything that moves runs on a charged cell."},
+	"bp_carts": {"name": "Minecart Blueprint", "price": 3000.0, "cat": "blueprints", "tag": "Rails",
+		"desc": "Plans for minecarts 1 to 4 squares long, Go and Reverse blocks for their decks, and a cart sensor for stations. Build a cart on rails, give it a charged cell, build machines on its deck - they share its power - and wire up what makes it go."},
+	"bp_rail_tools": {"name": "Rail Layer & Lifter Blueprint", "price": 2500.0, "cat": "blueprints", "tag": "Rails",
+		"desc": "Plans for two cart parts: a rail layer that lays a rail from a crate on the cart when the track runs out, and a rail lifter that picks up the rail behind into a crate."},
 	"bp_feller": {"name": "Tree Feller Blueprint", "price": 2200.0, "cat": "blueprints", "tag": "Tree Farm",
 		"desc": "Plans for an automatic tree feller. Put your saw into it and power it: it saws down the tree in front of it."},
 	"bp_wheelbarrow": {"name": "Wheelbarrow Blueprint", "price": 600.0, "cat": "blueprints", "tag": "Hauling",
@@ -216,7 +222,7 @@ const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "throwing", "scr
 	"vacuum", "blower", "twinvac", "cyclone", "pickaxe", "sledge", "steel_pick", "rock_drill", "detector", "core_drill", "dynamite", "wires",
 	"hammer", "rake", "can", "scale", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_wheelbarrow", "bp_windmill", "bp_generator", "bp_battery", "bp_logic", "bp_sensors",
 	"bp_lamp", "bp_sawmill", "bp_chipper", "bp_planter", "bp_sprinkler", "bp_feller", "bp_smelter", "bp_kiln", "bp_assembler",
-	"bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig",
+	"bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig", "bp_charger", "bp_carts", "bp_rail_tools",
 	"bp_truck_caller", "truck_big", "truck_hauler", "phone"]
 
 const WOOD := Color("a0703c")

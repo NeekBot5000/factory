@@ -7,6 +7,7 @@ const COPPER_FROM := 1.5
 const IRON_FROM := 5.0
 const MAX_DEPTH := 40.0
 
+static var drilled := {}       # "x,z" grid square -> how deep drill rigs have got there (it stays drilled out)
 static var _copper: FastNoiseLite
 static var _iron: FastNoiseLite
 

@@ -220,6 +220,7 @@ func _complete() -> void:
 	Game.toast.emit(Builds.BUILDS[id].name, Color("7aff9a"))
 	if Machines.is_machine(id):
 		Trophies.award("first_machine")
+	Minecart.adopt_all(get_tree())
 	# a little pop as it becomes real
 	obj.scale = Vector3.ONE * 0.9
 	var tw := obj.create_tween()

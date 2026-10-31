@@ -89,11 +89,14 @@ func busy() -> bool:
 
 
 var _off_land := false
+var _on_rails := true
 
 
 func hint_text() -> String:
 	if state == "place" and _off_land:
 		return "This isn't your land - buy it at a for-sale sign    [E] cancel"
+	if state == "place" and not _on_rails:
+		return "A minecart goes on rails, along the track, with rail under every square of it    [R] turn    [E] cancel"
 	match state:
 		"place":
 			if Builds.fixed(build_id):
@@ -182,7 +185,19 @@ func update(_delta: float) -> void:
 		if _off_land:
 			_valid = false
 		# front of the build faces you, plus however much you've turned it
-		_holo.global_transform = Transform3D(Basis.looking_at(flat, Vector3.UP).rotated(Vector3.UP, turn), pos)
+		var basis := Basis.looking_at(flat, Vector3.UP).rotated(Vector3.UP, turn)
+		_on_rails = true
+		if build_id.begins_with("minecart_"):
+			# a cart goes on rails that run its way, under every square of it
+			var f := -basis.z
+			var d := Vector2i(int(round(f.x)), int(round(f.z)))
+			var c := Rail.cell_of(pos)
+			_on_rails = Minecart.fits(c, d, int(build_id.trim_prefix("minecart_")))
+			if _on_rails:
+				pos.y = Rail.at(c).top()
+			else:
+				_valid = false
+		_holo.global_transform = Transform3D(basis, pos)
 		_paint(_valid)
 
 
@@ -228,5 +243,6 @@ func _grid_snap(p: Vector3) -> Dictionary:
 	if hit.is_empty():
 		return {}
 	# machines don't stack on machines (aiming at a belt to extend it shouldn't pile one on top); pillars are for that
-	var on_machine := Machine.of(hit.collider) != null
+	# ...except a minecart's deck: build the cart's machines on it
+	var on_machine := Machine.of(hit.collider) != null and not (Machine.of(hit.collider) is Minecart)
 	return {"pos": hit.position, "ok": (hit.normal as Vector3).y > 0.75 and not on_machine and not (hit.collider is ForestTree) and not (hit.collider is Truck)}

@@ -379,6 +379,29 @@ func primary() -> void:
 				rot.on_hammer()
 				start_swing()
 				return
+		# hammer on a loose rail: lay it on the grid square it's lying on; on a laid rail: pick it up again
+		if not builder.busy() and not hit.is_empty() and hit.collider is Product and (hit.collider as Product).kind == "rail":
+			var item := hit.collider as Product
+			var f := -cam.global_transform.basis.z
+			var c := Rail.cell_of(item.global_position)
+			if not Land.owns(Vector3(c.x, 0, c.y)):
+				Game.toast.emit("That isn't your land", Color("ff8a6a"))
+				return
+			var laid := Rail.lay(get_parent(), c, absf(f.x) > absf(f.z), item.global_position.y)
+			if laid != null:
+				laid.value = item.value
+				item.queue_free()
+				start_swing()
+				Sfx.play("clink", 0.9)
+				Sfx.play("thud", 1.5, -4.0)
+				Game.save_game()
+			return
+		if not builder.busy() and not hit.is_empty() and hit.collider is Rail:
+			(hit.collider as Rail).lift()
+			start_swing()
+			Sfx.play("clink", 1.2)
+			Game.save_game()
+			return
 		# hammer on a log: lock it in place / unlock it; anywhere else: the build menu
 		if not builder.busy() and not hit.is_empty() and hit.collider is Log:
 			var lg := hit.collider as Log
@@ -1057,6 +1080,10 @@ func take_down(b: Node3D) -> void:
 				take_down(on)
 	if b is Rotator:
 		(b as Rotator).unstick_all()
+	# a minecart's deck machines come down with it
+	if b is Minecart:
+		for m in (b as Minecart).deck_machines():
+			take_down(m)
 	if b is Machine:
 		(b as Machine).on_take_down()
 	if b.has_meta("build") and float(Builds.BUILDS.get(String(b.get_meta("build").id), {}).get("sell", 0.0)) > 1.0:

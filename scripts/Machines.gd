@@ -7,7 +7,9 @@ extends RefCounted
 const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp", "truck_caller",
 	"windmill", "generator", "battery", "gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch",
 	"gate_counter", "pressure_plate", "item_sensor", "lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller",
-	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver", "drill_rig"]
+	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver", "drill_rig",
+	"minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "cart_sensor", "rail_layer", "rail_lifter",
+	"charger", "level_sensor"]
 const GATE_COLOR := {"diode": Color("f2c12e"), "and": Color("3fa66b"), "not": Color("d64034"), "timer": Color("4fa3e3"),
 	"delay": Color("9b6ad6"), "latch": Color("e8642b"), "counter": Color("e2e2e2")}
 
@@ -235,6 +237,52 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			gem.name = "Gem"
 			if id == "receiver":
 				_p(parts, root, LowPoly.cyl(0.22, 0.05, 0.12, 10), Vector3(0, 0.82, 0), "", iron)
+		"minecart_1", "minecart_2", "minecart_3", "minecart_4":
+			_minecart(root, parts, int(id.trim_prefix("minecart_")), logm, iron, copper, dark)
+		"cart_go", "cart_back":
+			_p(parts, root, LowPoly.box(Vector3(0.5, 0.16, 0.5)), Vector3(0, 0.08, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.44, 0.06, 0.44)), Vector3(0, 0.19, 0), "copper_bar", copper)
+			var col := LowPoly.mat(Color("3fbf5f") if id == "cart_go" else Color("e8503a"), 0.5)
+			var sgn := 1.0 if id == "cart_go" else -1.0
+			_p(parts, root, LowPoly.box(Vector3(0.08, 0.04, 0.24)), Vector3(0, 0.24, 0.06 * sgn), "", col)
+			_p(parts, root, LowPoly.box(Vector3(0.08, 0.04, 0.18)), Vector3(-0.06, 0.24, -0.1 * sgn), "", col, Vector3(0, -40.0 * sgn, 0))
+			_p(parts, root, LowPoly.box(Vector3(0.08, 0.04, 0.18)), Vector3(0.06, 0.24, -0.1 * sgn), "", col, Vector3(0, 40.0 * sgn, 0))
+		"cart_sensor":
+			_p(parts, root, LowPoly.box(Vector3(0.36, 0.12, 0.36)), Vector3(0, 0.06, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.1, 0.6, 0.1)), Vector3(0, 0.42, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.26, 0.14, 0.12)), Vector3(0, 0.75, 0), "copper_bar", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.05, 0.05, 0.4)), Vector3(0, 0.75, -0.25), "", LowPoly.mat(Color("f2c12e"), 0.5))
+		"rail_layer", "rail_lifter":
+			_p(parts, root, LowPoly.box(Vector3(0.7, 0.2, 0.6)), Vector3(0, 0.1, 0), "stone", stone)
+			for sx in [-0.3, 0.3]:
+				_p(parts, root, LowPoly.box(Vector3(0.08, 0.6, 0.08)), Vector3(sx, 0.5, 0), "iron_bar", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.7, 0.08, 0.08)), Vector3(0, 0.82, 0), "iron_bar", iron)
+			var arm := _node(root, "Arm", Vector3(0, 0.78, 0))
+			var dz := -0.45 if id == "rail_layer" else 0.45
+			_p(parts, arm, LowPoly.box(Vector3(0.08, 0.08, 0.5)), Vector3(0, 0, dz * 0.5), "copper_bar", copper)
+			if id == "rail_layer":
+				for sx in [-0.15, 0.15]:
+					_p(parts, arm, LowPoly.box(Vector3(0.04, 0.05, 0.4)), Vector3(sx, -0.08, dz), "", Tools.steel(Color("8d949e"), 0.4))
+				_p(parts, arm, LowPoly.box(Vector3(0.42, 0.04, 0.08)), Vector3(0, -0.12, dz), "", logm)
+			else:
+				for sx in [-0.1, 0.1]:
+					_p(parts, arm, LowPoly.box(Vector3(0.04, 0.22, 0.04)), Vector3(sx, -0.12, dz), "", dark)
+					_p(parts, arm, LowPoly.box(Vector3(0.04, 0.04, 0.1)), Vector3(sx, -0.22, dz - 0.04), "", dark)
+		"charger":
+			_p(parts, root, LowPoly.box(Vector3(0.8, 0.5, 0.8)), Vector3(0, 0.25, 0), "stone", stone)
+			for k in 3:
+				_p(parts, root, LowPoly.cyl(0.32, 0.32, 0.04, 12), Vector3(0, 0.12 + k * 0.12, 0), "copper_bar", copper)
+			for sx in [-1.0, 1.0]:
+				_p(parts, root, LowPoly.box(Vector3(0.8, 0.18, 0.05)), Vector3(0, 0.59, sx * 0.38), "iron_bar", iron)
+				_p(parts, root, LowPoly.box(Vector3(0.05, 0.18, 0.8)), Vector3(sx * 0.38, 0.59, 0), "iron_bar", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.7, 0.02, 0.7)), Vector3(0, 0.51, 0), "", LowPoly.mat(Color("3fbf5f"), 0.6))
+		"level_sensor":
+			_p(parts, root, LowPoly.box(Vector3(0.36, 0.12, 0.36)), Vector3(0, 0.06, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.05, 0.06, 0.4, 8), Vector3(0, 0.3, 0), "log", logm)
+			_p(parts, root, LowPoly.box(Vector3(0.34, 0.3, 0.1)), Vector3(0, 0.6, 0), "copper", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.28, 0.24, 0.02)), Vector3(0, 0.6, 0.055), "", LowPoly.mat(Color("e8e2d0"), 0.8))
+			var needle := _node(root, "Needle", Vector3(0, 0.52, 0.07))
+			_p(parts, needle, LowPoly.box(Vector3(0.02, 0.18, 0.01)), Vector3(0, 0.09, 0), "", red)
 		"drill_rig":
 			_p(parts, root, LowPoly.box(Vector3(1.0, 0.12, 1.0)), Vector3(0, 0.06, 0), "stone", stone)
 			for k in 4:
@@ -324,6 +372,23 @@ static func _gate(root: Node3D, parts: Array, mode: String, stone: Material, cop
 
 
 ## A bark hopper on top of a machine: open-topped walls `w` wide whose floor is at `y`.
+## A minecart: an iron frame on four wheels with a plank deck, `n` grid squares long (from its front square back),
+## and a little cradle for the battery cell hanging off the back.
+static func _minecart(root: Node3D, parts: Array, n: int, logm: Material, iron: Material, copper: Material, dark: Material) -> void:
+	var mid := (n - 1) * 0.5
+	_p(parts, root, LowPoly.box(Vector3(0.9, 0.08, n - 0.1)), Vector3(0, 0.41, mid), "plank", logm)
+	for sx in [-0.44, 0.44]:
+		_p(parts, root, LowPoly.box(Vector3(0.06, 0.16, n - 0.06)), Vector3(sx, 0.33, mid), "iron_bar", iron)
+	for k in n:
+		_p(parts, root, LowPoly.box(Vector3(0.82, 0.08, 0.08)), Vector3(0, 0.29, k), "iron_bar", iron)
+		for sx in [-0.25, 0.25]:
+			_p(parts, root, LowPoly.cyl(0.1, 0.1, 0.06, 10), Vector3(sx, 0.13, k), "", dark, Vector3(0, 0, 90))
+	_p(parts, root, LowPoly.box(Vector3(0.36, 0.04, 0.34)), Vector3(0, 0.24, n - 0.28), "copper_bar", copper)
+	for sx in [-0.17, 0.17]:
+		_p(parts, root, LowPoly.box(Vector3(0.03, 0.14, 0.34)), Vector3(sx, 0.31, n - 0.28), "copper_bar", copper)
+	_p(parts, root, LowPoly.box(Vector3(0.36, 0.14, 0.03)), Vector3(0, 0.31, n - 0.11), "copper_bar", copper)
+
+
 static func _hopper(root: Node3D, parts: Array, y: float, w: float, bark: Material) -> void:
 	for s in [-1.0, 1.0]:
 		_p(parts, root, LowPoly.box(Vector3(w, 0.35, 0.04)), Vector3(0, y + 0.42, s * w * 0.5), "bark", bark, Vector3(s * -12.0, 0, 0))
@@ -436,6 +501,10 @@ static func new_body(id: String) -> Machine:
 		"crate": return Crate.new()
 		"transmitter", "receiver": return Wireless.new()
 		"drill_rig": return DrillRig.new()
+		"minecart_1", "minecart_2", "minecart_3", "minecart_4": return Minecart.new()
+		"cart_go", "cart_back", "rail_layer", "rail_lifter": return CartPart.new()
+		"cart_sensor", "level_sensor": return Sensor.new()
+		"charger": return Charger.new()
 	if id.begins_with("gate_"):
 		return Gate.new()
 	return Machine.new()
@@ -521,6 +590,24 @@ static func finish(id: String, body: Machine) -> void:
 		"drill_rig":
 			Builds._box_col(body, Vector3(1.0, 0.12, 1.0), Vector3(0, 0.06, 0))
 			Builds._box_col(body, Vector3(0.4, 2.1, 0.4), Vector3(0, 1.1, 0))
+		"minecart_1", "minecart_2", "minecart_3", "minecart_4":
+			var n := int(id.trim_prefix("minecart_"))
+			Builds._box_col(body, Vector3(0.9, 0.24, n - 0.1), Vector3(0, Minecart.DECK_Y - 0.12, (n - 1) * 0.5))
+			Builds._box_col(body, Vector3(0.36, 0.04, 0.34), Vector3(0, 0.24, n - 0.28))
+			for sx in [-0.17, 0.17]:
+				Builds._box_col(body, Vector3(0.03, 0.2, 0.34), Vector3(sx, 0.34, n - 0.28))
+			Builds._box_col(body, Vector3(0.36, 0.2, 0.03), Vector3(0, 0.34, n - 0.11))
+		"cart_go", "cart_back":
+			Builds._box_col(body, Vector3(0.5, 0.26, 0.5), Vector3(0, 0.13, 0))
+		"cart_sensor", "level_sensor":
+			Builds._box_col(body, Vector3(0.36, 0.8, 0.36), Vector3(0, 0.4, 0))
+		"rail_layer", "rail_lifter":
+			Builds._box_col(body, Vector3(0.7, 0.86, 0.6), Vector3(0, 0.43, 0))
+		"charger":
+			Builds._box_col(body, Vector3(0.8, 0.5, 0.8), Vector3(0, 0.25, 0))
+			for sgn in [-1.0, 1.0]:
+				Builds._box_col(body, Vector3(0.8, 0.2, 0.05), Vector3(0, 0.6, sgn * 0.38))
+				Builds._box_col(body, Vector3(0.05, 0.2, 0.8), Vector3(sgn * 0.38, 0.6, 0))
 		"feller":
 			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
 			Builds._box_col(body, Vector3(0.2, 1.2, 0.5), Vector3(0, 0.75, 0.1))

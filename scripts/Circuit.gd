@@ -36,6 +36,14 @@ func refresh() -> void:
 	for m in bl:
 		for n in bl[m]:
 			links[m].append(n)
+	# everything on a minecart's deck shares the cart's battery, no wires needed (except its switch inputs)
+	for c in get_tree().get_nodes_in_group("carts"):
+		if not links.has(c):
+			continue
+		for m in (c as Minecart).deck_machines():
+			if links.has(m) and Minecart.auto_linked(m):
+				links[c].append(m)
+				links[m].append(c)
 	# batteries charge from a network that has other power; if it has none, they power it themselves
 	var batteries: Array = machines.filter(func(m): return m is Battery)
 	for bt in batteries:

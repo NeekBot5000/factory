@@ -351,6 +351,7 @@ func run() -> void:
 	await second_wave()
 	await mining_test()
 	await truck_test()
+	await cart_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -556,3 +557,129 @@ func second_wave() -> void:
 			sign = c
 	await secs(2.5)
 	check(sign != null and sign.tier == 4, "the company sign grows as the business earns more (tier %d)" % (sign.tier if sign else -1))
+
+
+func rails_along_z(x: int, z0: int, z1: int, y: float) -> void:
+	for z in range(mini(z0, z1), maxi(z0, z1) + 1):
+		Rail.lay(main, Vector2i(x, z), false, y)
+
+
+func on_deck(id: String, cart: Minecart, square: int) -> Machine:
+	return Builds.finish(id, main, cart.global_transform * Transform3D(Basis(), Vector3(0, Minecart.DECK_Y, square)), Builds.HOOP_DEFAULT, [], 1.0) as Machine
+
+
+func cart_test() -> void:
+	var B3 := Vector3(-60, 40, -125)
+	var sb := LowPoly.static_box(main, Vector3(40, 1, 40), B3 + Vector3(0, -0.5, 0))
+	sb.collision_layer = 1
+	await frames(2)
+	# assembler recipes for the moving parts
+	check(Processor.RECIPES.battery_cell.has("copper_bar") and Processor.RECIPES.battery_cell.has("iron_bar") and Processor.RECIPES.rail.has("iron_bar"), "the assembler makes battery cells and rails")
+	# a charger charges a cell
+	var ck := place("crank", Vector3(2, 0, 4), 0.0, B3) as Crank
+	ck.charge = 200.0
+	var chg := place("charger", Vector3(0, 0, 4), 0.0, B3) as Charger
+	wire(ck, chg)
+	var cell := product("battery_cell", chg.global_transform * Vector3(0, 0.9, 0), 6.0)
+	check(cell.charge == 0.0, "a new battery cell starts empty")
+	await secs(3.0)
+	check(cell.charge > 0.2, "a powered charger charges the cell in its cradle (%d%%)" % int(cell.charge * 100))
+	# rails, laid along z, and a 2-long cart on them
+	var x := int(B3.x)
+	var z0 := int(B3.z)
+	rails_along_z(x, z0 + 1, z0 - 4, B3.y)
+	check(Rail.at(Vector2i(x, z0)) != null and not Rail.at(Vector2i(x, z0)).along_x and absf(Rail.at(Vector2i(x, z0)).global_position.y - B3.y) < 0.05, "rails lay on the grid, on the ground under them")
+	check(Minecart.fits(Vector2i(x, z0), Vector2i(0, -1), 2) and not Minecart.fits(Vector2i(x, z0), Vector2i(1, 0), 2), "a cart only fits along the track")
+	var cart := Builds.finish("minecart_2", main, Transform3D(Basis(), Vector3(x, Rail.at(Vector2i(x, z0)).top(), z0)), Builds.HOOP_DEFAULT, [], 1.0) as Minecart
+	var go := on_deck("cart_go", cart, 0) as CartPart
+	var lev := on_deck("lever", cart, 1) as Lever
+	var lamp := on_deck("lamp", cart, 1)
+	lamp.global_position.x += 0.3
+	Minecart.adopt_all(get_tree())
+	check(cart.length == 2 and cart.deck_machines().size() == 3, "machines built on the deck belong to the cart (%d)" % cart.deck_machines().size())
+	wire(lev, go)
+	await frames(6)
+	check(not lamp.powered, "no battery cell: nothing on the deck has power")
+	cell.set_charge(1.0)
+	cell.global_position = cart.global_transform * (cart.cradle() + Vector3(0, 0.4, 0))
+	await secs(1.0)
+	check(cart.cell == cell, "a charged cell dropped in the cradle snaps in")
+	check(lamp.powered and lev.powered and not go.powered, "the cell powers the deck without wires - but not Go, which needs a switch")
+	await secs(1.0)
+	check(Rail.cell_of(cart.global_position) == Vector2i(x, z0), "with Go off, the cart stays put")
+	lev.set_on(true)
+	await secs(1.5)
+	var c1 := Rail.cell_of(cart.global_position)
+	check(c1.y < z0 and lamp.global_position.z < B3.z, "switch Go on and it rolls forward along the rails, carrying its deck (%s)" % str(c1))
+	await secs(4.0)
+	check(Rail.cell_of(cart.global_position) == Vector2i(x, z0 - 4), "it stops where the track ends (%s)" % str(Rail.cell_of(cart.global_position)))
+	check(cell.charge < 1.0, "moving uses up the battery (%.3f)" % cell.charge)
+	lev.set_on(false)
+	var back := on_deck("cart_back", cart, 1) as CartPart
+	back.global_position.x -= 0.3
+	Minecart.adopt_all(get_tree())
+	wire(cart, back)
+	await secs(2.0)
+	check(Rail.cell_of(cart.global_position).y > z0 - 4, "Reverse rolls it back")
+	Circuit.toggle_wire(main, cart, back)
+	# a station: the cart sensor sees a cart on the rail in front of it
+	var stn := place("cart_sensor", Vector3(1, 0, -1), 90.0, B3) as Sensor
+	await frames(4)
+	var here := Rail.cell_of(stn.global_transform * Vector3(0, 0, -1))
+	var cart_here := false
+	for k in cart.length:
+		cart_here = cart_here or cart.front_cell() + Vector2i(0, 1) * k == here
+	check(stn.conducts() == cart_here, "the cart sensor knows whether a cart is at its station")
+	# the walking cart: a rail layer in front, a crate, a lifter at the back - it keeps going with the same rails
+	var x2 := x + 6
+	rails_along_z(x2, z0 + 3, z0, B3.y)
+	var walker := Builds.finish("minecart_4", main, Transform3D(Basis(), Vector3(x2, Rail.at(Vector2i(x2, z0)).top(), z0)), Builds.HOOP_DEFAULT, [], 1.0) as Minecart
+	on_deck("rail_layer", walker, 0)
+	var crate := on_deck("crate", walker, 1) as Crate
+	on_deck("rail_lifter", walker, 2)
+	var wgo := on_deck("cart_go", walker, 3)
+	Minecart.adopt_all(get_tree())
+	wire(walker, wgo)
+	for k in 2:
+		product("rail", crate.global_transform * Vector3(0, 0.5 + k * 0.2, 0), Product.RAIL_VALUE)
+	await secs(1.0)
+	var n_rails := get_tree().get_nodes_in_group("rails").size()
+	var cell2 := product("battery_cell", walker.global_transform * (walker.cradle() + Vector3(0, 0.4, 0)), 6.0)
+	cell2.set_charge(1.0)
+	await secs(6.0)
+	Circuit.toggle_wire(main, walker, wgo)
+	await secs(1.5)
+	var wz := Rail.cell_of(walker.global_position).y
+	check(wz <= z0 - 3, "with a rail layer and lifter it lays track ahead and picks it up behind (%d squares)" % (z0 - wz))
+	check(get_tree().get_nodes_in_group("rails").size() == n_rails and Rail.at(Vector2i(x2, z0 + 3)) == null, "...so it walks on the same handful of rails")
+	# drill rig: drilled out gives power out, and depth belongs to the ground
+	var rig := place("drill_rig", Vector3(-6, 0, 2), 0.0, B3) as DrillRig
+	rig.tool_id = "rock_drill"
+	await frames(2)
+	check(not rig.conducts(), "a drill rig that's still drilling stops power there")
+	Mining.drilled["%d,%d" % [int(round(rig.global_position.x)), int(round(rig.global_position.z))]] = 12.0
+	rig.global_position.x += 1.0
+	await frames(2)
+	rig.global_position.x -= 1.0
+	await frames(2)
+	check(rig.drilled_out() and rig.conducts(), "drilled out, it lets power through (its \"done\" output)")
+	rig.global_position.x += 1.0
+	await frames(2)
+	check(not rig.drilled_out() and rig.depth == 0.0, "moved to fresh ground, it starts again")
+	rig.tool_id = ""
+	# level sensor: on when the crate in front has enough in it
+	var lc := place("crate", Vector3(-3, 0, 6), 0.0, B3) as Crate
+	var ls := place("level_sensor", Vector3(-3, 0, 7), 0.0, B3) as Sensor
+	ls.level = 0
+	for k in 4:
+		ore_at(lc.global_transform * Vector3(0, 0.4 + k * 0.25, 0))
+	await secs(1.0)
+	check(not ls.conducts(), "level sensor: 4 in the crate is under 5")
+	ore_at(lc.global_transform * Vector3(0, 0.6, 0))
+	ore_at(lc.global_transform * Vector3(0.2, 0.8, 0))
+	await secs(1.0)
+	check(ls.conducts(), "level sensor: at 5 or more it lets power through (%d)" % lc.contents().size())
+	# saving keeps rails, cells and drilled spots
+	var ws := WorldSave.save(main)
+	check((ws.rails as Array).size() == n_rails and (ws.drilled as Dictionary).size() >= 1, "rails and drilled-out spots are saved")
+	check(float(walker.save_state().cell) > 0.0, "a cart saves its battery charge")

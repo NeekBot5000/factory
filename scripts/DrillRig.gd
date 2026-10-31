@@ -14,6 +14,7 @@ var _next := PER_CHUNK
 var _bit: Node3D
 var _model: Node3D
 var _fx := 0.0
+var _key := ""
 
 
 func activate(p_size: float) -> void:
@@ -33,6 +34,22 @@ func max_depth() -> float:
 func drilled_out() -> bool:
 	return tool_id != "" and depth >= max_depth()
 
+
+## Its "drilled out" output: while there's nothing left to drill here, it lets power through to whatever is wired to
+## it (a cart's Go, a lamp, a bell...). While it's still drilling, power stops at the rig.
+func conducts() -> bool:
+	return drilled_out()
+
+
+## Depth belongs to the ground, not the rig: move it (or the cart it's on) and it starts on fresh ground; bring it
+## back and that spot is still drilled out.
+func _sync_spot() -> void:
+	var k := "%d,%d" % [int(round(global_position.x)), int(round(global_position.z))]
+	if k == _key:
+		return
+	_key = k
+	depth = float(Mining.drilled.get(k, 0.0))
+	_next = (floor(depth / PER_CHUNK) + 1.0) * PER_CHUNK
 
 func hint_text() -> String:
 	var p := get_tree().get_first_node_in_group("player")
@@ -70,10 +87,12 @@ func _show_tool() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_sync_spot()
 	if tool_id == "" or not powered or drilled_out():
 		return
 	var d: Dictionary = DRILLS[tool_id]
 	depth = minf(max_depth(), depth + float(d.rate) * delta)
+	Mining.drilled[_key] = maxf(depth, float(Mining.drilled.get(_key, 0.0)))
 	if _bit != null:
 		_bit.rotation.y += delta * 18.0
 		_bit.position.y = 0.4 + sin(Time.get_ticks_msec() * 0.03) * 0.03
@@ -109,13 +128,17 @@ func on_take_down() -> void:
 
 
 func save_state() -> Dictionary:
-	return {"tool": tool_id, "depth": snappedf(depth, 0.01)}
+	return {"tool": tool_id}
 
 
 func load_state(d: Dictionary) -> void:
 	tool_id = String(d.get("tool", ""))
-	depth = float(d.get("depth", 0.0))
-	_next = (floor(depth / PER_CHUNK) + 1.0) * PER_CHUNK
+	# older saves kept the depth on the rig
+	if d.has("depth"):
+		var k := "%d,%d" % [int(round(global_position.x)), int(round(global_position.z))]
+		Mining.drilled[k] = maxf(float(d.depth), float(Mining.drilled.get(k, 0.0)))
+	_key = ""
+	_sync_spot()
 	if DRILLS.has(tool_id):
 		Game.set_dropped(tool_id, true)
 		_show_tool()
