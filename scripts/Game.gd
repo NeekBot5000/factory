@@ -6,6 +6,7 @@ signal tools_changed
 signal orders_changed
 signal toast(text: String, color: Color)
 signal saved
+signal vehicle_bought
 
 var save_path := "user://timber_save.json"   # tests point this elsewhere
 
@@ -17,6 +18,7 @@ var next_order := 1
 var total_earned := 0.0
 var save_enabled := true
 var land: Array = ["-1,-1", "-1,0", "0,-1", "0,0"]     # plots of land you own (Land.gd)
+var tutorial := 0               # starting tutorial step (-1 = finished, or an old save from before it existed)
 var trophies := {}              # milestones on the cabin's trophy wall
 var charges := {}               # consumables left: dynamite sticks
 var dropped := {}               # tools lying on the ground (owned, but not in your hands); not saved
@@ -79,6 +81,16 @@ func buy(id: String) -> bool:
 	if not can_afford(float(it.price)):
 		toast.emit("Not enough money", Color("ff7a7a"))
 		return false
+	if it.has("vehicle"):
+		# trucks don't come in a box: the old one drives off and the new one drives in
+		money -= float(it.price)
+		money_changed.emit(money)
+		owned[id] = true
+		toast.emit("Bought the %s" % it.name, Color("8fd0ff"))
+		tools_changed.emit()
+		vehicle_bought.emit()
+		save_game()
+		return true
 	money -= float(it.price)
 	money_changed.emit(money)
 	orders.append({"id": next_order, "item": id, "status": "processing", "t": 0.0})
@@ -105,6 +117,11 @@ func receive(id: String) -> void:
 	save_game()
 
 
+## Which truck you have: 0 the starting log truck, 1 the big truck, 2 the log hauler.
+func truck_level() -> int:
+	return 2 if owned.has("truck_hauler") else (1 if owned.has("truck_big") else 0)
+
+
 ## Nothing done yet: no money ever earned, nothing bought, nothing changed in the world.
 func is_fresh() -> bool:
 	return total_earned <= 0.0 and owned.size() <= 1 and orders.is_empty() and world_builds.is_empty() and world_state.is_empty()
@@ -125,7 +142,7 @@ func save_game() -> void:
 	if world_state_saver.is_valid():
 		world_state = world_state_saver.call()
 	# orders still in transit are refunded into "processing" so they get re-delivered next session
-	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings, "charges": charges, "land": land, "trophies": trophies}))
+	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings, "charges": charges, "land": land, "trophies": trophies, "tutorial": tutorial}))
 	saved.emit()
 
 
@@ -138,7 +155,7 @@ func load_game() -> void:
 	money = float(d.get("money", 0.0))
 	owned = {"hands": true}
 	for k in d.get("owned", []):
-		if Tools.TOOLS.has(k) or String(k).begins_with("bp_"):
+		if Tools.TOOLS.has(k) or String(k).begins_with("bp_") or Tools.SHOP.has(k):
 			owned[k] = true
 	has_phone = bool(d.get("phone", false))
 	orders = []
@@ -156,6 +173,7 @@ func load_game() -> void:
 		if not land.has(String(k)):
 			land.append(String(k))
 	trophies = d.get("trophies", {})
+	tutorial = int(d.get("tutorial", -1))
 	charges = {}
 	var ch: Dictionary = d.get("charges", {})
 	for k in ch:
@@ -183,6 +201,7 @@ func reset() -> void:
 	charges = {}
 	land = ["-1,-1", "-1,0", "0,-1", "0,0"]
 	trophies = {}
+	tutorial = 0
 	has_phone = false
 	orders = []
 	total_earned = 0.0

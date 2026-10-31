@@ -13,6 +13,10 @@ const SPEED := 10.0
 const AWAY_TIME := 4.0
 
 var role := "ship"
+var level := 0                          # 0 log truck, 1 big truck, 2 log hauler: bigger beds
+var swap_after := false                 # drives off to be swapped for a bigger truck
+signal swap_me
+const BEDS := [Vector3(2.2, 0.7, 4.0), Vector3(2.6, 1.4, 4.6), Vector3(2.9, 1.9, 5.2)]     # width, side height, length
 var main: Node
 var state := "parked"
 var park_xform := Transform3D.IDENTITY
@@ -46,7 +50,7 @@ func build(p_role: String, p_main: Node, park: Transform3D, out: Array[Vector3],
 	sync_to_physics = true
 	collision_layer = 1
 	collision_mask = 0
-	var body_col := Color("2f7d4a") if role == "ship" else Color("e8792b")
+	var body_col := (Color("2f7d4a") if level == 0 else (Color("2e6fb3") if level == 1 else Color("b3262e"))) if role == "ship" else Color("e8792b")
 	_chassis(body_col)
 	if role == "ship":
 		_flatbed()
@@ -108,25 +112,31 @@ func _chassis(body_col: Color) -> void:
 func _flatbed() -> void:
 	var boards := LowPoly.mat(Color("8a5a36"), 0.95)
 	var boards2 := LowPoly.mat(Color("6f4728"), 0.95)
-	LowPoly.mesh_instance(self, LowPoly.box(Vector3(2.2, 0.12, 4.0)), boards, Vector3(0, 1.0, 1.0))
+	var bed: Vector3 = BEDS[level]
+	var w := bed.x
+	var h := bed.y
+	var l := bed.z
+	var cz := -1.0 + l * 0.5          # the bed starts behind the cab and runs back toward the porch
+	var sy := 1.05 + h * 0.5
+	LowPoly.mesh_instance(self, LowPoly.box(Vector3(w, 0.12, l)), boards, Vector3(0, 1.0, cz))
 	for s in [-1, 1]:
-		LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.08, 0.7, 4.0)), boards2, Vector3(s * 1.08, 1.4, 1.0))
-		_col(Vector3(0.12, 0.8, 4.0), Vector3(s * 1.08, 1.45, 1.0))
+		LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.08, h, l)), boards2, Vector3(s * (w * 0.5 - 0.02), sy, cz))
+		_col(Vector3(0.12, h + 0.1, l), Vector3(s * (w * 0.5 - 0.02), sy + 0.05, cz))
 		for k in 3:
-			LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.1, 0.8, 0.08)), LowPoly.mat(Color("3a3d44")), Vector3(s * 1.1, 1.4, -0.7 + k * 1.7))
-	LowPoly.mesh_instance(self, LowPoly.box(Vector3(2.2, 0.7, 0.08)), boards2, Vector3(0, 1.4, 3.0))
-	LowPoly.mesh_instance(self, LowPoly.box(Vector3(2.2, 0.9, 0.1)), LowPoly.mat(Color("3a3d44")), Vector3(0, 1.5, -1.0))
-	_col(Vector3(2.2, 0.15, 4.0), Vector3(0, 1.0, 1.0))
-	_col(Vector3(2.2, 0.8, 0.12), Vector3(0, 1.45, 3.0))
-	_col(Vector3(2.2, 0.9, 0.12), Vector3(0, 1.5, -1.0))
+			LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.1, h + 0.1, 0.08)), LowPoly.mat(Color("3a3d44")), Vector3(s * w * 0.5, sy, -0.7 + k * (l - 0.6) / 2.0))
+	LowPoly.mesh_instance(self, LowPoly.box(Vector3(w, h, 0.08)), boards2, Vector3(0, sy, cz + l * 0.5))
+	LowPoly.mesh_instance(self, LowPoly.box(Vector3(w, h + 0.2, 0.1)), LowPoly.mat(Color("3a3d44")), Vector3(0, sy + 0.1, -1.0))
+	_col(Vector3(w, 0.15, l), Vector3(0, 1.0, cz))
+	_col(Vector3(w, h + 0.1, 0.12), Vector3(0, sy + 0.05, cz + l * 0.5))
+	_col(Vector3(w, h + 0.2, 0.12), Vector3(0, sy + 0.1, -1.0))
 	bed_area = Area3D.new()
 	bed_area.collision_layer = 0
 	bed_area.collision_mask = 2
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(2.0, 1.4, 3.8)
+	sh.size = Vector3(w - 0.2, h + 0.7, l - 0.2)
 	cs.shape = sh
-	cs.position = Vector3(0, 1.75, 1.0)
+	cs.position = Vector3(0, 1.05 + (h + 0.7) * 0.5, cz)
 	bed_area.add_child(cs)
 	add_child(bed_area)
 	sign = Label3D.new()
@@ -134,7 +144,7 @@ func _flatbed() -> void:
 	sign.font_size = 48
 	sign.pixel_size = 0.005
 	sign.outline_size = 12
-	sign.position = Vector3(0, 2.7, 1.0)
+	sign.position = Vector3(0, 2.0 + h, cz)
 	sign.modulate = Color("ffe28a")
 	sign.no_depth_test = true          # always readable, even behind a full load
 	sign.render_priority = 10
@@ -197,11 +207,29 @@ func on_use(_player: Node) -> void:
 		ship()
 
 
-func ship() -> bool:
+## Drives off to be swapped for a bigger truck (anything in the bed is sold on the way, as usual).
+func leave_for_upgrade() -> void:
+	swap_after = true
+	if not ship(true):
+		swap_after = false
+
+
+## A new truck arriving: drives in from the end of the road and parks.
+func arrive() -> void:
+	state = "returning"
+	visible = true
+	global_transform = Transform3D(Basis.IDENTITY, route_in[0])
+	_drive(route_in, func():
+		state = "parked"
+		global_transform = park_xform
+		engine.stop())
+
+
+func ship(even_empty := false) -> bool:
 	if role != "ship" or state != "parked":
 		return false
 	var v := load_value()
-	if v <= 0.0:
+	if v <= 0.0 and not even_empty:
 		return false
 	cargo.clear()
 	cargo_value = v
@@ -340,10 +368,15 @@ func _physics_process(delta: float) -> void:
 				if is_instance_valid(c):
 					c.queue_free()
 			cargo.clear()
-			Game.add_money(cargo_value)
-			Game.toast.emit("+$%.2f" % cargo_value, Color("7aff9a"))
-			Sfx.play("buy")
-			shipped.emit(cargo_value)
+			if cargo_value > 0.0:
+				Game.add_money(cargo_value)
+				Game.toast.emit("+$%.2f" % cargo_value, Color("7aff9a"))
+				Sfx.play("buy")
+				shipped.emit(cargo_value)
+			if swap_after:
+				state = "gone"
+				swap_me.emit()
+				return
 			state = "returning"
 			visible = true
 			_drive(route_in, func():

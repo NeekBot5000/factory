@@ -350,6 +350,7 @@ func run() -> void:
 
 	await second_wave()
 	await mining_test()
+	await truck_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -375,6 +376,22 @@ func ore(kind: String, at: Vector3) -> Ore:
 
 func products_of(kind: String) -> Array:
 	return get_tree().get_nodes_in_group("products").filter(func(p): return is_instance_valid(p) and (p as Product).kind == kind)
+
+
+func truck_test() -> void:
+	var old: Truck = main.ship_truck
+	check(old.level == 0, "you start with the small log truck")
+	Game.money = 20000.0
+	check(Game.buy("truck_big"), "buy the Big Truck in the shop")
+	var arrived := false
+	for k in 3600:
+		await get_tree().physics_frame
+		if main.ship_truck != old and main.ship_truck.state == "parked":
+			arrived = true
+			break
+	check(arrived and main.ship_truck.level == 1 and not is_instance_valid(old), "the old truck drives off and the bigger one comes back and parks")
+	var bed := ((main.ship_truck.bed_area.get_child(0) as CollisionShape3D).shape as BoxShape3D).size
+	check(bed.x * bed.y * bed.z > 2.0 * 1.4 * 3.8 * 2.0, "its bed holds more than twice as much (%.1f m3)" % (bed.x * bed.y * bed.z))
 
 
 func mining_test() -> void:

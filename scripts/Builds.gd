@@ -61,6 +61,7 @@ const BUILDS := {
 	"transmitter": {"name": "Transmitter", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
 	"receiver": {"name": "Receiver", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
 	# decorations: worth far more than what goes into them ("sell" = sale value per $ of materials)
+	"bark_wreath": {"name": "Bark Wreath", "needs": {"bark": 12}, "sell": 2.5},
 	"lamppost": {"name": "Lamp Post", "needs": {"stone": 2, "iron_bar": 2, "copper_bar": 1}, "sell": 3.0},
 	"garden_table": {"name": "Garden Table", "needs": {"plank": 8, "iron_bar": 1}, "sell": 3.0},
 	"statue": {"name": "Lumberjack Statue", "needs": {"stone": 10, "copper_bar": 6}, "sell": 3.5},
@@ -70,11 +71,11 @@ const ORDER := ["basket", "wheelbarrow", "bench", "campfire", "hammock", "chute"
 	"crank", "lever", "button", "windmill", "generator", "battery", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller",
 	"gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor",
 	"lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller", "smelter", "kiln", "assembler", "grabber", "sorter",
-	"splitter", "crate", "transmitter", "receiver", "drill_rig", "lamppost", "garden_table", "statue", "fountain"]
+	"splitter", "crate", "transmitter", "receiver", "drill_rig", "bark_wreath", "lamppost", "garden_table", "statue", "fountain"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "wheelbarrow", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock", "garden_table"]},
-	{"name": "Decorations", "items": ["lamppost", "statue", "fountain"]},
+	{"name": "Decorations", "items": ["bark_wreath", "lamppost", "statue", "fountain"]},
 	{"name": "Fire & Garden", "items": ["campfire", "compost"]},
 	{"name": "Workshop", "items": ["chute", "catapult"]},
 	{"name": "Fun", "items": ["ball", "hoop"]},
@@ -533,6 +534,8 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 				if b is Basketball and (b as RigidBody3D).linear_velocity.y < 0.0:
 					hoop.score(b))
 			body.add_to_group("hoops")
+		"bark_wreath":
+			_box_col(body, Vector3(0.7, 1.3, 0.2), Vector3(0, 0.65, 0))
 		"lamppost":
 			_box_col(body, Vector3(0.4, 2.5, 0.4), Vector3(0, 1.25, 0))
 		"garden_table":

@@ -162,7 +162,12 @@ void fragment() {
 	Game.saved.connect(save_icon.flash)
 	if main.icons != null:
 		main.icons.icon_ready.connect(func(_id): _rebuild_toolbar())
-	(health_bar.get_parent() as Control).modulate.a = 0.0     # hidden until you're hurt
+	(health_bar.get_parent().get_parent() as Control).modulate.a = 0.0     # hidden until you're hurt
+	# the starting tutorial, for a new game
+	if Game.tutorial >= 0 and Game.save_enabled:
+		var tut := Tutorial.new()
+		root.add_child(tut)
+		tut.setup(main, player, font_body, font_bold)
 	money_lbl.text = "$%.2f" % Game.money
 	_shown_money = Game.money
 	_rebuild_toolbar()
@@ -341,7 +346,7 @@ func _process(delta: float) -> void:
 	toolbar.visible = not ui_open
 	money_lbl.get_parent().visible = not ui_open
 	# health only shows while you're hurt (bare-hand chopping, standing too close to dynamite)
-	var hb := health_bar.get_parent() as Control
+	var hb := health_bar.get_parent().get_parent() as Control
 	var hurt := player.health < player.max_health - 0.5 and not (main.shop_ui is TitleMenu)
 	hb.modulate.a = move_toward(hb.modulate.a, 1.0 if hurt else 0.0, delta * (4.0 if hurt else 1.0))
 	hb.visible = hb.modulate.a > 0.01

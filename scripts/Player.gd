@@ -1059,6 +1059,8 @@ func take_down(b: Node3D) -> void:
 		(b as Rotator).unstick_all()
 	if b is Machine:
 		(b as Machine).on_take_down()
+	if b.has_meta("build") and float(Builds.BUILDS.get(String(b.get_meta("build").id), {}).get("sell", 0.0)) > 1.0:
+		Tutorial.sold_decoration = true
 	var v := float(b.get_meta("sale_value", 0.0))
 	if v > 0.0:
 		Game.add_money(v)

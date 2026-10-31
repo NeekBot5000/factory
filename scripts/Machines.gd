@@ -248,6 +248,15 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			for k in 3:
 				_p(parts, bit, LowPoly.box(Vector3(0.2, 0.02, 0.04)), Vector3(0, 0.05 + k * 0.08, 0), "", copper, Vector3(0, k * 60.0, 0))
 			_p(parts, root, LowPoly.box(Vector3(0.4, 0.04, 0.5)), Vector3(0, 0.5, -0.6), "", logm, Vector3(-30, 0, 0))
+		"bark_wreath":
+			# a ring of bark on a little easel
+			for sx in [-0.18, 0.18]:
+				_p(parts, root, LowPoly.box(Vector3(0.05, 0.95, 0.05)), Vector3(sx, 0.47, 0.06), "", logm, Vector3(-8, 0, sx * -30.0))
+			for k in 12:
+				var a := TAU * k / 12.0
+				var piece := _p(parts, root, LowPoly.box(Vector3(0.16, 0.08, 0.05)), Vector3(cos(a) * 0.26, 0.95 + sin(a) * 0.26, 0), "bark", bark)
+				piece.rotation.z = a + PI * 0.5
+			_p(parts, root, LowPoly.box(Vector3(0.12, 0.1, 0.06)), Vector3(0, 1.22, 0.01), "", red)
 		"lamppost":
 			_p(parts, root, LowPoly.box(Vector3(0.4, 0.25, 0.4)), Vector3(0, 0.125, 0), "stone", stone)
 			_p(parts, root, LowPoly.cyl(0.05, 0.06, 2.2, 8), Vector3(0, 1.35, 0), "iron_bar", iron)

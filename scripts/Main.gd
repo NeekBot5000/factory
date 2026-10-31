@@ -522,6 +522,37 @@ func _road_out(z0: float) -> Array[Vector3]:
 	return pts
 
 
+var _truck_park := Transform3D.IDENTITY
+var _truck_out: Array[Vector3] = []
+var _truck_back: Array[Vector3] = []
+var _truck_upgrade := false
+
+
+func _new_truck(level: int) -> Truck:
+	var t := Truck.new()
+	t.level = level
+	add_child(t)
+	t.build("ship", self, _truck_park, _truck_out, _truck_back)
+	t.swap_me.connect(_swap_truck)
+	return t
+
+
+## You bought a bigger truck: the old one drives off (selling what's in it), the new one comes back.
+func _on_vehicle_bought() -> void:
+	if ship_truck.state == "parked":
+		ship_truck.leave_for_upgrade()
+	else:
+		_truck_upgrade = true       # it's out on a run: it'll be swapped when it gets back
+
+
+func _swap_truck() -> void:
+	var old := ship_truck
+	ship_truck = _new_truck(Game.truck_level())
+	ship_truck.arrive()
+	Game.toast.emit("Your new truck is on its way", Color("8fd0ff"))
+	old.queue_free()
+
+
 func _ground(x: float, z: float) -> Vector3:
 	return Vector3(x, terrain.height_at(x, z), z)
 
@@ -536,9 +567,11 @@ func _trucks() -> void:
 	back.reverse()
 	back.append_array([_ground(1.5, 16.5), _ground(5.5, 15.0), _ground(9.0, 13.0), _ground(10.6, 10.2),
 		_ground(10.6, 7.4), _ground(9.6, 5.6), _ground(8.0, 5.0), _ground(6.6, 5.8), _ground(6.05, 7.2), park])
-	ship_truck = Truck.new()
-	add_child(ship_truck)
-	ship_truck.build("ship", self, Transform3D(Basis.looking_at(Vector3(0, 0, 1), Vector3.UP), park), out, back)
+	_truck_park = Transform3D(Basis.looking_at(Vector3(0, 0, 1), Vector3.UP), park)
+	_truck_out = out
+	_truck_back = back
+	ship_truck = _new_truck(Game.truck_level())
+	Game.vehicle_bought.connect(_on_vehicle_bought)
 	# orange TimberMart van: drives in, U-turns past the cabin, then backs onto the loading dock
 	var vin := _road_out(24.0)
 	vin.reverse()

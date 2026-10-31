@@ -164,6 +164,10 @@ const SHOP := {
 		"desc": "Water a sapling that has taken root and it grows twice as fast for the next minute."},
 	"scale": {"name": "Log Scale", "price": 90.0, "cat": "other", "tag": "Handy",
 		"desc": "Point it at a log, a piece of bark or a full basket: the dial shows how heavy it is, and the hint tells you what the mill would pay for it."},
+	"truck_big": {"name": "Big Truck", "price": 3500.0, "cat": "other", "tag": "Hauling", "vehicle": 1,
+		"desc": "A wider truck with tall sides: carries twice as much per trip. Your old truck drives off and this one comes back in its place."},
+	"truck_hauler": {"name": "Log Hauler", "price": 14000.0, "cat": "other", "tag": "Hauling", "vehicle": 2,
+		"desc": "The biggest truck there is: a long, deep bed for whole factories' worth of goods. It replaces the truck you have."},
 	"bp_windmill": {"name": "Windmill Blueprint", "price": 700.0, "cat": "blueprints", "tag": "Power",
 		"desc": "Plans for a windmill: free power whenever there's enough wind. The wind comes and goes, so pair it with a battery."},
 	"bp_generator": {"name": "Generator Blueprint", "price": 1100.0, "cat": "blueprints", "tag": "Power",
@@ -213,7 +217,7 @@ const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "throwing", "scr
 	"hammer", "rake", "can", "scale", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_wheelbarrow", "bp_windmill", "bp_generator", "bp_battery", "bp_logic", "bp_sensors",
 	"bp_lamp", "bp_sawmill", "bp_chipper", "bp_planter", "bp_sprinkler", "bp_feller", "bp_smelter", "bp_kiln", "bp_assembler",
 	"bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig",
-	"bp_truck_caller", "phone"]
+	"bp_truck_caller", "truck_big", "truck_hauler", "phone"]
 
 const WOOD := Color("a0703c")
 const STEEL := Color("c9ced6")
@@ -305,6 +309,7 @@ static func build_model(id: String, parent: Node3D) -> Node3D:
 		"dynamite": _dynamite(root)
 		"can": _can(root)
 		"scale": _scale(root)
+		"truck_big", "truck_hauler": _toy_truck(root, Color("2e6fb3") if id == "truck_big" else Color("b3262e"))
 		_:
 			if id.begins_with("bp_"):
 				_blueprint(root, id)
@@ -1007,3 +1012,16 @@ static func _scale(root: Node3D) -> void:
 	LowPoly.mesh_instance(root, LowPoly.cyl(0.006, 0.006, 0.006, 6), brass, Vector3(0, 0.17, 0.0), Vector3(90, 0, 0))
 	_rod(root, Vector3(0, 0.04, -0.03), Vector3(0, -0.02, -0.06), 0.006, brass, 4)
 	_rod(root, Vector3(0, -0.02, -0.06), Vector3(0, -0.03, -0.1), 0.006, brass, 4)
+
+
+## A little model of a truck (shop icons for the truck upgrades).
+static func _toy_truck(root: Node3D, col: Color) -> void:
+	var paint := LowPoly.mat(col, 0.45)
+	var dark := LowPoly.mat(Color("2b2d33"), 0.8)
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.18, 0.14, 0.16)), paint, Vector3(0, 0.12, -0.16))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.16, 0.06, 0.06)), LowPoly.mat(Color("9fd3f0"), 0.1), Vector3(0, 0.15, -0.245))
+	LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.2, 0.04, 0.34)), LowPoly.mat(Color("8a5a36"), 0.9), Vector3(0, 0.06, 0.08))
+	for sx in [-0.1, 0.1]:
+		LowPoly.mesh_instance(root, LowPoly.box(Vector3(0.015, 0.08, 0.34)), LowPoly.mat(Color("6f4728"), 0.9), Vector3(sx, 0.11, 0.08))
+	for k in 4:
+		LowPoly.mesh_instance(root, LowPoly.cyl(0.04, 0.04, 0.03, 8), dark, Vector3(0.1 if k & 1 else -0.1, 0.03, -0.14 if k & 2 else 0.16), Vector3(0, 0, 90))

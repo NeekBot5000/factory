@@ -90,6 +90,13 @@ jobs:
           ! grep -q "SCRIPT ERROR" factory.log
           ! grep -q "^ERROR" factory.log
 
+      - name: Gameplay test (starting tutorial)
+        run: |
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/TutorialTest.tscn --fixed-fps 60 2>&1 | tee tutorial.log
+          grep -q "TUTORIAL RESULT: PASS" tutorial.log
+          ! grep -q "SCRIPT ERROR" tutorial.log
+          ! grep -q "^ERROR" tutorial.log
+
       - name: Save test (builds survive a restart)
         run: |
           timeout 900 ${GODOT_BIN} --headless --path . res://tests/SaveTest.tscn --fixed-fps 60 2>&1 | tee save.log
