@@ -340,6 +340,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				builder.rotate(1)
 			elif held != null:
 				_pouring = true
+			elif tool == "hammer":
+				var rl: Object = look_ray(GRAB_REACH + 1.0, 1).get("collider")
+				if rl is Rail:
+					(rl as Rail).turn()
+					Sfx.play("click", 1.1, -4.0)
+					Game.save_game()
 		elif k == KEY_ESCAPE:
 			get_parent().call("open_settings")
 		elif k == KEY_TAB:
@@ -380,14 +386,19 @@ func primary() -> void:
 				start_swing()
 				return
 		# hammer on a loose rail: lay it on the grid square it's lying on; on a laid rail: pick it up again
-		if not builder.busy() and not hit.is_empty() and hit.collider is Product and (hit.collider as Product).kind == "rail":
+		if not builder.busy() and not hit.is_empty() and hit.collider is Product and (hit.collider as Product).kind in ["rail", "curved_rail"]:
 			var item := hit.collider as Product
 			var f := -cam.global_transform.basis.z
 			var c := Rail.cell_of(item.global_position)
 			if not Land.owns(Vector3(c.x, 0, c.y)):
 				Game.toast.emit("That isn't your land", Color("ff8a6a"))
 				return
-			var laid := Rail.lay(get_parent(), c, absf(f.x) > absf(f.z), item.global_position.y)
+			var laid: Rail
+			if item.kind == "curved_rail":
+				var fc := Vector2i(int(signf(f.x)), 0) if absf(f.x) > absf(f.z) else Vector2i(0, int(signf(f.z)))
+				laid = Rail.lay_curve(get_parent(), c, fc, item.global_position.y)
+			else:
+				laid = Rail.lay(get_parent(), c, absf(f.x) > absf(f.z), item.global_position.y)
 			if laid != null:
 				laid.value = item.value
 				item.queue_free()

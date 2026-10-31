@@ -19,6 +19,7 @@ var _t := -1.0                # 0..1 while rolling to the next square
 var _forward := true
 var _lift_cell := Vector2i(999999, 0)
 var _settle := 0.0
+var _arrive := Vector2i.ZERO
 var deck: Array = []          # machines built on the deck (they ride along and share the battery)
 
 
@@ -175,26 +176,53 @@ func _physics_process(delta: float) -> void:
 
 func _try(fwd: bool) -> void:
 	var d := dir()
-	var target := front_cell() + d if fwd else rear_cell() - d
+	var m := d if fwd else -d                 # which way the cart moves
+	var from_c := front_cell() if fwd else rear_cell()
+	var target := from_c + m
+	if blocked(target, self):
+		return
 	var r := Rail.at(target)
 	if r == null and fwd and _part_on("rail_layer"):
 		var cr := _deck_crate_with("rail")
 		if cr != null:
+			var item: Product = null
 			for b in cr.contents():
 				if b is Product and (b as Product).kind == "rail":
-					b.queue_free()
+					item = b
 					break
-			r = Rail.lay(get_parent(), target, d.x != 0)
-			Sfx.play_at("thunk", global_position, 1.4, -4.0)
-	if r == null or r.along_x != (d.x != 0):
+			r = Rail.lay(get_parent(), target, d.x != 0, global_position.y)
+			if r != null and not r.links().has(-m):
+				r.lift().global_position = global_transform * Vector3(0, DECK_Y + 0.5, 0)
+				r = null
+			elif r != null:
+				r.value = item.value
+				item.queue_free()
+				Sfx.play_at("thunk", global_position, 1.4, -4.0)
+	if r == null or not r.links().has(-m):
 		return
 	_forward = fwd
+	_arrive = target
 	_lift_cell = rear_cell() if fwd else front_cell()
 	_from = global_position
-	var step := Vector3(d.x, 0, d.y) * (1.0 if fwd else -1.0)
-	_to = _from + step
-	_to.y = r.top() if fwd else _height_at(front_cell() - d)
+	_to = _from + Vector3(m.x, 0, m.y)
+	_to.y = r.top() if fwd else _height_at(front_cell() + m)
 	_t = 0.0
+
+
+## Can't roll into a square another cart is on, or past a rail buffer that's down.
+static func blocked(c: Vector2i, me: Minecart) -> bool:
+	for n in me.get_tree().get_nodes_in_group("carts"):
+		var o := n as Minecart
+		if o == me:
+			continue
+		for k in o.length:
+			if o.front_cell() - o.dir() * k == c:
+				return true
+	for n in me.get_tree().get_nodes_in_group("buffers"):
+		var bf := n as TrackPart
+		if not bf.powered and bf.guards() == c:
+			return true
+	return false
 
 
 func _height_at(c: Vector2i) -> float:
@@ -202,13 +230,30 @@ func _height_at(c: Vector2i) -> float:
 	return r.top() if r != null else global_position.y
 
 
-## The rails under the whole cart, for placing one: they all need to be there and run the cart's way.
+## The rails under the whole cart, for placing one: they all need to be there, the front one running the cart's way.
 static func fits(c: Vector2i, d: Vector2i, n: int) -> bool:
 	for k in n:
 		var r := Rail.at(c - d * k)
-		if r == null or r.along_x != (d.x != 0):
+		if r == null or (k == 0 and not (r.links().has(d) or r.links().has(-d))):
 			return false
 	return true
+
+
+## Round a curve: the cart swings about the square its leading end just reached, deck and riders with it.
+func _turn_at(pivot: Vector2i, new_dir: Vector2i) -> void:
+	var nb := Basis.looking_at(Vector3(new_dir.x, 0, new_dir.y), Vector3.UP)
+	var rot := nb * global_basis.orthonormalized().inverse()
+	var p := Vector3(pivot.x, global_position.y, pivot.y)
+	var xf := Transform3D(Basis(), p) * Transform3D(rot, Vector3.ZERO) * Transform3D(Basis(), -p)
+	var riders := bodies_in(Vector3(0, DECK_Y + 0.8, (length - 1) * 0.5), Vector3(0.98, 1.6, length + 0.1), 2)
+	for mc in deck_machines():
+		(mc as Node3D).global_transform = xf * (mc as Node3D).global_transform
+	for b in riders:
+		var rb := b as RigidBody3D
+		if rb != null and rb.get_parent() != self:
+			rb.global_transform = xf * rb.global_transform
+	global_transform = xf * global_transform
+	Sfx.play_at("clink", global_position, 0.7, -6.0)
 
 
 func _roll(delta: float) -> void:
@@ -228,6 +273,12 @@ func _roll(delta: float) -> void:
 	if _t >= 1.0:
 		_t = -1.0
 		_settle = SETTLE
+		# a curve (or a switched rail) turns the cart: the leading end follows the track's other way out
+		var ar := Rail.at(_arrive)
+		var mv := dir() if _forward else -dir()
+		if ar != null and not ar.links().has(mv):
+			var out: Vector2i = ar.links()[0] if ar.links()[0] != -mv else ar.links()[1]
+			_turn_at(_arrive, out if _forward else -out)
 		# the lifter picks up the rail the cart has just left behind
 		if _forward and _part_on("rail_lifter"):
 			var old := Rail.at(_lift_cell)

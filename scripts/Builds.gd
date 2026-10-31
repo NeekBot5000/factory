@@ -72,6 +72,10 @@ const BUILDS := {
 	"rail_lifter": {"name": "Rail Lifter", "needs": {"stone": 2, "iron_bar": 2, "copper_bar": 1}, "bp": "bp_rail_tools"},
 	"charger": {"name": "Charger", "needs": {"stone": 3, "copper_bar": 2, "iron_bar": 1}, "bp": "bp_charger"},
 	"level_sensor": {"name": "Level Sensor", "needs": {"stone": 1, "log": 1, "copper": 2}, "bp": "bp_sensors"},
+	"rail_switch": {"name": "Rail Switch", "needs": {"stone": 2, "iron_bar": 1, "copper_bar": 1}, "bp": "bp_rail_extras"},
+	"rail_buffer": {"name": "Rail Buffer", "needs": {"stone": 2, "iron_bar": 1, "log": 1}, "bp": "bp_rail_extras"},
+	"cart_unloader": {"name": "Cart Unloader", "needs": {"stone": 3, "iron_bar": 2, "copper_bar": 1}, "bp": "bp_rail_extras"},
+	"drone_pad": {"name": "Drone Pad", "needs": {"stone": 4, "copper_bar": 2}, "bp": "bp_drones"},
 	"drone_small": {"name": "Small Drone", "needs": {"iron_bar": 1, "copper_bar": 2, "plank": 1}, "bp": "bp_drones"},
 	"drone_medium": {"name": "Medium Drone", "needs": {"iron_bar": 2, "copper_bar": 3, "plank": 2}, "bp": "bp_drones"},
 	"drone_large": {"name": "Large Drone", "needs": {"iron_bar": 4, "copper_bar": 5, "plank": 3}, "bp": "bp_drones"},
@@ -87,7 +91,7 @@ const ORDER := ["basket", "wheelbarrow", "bench", "campfire", "hammock", "chute"
 	"gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor",
 	"lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller", "smelter", "kiln", "assembler", "grabber", "sorter",
 	"splitter", "crate", "transmitter", "receiver", "drill_rig", "minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "cart_sensor",
-	"rail_layer", "rail_lifter", "charger", "level_sensor", "drone_small", "drone_medium", "drone_large", "bark_wreath", "lamppost", "garden_table", "statue", "fountain"]
+	"rail_layer", "rail_lifter", "charger", "level_sensor", "drone_small", "drone_medium", "drone_large", "rail_switch", "rail_buffer", "cart_unloader", "drone_pad", "bark_wreath", "lamppost", "garden_table", "statue", "fountain"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "wheelbarrow", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock", "garden_table"]},
@@ -99,9 +103,9 @@ const CATEGORIES := [
 	{"name": "Logic & Sensors", "items": ["gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor", "level_sensor", "lamp", "bell"]},
 	{"name": "Production", "items": ["sawmill", "chipper", "smelter", "kiln", "assembler"]},
 	{"name": "Mining", "items": ["drill_rig"]},
-	{"name": "Rails & Carts", "items": ["minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "rail_layer", "rail_lifter", "cart_sensor"]},
+	{"name": "Rails & Carts", "items": ["minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "rail_layer", "rail_lifter", "cart_sensor", "rail_switch", "rail_buffer", "cart_unloader"]},
 	{"name": "Logistics", "items": ["grabber", "sorter", "splitter", "crate", "transmitter", "receiver"]},
-	{"name": "Drones", "items": ["drone_small", "drone_medium", "drone_large"]},
+	{"name": "Drones", "items": ["drone_small", "drone_medium", "drone_large", "drone_pad"]},
 	{"name": "Tree Farm", "items": ["planter", "sprinkler", "feller"]},
 	{"name": "Machines", "items": ["conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]},
 ]

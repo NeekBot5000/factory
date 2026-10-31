@@ -87,7 +87,7 @@ static func save(world: Node) -> Dictionary:
 	for r in world.get_tree().get_nodes_in_group("rails"):
 		var rail := r as Rail
 		if rail != null and not rail.is_queued_for_deletion():
-			out.rails.append([rail.cell.x, rail.cell.y, rail.along_x, snappedf(rail.global_position.y, 0.001), rail.value])
+			out.rails.append([rail.cell.x, rail.cell.y, rail.along_x, snappedf(rail.global_position.y, 0.001), rail.value, rail.curve])
 	out.drilled = Mining.drilled.duplicate()
 	for t in world.get_tree().get_nodes_in_group("tool_items"):
 		var ti := t as ToolItem
@@ -207,6 +207,7 @@ static func load(world: Node, d: Dictionary) -> void:
 	for e in d.get("rails", []):
 		var rl := Rail.new()
 		world.add_child(rl)
+		rl.curve = int(e[5]) if (e as Array).size() > 5 else -1
 		rl.setup(Vector2i(int(e[0]), int(e[1])), bool(e[2]), float(e[3]))
 		rl.value = float(e[4])
 	Mining.drilled = {}

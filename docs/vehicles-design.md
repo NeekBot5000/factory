@@ -1,4 +1,17 @@
-# Carts, rails and drones (design, before building)
+# Carts, rails and drones
+
+**Status: built** (all five steps of the build order below). How it turned out in the game:
+
+* Shop blueprints: Charger, Minecart (carts, Go, Reverse, cart sensor), Rail Layer & Lifter, Rail Yard (switch, buffer,
+  unloader), Drone (three drones and the drone pad). The level sensor comes with the Sensors blueprint.
+* The assembler makes battery cells (copper bar + iron bar), rails (1 iron bar -> 2) and curved rails.
+* Rails and curves are laid by clicking the item with the hammer, picked up with a click, turned with R.
+* Carts are 1-4 squares long (not 2-wide), and machines on the deck share the cart's cell without wires. Go and
+  Reverse, logic blocks, transmitters and crates are the exception: wire them, so the player builds the control.
+* Drone directions are relative to how the drone was built (front, right, back, left dials). Wireless has 8 channels.
+* Drill rig depth now belongs to the ground square, so a rig on a cart drills fresh ground after every step.
+
+The original design, as agreed:
 
 Goal (your words): drill rigs run out of depth, so make machines that can go an unlimited distance and come back, with
 batteries, minecarts carrying machines, rail layers and rail breakers (or a grabber arm moving rails from behind to

@@ -16,6 +16,7 @@ const KINDS := {
 	"toy_truck": {"name": "Toy Truck", "fuel": 10.0, "res": ""},
 	"battery_cell": {"name": "Battery Cell", "fuel": 0.0, "res": ""},
 	"rail": {"name": "Rail", "fuel": 0.0, "res": ""},
+	"curved_rail": {"name": "Curved Rail", "fuel": 0.0, "res": ""},
 }
 const RAIL_VALUE := 2.0
 
@@ -106,6 +107,22 @@ func setup(p_kind: String, p_value: float, p_color: Color) -> void:
 				_box(Vector3(0.6, 0.05, 0.12), LowPoly.mat(Color("6b4a32"), 0.95), Vector3(0, -0.035, -0.22 + k * 0.44))
 			for sx in [-0.2, 0.2]:
 				_box(Vector3(0.06, 0.07, 0.76), iron, Vector3(sx, 0.025, 0))
+		"curved_rail":
+			mass = 4.0
+			size = Vector3(0.7, 0.12, 0.7)
+			var iron2 := Tools.steel(Color("8d949e"), 0.4)
+			for rr: float in [0.15, 0.55]:
+				for k in 4:
+					var a0 := float(k) / 4.0 * PI * 0.5
+					var a1 := float(k + 1) / 4.0 * PI * 0.5
+					var p0 := Vector3(0.35 - cos(a0) * rr, 0, -0.35 + sin(a0) * rr)
+					var p1 := Vector3(0.35 - cos(a1) * rr, 0, -0.35 + sin(a1) * rr)
+					var seg := LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.06, 0.07, p0.distance_to(p1) + 0.02)), iron2, (p0 + p1) * 0.5 + Vector3(0, 0.025, 0))
+					seg.rotation.y = atan2(p1.x - p0.x, p1.z - p0.z)
+			for k in 2:
+				var a := (k + 0.5) / 2.0 * PI * 0.5
+				var sl := LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.55, 0.05, 0.12)), LowPoly.mat(Color("6b4a32"), 0.95), Vector3(0.35 - cos(a) * 0.35, -0.035, -0.35 + sin(a) * 0.35))
+				sl.rotation.y = -a + PI * 0.5
 		"toy_truck":
 			mass = 1.0
 			size = Vector3(0.18, 0.16, 0.36)
@@ -147,9 +164,9 @@ func display_name() -> String:
 func hint_text() -> String:
 	if kind == "battery_cell":
 		return "[E] grab    Battery Cell  ·  %s" % ("empty - charge it in a charger" if charge <= 0.0 else "%d%% charged" % int(charge * 100.0))
-	if kind == "rail":
+	if kind == "rail" or kind == "curved_rail":
 		var p := get_tree().get_first_node_in_group("player")
 		if p != null and String(p.get("tool")) == "hammer":
-			return "[Click] lay it here    Rail"
-		return "[E] grab    Rail  ·  lay it with the hammer"
+			return "[Click] lay it here    %s" % display_name()
+		return "[E] grab    %s  ·  lay it with the hammer" % display_name()
 	return "[E] grab    %s  ·  worth $%.2f" % [display_name(), value]

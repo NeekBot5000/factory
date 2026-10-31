@@ -353,6 +353,7 @@ func run() -> void:
 	await truck_test()
 	await cart_test()
 	await drone_test()
+	await yard_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -756,3 +757,109 @@ func drone_test() -> void:
 	check(int(st.dial[0]) == 7 and float(st.cell) > 0.0, "a drone saves its dials and battery")
 	var ws := WorldSave.save(main)
 	check(ws.has("products"), "the world saves with drones about")
+
+
+func cart_at(id: String, c: Vector2i, yaw_deg := 0.0) -> Minecart:
+	return Builds.finish(id, main, Transform3D(Basis(Vector3.UP, deg_to_rad(yaw_deg)), Vector3(c.x, Rail.at(c).top(), c.y)), Builds.HOOP_DEFAULT, [], 1.0) as Minecart
+
+
+func charged_cell(cart: Minecart) -> void:
+	var c := product("battery_cell", cart.global_transform * (cart.cradle() + Vector3(0, 0.4, 0)), 6.0)
+	c.set_charge(1.0)
+
+
+func yard_test() -> void:
+	var B5 := Vector3(-60, 40, -205)
+	var sb := LowPoly.static_box(main, Vector3(40, 1, 40), B5 + Vector3(0, -0.5, 0))
+	sb.collision_layer = 1
+	await frames(2)
+	var x := int(B5.x) - 10
+	var z0 := int(B5.z)
+	# a curve: straight north, then round to the east
+	rails_along_z(x, z0, z0 - 3, B5.y)
+	for k in 3:
+		Rail.lay(main, Vector2i(x + 1 + k, z0 - 4), true, B5.y)
+	var cv := Rail.lay_curve(main, Vector2i(x, z0 - 4), Vector2i(0, -1), B5.y)
+	check(cv != null and cv.links().has(Vector2i(0, 1)) and cv.links().has(Vector2i(1, 0)), "a curved rail joins up with the track on two sides (%s)" % str(cv.links() if cv else []))
+	var c1 := cart_at("minecart_2", Vector2i(x, z0 - 1))
+	var g1 := on_deck("cart_go", c1, 0)
+	var lmp := on_deck("lamp", c1, 1)
+	Minecart.adopt_all(get_tree())
+	wire(c1, g1)
+	charged_cell(c1)
+	await secs(8.0)
+	check(c1.dir() == Vector2i(1, 0) and Rail.cell_of(c1.global_position) == Vector2i(x + 3, z0 - 4), "a cart follows the curve round and carries on (%s, facing %s)" % [str(Rail.cell_of(c1.global_position)), str(c1.dir())])
+	check(Rail.cell_of(lmp.global_position) == Vector2i(x + 2, z0 - 4), "...its deck swings round with it")
+	# R turns a laid rail
+	var r0 := Rail.at(Vector2i(x, z0))
+	r0.turn()
+	check(r0.along_x, "turning a straight rail swaps its direction")
+	r0.turn()
+	# a switch and a buffer
+	var x2 := x + 8
+	rails_along_z(x2, z0, z0 - 4, B5.y)
+	for k in 3:
+		Rail.lay(main, Vector2i(x2 + 1 + k, z0 - 2), true, B5.y)
+	var sw := place("rail_switch", Vector3(x2 - 1 - B5.x, 0, z0 - 2 - B5.z), 180.0, B5) as TrackPart
+	var bf := place("rail_buffer", Vector3(x2 - 1 - B5.x, 0, z0 - 3 - B5.z), -90.0, B5) as TrackPart
+	await frames(3)
+	check(sw.switch_target() == Vector2i(x2, z0 - 2) and bf.guards() == Vector2i(x2, z0 - 3), "the switch and buffer find their rails")
+	var c2 := cart_at("minecart_1", Vector2i(x2, z0))
+	var g2 := on_deck("cart_go", c2, 0)
+	Minecart.adopt_all(get_tree())
+	wire(c2, g2)
+	charged_cell(c2)
+	await secs(4.0)
+	check(Rail.cell_of(c2.global_position) == Vector2i(x2, z0 - 2), "a rail buffer that's down stops the cart in front of it (%s)" % str(Rail.cell_of(c2.global_position)))
+	var ck := place("crank", Vector3(x2 - 3 - B5.x, 0, z0 - 3 - B5.z), 0.0, B5) as Crank
+	ck.charge = 600.0
+	wire(ck, bf)
+	await secs(2.5)
+	check(Rail.cell_of(c2.global_position) == Vector2i(x2, z0 - 4), "power the buffer and the cart goes by")
+	# back to the start, switch on, and it takes the branch
+	Circuit.toggle_wire(main, c2, g2)
+	var bk := on_deck("cart_back", c2, 0)
+	bk.global_position.x += 0.3
+	Minecart.adopt_all(get_tree())
+	wire(c2, bk)
+	await secs(4.0)
+	check(Rail.cell_of(c2.global_position) == Vector2i(x2, z0), "Reverse brings it back (%s)" % str(Rail.cell_of(c2.global_position)))
+	Circuit.toggle_wire(main, c2, bk)
+	wire(ck, sw)
+	await frames(4)
+	wire(c2, g2)
+	await secs(5.0)
+	check(Rail.cell_of(c2.global_position) == Vector2i(x2 + 3, z0 - 2) and c2.dir() == Vector2i(1, 0), "with the switch powered it turns off down the branch (%s)" % str(Rail.cell_of(c2.global_position)))
+	# cart unloader: empties the crate on the cart beside it out of its front
+	var x3 := x + 16
+	rails_along_z(x3, z0, z0 - 1, B5.y)
+	var c3 := cart_at("minecart_2", Vector2i(x3, z0 - 1))
+	var cr := on_deck("crate", c3, 0) as Crate
+	Minecart.adopt_all(get_tree())
+	for k in 3:
+		ore_at(cr.global_transform * Vector3(0, 0.4 + k * 0.25, 0))
+	await secs(1.0)
+	var n0 := cr.contents().size()
+	var un := place("cart_unloader", Vector3(x3 + 1 - B5.x, 0, z0 - 1 - B5.z), -90.0, B5) as TrackPart
+	var ck2 := place("crank", Vector3(x3 + 3 - B5.x, 0, z0 - B5.z), 0.0, B5) as Crank
+	ck2.charge = 600.0
+	wire(ck2, un)
+	await secs(2.5)
+	check(n0 == 3 and cr.contents().size() == 0, "the cart unloader empties the crate on the cart beside it (%d -> %d)" % [n0, cr.contents().size()])
+	# drone pad: charges a drone over it
+	var pad := place("drone_pad", Vector3(4, 0, 6), 0.0, B5) as TrackPart
+	var dr := place("drone_small", Vector3(4, 0.12, 6), 0.0, B5) as Drone
+	var dc := product("battery_cell", dr.global_transform * (dr.cradle() + Vector3(0, 0.3, 0)), 6.0)
+	dc.set_charge(0.2)
+	var ck3 := place("crank", Vector3(6, 0, 6), 0.0, B5) as Crank
+	ck3.charge = 600.0
+	await secs(2.0)
+	var ch0 := dc.charge
+	wire(ck3, pad)
+	await secs(2.0)
+	check(dr.cell == dc and dc.charge > ch0 + 0.05, "a powered drone pad charges the drone hovering over it (%.2f -> %.2f)" % [ch0, dc.charge])
+	var ws := WorldSave.save(main)
+	var has_curve := false
+	for e in ws.rails:
+		has_curve = has_curve or int(e[5]) >= 0
+	check(has_curve, "curved rails save as curves")

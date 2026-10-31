@@ -9,7 +9,8 @@ const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp
 	"gate_counter", "pressure_plate", "item_sensor", "lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller",
 	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver", "drill_rig",
 	"minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "cart_sensor", "rail_layer", "rail_lifter",
-	"charger", "level_sensor", "drone_small", "drone_medium", "drone_large"]
+	"charger", "level_sensor", "drone_small", "drone_medium", "drone_large",
+	"rail_switch", "rail_buffer", "cart_unloader", "drone_pad"]
 const GATE_COLOR := {"diode": Color("f2c12e"), "and": Color("3fa66b"), "not": Color("d64034"), "timer": Color("4fa3e3"),
 	"delay": Color("9b6ad6"), "latch": Color("e8642b"), "counter": Color("e2e2e2")}
 
@@ -285,6 +286,34 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			_p(parts, needle, LowPoly.box(Vector3(0.02, 0.18, 0.01)), Vector3(0, 0.09, 0), "", red)
 		"drone_small", "drone_medium", "drone_large":
 			_drone(root, parts, float(Drone.SIZES[id].w), logm, iron, copper, dark)
+		"rail_switch":
+			_p(parts, root, LowPoly.box(Vector3(0.4, 0.2, 0.5)), Vector3(0, 0.1, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.06, 0.4)), Vector3(0, 0.23, 0), "copper_bar", copper)
+			var sarm := _node(root, "Arm", Vector3(0, 0.24, 0))
+			_p(parts, sarm, LowPoly.box(Vector3(0.05, 0.55, 0.05)), Vector3(0, 0.27, 0), "iron_bar", iron)
+			_p(parts, sarm, LowPoly.box(Vector3(0.1, 0.1, 0.1)), Vector3(0, 0.56, 0), "", red)
+			_p(parts, root, LowPoly.box(Vector3(0.06, 0.03, 0.3)), Vector3(0, 0.27, -0.12), "", LowPoly.mat(Color("f2c12e"), 0.5))
+		"rail_buffer":
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.2, 0.3)), Vector3(0, 0.1, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.12, 0.7, 0.12)), Vector3(0, 0.55, 0), "iron_bar", iron)
+			var barm := _node(root, "Arm", Vector3(0, 0.75, -0.1))
+			for k in 6:
+				_p(parts, barm, LowPoly.box(Vector3(0.06, 0.12, 0.2)), Vector3(0, 0, -0.1 - k * 0.2), "log" if k % 2 == 0 else "", logm if k % 2 == 0 else red)
+		"cart_unloader":
+			_p(parts, root, LowPoly.box(Vector3(0.8, 0.3, 0.6)), Vector3(0, 0.15, 0), "stone", stone)
+			for sx in [-0.35, 0.35]:
+				_p(parts, root, LowPoly.box(Vector3(0.08, 1.1, 0.08)), Vector3(sx, 0.85, 0.2), "iron_bar", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.78, 0.08, 0.08)), Vector3(0, 1.4, 0.2), "iron_bar", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.08, 0.08, 0.9)), Vector3(0, 1.32, 0.45), "copper_bar", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.06, 0.06)), Vector3(0, 1.22, 0.85), "", dark)
+			_p(parts, root, LowPoly.box(Vector3(0.6, 0.04, 0.5)), Vector3(0, 0.45, -0.45), "", logm, Vector3(-20, 0, 0))
+		"drone_pad":
+			_p(parts, root, LowPoly.box(Vector3(1.0, 0.1, 1.0)), Vector3(0, 0.05, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.8, 0.02, 0.8)), Vector3(0, 0.11, 0), "copper_bar", copper)
+			var yel := LowPoly.mat(Color("f2c12e"), 0.5)
+			_p(parts, root, LowPoly.box(Vector3(0.08, 0.025, 0.5)), Vector3(-0.15, 0.125, 0), "", yel)
+			_p(parts, root, LowPoly.box(Vector3(0.08, 0.025, 0.5)), Vector3(0.15, 0.125, 0), "", yel)
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.025, 0.08)), Vector3(0, 0.125, 0), "", yel)
 		"drill_rig":
 			_p(parts, root, LowPoly.box(Vector3(1.0, 0.12, 1.0)), Vector3(0, 0.06, 0), "stone", stone)
 			for k in 4:
@@ -536,6 +565,7 @@ static func new_body(id: String) -> Machine:
 		"cart_sensor", "level_sensor": return Sensor.new()
 		"charger": return Charger.new()
 		"drone_small", "drone_medium", "drone_large": return Drone.new()
+		"rail_switch", "rail_buffer", "cart_unloader", "drone_pad": return TrackPart.new()
 	if id.begins_with("gate_"):
 		return Gate.new()
 	return Machine.new()
@@ -642,6 +672,15 @@ static func finish(id: String, body: Machine) -> void:
 		"drone_small", "drone_medium", "drone_large":
 			var dw := float(Drone.SIZES[id].w)
 			Builds._box_col(body, Vector3(dw, 0.2, dw), Vector3(0, 0.14, 0))
+		"rail_switch":
+			Builds._box_col(body, Vector3(0.4, 0.3, 0.5), Vector3(0, 0.15, 0))
+		"rail_buffer":
+			Builds._box_col(body, Vector3(0.3, 0.9, 0.3), Vector3(0, 0.45, 0))
+		"cart_unloader":
+			Builds._box_col(body, Vector3(0.8, 0.3, 0.6), Vector3(0, 0.15, 0))
+			Builds._box_col(body, Vector3(0.8, 1.45, 0.12), Vector3(0, 0.72, 0.2))
+		"drone_pad":
+			Builds._box_col(body, Vector3(1.0, 0.12, 1.0), Vector3(0, 0.06, 0))
 		"feller":
 			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
 			Builds._box_col(body, Vector3(0.2, 1.2, 0.5), Vector3(0, 0.75, 0.1))

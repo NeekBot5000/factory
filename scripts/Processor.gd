@@ -14,10 +14,11 @@ const RECIPES := {
 	"toy_truck": {"plank": 2, "iron_bar": 1},
 	"battery_cell": {"copper_bar": 1, "iron_bar": 1},
 	"rail": {"iron_bar": 1},
+	"curved_rail": {"iron_bar": 1},
 }
-const RECIPE_ORDER := ["chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail"]
+const RECIPE_ORDER := ["chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail", "curved_rail"]
 ## Parts rather than furniture: they're for using, so they sell for little more than what went in.
-const PART_VALUE := {"battery_cell": 1.2, "rail": 0.7}
+const PART_VALUE := {"battery_cell": 1.2, "rail": 0.7, "curved_rail": 0.7}
 const MAKES := {"rail": 2}
 const WORK_TIME := {"smelter": 3.0, "kiln": 4.0, "assembler": 3.0}
 
