@@ -11,6 +11,7 @@ var _segs: Array[MeshInstance3D] = []
 var _mat: StandardMaterial3D
 var _last := [Vector3.INF, Vector3.INF]
 var _live := false
+var _plugs: Array[Node3D] = []
 
 
 func setup(p_a: Machine, p_b: Machine) -> void:
@@ -30,8 +31,33 @@ func setup(p_a: Machine, p_b: Machine) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 		_segs.append(mi)
+	for k in 2:
+		_plugs.append(_make_plug())
 	add_to_group("wires")
 	_redraw()
+
+
+## The plug on each end: a dark block that fits the machine's socket exactly, a copper band and a rubber boot.
+func _make_plug() -> Node3D:
+	var n := Node3D.new()
+	add_child(n)
+	var dark := LowPoly.mat(Color("2e3036"), 0.5)
+	var w := Machine.SOCKET - 0.008
+	LowPoly.mesh_instance(n, LowPoly.box(Vector3(w, 0.1, w)), dark, Vector3(0, -0.01, 0))
+	LowPoly.mesh_instance(n, LowPoly.box(Vector3(w + 0.006, 0.018, w + 0.006)), LowPoly.mat(Color("d8893f"), 0.3), Vector3(0, 0.028, 0))
+	LowPoly.mesh_instance(n, LowPoly.cyl(0.03, 0.05, 0.06, 8), LowPoly.mat(Color("1d1e22"), 0.8), Vector3(0, 0.07, 0))
+	for c in n.get_children():
+		(c as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return n
+
+
+## Plugs sit in the socket (or on top of the cell in it), turned to match the machine.
+func _place_plugs(pa: Vector3, pb: Vector3) -> void:
+	var ends := [[a, pa], [b, pb]]
+	for k in 2:
+		var m: Machine = ends[k][0]
+		var yaw := m.global_basis.get_euler().y
+		_plugs[k].global_transform = Transform3D(Basis(Vector3.UP, yaw), ends[k][1])
 
 
 func connects(m: Machine) -> bool:
@@ -63,6 +89,10 @@ func _redraw() -> void:
 	var pa := a.terminal_world()
 	var pb := b.terminal_world()
 	_last = [pa, pb]
+	_place_plugs(pa, pb)
+	# the cable comes out of the top of each plug
+	pa += Vector3.UP * 0.09
+	pb += Vector3.UP * 0.09
 	var sag := clampf(pa.distance_to(pb) * 0.12, 0.05, 1.2)
 	var pts: Array[Vector3] = []
 	for i in SEGMENTS + 1:

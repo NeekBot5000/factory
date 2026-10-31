@@ -48,15 +48,30 @@ func refresh() -> void:
 	var batteries: Array = machines.filter(func(m): return m is Battery)
 	for bt in batteries:
 		(bt as Battery).feeding = false
+	# battery cells plugged into machines' sockets work the same way
+	_plug_loose_cells(machines)
+	var ported: Array = machines.filter(func(m): return (m as Machine).port_cell != null and is_instance_valid((m as Machine).port_cell))
+	for pm in ported:
+		(pm as Machine).port_feeding = false
 	var res := _solve(machines, links)
-	if not batteries.is_empty():
+	if not batteries.is_empty() or not ported.is_empty():
 		var any := false
 		for bt in batteries:
 			if not res.live.has(bt) and (bt as Battery).charge > 0.0:
 				(bt as Battery).feeding = true
 				any = true
+		for pm in ported:
+			if not res.live.has(pm) and (pm as Machine).port_cell.charge > 0.0:
+				(pm as Machine).port_feeding = true
+				any = true
 		if any:
 			res = _solve(machines, links)
+	for pm in ported:
+		var mc := pm as Machine
+		if mc.port_feeding:
+			mc.port_cell.set_charge(mc.port_cell.charge - Machine.PORT_DRAIN * TICK)
+		elif res.live.has(pm):
+			mc.port_cell.set_charge(mc.port_cell.charge + Machine.PORT_CHARGE * TICK)
 	var live: Dictionary = res.live
 	var fed: Dictionary = res.fed
 	for m in machines:
@@ -79,7 +94,27 @@ func refresh() -> void:
 
 
 static func _feeds(m: Machine) -> bool:
-	return m.is_source() or m.conducts() or (m is Gate and (m as Gate).passing)
+	return m.gives_power() or m.conducts() or (m is Gate and (m as Gate).passing)
+
+
+## A loose battery cell dropped onto a machine's socket clicks into it.
+func _plug_loose_cells(machines: Array) -> void:
+	var held: Node = null
+	var p := get_tree().get_first_node_in_group("player")
+	if p != null:
+		held = p.get("held")
+	for n in get_tree().get_nodes_in_group("products"):
+		var c := n as Product
+		if c == null or c.kind != "battery_cell" or c.freeze or c == held or not c.is_inside_tree():
+			continue
+		for m in machines:
+			var mc := m as Machine
+			if mc.port_cell != null or not mc.accepts_cell() or not mc.has_node("Port"):
+				continue
+			var mouth := mc.global_transform * (mc.port_local() + Vector3(0, Machine.CELL_H * 0.5 - 0.055, 0))
+			if c.global_position.distance_to(mouth) < 0.24:
+				mc.plug(c)
+				break
 
 
 ## Spreads power from every source. Logic blocks only let it out of their front, and only when their logic says so;
@@ -96,7 +131,7 @@ func _solve(machines: Array, links: Dictionary) -> Dictionary:
 		var queue: Array = []
 		for m in machines:
 			var mm := m as Machine
-			if mm.is_source() or (mm is Gate and (mm as Gate).passing):
+			if mm.gives_power() or (mm is Gate and (mm as Gate).passing):
 				live[m] = true
 				queue.append(m)
 		while not queue.is_empty():

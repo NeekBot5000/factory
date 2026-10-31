@@ -35,6 +35,19 @@ func cradle() -> Vector3:
 	return Vector3(0, 0.42, length - 0.28)
 
 
+## Its socket is the cradle: the cell stands in it, and a wire plugs in there when there's no cell.
+func port_local() -> Vector3:
+	return cradle() - Vector3(0, CELL_H * 0.5 - 0.055, 0)
+
+
+func accepts_cell() -> bool:
+	return false
+
+
+func plugged() -> Product:
+	return cell if cell != null and is_instance_valid(cell) else null
+
+
 func is_source() -> bool:
 	return cell != null and is_instance_valid(cell) and cell.charge > 0.0
 

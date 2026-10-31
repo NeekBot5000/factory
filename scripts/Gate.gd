@@ -133,3 +133,8 @@ func load_state(d: Dictionary) -> void:
 	setting = clampi(int(d.get("setting", 0)), 0, 3)
 	_on = bool(d.get("on", false))
 	_count = int(d.get("count", 0))
+
+
+## Logic blocks take wires in their socket, not cells (their inputs and output depend on which side power comes from).
+func accepts_cell() -> bool:
+	return false

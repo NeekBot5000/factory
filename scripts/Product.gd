@@ -153,6 +153,11 @@ func _box(s: Vector3, m: Material, at: Vector3) -> void:
 	LowPoly.mesh_instance(self, LowPoly.box(s), m, at)
 
 
+## Battery cells: drop one on any machine's power socket and it clicks in.
+func is_battery() -> bool:
+	return kind == "battery_cell"
+
+
 func fuel() -> float:
 	return float(KINDS[kind].fuel)
 
@@ -163,7 +168,8 @@ func display_name() -> String:
 
 func hint_text() -> String:
 	if kind == "battery_cell":
-		return "[E] grab    Battery Cell  ·  %s" % ("empty - charge it in a charger" if charge <= 0.0 else "%d%% charged" % int(charge * 100.0))
+		var where := "    plugged in" if has_meta("in_port") else ""
+		return "[E] grab    Battery Cell  ·  %s%s" % ["empty - charge it in a charger" if charge <= 0.0 else "%d%% charged" % int(charge * 100.0), where]
 	if kind == "rail" or kind == "curved_rail":
 		var p := get_tree().get_first_node_in_group("player")
 		if p != null and String(p.get("tool")) == "hammer":

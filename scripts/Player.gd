@@ -751,6 +751,12 @@ func try_grab() -> bool:
 	var bk := _basket_around(b)
 	if bk != null:
 		b = bk
+	# a cell in a machine's socket comes out as you take it
+	if b.has_meta("in_port"):
+		var pm := b.get_meta("in_port") as Machine
+		if pm != null and is_instance_valid(pm):
+			pm.unplug()
+			Sfx.play("click", 0.8, -4.0)
 	held = b
 	add_collision_exception_with(held)
 	held.sleeping = false
@@ -1097,6 +1103,7 @@ func take_down(b: Node3D) -> void:
 			take_down(m)
 	if b is Machine:
 		(b as Machine).on_take_down()
+		(b as Machine).unplug()
 	if b.has_meta("build") and float(Builds.BUILDS.get(String(b.get_meta("build").id), {}).get("sell", 0.0)) > 1.0:
 		Tutorial.sold_decoration = true
 	var v := float(b.get_meta("sale_value", 0.0))

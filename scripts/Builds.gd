@@ -657,6 +657,8 @@ static func save_world(world: Node) -> Array:
 		if b is Machine:
 			e["uid"] = (b as Machine).uid
 			e["state"] = (b as Machine).save_state()
+			if (b as Machine).port_cell != null and is_instance_valid((b as Machine).port_cell):
+				e["port"] = snappedf((b as Machine).port_cell.charge, 0.001)
 		out.append(e)
 	for n in world.get_tree().get_nodes_in_group("blueprints"):
 		var bp := n as Blueprint
@@ -693,6 +695,12 @@ static func load_world(world: Node, data: Array) -> void:
 					mc.set_uid(int(d.uid))
 				by_uid[mc.uid] = mc
 				states.append([mc, d.get("state", {})])
+				if d.has("port") and mc.accepts_cell():
+					var pc := Product.new()
+					world.add_child(pc)
+					pc.setup("battery_cell", 6.0, Color.WHITE)
+					pc.set_charge(float(d.port))
+					mc.plug(pc)
 		elif d.get("kind", "") == "plan":
 			var bp := Blueprint.new()
 			world.add_child(bp)

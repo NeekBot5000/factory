@@ -66,6 +66,19 @@ func dial_pos(i: int) -> Vector3:
 	return Vector3(-0.12, 0.3, -0.05)
 
 
+## Its socket is the cradle on its back.
+func port_local() -> Vector3:
+	return cradle() - Vector3(0, CELL_H * 0.5 - 0.055, 0)
+
+
+func accepts_cell() -> bool:
+	return false
+
+
+func plugged() -> Product:
+	return cell if cell != null and is_instance_valid(cell) else null
+
+
 func conducts() -> bool:
 	return false
 

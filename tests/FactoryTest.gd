@@ -354,6 +354,7 @@ func run() -> void:
 	await cart_test()
 	await drone_test()
 	await yard_test()
+	await port_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -863,3 +864,62 @@ func yard_test() -> void:
 	for e in ws.rails:
 		has_curve = has_curve or int(e[5]) >= 0
 	check(has_curve, "curved rails save as curves")
+
+
+func port_test() -> void:
+	var B6 := Vector3(-60, 40, -245)
+	var sb := LowPoly.static_box(main, Vector3(40, 1, 40), B6 + Vector3(0, -0.5, 0))
+	sb.collision_layer = 1
+	await frames(2)
+	var l1 := place("lamp", Vector3(0, 0, 0), 0.0, B6) as Machine
+	var l2 := place("lamp", Vector3(2, 0, 0), 0.0, B6) as Machine
+	check(l1.has_node("Port") and l2.has_node("Port"), "every machine has a power socket")
+	wire(l1, l2)
+	var w: Wire = null
+	for n in get_tree().get_nodes_in_group("wires"):
+		if (n as Wire).connects(l1) and (n as Wire).connects(l2):
+			w = n
+	check(w != null and w.get("_plugs")[0].global_position.distance_to(l1.terminal_world()) < 0.01, "the wire's plug sits in the socket")
+	var mouth := l1.global_transform * l1.port_local()
+	var c := product("battery_cell", mouth + Vector3(0, 0.4, 0), 6.0)
+	c.set_charge(0.5)
+	await secs(1.0)
+	check(l1.port_cell == c and c.freeze and absf(c.global_position.y - (mouth.y + Machine.CELL_H * 0.5 - 0.055)) < 0.01, "a cell dropped on the socket clicks into it")
+	check(l1.powered and l2.powered, "a plugged-in cell powers the machine and what's wired to it")
+	check(l1.terminal_world().distance_to(c.global_transform * Vector3(0, Machine.CELL_H * 0.5, 0)) < 0.01, "the wire's plug moves up onto the cell")
+	await secs(2.0)
+	check(c.charge < 0.5, "powering things uses the cell up (%.3f)" % c.charge)
+	var ck := place("crank", Vector3(4, 0, 0), 0.0, B6) as Crank
+	ck.charge = 300.0
+	wire(ck, l2)
+	await frames(6)
+	var ch := c.charge
+	await secs(2.0)
+	check(c.charge > ch, "with other power on the network the cell charges instead (%.3f -> %.3f)" % [ch, c.charge])
+	Circuit.toggle_wire(main, ck, l2)
+	# taking it out: grab it
+	player.global_position = l1.global_position + Vector3(0, 0.05, 1.4)
+	player.velocity = Vector3.ZERO
+	await frames(2)
+	var eye := player.cam.global_position
+	var to := c.global_position - eye
+	player.set("_yaw", atan2(-to.x, -to.z))
+	player.set("_pitch", atan2(to.y, Vector2(to.x, to.z).length()))
+	player.rotation.y = atan2(-to.x, -to.z)
+	player.head.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
+	await frames(1)
+	var got := player.try_grab()
+	await frames(6)
+	check(got and player.held == c and l1.port_cell == null and not c.freeze, "grabbing the cell pulls it out of the socket")
+	check(not l1.powered, "...and the lamp goes off")
+	player.drop_held()
+	await frames(2)
+	var g := place("gate_diode", Vector3(0, 0, 4), 0.0, B6) as Machine
+	var c2 := product("battery_cell", g.global_transform * g.port_local() + Vector3(0, 0.3, 0), 6.0)
+	c2.set_charge(1.0)
+	await secs(1.0)
+	check(g.port_cell == null, "logic blocks only take wires in their socket")
+	# a cell in a socket is saved with the machine
+	l2.plug(c2)
+	var saved := Builds.save_world(main).filter(func(e): return e.get("uid", -1) == l2.uid)
+	check(saved.size() == 1 and float(saved[0].get("port", -1.0)) > 0.9, "a plugged-in cell is saved with its machine")

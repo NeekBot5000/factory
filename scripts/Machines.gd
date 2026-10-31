@@ -692,3 +692,4 @@ static func finish(id: String, body: Machine) -> void:
 	if not body.has_meta("build"):
 		body.set_meta("build", {"id": id})     # (the full record is filled in by Builds.finish right after)
 	body.activate(1.0)
+	body.make_port()
