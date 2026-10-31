@@ -83,6 +83,13 @@ jobs:
           ! grep -q "SCRIPT ERROR" item.log
           ! grep -q "^ERROR" item.log
 
+      - name: Gameplay test (power, logic, production and tree-farm machines)
+        run: |
+          timeout 900 ${GODOT_BIN} --headless --path . res://tests/FactoryTest.tscn --fixed-fps 60 2>&1 | tee factory.log
+          grep -q "FACTORY RESULT: PASS" factory.log
+          ! grep -q "SCRIPT ERROR" factory.log
+          ! grep -q "^ERROR" factory.log
+
       - name: Save test (builds survive a restart)
         run: |
           timeout 900 ${GODOT_BIN} --headless --path . res://tests/SaveTest.tscn --fixed-fps 60 2>&1 | tee save.log

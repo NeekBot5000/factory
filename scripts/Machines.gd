@@ -4,7 +4,11 @@ extends RefCounted
 ## They always build at 1x on a 1 m grid, facing one of four directions. Their front (the way a piston pushes or a
 ## belt carries) is local -Z, away from you as you place them.
 
-const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp", "truck_caller"]
+const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp", "truck_caller",
+	"windmill", "generator", "battery", "gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch",
+	"gate_counter", "pressure_plate", "item_sensor", "lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller"]
+const GATE_COLOR := {"diode": Color("f2c12e"), "and": Color("3fa66b"), "not": Color("d64034"), "timer": Color("4fa3e3"),
+	"delay": Color("9b6ad6"), "latch": Color("e8642b"), "counter": Color("e2e2e2")}
 
 const STONE := Color("8a8780")
 const COPPER := Color("c8703a")
@@ -36,6 +40,9 @@ static func _node(parent: Node3D, n: String, pos := Vector3.ZERO) -> Node3D:
 
 
 static func model(id: String, root: Node3D, parts: Array) -> void:
+	if id.begins_with("gate_"):
+		_gate(root, parts, id.trim_prefix("gate_"), LowPoly.mat(STONE, 1.0), LowPoly.mat(COPPER, 0.35, 0.05), LowPoly.mat(DARK, 0.7))
+		return
 	var stone := LowPoly.mat(STONE, 1.0)
 	var copper := LowPoly.mat(COPPER, 0.35, 0.05)
 	var logm := LowPoly.mat(Builds.LOGC, 0.9)
@@ -101,6 +108,84 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 				var o := Vector3(0.245 if k & 1 else -0.245, 0.25 if k & 4 else 0.75, 0.245 if k & 2 else -0.245)
 				_p(parts, root, LowPoly.box(Vector3(0.48, 0.49, 0.48)), o, "stone", stone)
 			_p(parts, root, LowPoly.box(Vector3(1.0, 0.04, 1.0)), Vector3(0, 0.99, 0), "", LowPoly.mat(STONE.lightened(0.15), 1.0))
+		"windmill": _windmill(root, parts, stone, logm, bark, copper, iron)
+		"generator": _generator(root, parts, stone, bark, copper, iron, dark)
+		"battery":
+			_p(parts, root, LowPoly.box(Vector3(0.7, 0.15, 0.5)), Vector3(0, 0.075, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.6, 0.6, 0.4)), Vector3(0, 0.45, 0), "copper", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.62, 0.05, 0.42)), Vector3(0, 0.77, 0), "iron", iron)
+			for sx in [-0.18, 0.18]:
+				_p(parts, root, LowPoly.cyl(0.04, 0.04, 0.08, 8), Vector3(sx, 0.83, 0), "", red if sx < 0 else dark)
+			_p(parts, root, LowPoly.box(Vector3(0.1, 0.5, 0.02)), Vector3(0, 0.45, 0.205), "", dark)
+			var bar := _node(root, "Bar", Vector3(0, 0.21, 0.212))
+			var gl := StandardMaterial3D.new()
+			gl.albedo_color = Color("7dff8a")
+			gl.emission_enabled = true
+			gl.emission = Color("4fe36a")
+			gl.emission_energy_multiplier = 1.5
+			_p(parts, bar, LowPoly.box(Vector3(0.07, 0.48, 0.01)), Vector3(0, 0.24, 0), "", gl)
+			bar.scale.y = 0.02
+		"pressure_plate":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.04, 0.9)), Vector3(0, 0.02, 0), "stone", stone)
+			var plate := _node(root, "Plate", Vector3(0, 0.06, 0))
+			_p(parts, plate, LowPoly.box(Vector3(0.74, 0.04, 0.74)), Vector3.ZERO, "log", logm)
+			_p(parts, root, LowPoly.box(Vector3(0.08, 0.06, 0.08)), Vector3(0.36, 0.05, 0.36), "copper", copper)
+		"item_sensor":
+			_p(parts, root, LowPoly.box(Vector3(0.36, 0.12, 0.36)), Vector3(0, 0.06, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.05, 0.06, 0.55, 8), Vector3(0, 0.38, 0), "log", logm)
+			_p(parts, root, LowPoly.box(Vector3(0.22, 0.18, 0.16)), Vector3(0, 0.7, 0), "copper", copper)
+			_p(parts, root, LowPoly.cyl(0.06, 0.06, 0.04, 10), Vector3(0, 0.7, -0.09), "", dark, Vector3(90, 0, 0))
+			_p(parts, root, LowPoly.cyl(0.035, 0.035, 0.045, 10), Vector3(0, 0.7, -0.1), "", LowPoly.mat(Color("ff5a4a"), 0.3, 1.0), Vector3(90, 0, 0))
+		"lamp":
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.1, 0.3)), Vector3(0, 0.05, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.04, 0.05, 1.05, 7), Vector3(0, 0.6, 0), "log", logm)
+			var bulb := _p(parts, root, LowPoly.box(Vector3(0.16, 0.2, 0.16)), Vector3(0, 1.25, 0), "", LowPoly.mat(Color("6b6458")))
+			bulb.name = "Bulb"
+			_p(parts, root, LowPoly.box(Vector3(0.24, 0.04, 0.24)), Vector3(0, 1.37, 0), "copper", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.22, 0.03, 0.22)), Vector3(0, 1.13, 0), "", iron)
+		"bell":
+			for sx in [-0.25, 0.25]:
+				_p(parts, root, LowPoly.box(Vector3(0.08, 1.1, 0.08)), Vector3(sx, 0.55, 0), "log", logm)
+			_p(parts, root, LowPoly.box(Vector3(0.6, 0.08, 0.1)), Vector3(0, 1.12, 0), "log", logm)
+			var bell := _node(root, "Bell", Vector3(0, 1.08, 0))
+			_p(parts, bell, LowPoly.cyl(0.07, 0.18, 0.28, 10), Vector3(0, -0.16, 0), "copper", copper)
+			_p(parts, bell, LowPoly.cyl(0.03, 0.03, 0.05, 6), Vector3(0, -0.32, 0), "", dark)
+		"sawmill":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.5, 0.9)), Vector3(0, 0.25, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(1.0, 0.06, 1.0)), Vector3(0, 0.55, 0), "iron", iron)
+			var blade := _node(root, "Blade", Vector3(0, 0.56, 0))
+			_p(parts, blade, LowPoly.cyl(0.3, 0.3, 0.015, 16), Vector3.ZERO, "iron", LowPoly.mat(Color("c9ced6"), 0.3), Vector3(0, 0, 90))
+			for k in 8:
+				_p(parts, blade, LowPoly.box(Vector3(0.02, 0.05, 0.05)), Vector3(0, 0.3, 0).rotated(Vector3.RIGHT, TAU * k / 8.0), "", dark, Vector3(rad_to_deg(TAU * k / 8.0), 0, 0))
+			_p(parts, root, LowPoly.box(Vector3(0.6, 0.04, 0.5)), Vector3(0, 0.38, -0.62), "log", logm, Vector3(-25, 0, 0))
+			_p(parts, root, LowPoly.box(Vector3(0.12, 0.3, 0.9)), Vector3(0.47, 0.75, 0), "", logm)
+		"chipper":
+			_p(parts, root, LowPoly.box(Vector3(0.8, 0.55, 0.8)), Vector3(0, 0.275, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.7, 0.2, 0.7)), Vector3(0, 0.65, 0), "copper", copper)
+			_hopper(root, parts, 0.75, 0.75, bark)
+			var drum := _node(root, "Drum", Vector3(0, 0.62, 0))
+			for k in 4:
+				_p(parts, drum, LowPoly.box(Vector3(0.6, 0.03, 0.12)), Vector3.ZERO, "", iron, Vector3(k * 45.0, 0, 0))
+			_p(parts, root, LowPoly.box(Vector3(0.5, 0.04, 0.4)), Vector3(0, 0.3, -0.55), "", iron, Vector3(-25, 0, 0))
+		"planter":
+			_p(parts, root, LowPoly.box(Vector3(0.8, 0.5, 0.8)), Vector3(0, 0.25, 0), "stone", stone)
+			_hopper(root, parts, 0.5, 0.7, bark)
+			_p(parts, root, LowPoly.box(Vector3(0.12, 0.12, 0.7)), Vector3(0, 0.35, -0.6), "log", logm)
+			_p(parts, root, LowPoly.box(Vector3(0.2, 0.04, 0.16)), Vector3(0, 0.25, -0.95), "", iron, Vector3(30, 0, 0))
+		"sprinkler":
+			_p(parts, root, LowPoly.box(Vector3(0.36, 0.1, 0.36)), Vector3(0, 0.05, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.03, 0.03, 0.55, 6), Vector3(0, 0.37, 0), "copper", copper)
+			var head := _node(root, "Head", Vector3(0, 0.66, 0))
+			_p(parts, head, LowPoly.box(Vector3(0.36, 0.04, 0.04)), Vector3.ZERO, "", iron)
+			for sx in [-0.18, 0.18]:
+				_p(parts, head, LowPoly.cyl(0.02, 0.03, 0.06, 6), Vector3(sx, 0.03, 0), "", iron)
+		"feller":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.3, 0.9)), Vector3(0, 0.15, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.18, 0.9, 0.18)), Vector3(0, 0.75, 0.2), "log", logm)
+			_p(parts, root, LowPoly.box(Vector3(0.16, 0.16, 0.9)), Vector3(0, 1.1, -0.2), "iron", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.1, 0.7, 0.1)), Vector3(0, 0.75, -0.6), "iron", iron)
+			_node(root, "Arm", Vector3(0, 0.45, -0.75))
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.06, 0.3)), Vector3(0, 0.33, 0.2), "copper", copper)
 		"truck_caller":
 			for sx in [-0.14, 0.14]:
 				_p(parts, root, LowPoly.box(Vector3(0.27, 0.2, 0.5)), Vector3(sx, 0.1, 0), "stone", stone)
@@ -116,6 +201,59 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 				_p(parts, root, LowPoly.cyl(0.035, 0.035, 0.012, 8), Vector3(sx, 1.48, 0.11), "", dark, Vector3(90, 0, 0))
 			_p(parts, root, LowPoly.cyl(0.03, 0.09, 0.2, 10), Vector3(0, 1.9, 0.02), "iron", iron, Vector3(80, 0, 0))
 			_p(parts, root, LowPoly.box(Vector3(0.66, 0.05, 0.08)), Vector3(0, 1.75, 0.07), "iron", iron)
+
+
+## A logic block: stone slab, copper top, an arrow pointing to its front and a coloured gem for its mode.
+static func _gate(root: Node3D, parts: Array, mode: String, stone: Material, copper: Material, dark: Material) -> void:
+	_p(parts, root, LowPoly.box(Vector3(0.7, 0.12, 0.7)), Vector3(0, 0.06, 0), "stone", stone)
+	_p(parts, root, LowPoly.box(Vector3(0.6, 0.04, 0.6)), Vector3(0, 0.14, 0), "copper", copper)
+	var paint := LowPoly.mat(Color("f2c12e"), 0.6)
+	var arrow := Tools.prism(PackedVector2Array([Vector2(0.0, -0.2), Vector2(0.16, 0.0), Vector2(0.07, 0.0), Vector2(0.07, 0.16), Vector2(-0.07, 0.16), Vector2(-0.07, 0.0), Vector2(-0.16, 0.0)]), 0.01, Color("f2c12e"))
+	var mi := _p(parts, root, arrow, Vector3(0, 0.165, 0.02), "", paint)
+	mi.basis = Basis(Vector3.BACK, -PI * 0.5)
+	mi.set_meta("arrow", true)
+	var col: Color = GATE_COLOR.get(mode, Color.WHITE)
+	var gem := StandardMaterial3D.new()
+	gem.albedo_color = col
+	gem.emission_enabled = true
+	gem.emission = col
+	gem.emission_energy_multiplier = 0.6
+	_p(parts, root, LowPoly.box(Vector3(0.12, 0.08, 0.12)), Vector3(0, 0.2, 0.2), "", gem)
+	# little posts: copper at the back (input), dark on the sides (control)
+	_p(parts, root, LowPoly.cyl(0.03, 0.03, 0.1, 6), Vector3(0, 0.2, 0.3), "", copper)
+	for sx in [-0.3, 0.3]:
+		_p(parts, root, LowPoly.cyl(0.03, 0.03, 0.1, 6), Vector3(sx, 0.2, 0), "", dark)
+
+
+## A bark hopper on top of a machine: open-topped walls `w` wide whose floor is at `y`.
+static func _hopper(root: Node3D, parts: Array, y: float, w: float, bark: Material) -> void:
+	for s in [-1.0, 1.0]:
+		_p(parts, root, LowPoly.box(Vector3(w, 0.35, 0.04)), Vector3(0, y + 0.42, s * w * 0.5), "bark", bark, Vector3(s * -12.0, 0, 0))
+		_p(parts, root, LowPoly.box(Vector3(0.04, 0.35, w)), Vector3(s * w * 0.5, y + 0.42, 0), "bark", bark, Vector3(0, 0, s * 12.0))
+
+
+static func _windmill(root: Node3D, parts: Array, stone: Material, logm: Material, bark: Material, copper: Material, iron: Material) -> void:
+	for k in 4:
+		var o := Vector3(0.2 if k & 1 else -0.2, 0.1, 0.2 if k & 2 else -0.2)
+		_p(parts, root, LowPoly.box(Vector3(0.38, 0.2, 0.38)), o, "stone", stone)
+	_p(parts, root, LowPoly.cyl(0.08, 0.14, 2.5, 7), Vector3(0, 1.45, 0), "log", logm)
+	_p(parts, root, LowPoly.box(Vector3(0.22, 0.22, 0.5)), Vector3(0, 2.7, 0.05), "copper", copper)
+	_p(parts, root, LowPoly.box(Vector3(0.03, 0.35, 0.5)), Vector3(0, 2.75, 0.5), "bark", bark)
+	var rotor := _node(root, "Rotor", Vector3(0, 2.7, -0.25))
+	_p(parts, rotor, LowPoly.cyl(0.08, 0.08, 0.12, 8), Vector3.ZERO, "", iron, Vector3(90, 0, 0))
+	for k in 4:
+		var a := TAU * k / 4.0
+		var blade := _p(parts, rotor, LowPoly.box(Vector3(0.22, 1.1, 0.03)), Vector3(sin(a), cos(a), 0) * 0.62, "bark", bark)
+		blade.rotation.z = -a
+
+
+static func _generator(root: Node3D, parts: Array, stone: Material, bark: Material, copper: Material, iron: Material, dark: Material) -> void:
+	_p(parts, root, LowPoly.box(Vector3(0.9, 0.8, 0.9)), Vector3(0, 0.4, 0), "stone", stone)
+	_p(parts, root, LowPoly.box(Vector3(0.4, 0.3, 0.04)), Vector3(0, 0.3, -0.46), "", dark)
+	_p(parts, root, LowPoly.box(Vector3(0.92, 0.08, 0.92)), Vector3(0, 0.6, 0), "copper", copper)
+	_hopper(root, parts, 0.8, 0.7, bark)
+	_p(parts, root, LowPoly.cyl(0.07, 0.08, 0.8, 8), Vector3(-0.3, 1.15, 0.3), "iron", iron)
+	_p(parts, root, LowPoly.cyl(0.1, 0.1, 0.08, 8), Vector3(-0.3, 1.58, 0.3), "", dark)
 
 
 ## A belt `len` long (along Z), rising `rise` toward the front (-Z). Belt top starts at BELT_Y.
@@ -184,6 +322,18 @@ static func new_body(id: String) -> Machine:
 		"rotator": return Rotator.new()
 		"conveyor", "ramp": return Conveyor.new()
 		"truck_caller": return TruckCaller.new()
+		"windmill": return Windmill.new()
+		"generator": return Generator.new()
+		"battery": return Battery.new()
+		"pressure_plate", "item_sensor": return Sensor.new()
+		"lamp", "bell": return Lamp.new()
+		"sawmill": return Sawmill.new()
+		"chipper": return Chipper.new()
+		"planter": return Planter.new()
+		"sprinkler": return Sprinkler.new()
+		"feller": return Feller.new()
+	if id.begins_with("gate_"):
+		return Gate.new()
 	return Machine.new()
 
 
@@ -191,6 +341,8 @@ static func new_body(id: String) -> Machine:
 static func finish(id: String, body: Machine) -> void:
 	body.collision_layer = 1
 	var model := body.get_node("Model") as Node3D
+	if id.begins_with("gate_"):
+		Builds._box_col(body, Vector3(0.7, 0.25, 0.7), Vector3(0, 0.12, 0))
 	match id:
 		"crank":
 			Builds._box_col(body, Vector3(0.6, 0.16, 0.6), Vector3(0, 0.08, 0))
@@ -225,9 +377,39 @@ static func finish(id: String, body: Machine) -> void:
 			pm.friction = 1.0
 			body.physics_material_override = pm
 			(body as Conveyor).setup_belt(model.get_node("Slats"), Vector3(0, rise, -len).normalized(), c, run, tilt)
+		"windmill":
+			Builds._box_col(body, Vector3(0.8, 0.2, 0.8), Vector3(0, 0.1, 0))
+			Builds._box_col(body, Vector3(0.25, 2.6, 0.25), Vector3(0, 1.4, 0))
+		"generator", "chipper", "planter":
+			var hy := 0.8 if id == "generator" else (0.75 if id == "chipper" else 0.5)
+			var hw := 0.75 if id == "chipper" else 0.7
+			Builds._box_col(body, Vector3(0.9, hy, 0.9), Vector3(0, hy * 0.5, 0))
+			for sgn in [-1.0, 1.0]:
+				Builds._box_col(body, Vector3(hw + 0.1, 0.4, 0.06), Vector3(0, hy + 0.25, sgn * hw * 0.5))
+				Builds._box_col(body, Vector3(0.06, 0.4, hw + 0.1), Vector3(sgn * hw * 0.5, hy + 0.25, 0))
+		"battery":
+			Builds._box_col(body, Vector3(0.7, 0.85, 0.5), Vector3(0, 0.42, 0))
+		"pressure_plate":
+			Builds._box_col(body, Vector3(0.9, 0.06, 0.9), Vector3(0, 0.03, 0))
+		"item_sensor":
+			Builds._box_col(body, Vector3(0.3, 0.85, 0.3), Vector3(0, 0.42, 0))
+		"lamp":
+			Builds._box_col(body, Vector3(0.24, 1.4, 0.24), Vector3(0, 0.7, 0))
+		"bell":
+			Builds._box_col(body, Vector3(0.62, 1.16, 0.12), Vector3(0, 0.58, 0))
+		"sawmill":
+			Builds._box_col(body, Vector3(1.0, 0.58, 1.0), Vector3(0, 0.29, 0))
+			Builds._box_col(body, Vector3(0.12, 0.3, 0.9), Vector3(0.47, 0.75, 0))
+		"sprinkler":
+			Builds._box_col(body, Vector3(0.36, 0.7, 0.36), Vector3(0, 0.35, 0))
+		"feller":
+			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
+			Builds._box_col(body, Vector3(0.2, 1.2, 0.5), Vector3(0, 0.75, 0.1))
 		"truck_caller":
 			Builds._box_col(body, Vector3(0.5, 0.32, 0.5), Vector3(0, 0.16, 0))
 			Builds._box_col(body, Vector3(0.16, 1.6, 0.16), Vector3(0, 1.0, 0))
 			Builds._box_col(body, Vector3(0.6, 0.4, 0.06), Vector3(0, 1.54, 0.08))
 	body.uid = Machine.take_uid()
+	if not body.has_meta("build"):
+		body.set_meta("build", {"id": id})     # (the full record is filled in by Builds.finish right after)
 	body.activate(1.0)

@@ -177,6 +177,8 @@ static func sale_value(b: Node) -> float:
 		return (b as Log).value()
 	if b is Ore:
 		return (b as Ore).value
+	if b is Product:
+		return (b as Product).value
 	if b.has_meta("sale_value"):
 		return float(b.get_meta("sale_value"))     # built things (baskets, balls...)
 	return 0.0

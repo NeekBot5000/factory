@@ -27,16 +27,43 @@ const BUILDS := {
 	"ramp": {"name": "Ramp Conveyor", "needs": {"bark": 8, "stone": 2}, "bp": "bp_ramp"},
 	"pillar": {"name": "Stone Pillar", "needs": {"stone": 4}},
 	"truck_caller": {"name": "Truck Caller", "needs": {"stone": 3, "log": 1, "copper": 3, "iron": 2}, "bp": "bp_truck_caller"},
+	# power
+	"windmill": {"name": "Windmill", "needs": {"log": 2, "bark": 10, "stone": 4, "copper": 2}, "bp": "bp_windmill"},
+	"generator": {"name": "Generator", "needs": {"stone": 8, "iron": 2, "copper": 2, "bark": 4}, "bp": "bp_generator"},
+	"battery": {"name": "Battery", "needs": {"stone": 2, "copper": 4, "iron": 2}, "bp": "bp_battery"},
+	# logic (one kit unlocks them all)
+	"gate_diode": {"name": "One-Way", "needs": {"stone": 2, "copper": 1}, "bp": "bp_logic"},
+	"gate_and": {"name": "Relay", "needs": {"stone": 2, "copper": 1}, "bp": "bp_logic"},
+	"gate_not": {"name": "Inverting Relay", "needs": {"stone": 2, "copper": 1}, "bp": "bp_logic"},
+	"gate_timer": {"name": "Timer", "needs": {"stone": 2, "copper": 1}, "bp": "bp_logic"},
+	"gate_delay": {"name": "Delay", "needs": {"stone": 2, "copper": 1}, "bp": "bp_logic"},
+	"gate_latch": {"name": "Toggle Latch", "needs": {"stone": 2, "copper": 1}, "bp": "bp_logic"},
+	"gate_counter": {"name": "Counter", "needs": {"stone": 2, "copper": 1}, "bp": "bp_logic"},
+	"pressure_plate": {"name": "Pressure Plate", "needs": {"stone": 2, "log": 1, "copper": 1}, "bp": "bp_sensors"},
+	"item_sensor": {"name": "Item Sensor", "needs": {"stone": 1, "log": 1, "copper": 2}, "bp": "bp_sensors"},
+	"lamp": {"name": "Lamp", "needs": {"stone": 1, "log": 1, "copper": 1}, "bp": "bp_lamp"},
+	"bell": {"name": "Bell", "needs": {"log": 2, "copper": 2}, "bp": "bp_lamp"},
+	# production and the tree farm
+	"sawmill": {"name": "Sawmill", "needs": {"stone": 6, "iron": 3, "log": 1}, "bp": "bp_sawmill"},
+	"chipper": {"name": "Chipper", "needs": {"stone": 4, "iron": 2, "copper": 1, "bark": 6}, "bp": "bp_chipper"},
+	"planter": {"name": "Planter", "needs": {"stone": 4, "bark": 6, "log": 1, "copper": 1}, "bp": "bp_planter"},
+	"sprinkler": {"name": "Sprinkler", "needs": {"stone": 1, "copper": 2}, "bp": "bp_sprinkler"},
+	"feller": {"name": "Tree Feller", "needs": {"stone": 6, "iron": 3, "log": 1, "copper": 1}, "bp": "bp_feller"},
 }
 const ORDER := ["basket", "wheelbarrow", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult",
-	"crank", "lever", "button", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]
+	"crank", "lever", "button", "windmill", "generator", "battery", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller",
+	"gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor",
+	"lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "wheelbarrow", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock"]},
 	{"name": "Fire & Garden", "items": ["campfire", "compost"]},
 	{"name": "Workshop", "items": ["chute", "catapult"]},
 	{"name": "Fun", "items": ["ball", "hoop"]},
-	{"name": "Power & Switches", "items": ["crank", "lever", "button"]},
+	{"name": "Power & Switches", "items": ["crank", "windmill", "generator", "battery", "lever", "button"]},
+	{"name": "Logic & Sensors", "items": ["gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor", "lamp", "bell"]},
+	{"name": "Production", "items": ["sawmill", "chipper"]},
+	{"name": "Tree Farm", "items": ["planter", "sprinkler", "feller"]},
 	{"name": "Machines", "items": ["conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]},
 ]
 const SIZES := [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]

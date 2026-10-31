@@ -260,6 +260,19 @@ func cycle_tool(step: int) -> void:
 	equip(owned[posmod(i + step, owned.size())])
 
 
+## Gives the tool in hand to a machine (it leaves the tool bar until you take it back). Returns its id.
+func hand_over_tool() -> String:
+	var id := tool
+	if id == "hands":
+		return ""
+	builder.cancel()
+	tool = "hands"
+	_apply_tool_visuals()
+	Game.set_dropped(id, true)
+	tool_changed.emit(tool)
+	return id
+
+
 ## Q: put the current tool down on the ground (pick it up again with E).
 func drop_tool() -> void:
 	if tool == "hands" or (tool == "throwing" and is_instance_valid(_thrown)):
@@ -1040,6 +1053,8 @@ func take_down(b: Node3D) -> void:
 				take_down(on)
 	if b is Rotator:
 		(b as Rotator).unstick_all()
+	if b is Machine:
+		(b as Machine).on_take_down()
 	var v := float(b.get_meta("sale_value", 0.0))
 	if v > 0.0:
 		Game.add_money(v)

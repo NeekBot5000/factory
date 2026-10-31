@@ -25,7 +25,7 @@ static func _loose(b: Node3D, world: Node) -> bool:
 
 
 static func save(world: Node) -> Dictionary:
-	var out := {"trees": [], "grown": [], "bushes": [], "chips": [], "leaves": [], "logs": [], "saplings": [], "tools": [], "ores": [], "rocks": []}
+	var out := {"trees": [], "grown": [], "bushes": [], "chips": [], "leaves": [], "logs": [], "saplings": [], "tools": [], "ores": [], "rocks": [], "products": []}
 	var n_wild: int = world.get("n_wild_trees")
 	var trees: Array = world.get("trees")
 	for i in trees.size():
@@ -74,6 +74,10 @@ static func save(world: Node) -> Dictionary:
 		var sp := s as Sapling
 		if _loose(sp, world) or (sp.get("_rooted") and is_instance_valid(sp)):
 			out.saplings.append({"xf": _xf(sp.global_transform), "kind": sp.kind, "rooted": sp.get("_rooted"), "grow": sp.get("_grow"), "boost": snappedf(sp.boost, 0.1)})
+	for pr in world.get_tree().get_nodes_in_group("products"):
+		var prod := pr as Product
+		if _loose(prod, world):
+			out.products.append({"xf": _xf(prod.global_transform), "k": prod.kind, "v": prod.value, "c": prod.color.to_html()})
 	for t in world.get_tree().get_nodes_in_group("tool_items"):
 		var ti := t as ToolItem
 		if _loose(ti, world):
@@ -176,6 +180,11 @@ static func load(world: Node, d: Dictionary) -> void:
 			lg.set_locked(true)
 		if bool(e.get("clean", false)):
 			lg.set_meta("clean", true)
+	for e in d.get("products", []):
+		var prod := Product.new()
+		world.add_child(prod)
+		prod.setup(String(e.k), float(e.v), Color.html(String(e.c)))
+		prod.global_transform = _unxf(e.xf)
 	for e in d.get("saplings", []):
 		var sp := Sapling.new()
 		world.add_child(sp)

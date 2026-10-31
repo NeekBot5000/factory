@@ -97,6 +97,37 @@ func load_state(_d: Dictionary) -> void:
 	pass
 
 
+## Loose things (and, with mask 4, the player) inside a box given in this machine's own space: hoppers, sensors.
+## Whatever the player is holding doesn't count until they let go of it.
+func bodies_in(center: Vector3, box: Vector3, mask := 2) -> Array:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = box * size
+	q.shape = sh
+	q.transform = global_transform * Transform3D(Basis(), center * size)
+	q.collision_mask = mask
+	q.exclude = [get_rid()]
+	var held: Node = null
+	var p := get_tree().get_first_node_in_group("player")
+	if p != null:
+		held = p.get("held")
+	var out: Array = []
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 32):
+		var c: Object = r.collider
+		if out.has(c) or c == held:
+			continue
+		if c is RigidBody3D and not (c as RigidBody3D).freeze:
+			out.append(c)
+		elif c is CharacterBody3D:
+			out.append(c)
+	return out
+
+
+## Called when the hammer takes this machine down (give back anything inside it).
+func on_take_down() -> void:
+	pass
+
+
 ## A small indicator light that glows while powered (machines call this to add one).
 func add_lamp(pos: Vector3) -> MeshInstance3D:
 	var m := StandardMaterial3D.new()
