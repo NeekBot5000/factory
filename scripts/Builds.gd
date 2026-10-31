@@ -57,6 +57,7 @@ const BUILDS := {
 	"sorter": {"name": "Sorter Belt", "needs": {"bark": 5, "stone": 2, "copper": 1}, "bp": "bp_sorter"},
 	"splitter": {"name": "Splitter Belt", "needs": {"bark": 5, "stone": 2, "copper": 1}, "bp": "bp_sorter"},
 	"crate": {"name": "Storage Crate", "needs": {"plank": 8, "log": 1, "iron": 1}, "bp": "bp_crate"},
+	"drill_rig": {"name": "Drill Rig", "needs": {"stone": 6, "iron": 4, "copper": 2, "log": 2}, "bp": "bp_drill_rig"},
 	"transmitter": {"name": "Transmitter", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
 	"receiver": {"name": "Receiver", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
 	# decorations: worth far more than what goes into them ("sell" = sale value per $ of materials)
@@ -69,7 +70,7 @@ const ORDER := ["basket", "wheelbarrow", "bench", "campfire", "hammock", "chute"
 	"crank", "lever", "button", "windmill", "generator", "battery", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller",
 	"gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor",
 	"lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller", "smelter", "kiln", "assembler", "grabber", "sorter",
-	"splitter", "crate", "transmitter", "receiver", "lamppost", "garden_table", "statue", "fountain"]
+	"splitter", "crate", "transmitter", "receiver", "drill_rig", "lamppost", "garden_table", "statue", "fountain"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "wheelbarrow", "rack"]},
 	{"name": "Furniture", "items": ["bench", "hammock", "garden_table"]},
@@ -80,6 +81,7 @@ const CATEGORIES := [
 	{"name": "Power & Switches", "items": ["crank", "windmill", "generator", "battery", "lever", "button"]},
 	{"name": "Logic & Sensors", "items": ["gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor", "lamp", "bell"]},
 	{"name": "Production", "items": ["sawmill", "chipper", "smelter", "kiln", "assembler"]},
+	{"name": "Mining", "items": ["drill_rig"]},
 	{"name": "Logistics", "items": ["grabber", "sorter", "splitter", "crate", "transmitter", "receiver"]},
 	{"name": "Tree Farm", "items": ["planter", "sprinkler", "feller"]},
 	{"name": "Machines", "items": ["conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]},

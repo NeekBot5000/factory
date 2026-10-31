@@ -367,7 +367,8 @@ func _quarry() -> void:
 		rock.set_meta("rock_id", 1000 + placed)
 		add_child(rock)
 		rock.position = Vector3(p.x, terrain.height_at(p.x, p.y) + s * 0.25, p.y)
-		rock.build(qr, s, "iron" if roll < 0.3 else ("copper" if roll < 0.7 else "stone"), "copper" if roll > 0.85 else "")
+		rock.build(qr, s, "stone")
+		roll = 0.0
 		rock_specs[1000 + placed] = {"pos": rock.position, "s": s, "ore": rock.ore, "hidden": rock.hidden}
 		placed += 1
 
@@ -460,7 +461,8 @@ func _decor() -> void:
 			var inside := ""
 			if hash(i * 31337) % 100 < 25:
 				inside = "iron" if r > 45.0 and hash(i * 17) % 3 == 0 else "copper"
-			rock.build(rng, s, "copper" if hash(i * 7919) % 100 < 18 else "stone", inside)
+			rock.build(rng, s, "stone")
+			inside = ""
 			rock_specs[i] = {"pos": rock.position, "s": s, "ore": rock.ore, "hidden": rock.hidden}
 		else:
 			var bush := Bush.new()

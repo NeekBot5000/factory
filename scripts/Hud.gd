@@ -162,6 +162,7 @@ void fragment() {
 	Game.saved.connect(save_icon.flash)
 	if main.icons != null:
 		main.icons.icon_ready.connect(func(_id): _rebuild_toolbar())
+	(health_bar.get_parent() as Control).modulate.a = 0.0     # hidden until you're hurt
 	money_lbl.text = "$%.2f" % Game.money
 	_shown_money = Game.money
 	_rebuild_toolbar()

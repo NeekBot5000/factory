@@ -7,7 +7,7 @@ extends RefCounted
 const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp", "truck_caller",
 	"windmill", "generator", "battery", "gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch",
 	"gate_counter", "pressure_plate", "item_sensor", "lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller",
-	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver"]
+	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver", "drill_rig"]
 const GATE_COLOR := {"diode": Color("f2c12e"), "and": Color("3fa66b"), "not": Color("d64034"), "timer": Color("4fa3e3"),
 	"delay": Color("9b6ad6"), "latch": Color("e8642b"), "counter": Color("e2e2e2")}
 
@@ -235,6 +235,19 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			gem.name = "Gem"
 			if id == "receiver":
 				_p(parts, root, LowPoly.cyl(0.22, 0.05, 0.12, 10), Vector3(0, 0.82, 0), "", iron)
+		"drill_rig":
+			_p(parts, root, LowPoly.box(Vector3(1.0, 0.12, 1.0)), Vector3(0, 0.06, 0), "stone", stone)
+			for k in 4:
+				var c := Vector3(0.42 if k & 1 else -0.42, 0, 0.42 if k & 2 else -0.42)
+				var leg := _p(parts, root, LowPoly.box(Vector3(0.07, 2.1, 0.07)), c * 0.5 + Vector3(0, 1.05, 0), "iron", iron)
+				leg.rotation = Vector3(-c.z * 0.4, 0, c.x * 0.4)
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.2, 0.3)), Vector3(0, 2.05, 0), "copper", copper)
+			_p(parts, root, LowPoly.cyl(0.03, 0.03, 1.6, 6), Vector3(0, 1.2, 0), "", dark)
+			var bit := _node(root, "Bit", Vector3(0, 0.4, 0))
+			_p(parts, bit, LowPoly.cyl(0.0, 0.1, 0.35, 6), Vector3(0, 0, 0), "", iron, Vector3(180, 0, 0))
+			for k in 3:
+				_p(parts, bit, LowPoly.box(Vector3(0.2, 0.02, 0.04)), Vector3(0, 0.05 + k * 0.08, 0), "", copper, Vector3(0, k * 60.0, 0))
+			_p(parts, root, LowPoly.box(Vector3(0.4, 0.04, 0.5)), Vector3(0, 0.5, -0.6), "", logm, Vector3(-30, 0, 0))
 		"lamppost":
 			_p(parts, root, LowPoly.box(Vector3(0.4, 0.25, 0.4)), Vector3(0, 0.125, 0), "stone", stone)
 			_p(parts, root, LowPoly.cyl(0.05, 0.06, 2.2, 8), Vector3(0, 1.35, 0), "iron_bar", iron)
@@ -413,6 +426,7 @@ static func new_body(id: String) -> Machine:
 		"sorter", "splitter": return Sorter.new()
 		"crate": return Crate.new()
 		"transmitter", "receiver": return Wireless.new()
+		"drill_rig": return DrillRig.new()
 	if id.begins_with("gate_"):
 		return Gate.new()
 	return Machine.new()
@@ -495,6 +509,9 @@ static func finish(id: String, body: Machine) -> void:
 			door.name = "DoorCol"
 		"transmitter", "receiver":
 			Builds._box_col(body, Vector3(0.4, 1.0, 0.4), Vector3(0, 0.5, 0))
+		"drill_rig":
+			Builds._box_col(body, Vector3(1.0, 0.12, 1.0), Vector3(0, 0.06, 0))
+			Builds._box_col(body, Vector3(0.4, 2.1, 0.4), Vector3(0, 1.1, 0))
 		"feller":
 			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
 			Builds._box_col(body, Vector3(0.2, 1.2, 0.5), Vector3(0, 0.75, 0.1))

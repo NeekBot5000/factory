@@ -349,6 +349,7 @@ func run() -> void:
 	check(sap.boost > 0.0, "the sprinkler waters saplings nearby")
 
 	await second_wave()
+	await mining_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -374,6 +375,65 @@ func ore(kind: String, at: Vector3) -> Ore:
 
 func products_of(kind: String) -> Array:
 	return get_tree().get_nodes_in_group("products").filter(func(p): return is_instance_valid(p) and (p as Product).kind == kind)
+
+
+func mining_test() -> void:
+	# find the spot near the cabin richest in copper
+	var best := Vector3.ZERO
+	var bv := -1.0
+	for x in range(-24, 25, 2):
+		for z in range(8, 30, 2):
+			var r := Mining.richness("copper", x, z)
+			if r > bv:
+				bv = r
+				best = Vector3(x, 0, z)
+	best.y = main.terrain.height_at(best.x, best.z)
+	# dig by hand with a pickaxe
+	var sh := Mining.dig(main, best, "pickaxe")
+	check(sh != null and sh.depth > 0.0, "a pickaxe on the ground starts a mine shaft")
+	var kinds := {}
+	for k in 60:
+		var got := sh.dig(1, 1)
+		kinds[got] = int(kinds.get(got, 0)) + 1
+	check(sh.depth > 10.0 and kinds.has("copper"), "digging down brings up copper from the deeper layers (%s at %.1f m)" % [str(kinds), sh.depth])
+	check(not kinds.has("iron"), "a basic pick can't get iron out (it comes up as stone)")
+	var again := Mining.dig(main, best + Vector3(0.3, 0, 0.2), "pickaxe")
+	check(again == sh, "digging the same spot again goes down the same shaft")
+	var deep := Shaft.new()
+	main.add_child(deep)
+	deep.setup(best + Vector3(5, 0, 0))
+	deep.depth = 12.0
+	var irons := 0
+	for k in 80:
+		if deep.dig(2, 2) == "iron":
+			irons += 1
+	check(irons > 0 or Mining.richness("iron", best.x + 5, best.z) < 0.15, "deep down, a steel pick finds iron (%d)" % irons)
+	var ws := WorldSave.save(main)
+	check((ws.get("shafts", []) as Array).size() >= 2, "shafts are saved with the world")
+	# a drill rig drills down by itself, into a crate in front, and stops at its limit
+	var at := best + Vector3(-4, 0, 0)
+	at.y = main.terrain.height_at(at.x, at.z)
+	var rig := Builds.finish("drill_rig", main, Transform3D(Basis(), at), Builds.HOOP_DEFAULT, [], 1.0) as DrillRig
+	var cr_at := at + Vector3(0, 0, -1.0)
+	cr_at.y = main.terrain.height_at(cr_at.x, cr_at.z) - 0.05
+	var crate := Builds.finish("crate", main, Transform3D(Basis(), cr_at), Builds.HOOP_DEFAULT, [], 1.0) as Crate
+	var cp := at + Vector3(1.5, 0, 0)
+	cp.y = main.terrain.height_at(cp.x, cp.z)
+	var crk := Builds.finish("crank", main, Transform3D(Basis(), cp), Builds.HOOP_DEFAULT, [], 1.0) as Crank
+	wire(crk, rig)
+	Game.owned["rock_drill"] = true
+	player.equip("rock_drill")
+	await frames(20)
+	rig.on_use(player)
+	check(rig.tool_id == "rock_drill" and player.tool == "hands", "put the rock drill into the drill rig")
+	crk.charge = 120.0
+	await secs(6.0)
+	check(rig.depth > 0.4 and crate.contents().size() >= 1, "powered, it drills down and drops what it digs into the crate in front (%.1f m, %d in the crate)" % [rig.depth, crate.contents().size()])
+	rig.depth = DrillRig.DRILLS.rock_drill.max - 0.01
+	await secs(1.0)
+	var d0 := rig.depth
+	await secs(1.0)
+	check(rig.drilled_out() and rig.depth == d0, "it stops at its limit (%d m): that spot is drilled out" % int(rig.depth))
 
 
 func second_wave() -> void:

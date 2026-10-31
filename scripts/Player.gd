@@ -600,6 +600,10 @@ func _do_impact() -> void:
 		Sfx.play("drop", 1.3)
 	elif c.has_method("on_hit"):
 		c.call("on_hit", hit.position, hit.normal, tool)
+	elif (c is Terrain or c is Shaft) and int(d.get("mine", 0)) > 0:
+		# mining tools dig straight down into the ground
+		Mining.dig(get_parent(), hit.position, tool)
+		_kick = 0.02
 	elif c is Terrain:
 		# grass flattens where you hit (visual only) and some dirt flies
 		get_parent().call("bend_grass", hit.position, 1.0 + float(d.radius) * 3.0)
@@ -1130,9 +1134,14 @@ func _update_wire_preview() -> void:
 ## Rock drills: every turn of the bit knocks a chunk off the rock you're holding it on.
 func drill_rock() -> bool:
 	var hit := look_ray(float(tdef().reach), 1)
-	if hit.is_empty() or not hit.collider.has_method("on_hit") or not (hit.collider is Rock):
+	if hit.is_empty():
 		return false
-	hit.collider.call("on_hit", hit.position, hit.normal, tool)
+	if hit.collider is Terrain or hit.collider is Shaft:
+		Mining.dig(get_parent(), hit.position, tool)
+	elif hit.collider is Rock:
+		hit.collider.call("on_hit", hit.position, hit.normal, tool)
+	else:
+		return false
 	Sfx.play("grind", randf_range(0.9, 1.1), -6.0)
 	_shake = 0.05
 	return true
@@ -1374,20 +1383,16 @@ func _detector_step(delta: float) -> void:
 	var lamp := tool_model.get_node_or_null("Glow") as MeshInstance3D
 	if lamp != null:
 		(lamp.material_override as StandardMaterial3D).emission_energy_multiplier = _beep_glow * 4.0
-	var best := 1e9
-	for r in get_tree().get_nodes_in_group("rocks"):
-		var rk := r as Rock
-		if rk.inner_ore() == "stone" or rk.is_queued_for_deletion():
-			continue
-		best = minf(best, rk.global_position.distance_to(global_position))
-	if best > 18.0:
+	# how rich the ground under your feet is: the richer, the faster it beeps (iron counts a bit more)
+	var r := maxf(Mining.richness("copper", global_position.x, global_position.z), Mining.richness("iron", global_position.x, global_position.z) * 1.1)
+	if r < 0.3:
 		return
 	_beep_t -= delta
 	if _beep_t <= 0.0:
-		var k := clampf(best / 18.0, 0.0, 1.0)
-		_beep_t = lerpf(0.09, 1.3, k)
+		var k := clampf((r - 0.3) / 0.7, 0.0, 1.0)
+		_beep_t = lerpf(1.3, 0.09, k)
 		_beep_glow = 1.0
-		Sfx.play("beep", lerpf(1.5, 0.8, k), lerpf(-4.0, -12.0, k))
+		Sfx.play("beep", lerpf(0.8, 1.5, k), lerpf(-12.0, -4.0, k))
 
 
 ## Pole saw: held up in the leaves of a standing tree, it cuts the whole crown off.

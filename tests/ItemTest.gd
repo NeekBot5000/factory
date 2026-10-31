@@ -409,20 +409,36 @@ func sledge_test() -> void:
 	check(get_tree().get_nodes_in_group("ores").size() >= ores0 + 2, "into all its chunks (%d)" % (get_tree().get_nodes_in_group("ores").size() - ores0))
 
 
+## The richest and poorest spots (for ore underground) within the cabin clearing area.
+func rich_spots() -> Array:
+	var best := Vector3.ZERO
+	var worst := Vector3.ZERO
+	var bv := -1.0
+	var wv := 2.0
+	for x in range(-30, 31, 3):
+		for z in range(-10, 31, 3):
+			var r := maxf(Mining.richness("copper", x, z), Mining.richness("iron", x, z) * 1.1)
+			if r > bv:
+				bv = r
+				best = Vector3(x, 0, z)
+			if r < wv:
+				wv = r
+				worst = Vector3(x, 0, z)
+	return [best, worst]
+
+
 func detector_test() -> void:
-	var hid := _rock(func(r): return r.hidden != "")
-	check(hid != null and hid.hint_text().begins_with("Stone"), "some plain-looking rocks hide ore inside")
 	await equip("detector")
-	var vein := _rock(func(r): return r.inner_ore() != "stone")
-	await stand(vein.global_position + Vector3(2.5, 0, 2.5))
+	var spots := rich_spots()
+	await stand(spots[0])
 	var b0 := int(Sfx.played.get("beep", 0))
 	await frames(120)
 	var near := int(Sfx.played.get("beep", 0)) - b0
-	await stand(Vector3(0, 0, 6))
+	await stand(spots[1])
 	b0 = int(Sfx.played.get("beep", 0))
 	await frames(120)
 	var far := int(Sfx.played.get("beep", 0)) - b0
-	check(near >= 4 and near > far, "the ore detector beeps faster close to ore (%d beeps near, %d away)" % [near, far])
+	check(near >= 4 and near > far, "the ore detector beeps faster over ground rich in ore (%d beeps rich, %d poor)" % [near, far])
 
 
 func dynamite_test() -> void:

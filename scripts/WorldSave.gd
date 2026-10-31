@@ -25,7 +25,7 @@ static func _loose(b: Node3D, world: Node) -> bool:
 
 
 static func save(world: Node) -> Dictionary:
-	var out := {"trees": [], "grown": [], "bushes": [], "chips": [], "leaves": [], "logs": [], "saplings": [], "tools": [], "ores": [], "rocks": [], "products": []}
+	var out := {"trees": [], "grown": [], "bushes": [], "chips": [], "leaves": [], "logs": [], "saplings": [], "tools": [], "ores": [], "rocks": [], "products": [], "shafts": []}
 	var n_wild: int = world.get("n_wild_trees")
 	var trees: Array = world.get("trees")
 	for i in trees.size():
@@ -74,6 +74,9 @@ static func save(world: Node) -> Dictionary:
 		var sp := s as Sapling
 		if _loose(sp, world) or (sp.get("_rooted") and is_instance_valid(sp)):
 			out.saplings.append({"xf": _xf(sp.global_transform), "kind": sp.kind, "rooted": sp.get("_rooted"), "grow": sp.get("_grow"), "boost": snappedf(sp.boost, 0.1)})
+	for sh in world.get_tree().get_nodes_in_group("shafts"):
+		var shaft := sh as Shaft
+		out.shafts.append({"p": [snappedf(shaft.global_position.x, 0.01), snappedf(shaft.global_position.y, 0.01), snappedf(shaft.global_position.z, 0.01)], "d": snappedf(shaft.depth, 0.01)})
 	for pr in world.get_tree().get_nodes_in_group("products"):
 		var prod := pr as Product
 		if _loose(prod, world):
@@ -180,6 +183,12 @@ static func load(world: Node, d: Dictionary) -> void:
 			lg.set_locked(true)
 		if bool(e.get("clean", false)):
 			lg.set_meta("clean", true)
+	for e in d.get("shafts", []):
+		var shaft := Shaft.new()
+		world.add_child(shaft)
+		shaft.setup(Vector3(float(e.p[0]), float(e.p[1]), float(e.p[2])))
+		shaft.depth = float(e.d)
+		shaft.call("_update")
 	for e in d.get("products", []):
 		var prod := Product.new()
 		world.add_child(prod)
