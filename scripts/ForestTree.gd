@@ -122,6 +122,10 @@ func fell(cut_j: int, push_dir: Vector3) -> Log:
 	if legendary:
 		Game.toast.emit("You felled the Legendary Tree!", Color("ffd27a"))
 		Sfx.play("reveal", 0.8, 4.0)
+		Trophies.award("legend")
+	elif giant:
+		Trophies.award("giant")
+	Trophies.award("first_tree")
 	var lg := Log.new()
 	get_parent().add_child(lg)
 	lg.setup_from(self, cut_j, bands, global_transform * Transform3D(Basis(), Vector3(0, cut_j * BAND_H + 0.03, 0)))

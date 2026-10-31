@@ -348,7 +348,134 @@ func run() -> void:
 	await secs(1.5)
 	check(sap.boost > 0.0, "the sprinkler waters saplings nearby")
 
+	await second_wave()
+
 	# --- products survive a save
 	var ws := WorldSave.save(main)
 	check((ws.get("products", []) as Array).size() >= 1, "planks and mulch are saved with the world")
 	finished = true
+
+
+func product(kind: String, at: Vector3, v := 1.0) -> Product:
+	var p := Product.new()
+	main.add_child(p)
+	p.setup(kind, v, Color("e2c08d"))
+	p.global_position = at
+	return p
+
+
+func ore(kind: String, at: Vector3) -> Ore:
+	var o := Ore.new()
+	main.add_child(o)
+	o.setup(kind, 0.14)
+	o.global_position = at
+	return o
+
+
+func products_of(kind: String) -> Array:
+	return get_tree().get_nodes_in_group("products").filter(func(p): return is_instance_valid(p) and (p as Product).kind == kind)
+
+
+func second_wave() -> void:
+	var B2 := Vector3(-60, 40, -85)
+	var sb := LowPoly.static_box(main, Vector3(60, 1, 30), B2 + Vector3(0, -0.5, 0))
+	sb.collision_layer = 1
+	await frames(2)
+	# smelter: ore -> bars
+	var cs := place("crank", Vector3(0, 0, 2), 0.0, B2) as Crank
+	cs.charge = 120.0
+	var smelter := place("smelter", Vector3(0, 0, 0), 0.0, B2) as Processor
+	wire(cs, smelter)
+	var o1 := ore("iron", smelter.global_transform * Vector3(0, 1.3, 0))
+	var ov := o1.value
+	await secs(4.5)
+	var bars := products_of("iron_bar")
+	check(not is_instance_valid(o1) and bars.size() == 1 and absf((bars[0] as Product).value - ov * 2.2) < 0.02, "the smelter turns iron ore into an iron bar worth 2.2x")
+	# kiln: plank -> dried plank
+	var ck := place("crank", Vector3(4, 0, 2), 0.0, B2) as Crank
+	ck.charge = 120.0
+	var kiln := place("kiln", Vector3(4, 0, 0), 0.0, B2) as Processor
+	wire(ck, kiln)
+	product("plank", kiln.global_transform * Vector3(0, 1.3, 0), 2.0)
+	await secs(5.0)
+	var dried := products_of("dry_plank")
+	check(dried.size() == 1 and absf((dried[0] as Product).value - 2.8) < 0.02, "the kiln dries a plank (worth 1.4x)")
+	# assembler: 2 planks -> chair worth 2.5x
+	var ca := place("crank", Vector3(8, 0, 2), 0.0, B2) as Crank
+	ca.charge = 120.0
+	var asm := place("assembler", Vector3(8, 0, 0), 0.0, B2) as Processor
+	wire(ca, asm)
+	product("plank", asm.global_transform * Vector3(0, 1.3, 0), 2.0)
+	product("plank", asm.global_transform * Vector3(0.1, 1.6, 0), 2.0)
+	product("copper_bar", asm.global_transform * Vector3(-0.1, 1.9, 0), 5.0)     # not part of a chair: ignored
+	await secs(4.5)
+	var chairs := products_of("chair")
+	check(chairs.size() == 1 and absf((chairs[0] as Product).value - 10.0) < 0.02 and Truck.sale_value(chairs[0]) > 9.0, "the assembler makes a chair from two planks, worth 2.5x ($%.2f)" % ((chairs[0] as Product).value if chairs.size() > 0 else 0.0))
+	check(products_of("copper_bar").size() >= 1, "things the recipe doesn't need are left alone")
+	asm.on_use(player)
+	check(String(Processor.RECIPE_ORDER[asm.recipe]) == "table", "E switches what the assembler makes")
+	# grabber arm moves a thing from in front to behind
+	var cg := place("crank", Vector3(13, 0, 0), 0.0, B2) as Crank
+	cg.charge = 120.0
+	var grab := place("grabber", Vector3(12, 0, 0), 0.0, B2) as Grabber
+	wire(cg, grab)
+	var thing := ore("stone", B2 + Vector3(12, 0.3, -1.0))
+	await secs(2.0)
+	check(is_instance_valid(thing) and thing.global_position.z > B2.z + 0.5, "the grabber arm swings a chunk from in front to behind it")
+	# sorter: only the sample kind goes left; splitter alternates
+	var cso := place("crank", Vector3(17, 0, 3), 0.0, B2) as Crank
+	cso.charge = 120.0
+	var srt := place("sorter", Vector3(16, 0, 0), 0.0, B2) as Sorter
+	wire(cso, srt)
+	srt.filter = "iron"
+	var a := ore("iron", B2 + Vector3(16, 0.75, 0.3))
+	var bb := ore("stone", B2 + Vector3(16.2, 0.75, 0.3))
+	await secs(2.0)
+	check(a.global_position.x < B2.x + 15.5 and bb.global_position.z < B2.z - 0.4 and bb.global_position.x > B2.x + 15.6, "the sorter sends iron off to the left and lets stone carry on (%.2f / %.2f)" % [a.global_position.x - B2.x, bb.global_position.z - B2.z])
+	# storage crate: stores things, empties when powered
+	var crate := place("crate", Vector3(21, 0, 0), 0.0, B2) as Crate
+	for k in 3:
+		ore("stone", crate.global_transform * Vector3(randf_range(-0.2, 0.2), 0.6 + k * 0.2, 0))
+	await secs(1.0)
+	check(crate.contents().size() == 3, "the crate holds what lands in it")
+	var cc := place("crank", Vector3(22.3, 0, 1), 0.0, B2) as Crank
+	wire(cc, crate)
+	cc.charge = 30.0
+	await secs(2.5)
+	check(crate.contents().size() == 0, "powered, it empties out of the front")
+	# wireless: a transmitter on red powers a receiver on red far away
+	var ct := place("crank", Vector3(25, 0, 1), 0.0, B2) as Crank
+	var tx := place("transmitter", Vector3(25, 0, 0), 0.0, B2) as Wireless
+	var rx := place("receiver", Vector3(-25, 0, 0), 0.0, B2) as Wireless
+	var lamp := place("lamp", Vector3(-25, 0, -1), 0.0, B2) as Lamp
+	wire(ct, tx)
+	wire(rx, lamp)
+	await frames(4)
+	check(not lamp.powered, "wireless: nothing sent, the far lamp is off")
+	ct.charge = 30.0
+	await frames(6)
+	check(lamp.powered, "wireless: power into the transmitter lights a lamp 50 m away")
+	rx.on_use(player)
+	await frames(6)
+	check(not lamp.powered, "on a different channel it doesn't")
+	# decorations sell for far more than their materials
+	check(float(Builds.BUILDS.statue.sell) >= 3.0 and float(Builds.BUILDS.bench.sell) >= 2.0, "decorations are worth several times their materials")
+	check(Builds.resource_of(product("plank", B2 + Vector3(0, 3, 8))).get("res", "") == "plank" and Builds.resource_of(product("copper_bar", B2 + Vector3(1, 3, 8))).get("res", "") == "copper_bar", "planks and bars count as build materials")
+	# land
+	check(Land.owns(Vector3(3, 0, 5)) and not Land.owns(Vector3(45, 0, 5)), "you start owning the land around the cabin, not beyond")
+	var signs := main.get_node("Land").get_children().filter(func(c): return c is ForSale)
+	check(signs.size() >= 4, "for-sale signs stand on the plots next to yours (%d)" % signs.size())
+	Game.money = 100000.0
+	var price := Land.next_price()
+	var k := (signs[0] as ForSale).key
+	(signs[0] as ForSale).on_use(player)
+	check(Game.land.has(k) and absf(Game.money - (100000.0 - price)) < 0.01 and Land.next_price() > price, "buying a plot costs money, and the next one costs more")
+	# trophies and the company sign
+	check(Game.trophies.has("first_tree") and Game.trophies.has("first_plank") and Game.trophies.has("first_iron") and Game.trophies.has("first_furniture"), "milestones land on the trophy wall")
+	Game.total_earned = 60000.0
+	var sign: CompanySign = null
+	for c in main.get_children():
+		if c is CompanySign:
+			sign = c
+	await secs(2.5)
+	check(sign != null and sign.tier == 4, "the company sign grows as the business earns more (tier %d)" % (sign.tier if sign else -1))

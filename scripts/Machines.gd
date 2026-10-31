@@ -6,7 +6,8 @@ extends RefCounted
 
 const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp", "truck_caller",
 	"windmill", "generator", "battery", "gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch",
-	"gate_counter", "pressure_plate", "item_sensor", "lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller"]
+	"gate_counter", "pressure_plate", "item_sensor", "lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller",
+	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver"]
 const GATE_COLOR := {"diode": Color("f2c12e"), "and": Color("3fa66b"), "not": Color("d64034"), "timer": Color("4fa3e3"),
 	"delay": Color("9b6ad6"), "latch": Color("e8642b"), "counter": Color("e2e2e2")}
 
@@ -186,6 +187,81 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			_p(parts, root, LowPoly.box(Vector3(0.1, 0.7, 0.1)), Vector3(0, 0.75, -0.6), "iron", iron)
 			_node(root, "Arm", Vector3(0, 0.45, -0.75))
 			_p(parts, root, LowPoly.box(Vector3(0.3, 0.06, 0.3)), Vector3(0, 0.33, 0.2), "copper", copper)
+		"smelter":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.75, 0.9)), Vector3(0, 0.375, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.36, 0.26, 0.04)), Vector3(0, 0.3, -0.46), "", LowPoly.mat(Color("ff8a3d"), 0.4, 1.5))
+			_p(parts, root, LowPoly.box(Vector3(0.92, 0.06, 0.92)), Vector3(0, 0.72, 0), "iron", iron)
+			_hopper(root, parts, 0.75, 0.75, stone)
+			_p(parts, root, LowPoly.cyl(0.08, 0.1, 0.9, 8), Vector3(0.3, 1.2, 0.3), "stone", stone)
+		"kiln":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.75, 0.9)), Vector3(0, 0.375, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.42, 0.42, 0.2, 10), Vector3(0, 0.62, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.4, 0.22, 0.04)), Vector3(0, 0.25, -0.46), "", LowPoly.mat(Color("d9783a"), 0.5, 0.6))
+			_hopper(root, parts, 0.75, 0.75, bark)
+		"assembler":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.7, 0.9)), Vector3(0, 0.35, 0), "log", logm)
+			_p(parts, root, LowPoly.box(Vector3(0.94, 0.06, 0.94)), Vector3(0, 0.72, 0), "copper", copper)
+			_hopper(root, parts, 0.75, 0.75, bark)
+			for sx in [-0.3, 0.3]:
+				_p(parts, root, LowPoly.box(Vector3(0.06, 0.06, 0.4)), Vector3(sx, 0.55, -0.48), "", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.18, 0.18, 0.04)), Vector3(0, 0.45, -0.46), "", red)
+		"grabber":
+			_p(parts, root, LowPoly.cyl(0.32, 0.36, 0.25, 10), Vector3(0, 0.125, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.1, 0.1, 0.5, 8), Vector3(0, 0.5, 0), "iron", iron)
+			var arm := _node(root, "Arm", Vector3(0, 0.8, 0))
+			_p(parts, arm, LowPoly.box(Vector3(0.1, 0.1, 0.9)), Vector3(0, 0, -0.45), "copper", copper)
+			_p(parts, arm, LowPoly.box(Vector3(0.28, 0.06, 0.06)), Vector3(0, -0.06, -0.9), "", dark)
+			for sx in [-0.12, 0.12]:
+				_p(parts, arm, LowPoly.box(Vector3(0.03, 0.2, 0.05)), Vector3(sx, -0.16, -0.9), "", dark)
+			var paint := LowPoly.mat(Color("f2c12e"), 0.6)
+			_p(parts, root, LowPoly.box(Vector3(0.06, 0.01, 0.5)), Vector3(0, 0.255, 0), "", paint)
+		"sorter", "splitter":
+			_belt(root, parts, 1.0, 0.0, bark, stone, iron, dark)
+			_p(parts, root, LowPoly.box(Vector3(0.05, 0.9, 0.05)), Vector3(0.47, 0.75, 0.4), "", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.02, 0.18, 0.28)), Vector3(0.47, 1.1, 0.27), "", LowPoly.mat(Color("3f8ee8") if id == "sorter" else Color("9b6ad6"), 0.6))
+		"crate":
+			_p(parts, root, LowPoly.box(Vector3(1.0, 0.1, 1.0)), Vector3(0, 0.05, 0), "log", logm)
+			for k in 3:
+				var side := [Vector3(0, 0, 0.47), Vector3(0.47, 0, 0), Vector3(-0.47, 0, 0)][k] as Vector3
+				var sz := Vector3(1.0, 0.95, 0.06) if k == 0 else Vector3(0.06, 0.95, 1.0)
+				_p(parts, root, LowPoly.box(sz), side + Vector3(0, 0.525, 0), "plank", logm)
+			var door := _node(root, "Door", Vector3(0, 0.3, -0.47))
+			_p(parts, door, LowPoly.box(Vector3(0.9, 0.5, 0.06)), Vector3.ZERO, "", iron)
+			_p(parts, root, LowPoly.box(Vector3(1.0, 0.45, 0.06)), Vector3(0, 0.78, -0.47), "plank", logm)
+		"transmitter", "receiver":
+			_p(parts, root, LowPoly.box(Vector3(0.4, 0.2, 0.4)), Vector3(0, 0.1, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.03, 0.04, 1.2 if id == "transmitter" else 0.7, 6), Vector3(0, 0.8 if id == "transmitter" else 0.55, 0), "copper", copper)
+			var gem := _p(parts, root, LowPoly.box(Vector3(0.12, 0.12, 0.12)), Vector3(0, 1.45 if id == "transmitter" else 0.95, 0), "", LowPoly.mat(Color.WHITE))
+			gem.name = "Gem"
+			if id == "receiver":
+				_p(parts, root, LowPoly.cyl(0.22, 0.05, 0.12, 10), Vector3(0, 0.82, 0), "", iron)
+		"lamppost":
+			_p(parts, root, LowPoly.box(Vector3(0.4, 0.25, 0.4)), Vector3(0, 0.125, 0), "stone", stone)
+			_p(parts, root, LowPoly.cyl(0.05, 0.06, 2.2, 8), Vector3(0, 1.35, 0), "iron_bar", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.6, 0.05, 0.05)), Vector3(0.22, 2.4, 0), "iron_bar", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.18, 0.26, 0.18)), Vector3(0.48, 2.25, 0), "copper_bar", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.12, 0.18, 0.12)), Vector3(0.48, 2.25, 0), "", LowPoly.mat(Color("ffd68a"), 0.3, 2.0))
+		"garden_table":
+			_p(parts, root, LowPoly.box(Vector3(1.4, 0.07, 0.8)), Vector3(0, 0.75, 0), "plank", logm)
+			for k in 4:
+				_p(parts, root, LowPoly.box(Vector3(0.06, 0.72, 0.06)), Vector3(0.62 if k & 1 else -0.62, 0.36, 0.34 if k & 2 else -0.34), "iron_bar", iron)
+			for sz in [-0.65, 0.65]:
+				_p(parts, root, LowPoly.box(Vector3(1.3, 0.05, 0.28)), Vector3(0, 0.45, sz), "plank", logm)
+		"statue":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.5, 0.9)), Vector3(0, 0.25, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.4, 0.7, 0.28)), Vector3(0, 0.95, 0), "copper_bar", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.24, 0.24, 0.24)), Vector3(0, 1.45, 0), "copper_bar", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.12, 0.55, 0.12)), Vector3(0.28, 1.0, -0.05), "copper_bar", copper, Vector3(0, 0, -25))
+			_p(parts, root, LowPoly.cyl(0.03, 0.03, 0.9, 6), Vector3(-0.32, 1.1, 0), "copper_bar", copper)
+			_p(parts, root, LowPoly.box(Vector3(0.05, 0.2, 0.22)), Vector3(-0.32, 1.55, -0.08), "copper_bar", copper)
+		"fountain":
+			_p(parts, root, LowPoly.cyl(0.9, 1.0, 0.4, 12), Vector3(0, 0.2, 0), "stone", stone)
+			var water := StandardMaterial3D.new()
+			water.albedo_color = Color(0.35, 0.6, 0.85, 0.8)
+			water.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			_p(parts, root, LowPoly.cyl(0.8, 0.8, 0.05, 12), Vector3(0, 0.38, 0), "", water)
+			_p(parts, root, LowPoly.cyl(0.12, 0.16, 0.9, 8), Vector3(0, 0.8, 0), "copper_bar", copper)
+			_p(parts, root, LowPoly.cyl(0.4, 0.3, 0.12, 10), Vector3(0, 1.25, 0), "iron_bar", iron)
 		"truck_caller":
 			for sx in [-0.14, 0.14]:
 				_p(parts, root, LowPoly.box(Vector3(0.27, 0.2, 0.5)), Vector3(sx, 0.1, 0), "stone", stone)
@@ -332,6 +408,11 @@ static func new_body(id: String) -> Machine:
 		"planter": return Planter.new()
 		"sprinkler": return Sprinkler.new()
 		"feller": return Feller.new()
+		"smelter", "kiln", "assembler": return Processor.new()
+		"grabber": return Grabber.new()
+		"sorter", "splitter": return Sorter.new()
+		"crate": return Crate.new()
+		"transmitter", "receiver": return Wireless.new()
 	if id.begins_with("gate_"):
 		return Gate.new()
 	return Machine.new()
@@ -358,7 +439,7 @@ static func finish(id: String, body: Machine) -> void:
 		"rotator":
 			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
 			(body as Rotator).setup_table(model.get_node("Table"))
-		"conveyor", "ramp":
+		"conveyor", "ramp", "sorter", "splitter":
 			var rise := RAMP_RISE if id == "ramp" else 0.0
 			var len := RAMP_LEN if id == "ramp" else 1.0
 			var tilt := atan2(rise, len)
@@ -380,9 +461,9 @@ static func finish(id: String, body: Machine) -> void:
 		"windmill":
 			Builds._box_col(body, Vector3(0.8, 0.2, 0.8), Vector3(0, 0.1, 0))
 			Builds._box_col(body, Vector3(0.25, 2.6, 0.25), Vector3(0, 1.4, 0))
-		"generator", "chipper", "planter":
-			var hy := 0.8 if id == "generator" else (0.75 if id == "chipper" else 0.5)
-			var hw := 0.75 if id == "chipper" else 0.7
+		"generator", "chipper", "planter", "smelter", "kiln", "assembler":
+			var hy := 0.8 if id == "generator" else (0.5 if id == "planter" else 0.75)
+			var hw := 0.7 if id == "generator" or id == "planter" else 0.75
 			Builds._box_col(body, Vector3(0.9, hy, 0.9), Vector3(0, hy * 0.5, 0))
 			for sgn in [-1.0, 1.0]:
 				Builds._box_col(body, Vector3(hw + 0.1, 0.4, 0.06), Vector3(0, hy + 0.25, sgn * hw * 0.5))
@@ -402,6 +483,18 @@ static func finish(id: String, body: Machine) -> void:
 			Builds._box_col(body, Vector3(0.12, 0.3, 0.9), Vector3(0.47, 0.75, 0))
 		"sprinkler":
 			Builds._box_col(body, Vector3(0.36, 0.7, 0.36), Vector3(0, 0.35, 0))
+		"grabber":
+			Builds._box_col(body, Vector3(0.6, 0.6, 0.6), Vector3(0, 0.3, 0))
+		"crate":
+			Builds._box_col(body, Vector3(1.0, 0.1, 1.0), Vector3(0, 0.05, 0))
+			Builds._box_col(body, Vector3(1.0, 1.0, 0.08), Vector3(0, 0.5, 0.47))
+			for sgn in [-1.0, 1.0]:
+				Builds._box_col(body, Vector3(0.08, 1.0, 1.0), Vector3(sgn * 0.47, 0.5, 0))
+			Builds._box_col(body, Vector3(1.0, 0.45, 0.08), Vector3(0, 0.78, -0.47))
+			var door := Builds._rot_col(body, Vector3(1.0, 0.56, 0.08), Vector3(0, 0.28, -0.47), Basis())
+			door.name = "DoorCol"
+		"transmitter", "receiver":
+			Builds._box_col(body, Vector3(0.4, 1.0, 0.4), Vector3(0, 0.5, 0))
 		"feller":
 			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
 			Builds._box_col(body, Vector3(0.2, 1.2, 0.5), Vector3(0, 0.75, 0.1))

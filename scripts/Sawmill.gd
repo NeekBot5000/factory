@@ -66,4 +66,5 @@ func _cut(lg: Log) -> void:
 		p.global_transform = global_transform * Transform3D(Basis(), Vector3(randf_range(-0.15, 0.15), 0.6 + k * 0.06, -0.75))
 		p.linear_velocity = -global_basis.z * 1.5 + Vector3.UP * 0.5
 	Sfx.play_at("thud", global_position, 1.2, 0.0)
+	Trophies.award("first_plank")
 	lg.queue_free()

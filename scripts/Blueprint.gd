@@ -209,8 +209,8 @@ func _complete() -> void:
 			colors.append(_filled[p_i] if _filled[p_i] != null else (_parts[p_i].real as StandardMaterial3D).albedo_color)
 	var world := get_parent()
 	var obj := Builds.finish(id, world, global_transform, height, colors, size)
-	# sells for a bit less than the materials that went into it
-	obj.set_meta("sale_value", snappedf(_worth * 0.85, 0.01))
+	# machines sell back for a bit less than their materials; decorations for far more (the work adds value)
+	obj.set_meta("sale_value", snappedf(_worth * float(Builds.BUILDS[id].get("sell", 0.85)), 0.01))
 	for b in _stored:
 		if is_instance_valid(b):
 			b.queue_free()
@@ -218,6 +218,8 @@ func _complete() -> void:
 	Nature.burst(world, global_position + Vector3.UP * 0.5, Vector3.UP, Color("ffe08a"), 30, 2.5, 0.04, 4.0, 1.0, 120.0, 1.5)
 	Sfx.play("reveal")
 	Game.toast.emit(Builds.BUILDS[id].name, Color("7aff9a"))
+	if Machines.is_machine(id):
+		Trophies.award("first_machine")
 	# a little pop as it becomes real
 	obj.scale = Vector3.ONE * 0.9
 	var tw := obj.create_tween()

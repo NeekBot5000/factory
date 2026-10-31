@@ -29,6 +29,10 @@ func _ready() -> void:
 	Game.reset()
 	for id in ["pickaxe", "steel_pick", "rock_drill", "core_drill", "wires", "hammer", "shears"]:
 		Game.owned[id] = true
+	# (the land rule has its own test in FactoryTest: here, own the whole map)
+	for lx in range(-6, 6):
+		for lz in range(-6, 6):
+			Game.land.append("%d,%d" % [lx, lz])
 	main = load("res://scenes/Main.tscn").instantiate()
 	add_child(main)
 	await frames(3)

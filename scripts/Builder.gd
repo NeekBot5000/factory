@@ -88,7 +88,12 @@ func busy() -> bool:
 	return state != "idle"
 
 
+var _off_land := false
+
+
 func hint_text() -> String:
+	if state == "place" and _off_land:
+		return "This isn't your land - buy it at a for-sale sign    [E] cancel"
 	match state:
 		"place":
 			if Builds.fixed(build_id):
@@ -172,6 +177,10 @@ func update(_delta: float) -> void:
 				_valid = bool(cell.ok)
 			var a := snappedf(atan2(flat.x, flat.z), PI * 0.5)
 			flat = Vector3(sin(a), 0, cos(a))
+		# only on land you own
+		_off_land = not Land.owns(pos)
+		if _off_land:
+			_valid = false
 		# front of the build faces you, plus however much you've turned it
 		_holo.global_transform = Transform3D(Basis.looking_at(flat, Vector3.UP).rotated(Vector3.UP, turn), pos)
 		_paint(_valid)
@@ -198,7 +207,8 @@ func _place_on_side(hit: Dictionary) -> void:
 	q.transform = Transform3D(basis, p + n * 0.24)
 	q.collision_mask = 1 | Blueprint.LAYER
 	q.exclude = [player.get_rid()]
-	_valid = player.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+	_off_land = not Land.owns(p)
+	_valid = player.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty() and not _off_land
 	_holo.global_transform = Transform3D(basis, p)
 	_paint(_valid)
 

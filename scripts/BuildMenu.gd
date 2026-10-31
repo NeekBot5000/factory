@@ -10,7 +10,7 @@ const CARD := Color(1, 1, 1, 0.06)
 const CARD_HOVER := Color(1, 0.81, 0.42, 0.22)
 const ACCENT := Color("ffcf6a")
 const RES_COLOR := {"bark": Color("a0703c"), "log": Color("6b4a32"), "leaf": Color("4f9a3c"), "stone": Color("7d7a73"),
-	"copper": Color("c8703a"), "iron": Color("6d7180")}
+	"copper": Color("c8703a"), "iron": Color("6d7180"), "plank": Color("c69a62"), "copper_bar": Color("d9783a"), "iron_bar": Color("8d949e")}
 
 var main: Node
 var cat := -1         # index into Builds.CATEGORIES, -1 = all

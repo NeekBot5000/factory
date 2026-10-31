@@ -16,6 +16,8 @@ var orders: Array = []          # {id, item, status: "processing"|"shipping"|"de
 var next_order := 1
 var total_earned := 0.0
 var save_enabled := true
+var land: Array = ["-1,-1", "-1,0", "0,-1", "0,0"]     # plots of land you own (Land.gd)
+var trophies := {}              # milestones on the cabin's trophy wall
 var charges := {}               # consumables left: dynamite sticks
 var dropped := {}               # tools lying on the ground (owned, but not in your hands); not saved
 var world_builds: Array = []    # things built with the hammer (and plans in progress), as saved data
@@ -33,6 +35,8 @@ func _ready() -> void:
 func add_money(v: float) -> void:
 	money += v
 	total_earned += maxf(v, 0.0)
+	if total_earned >= 1000.0:
+		Trophies.award("thousand")
 	money_changed.emit(money)
 	save_game()
 
@@ -121,7 +125,7 @@ func save_game() -> void:
 	if world_state_saver.is_valid():
 		world_state = world_state_saver.call()
 	# orders still in transit are refunded into "processing" so they get re-delivered next session
-	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings, "charges": charges}))
+	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings, "charges": charges, "land": land, "trophies": trophies}))
 	saved.emit()
 
 
@@ -147,6 +151,11 @@ func load_game() -> void:
 	world_builds = d.get("builds", [])
 	world_state = d.get("world", {})
 	quality = int(d.get("quality", 0))
+	land = ["-1,-1", "-1,0", "0,-1", "0,0"]
+	for k in d.get("land", []):
+		if not land.has(String(k)):
+			land.append(String(k))
+	trophies = d.get("trophies", {})
 	charges = {}
 	var ch: Dictionary = d.get("charges", {})
 	for k in ch:
@@ -172,6 +181,8 @@ func reset() -> void:
 	money = 0.0
 	owned = {"hands": true}
 	charges = {}
+	land = ["-1,-1", "-1,0", "0,-1", "0,0"]
+	trophies = {}
 	has_phone = false
 	orders = []
 	total_earned = 0.0

@@ -7,14 +7,14 @@ extends RefCounted
 const BUILDS := {
 	"basket": {"name": "Bark Basket", "needs": {"bark": 50}},
 	"wheelbarrow": {"name": "Wheelbarrow", "needs": {"bark": 24, "log": 1, "stone": 2}, "bp": "bp_wheelbarrow"},
-	"bench": {"name": "Log Bench", "needs": {"log": 1, "bark": 6}},
-	"campfire": {"name": "Campfire", "needs": {"bark": 6, "leaf": 10}},
-	"hammock": {"name": "Leaf Hammock", "needs": {"log": 2, "leaf": 30}},
+	"bench": {"name": "Log Bench", "needs": {"log": 1, "bark": 6}, "sell": 2.5},
+	"campfire": {"name": "Campfire", "needs": {"bark": 6, "leaf": 10}, "sell": 2.5},
+	"hammock": {"name": "Leaf Hammock", "needs": {"log": 2, "leaf": 30}, "sell": 2.5},
 	"chute": {"name": "Bark Chute", "needs": {"log": 3, "bark": 12}},
 	"rack": {"name": "Log Rack", "needs": {"log": 4}},
 	"compost": {"name": "Compost Pile", "needs": {"leaf": 40}},
-	"ball": {"name": "Basketball", "needs": {"leaf": 8}},
-	"hoop": {"name": "Basketball Hoop", "needs": {"bark": 12, "log": 1}},
+	"ball": {"name": "Basketball", "needs": {"leaf": 8}, "sell": 2.0},
+	"hoop": {"name": "Basketball Hoop", "needs": {"bark": 12, "log": 1}, "sell": 2.5},
 	"catapult": {"name": "Catapult", "needs": {"log": 3, "bark": 10, "leaf": 6}},
 	# machines: you need the blueprint from TimberMart first ("bp"); they build at 1x on a grid. The simple ones
 	# take stone and copper; the advanced ones (piston, rotator, truck caller) need iron ore too
@@ -49,27 +49,46 @@ const BUILDS := {
 	"planter": {"name": "Planter", "needs": {"stone": 4, "bark": 6, "log": 1, "copper": 1}, "bp": "bp_planter"},
 	"sprinkler": {"name": "Sprinkler", "needs": {"stone": 1, "copper": 2}, "bp": "bp_sprinkler"},
 	"feller": {"name": "Tree Feller", "needs": {"stone": 6, "iron": 3, "log": 1, "copper": 1}, "bp": "bp_feller"},
+	"smelter": {"name": "Smelter", "needs": {"stone": 10, "iron": 2}, "bp": "bp_smelter"},
+	"kiln": {"name": "Kiln", "needs": {"stone": 8, "copper": 1}, "bp": "bp_kiln"},
+	"assembler": {"name": "Assembler", "needs": {"plank": 6, "iron_bar": 2, "copper_bar": 2}, "bp": "bp_assembler"},
+	# logistics
+	"grabber": {"name": "Grabber Arm", "needs": {"stone": 3, "iron": 2, "copper": 2}, "bp": "bp_grabber"},
+	"sorter": {"name": "Sorter Belt", "needs": {"bark": 5, "stone": 2, "copper": 1}, "bp": "bp_sorter"},
+	"splitter": {"name": "Splitter Belt", "needs": {"bark": 5, "stone": 2, "copper": 1}, "bp": "bp_sorter"},
+	"crate": {"name": "Storage Crate", "needs": {"plank": 8, "log": 1, "iron": 1}, "bp": "bp_crate"},
+	"transmitter": {"name": "Transmitter", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
+	"receiver": {"name": "Receiver", "needs": {"stone": 2, "copper_bar": 2}, "bp": "bp_wireless"},
+	# decorations: worth far more than what goes into them ("sell" = sale value per $ of materials)
+	"lamppost": {"name": "Lamp Post", "needs": {"stone": 2, "iron_bar": 2, "copper_bar": 1}, "sell": 3.0},
+	"garden_table": {"name": "Garden Table", "needs": {"plank": 8, "iron_bar": 1}, "sell": 3.0},
+	"statue": {"name": "Lumberjack Statue", "needs": {"stone": 10, "copper_bar": 6}, "sell": 3.5},
+	"fountain": {"name": "Fountain", "needs": {"stone": 14, "copper_bar": 2, "iron_bar": 1}, "sell": 3.5},
 }
 const ORDER := ["basket", "wheelbarrow", "bench", "campfire", "hammock", "chute", "rack", "compost", "ball", "hoop", "catapult",
 	"crank", "lever", "button", "windmill", "generator", "battery", "conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller",
 	"gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor",
-	"lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller"]
+	"lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller", "smelter", "kiln", "assembler", "grabber", "sorter",
+	"splitter", "crate", "transmitter", "receiver", "lamppost", "garden_table", "statue", "fountain"]
 const CATEGORIES := [
 	{"name": "Storage", "items": ["basket", "wheelbarrow", "rack"]},
-	{"name": "Furniture", "items": ["bench", "hammock"]},
+	{"name": "Furniture", "items": ["bench", "hammock", "garden_table"]},
+	{"name": "Decorations", "items": ["lamppost", "statue", "fountain"]},
 	{"name": "Fire & Garden", "items": ["campfire", "compost"]},
 	{"name": "Workshop", "items": ["chute", "catapult"]},
 	{"name": "Fun", "items": ["ball", "hoop"]},
 	{"name": "Power & Switches", "items": ["crank", "windmill", "generator", "battery", "lever", "button"]},
 	{"name": "Logic & Sensors", "items": ["gate_diode", "gate_and", "gate_not", "gate_timer", "gate_delay", "gate_latch", "gate_counter", "pressure_plate", "item_sensor", "lamp", "bell"]},
-	{"name": "Production", "items": ["sawmill", "chipper"]},
+	{"name": "Production", "items": ["sawmill", "chipper", "smelter", "kiln", "assembler"]},
+	{"name": "Logistics", "items": ["grabber", "sorter", "splitter", "crate", "transmitter", "receiver"]},
 	{"name": "Tree Farm", "items": ["planter", "sprinkler", "feller"]},
 	{"name": "Machines", "items": ["conveyor", "ramp", "pillar", "piston", "rotator", "truck_caller"]},
 ]
 const SIZES := [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
 
 static var _S := 1.0     # scale applied to colliders while finishing a sized build
-const RES_NAME := {"bark": "bark", "log": "log", "leaf": "leaves", "stone": "stone", "copper": "copper ore", "iron": "iron ore"}
+const RES_NAME := {"bark": "bark", "log": "log", "leaf": "leaves", "stone": "stone", "copper": "copper ore", "iron": "iron ore",
+	"plank": "planks", "copper_bar": "copper bars", "iron_bar": "iron bars"}
 
 const HOOP_DEFAULT := 3.05
 
@@ -110,6 +129,12 @@ static func resource_of(body: Node) -> Dictionary:
 		return {"res": "log", "amount": 1, "color": (body as Log).trunk.bark_color}
 	if body is Leaf:
 		return {"res": "leaf", "amount": 1, "color": (body as Leaf).color}
+	if body is Product:
+		var pr := body as Product
+		var res := String(Product.KINDS[pr.kind].res)
+		if res == "":
+			return {}
+		return {"res": res, "amount": 1, "color": pr.color if res == "plank" else (Machines.COPPER if res == "copper_bar" else Color("9aa1ab"))}
 	if body is Ore:
 		var o := body as Ore
 		return {"res": o.kind, "amount": 1, "color": Machines.COPPER if o.kind == "copper" else (Machines.IRON if o.kind == "iron" else Ore.KINDS.stone.color)}
@@ -506,6 +531,15 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 				if b is Basketball and (b as RigidBody3D).linear_velocity.y < 0.0:
 					hoop.score(b))
 			body.add_to_group("hoops")
+		"lamppost":
+			_box_col(body, Vector3(0.4, 2.5, 0.4), Vector3(0, 1.25, 0))
+		"garden_table":
+			_box_col(body, Vector3(1.4, 0.8, 1.6), Vector3(0, 0.4, 0))
+		"statue":
+			_box_col(body, Vector3(0.9, 1.6, 0.9), Vector3(0, 0.8, 0))
+		"fountain":
+			_box_col(body, Vector3(1.9, 0.4, 1.9), Vector3(0, 0.2, 0))
+			_box_col(body, Vector3(0.3, 1.3, 0.3), Vector3(0, 0.65, 0))
 		"bench":
 			_box_col(body, Vector3(1.4, 0.06, 0.45), Vector3(0, 0.44, 0))
 			for sx in [-0.5, 0.5]:

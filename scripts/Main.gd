@@ -86,6 +86,18 @@ func _ready() -> void:
 	add_child(regrow)
 	# a brand-new world: the old hatchet lies on the porch, waiting for you
 	_chopping_block()
+	var land := Land.new()
+	land.name = "Land"
+	add_child(land)
+	land.setup(self)
+	var sign := CompanySign.new()
+	add_child(sign)
+	sign.position = Vector3(-3.8, terrain.height_at(-3.8, 6.8), 6.8)
+	sign.rotation.y = PI * 0.5
+	var wall := Trophies.new()
+	wall.name = "Trophies"
+	add_child(wall)
+	wall.position = Vector3(-Cabin.W * 0.5 + 0.2, Cabin.FLOOR_Y, 0.0)
 	var fresh := Game.is_fresh()
 	if fresh and Game.save_enabled:
 		_porch_hatchet()
