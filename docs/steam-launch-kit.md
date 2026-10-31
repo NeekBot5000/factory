@@ -39,7 +39,9 @@ Atmospheric, Stylized, Low-poly, Singleplayer.
 6. *Better with friends* (GIF: two players carrying a log, one falling over)
 7. Feature bullet list (species, biomes, machines, co-op, Steam Deck, achievements)
 
-**Capsule art brief** (commission a professional; it's the most-seen image):
+**Capsule art brief** (commission a professional; it's the most-seen image). Official sizes since August 2024: main
+capsule 1232x706, header 920x430, small 462x174, vertical 748x896; screenshots 1920x1080 or larger, 16:9
+([Steamworks: graphical assets](https://partner.steamgames.com/doc/store/assets)).
 - Must read at the tiny search-result size (~120x45 px is a common test).
 - One idea: a lumberjack mid-swing, a giant tree beginning to fall behind them, bark sheets flying toward the camera,
   warm sunrise light, bold chunky logo on the right.
@@ -61,8 +63,11 @@ Atmospheric, Stylized, Low-poly, Singleplayer.
 
 ## 2. Trailer shot list (60 seconds)
 
-Rule from the research: gameplay in the first 4-5 seconds, no logos first. Many shoppers skip trailers entirely, so
-the screenshots carry as much weight.
+Rules from the research: gameplay in the first 4-5 seconds, no logos first. Trailer editor Derek Lieu's order (as
+reported) is *genre, then hook, then content*, with the hook inside the first 10-15 seconds and the audio planned first.
+Many shoppers skip trailers entirely, so the screenshots carry as much weight.
+[GameDiscoverCo: getting to the hook](https://newsletter.gamediscover.co/p/how-to-get-to-your-games-hook-quick),
+[wnhub: gameplay first](https://wnhub.io/news/analytics/item-237)
 
 | Time | Shot | Sound |
 |---|---|---|
@@ -134,6 +139,11 @@ which is real work. *Recommendation: skip straight to Stage 1 unless split-scree
 - A joining client loads the world from the host's save data (the save system already serialises everything: trees,
   logs, chips, builds, wires), then switches to live sync.
 - Only the host saves. Clients' tool unlocks belong to the shared world.
+
+**Steam basics with GodotSteam:** achievements and stats are covered; rich presence has an official tutorial
+(localised tokens in a .vdf, then `setRichPresence("steam_display", token)`)
+([GodotSteam: rich presence](https://godotsteam.com/tutorials/rich_presence/)); for cloud saves the simplest route is
+Steam Auto-Cloud (set in Steamworks to sync the save folder, no code).
 
 **Stage 4: polish.** Proximity voice (Steam voice via GodotSteam), emotes, ping marker, name tags only on a held key
 (your no-floating-text rule could allow this as an exception, or skip names and rely on shirt colours).

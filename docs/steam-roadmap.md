@@ -458,7 +458,7 @@ You said players should learn it themselves. These teach through the world, not 
 301. **Localise the store page** first (Simplified Chinese, German, French, Spanish, Portuguese-BR, Russian, Japanese, Korean). ★★★ S
 302. **Name check**: "Timber" alone is hard to search on Steam and Google; consider a more searchable title or subtitle ("Timber: Lumber Co.", "Bark & Barrow", "Peel Mill"). ★★ S (decision)
 303. **Early Access launch** with a public roadmap (written as ranges, not fixed dates) and a promise of regular updates. ★★★ S
-304. **Launch price around $12-20** (Schedule I was ~$17; Hydroneer/Planet Crafter-style pricing) with a 10-20% launch discount. ★★ (decision)
+304. **Launch price around $15-20** with a 10-20% launch discount. For reference: Schedule I ~$17, Chop Chop Inc. €12.99 at launch, The Planet Crafter ~$24, Satisfactory $29.99 before a $10 rise. ★★ (decision) [PCGamesN](https://pcgamesn.com/satisfactory/price-increase), [Deku Deals](https://dekudeals.com/items/the-planet-crafter)
 305. **Launch on a quiet week** (avoid big AAA launches and Steam sales), Tuesday-Thursday, not during Next Fest itself. ★★ S
 306. **Respond to every early review** and patch fast in week one. ★★★ S
 307. **Bundle with a friend's game** later (Steam bundles across developers). ★ S
@@ -727,8 +727,8 @@ Ordered by impact for the effort, and by what has to come first. Numbers refer t
   gamedeveloper.com, the Steam store, vaporlens were all blocked), so most facts come from search-result summaries
   of those pages and are quoted second-hand. Allow those domains in the environment's network settings if you want a
   deeper pass.
-* **GodotSteam** (4.19.x for Godot 4.4+) covers achievements, stats, lobbies and networking; I couldn't confirm its
-  cloud-save and rich-presence API from here (Steam Auto-Cloud can sync save files without code).
+* **GodotSteam** (4.19.x for Godot 4.4+) covers achievements, stats, lobbies and networking, and has a rich presence
+  tutorial; for cloud saves, Steam Auto-Cloud can sync the save folder without code. Details in the launch kit.
 
 ---
 
