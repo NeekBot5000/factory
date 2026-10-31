@@ -801,6 +801,27 @@ Ordered by impact for the effort, and by what has to come first. Numbers refer t
 
 ---
 
+## Part 4b: What "popular" looks like in numbers
+
+Reference points from the research (all approximate, from developer statements or press):
+
+| Outcome | Example | Rough numbers |
+|---|---|---|
+| Typical | The median "simulator" on Steam | ~$70k gross revenue, ever |
+| Solid indie hit | Hydroneer | ~500k copies over a few years, ~12-14k reviews |
+| Big indie hit | The Planet Crafter | 241k wishlists at Early Access → 33k sold on day one, 240k in month one, 1M+ in ~3 years |
+| Breakout | Supermarket Simulator | ~33k wishlists shortly before launch → 2.15M copies, ~$22M in a year |
+| Viral co-op | Schedule I | ~459k peak concurrent players in its first weeks |
+
+Two rules of thumb from marketers (not Valve): roughly 1 launch-week sale per 10 wishlists (varies a lot by genre),
+and Steam reviews ≈ 1/30-1/60 of sales (Hydroneer: about 40x). Use them for gut checks, not plans.
+
+**A realistic target to steer by:** 30-50k wishlists by Early Access launch, a "Very Positive" score, and two content
+updates in the first three months. That's "solid indie hit" territory; co-op and a great clip on TikTok are what could
+push it further.
+
+---
+
 ## Part 5: Risks and honest notes
 
 * **Online physics co-op is the hardest item on this list.** Hydroneer's developer said true server/client multiplayer
