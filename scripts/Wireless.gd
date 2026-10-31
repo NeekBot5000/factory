@@ -3,8 +3,9 @@ extends Machine
 ## A transmitter and receiver pair with no wire between them, at any distance. Set both to the same channel (E):
 ## while any transmitter on a channel has power, every receiver on that channel gives power out.
 
-const CHANNELS := [Color("e8503a"), Color("3fa66b"), Color("3f8ee8"), Color("f2c12e")]
-const NAMES := ["red", "green", "blue", "yellow"]
+const CHANNELS := [Color("e8503a"), Color("3fa66b"), Color("3f8ee8"), Color("f2c12e"), Color("9b6ad6"), Color("f08a2e"),
+	Color("eeeeee"), Color("f06fb0")]
+const NAMES := ["red", "green", "blue", "yellow", "purple", "orange", "white", "pink"]
 
 var kind := "transmitter"
 var channel := 0
@@ -19,11 +20,14 @@ func activate(p_size: float) -> void:
 
 
 func is_source() -> bool:
-	if kind != "receiver":
-		return false
-	for t in get_tree().get_nodes_in_group("transmitters"):
+	return kind == "receiver" and channel_on(get_tree(), channel)
+
+
+## Whether any transmitter on a channel has power right now (receivers and drones listen for this).
+static func channel_on(tree: SceneTree, ch: int) -> bool:
+	for t in tree.get_nodes_in_group("transmitters"):
 		var tx := t as Wireless
-		if tx.channel == channel and tx.powered and is_instance_valid(tx):
+		if is_instance_valid(tx) and tx.channel == ch and tx.powered:
 			return true
 	return false
 
@@ -65,5 +69,5 @@ func save_state() -> Dictionary:
 
 
 func load_state(d: Dictionary) -> void:
-	channel = clampi(int(d.get("ch", 0)), 0, 3)
+	channel = clampi(int(d.get("ch", 0)), 0, CHANNELS.size() - 1)
 	_paint()

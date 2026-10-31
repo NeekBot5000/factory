@@ -19,7 +19,7 @@ static func _loose(b: Node3D, world: Node) -> bool:
 	var p := b.get_parent()
 	if p == world:
 		# frozen means it's in a plan or the truck - unless it's a locked log or stuck to a rotator
-		return not ((b is RigidBody3D) and (b as RigidBody3D).freeze and not (b is Log and (b as Log).locked) and not b.has_meta("stuck"))
+		return not ((b is RigidBody3D) and (b as RigidBody3D).freeze and not (b is Log and (b as Log).locked) and not b.has_meta("stuck") and not b.has_meta("carried"))
 	# things riding in a carried basket count as being in the world
 	return p is RigidBody3D and p.is_in_group("baskets")
 

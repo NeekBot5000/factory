@@ -352,6 +352,7 @@ func run() -> void:
 	await mining_test()
 	await truck_test()
 	await cart_test()
+	await drone_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -683,3 +684,75 @@ func cart_test() -> void:
 	var ws := WorldSave.save(main)
 	check((ws.rails as Array).size() == n_rails and (ws.drilled as Dictionary).size() >= 1, "rails and drilled-out spots are saved")
 	check(float(walker.save_state().cell) > 0.0, "a cart saves its battery charge")
+
+
+func drone_test() -> void:
+	var B4 := Vector3(-60, 40, -165)
+	var sb := LowPoly.static_box(main, Vector3(40, 1, 40), B4 + Vector3(0, -0.5, 0))
+	sb.collision_layer = 1
+	await frames(2)
+	# five channels at base: a crank, five levers, five transmitters (red, green, blue, yellow, purple)
+	var ck := place("crank", Vector3(-10, 0, 10), 0.0, B4) as Crank
+	ck.charge = 600.0
+	var levers: Array = []
+	for i in 5:
+		var lv := place("lever", Vector3(-12 + i * 1.0, 0, 12), 0.0, B4) as Lever
+		var tx := place("transmitter", Vector3(-12 + i * 1.0, 0, 14), 0.0, B4) as Wireless
+		tx.channel = i
+		wire(ck, lv)
+		wire(lv, tx)
+		levers.append(lv)
+	var dr := place("drone_medium", Vector3(0, 0, 0), 0.0, B4) as Drone
+	check(dr.dial == [0, 1, 2, 3, 4], "a drone's five dials start on five different channels")
+	(levers[4] as Lever).set_on(true)
+	await secs(1.0)
+	check(dr.global_position.y < B4.y + 0.1, "no battery cell: it stays on the ground")
+	(levers[4] as Lever).set_on(false)
+	var cell := product("battery_cell", dr.global_transform * (dr.cradle() + Vector3(0, 0.3, 0)), 6.0)
+	cell.set_charge(1.0)
+	await secs(3.0)
+	check(dr.cell == cell and dr.global_position.y > B4.y + Drone.CRUISE - 0.3, "with a charged cell it lifts off and hovers (%.1f m up)" % (dr.global_position.y - B4.y))
+	var z0 := dr.global_position.z
+	(levers[0] as Lever).set_on(true)
+	await secs(2.0)
+	(levers[0] as Lever).set_on(false)
+	check(dr.global_position.z < z0 - 3.0 and absf(dr.global_position.x - B4.x) < 0.1, "front channel on: it flies forward (%.1f m)" % (z0 - dr.global_position.z))
+	await frames(10)
+	# pad: go down, pick up the plank underneath, climb back up with it
+	var pl := product("plank", Vector3(dr.global_position.x, B4.y + 0.2, dr.global_position.z), 3.0)
+	await secs(1.0)
+	(levers[4] as Lever).set_on(true)
+	await secs(4.0)
+	check(dr.carried == pl, "pad channel on: it goes down and picks up the plank under it")
+	await secs(3.0)
+	check(pl.global_position.y > B4.y + 1.5, "...and carries it back up (%.1f m)" % (pl.global_position.y - B4.y))
+	var x0 := dr.global_position.x
+	(levers[1] as Lever).set_on(true)
+	await secs(1.5)
+	(levers[1] as Lever).set_on(false)
+	check(dr.global_position.x > x0 + 2.0 and absf(pl.global_position.x - dr.global_position.x) < 0.05, "right channel: it flies right, plank and all")
+	(levers[4] as Lever).set_on(false)
+	await secs(2.0)
+	check(dr.carried == null and pl.global_position.y < B4.y + 0.4 and not pl.freeze, "pad off: it lets go and the plank drops")
+	var used := 1.0 - dr.cell.charge
+	check(used > 0.0, "flying drains the battery (%.3f)" % used)
+	# too heavy for a small drone: a table
+	var sm := place("drone_small", Vector3(6, 0, 0), 0.0, B4) as Drone
+	sm.dial = [-1, -1, -1, -1, 4]
+	var c2 := product("battery_cell", sm.global_transform * (sm.cradle() + Vector3(0, 0.3, 0)), 6.0)
+	c2.set_charge(1.0)
+	await secs(2.5)
+	var tb := product("table", Vector3(sm.global_position.x, B4.y + 0.4, sm.global_position.z), 10.0)
+	await secs(1.0)
+	(levers[4] as Lever).set_on(true)
+	await secs(5.0)
+	check(sm.carried == tb and sm.too_heavy() and sm.global_position.y < B4.y + 0.8, "a table is too heavy for a small drone: it can't get off the ground (%.2f m)" % (sm.global_position.y - B4.y))
+	(levers[4] as Lever).set_on(false)
+	await secs(0.5)
+	check(sm.carried == null, "and it lets go when the pad switches off")
+	# saving
+	dr.dial[0] = 7
+	var st := dr.save_state()
+	check(int(st.dial[0]) == 7 and float(st.cell) > 0.0, "a drone saves its dials and battery")
+	var ws := WorldSave.save(main)
+	check(ws.has("products"), "the world saves with drones about")

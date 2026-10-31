@@ -9,7 +9,7 @@ const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp
 	"gate_counter", "pressure_plate", "item_sensor", "lamp", "bell", "sawmill", "chipper", "planter", "sprinkler", "feller",
 	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver", "drill_rig",
 	"minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "cart_sensor", "rail_layer", "rail_lifter",
-	"charger", "level_sensor"]
+	"charger", "level_sensor", "drone_small", "drone_medium", "drone_large"]
 const GATE_COLOR := {"diode": Color("f2c12e"), "and": Color("3fa66b"), "not": Color("d64034"), "timer": Color("4fa3e3"),
 	"delay": Color("9b6ad6"), "latch": Color("e8642b"), "counter": Color("e2e2e2")}
 
@@ -283,6 +283,8 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			_p(parts, root, LowPoly.box(Vector3(0.28, 0.24, 0.02)), Vector3(0, 0.6, 0.055), "", LowPoly.mat(Color("e8e2d0"), 0.8))
 			var needle := _node(root, "Needle", Vector3(0, 0.52, 0.07))
 			_p(parts, needle, LowPoly.box(Vector3(0.02, 0.18, 0.01)), Vector3(0, 0.09, 0), "", red)
+		"drone_small", "drone_medium", "drone_large":
+			_drone(root, parts, float(Drone.SIZES[id].w), logm, iron, copper, dark)
 		"drill_rig":
 			_p(parts, root, LowPoly.box(Vector3(1.0, 0.12, 1.0)), Vector3(0, 0.06, 0), "stone", stone)
 			for k in 4:
@@ -387,6 +389,34 @@ static func _minecart(root: Node3D, parts: Array, n: int, logm: Material, iron: 
 	for sx in [-0.17, 0.17]:
 		_p(parts, root, LowPoly.box(Vector3(0.03, 0.14, 0.34)), Vector3(sx, 0.31, n - 0.28), "copper_bar", copper)
 	_p(parts, root, LowPoly.box(Vector3(0.36, 0.14, 0.03)), Vector3(0, 0.31, n - 0.11), "copper_bar", copper)
+
+
+## A drone: a flat body with four arms and rotors, a pad underneath, the battery cradle on its back, and five dials
+## (front, right, back, left, and the pad dial on top) that light up in their wireless channel's colour.
+static func _drone(root: Node3D, parts: Array, w: float, logm: Material, iron: Material, copper: Material, dark: Material) -> void:
+	var h := w * 0.5
+	_p(parts, root, LowPoly.box(Vector3(w, 0.16, w)), Vector3(0, 0.16, 0), "iron_bar", iron)
+	_p(parts, root, LowPoly.box(Vector3(w * 0.8, 0.04, w * 0.8)), Vector3(0, 0.06, 0), "plank", logm)
+	for k in 4:
+		var o := Vector3(1.0 if k & 1 else -1.0, 0, 1.0 if k & 2 else -1.0) * (h + 0.12)
+		var arm := _p(parts, root, LowPoly.box(Vector3(0.06, 0.05, (h + 0.12) * 1.41)), o * 0.5 + Vector3(0, 0.2, 0), "copper_bar", copper)
+		arm.rotation.y = atan2(o.x, o.z)
+		_p(parts, root, LowPoly.cyl(0.05, 0.06, 0.1, 8), o + Vector3(0, 0.24, 0), "copper_bar", copper)
+		var rotor := _node(root, "Rotor%d" % k, o + Vector3(0, 0.3, 0))
+		_p(parts, rotor, LowPoly.box(Vector3(0.05, 0.015, w * 0.55)), Vector3.ZERO, "", dark)
+		_p(parts, rotor, LowPoly.box(Vector3(w * 0.55, 0.015, 0.05)), Vector3.ZERO, "", dark)
+	# the cradle for the cell
+	_p(parts, root, LowPoly.box(Vector3(0.28, 0.03, 0.28)), Vector3(0, 0.255, h - 0.12), "", dark)
+	for i in 5:
+		var at: Vector3
+		match i:
+			0: at = Vector3(0, 0.18, -h - 0.02)
+			1: at = Vector3(h + 0.02, 0.18, 0)
+			2: at = Vector3(-0.15, 0.18, h + 0.02)
+			3: at = Vector3(-h - 0.02, 0.18, 0)
+			_: at = Vector3(-0.12, 0.27, -0.05)
+		var d := _p(parts, root, LowPoly.cyl(0.045, 0.045, 0.04, 8), at, "", dark, Vector3(0, 0, 0) if i == 4 else (Vector3(90, 0, 0) if i % 2 == 0 else Vector3(0, 0, 90)))
+		d.name = "Dial%d" % i
 
 
 static func _hopper(root: Node3D, parts: Array, y: float, w: float, bark: Material) -> void:
@@ -505,6 +535,7 @@ static func new_body(id: String) -> Machine:
 		"cart_go", "cart_back", "rail_layer", "rail_lifter": return CartPart.new()
 		"cart_sensor", "level_sensor": return Sensor.new()
 		"charger": return Charger.new()
+		"drone_small", "drone_medium", "drone_large": return Drone.new()
 	if id.begins_with("gate_"):
 		return Gate.new()
 	return Machine.new()
@@ -608,6 +639,9 @@ static func finish(id: String, body: Machine) -> void:
 			for sgn in [-1.0, 1.0]:
 				Builds._box_col(body, Vector3(0.8, 0.2, 0.05), Vector3(0, 0.6, sgn * 0.38))
 				Builds._box_col(body, Vector3(0.05, 0.2, 0.8), Vector3(sgn * 0.38, 0.6, 0))
+		"drone_small", "drone_medium", "drone_large":
+			var dw := float(Drone.SIZES[id].w)
+			Builds._box_col(body, Vector3(dw, 0.2, dw), Vector3(0, 0.14, 0))
 		"feller":
 			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
 			Builds._box_col(body, Vector3(0.2, 1.2, 0.5), Vector3(0, 0.75, 0.1))

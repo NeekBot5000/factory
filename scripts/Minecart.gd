@@ -113,7 +113,7 @@ func _part_on(kind: String) -> bool:
 func adopt() -> void:
 	for b in get_tree().get_nodes_in_group("builds"):
 		var m := b as Node3D
-		if m == self or m is Minecart or not (m is Machine) or deck.has(m):
+		if m == self or m is Minecart or m is Drone or not (m is Machine) or deck.has(m):
 			continue
 		var lp := to_local(m.global_position)
 		if absf(lp.x) < 0.5 and lp.z > -0.5 and lp.z < length - 0.5 and lp.y > DECK_Y - 0.15 and lp.y < DECK_Y + 0.3:
