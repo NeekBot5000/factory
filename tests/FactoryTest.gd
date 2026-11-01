@@ -355,6 +355,7 @@ func run() -> void:
 	await drone_test()
 	await yard_test()
 	await port_test()
+	await sweep_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -953,3 +954,55 @@ func port_test() -> void:
 	player.take_down(dn)
 	await frames(3)
 	check(is_instance_valid(load) and not load.freeze and load.is_in_group("grabbable") and is_instance_valid(dcell) and not dcell.freeze, "taking a drone down drops what it carried and its cell")
+
+
+## Every build in the game: build it, read its hint, use it, save and reload its settings, save and load the
+## whole lot, and take it all down. Any script error on the way shows up in the log (and fails CI).
+func sweep_test() -> void:
+	var B7 := Vector3(-60, 40, -290)
+	var sb := LowPoly.static_box(main, Vector3(70, 1, 50), B7 + Vector3(0, -0.5, 0))
+	sb.collision_layer = 1
+	await frames(2)
+	for x in range(-30, 31):
+		Rail.lay(main, Vector2i(int(B7.x) + x, int(B7.z) - 20), true, B7.y)
+	var before := get_tree().get_nodes_in_group("builds").size()
+	var made: Array = []
+	var i := 0
+	for id in Builds.ORDER:
+		var at := B7 + Vector3(-30 + (i % 15) * 4, 0, -15 + (i / 15) * 5)
+		if String(id).begins_with("minecart_"):
+			at = Vector3(B7.x - 28 + i % 15 * 4, Rail.at(Vector2i(int(B7.x) - 28 + i % 15 * 4, int(B7.z) - 20)).top(), B7.z - 20)
+		var b := Builds.finish(id, main, Transform3D(Basis(Vector3.UP, PI * 0.5) if String(id).begins_with("minecart_") else Basis(), at), Builds.HOOP_DEFAULT, [], 1.0)
+		made.append(b)
+		i += 1
+	await frames(10)
+	var hints := 0
+	for b in made:
+		if is_instance_valid(b) and b.has_method("hint_text"):
+			var h = b.call("hint_text")
+			if typeof(h) == TYPE_STRING:
+				hints += 1
+	check(made.size() == Builds.ORDER.size(), "all %d builds can be built" % made.size())
+	check(hints > 0, "their hints read without errors (%d)" % hints)
+	var used := 0
+	for b in made:
+		if b is Machine:
+			var m := b as Machine
+			var st := m.save_state()
+			m.load_state(st)
+			if m.has_method("on_use"):
+				m.call("on_use", player)
+			used += 1
+	await secs(1.0)
+	check(used > 50, "every machine can be used and its settings saved and loaded again (%d)" % used)
+	var data := Builds.save_world(main)
+	var n_saved := data.filter(func(e): return e.get("kind", "") == "build").size()
+	for b in made:
+		if is_instance_valid(b) and not (b as Node).is_queued_for_deletion():
+			player.take_down(b)
+	await frames(5)
+	check(get_tree().get_nodes_in_group("builds").size() <= before, "everything can be taken down again")
+	var keep := get_tree().get_nodes_in_group("builds").size()
+	Builds.load_world(main, data)
+	await frames(10)
+	check(get_tree().get_nodes_in_group("builds").size() - keep == n_saved and n_saved >= made.size() - 2, "and loaded back from the save (%d)" % n_saved)
