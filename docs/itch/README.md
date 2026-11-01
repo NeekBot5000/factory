@@ -104,7 +104,9 @@ Made by NeekBot5000 with Claude, in Godot 4.4.
 
 Once the page exists, `tools/push_itch.sh <your-itch-username> <folder with the three zips>` uploads a new version
 with [butler](https://itch.io/docs/butler/) (install it and run `butler login` once). Bump `config/version` in
-`project.godot` and add a line to `CHANGELOG.md` first.
+`project.godot` and add a line to `CHANGELOG.md` first. butler's uploads are separate from ones made by hand on the
+website: if you start with butler, use it from the first upload (then mark the web one "played in the browser" once);
+if you started by hand, delete the hand-made uploads after the first butler push.
 
 ## 6. Before you press Publish
 
