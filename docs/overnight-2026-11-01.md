@@ -29,5 +29,13 @@ DONE
 [x] Pause on focus loss; tests for take-down of carts/drones/socketed machines — Main.gd, FactoryTest — 04:42
 [x] README updated (v1.0, rails/drones/sockets, menus, releasing) — 04:45
 [x] Timber icon + loading splash — icon.svg, assets/splash.png, project.godot — 04:39
+[x] Review pass: re-read tonight's diff; Guide resize wording fixed; itch AI-disclosure + cover size verified with sources — 04:44
+[x] Browser round trip: New Game, Esc, Guide, Fullscreen (really fullscreen), Quit to title -> Continue — all work — 04:50
+[x] Sweep test: all 72 builds built/hinted/used/saved/taken down/loaded back — FactoryTest — 04:47
+[x] Soak test covers cells on sockets, rails, wireless/dials; 8 seeds clean — SoakTest — 04:50
+[x] Keys by physical position (AZERTY/QWERTZ) incl. browser check; InputTest AZERTY case — Player.gd, BuildMenu.gd — 04:53
+[x] New game looks down at the hatchet; hatchet no longer sticks out through the block side; TutorialTest covers — Main.gd — 04:57
+[x] CI smoke-tests the exported Linux binary (600 frames, no script errors) — build.yml — 04:57
+[x] Menus checked at 4:3 and ultrawide; Guide Controls page — 05:02
 
 PARKED
