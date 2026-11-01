@@ -101,6 +101,8 @@ func _ready() -> void:
 	var fresh := Game.is_fresh()
 	if fresh and Game.save_enabled:
 		_porch_hatchet()
+		# look down at the chopping block, so the first thing a new player sees is the hatchet in it
+		player.set("_pitch", deg_to_rad(-28.0))
 	# the title screen (tests run without saving, and skip it)
 	if Game.save_enabled and not Game.skip_title:
 		open_title(not fresh)
@@ -138,9 +140,11 @@ func _porch_hatchet() -> void:
 	item.freeze = true          # stays stuck in the block until you take it
 	# blade buried in the top of the block, handle sticking up at an angle
 	var head := BLOCK_AT
-	head.y = terrain.height_at(head.x, head.z) + 0.43
-	var b := Basis(Vector3.UP, 2.4) * Basis(Vector3.RIGHT, deg_to_rad(-60.0))
-	item.global_transform = Transform3D(b, head - b * Vector3(0, 0.15, -0.05))
+	head.y = terrain.height_at(head.x, head.z) + 0.47
+	# the item's model is centred: its head is 0.13 m up from the middle, the blade towards -Z and the grip down -Y.
+	# Turn it so the blade bites down into the wood and the grip rises out of the block at about 40 degrees.
+	var b := Basis(Vector3.UP, 2.4) * Basis(Vector3.RIGHT, deg_to_rad(-130.0))
+	item.global_transform = Transform3D(b, head - b * Vector3(0, 0.13, -0.06))
 	Game.set_dropped("hatchet", true)
 
 

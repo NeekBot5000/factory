@@ -64,6 +64,35 @@ func _ready() -> void:
 	await frames(25)
 	check(Game.tutorial == -1 and Game.money > m0, "selling it with the hammer finishes the tutorial")
 	check(not is_instance_valid(tut), "and the panel goes away")
+	# a real new game (saving on): you start looking down at the hatchet in the chopping block, and can take it
+	main.queue_free()
+	await frames(2)
+	Game.save_path = "user://timber_porchtest.json"
+	Game.save_enabled = true
+	Game.reset()
+	Game.skip_title = true
+	main = load("res://scenes/Main.tscn").instantiate()
+	add_child(main)
+	await frames(5)
+	var p2: Player = main.player
+	var items := get_tree().get_nodes_in_group("tool_items")
+	check(items.size() == 1 and (items[0] as ToolItem).tool == "hatchet" and float(p2.get("_pitch")) < -0.3, "a new game starts looking down at the hatchet in the chopping block")
+	if items.size() == 1:
+		var it := items[0] as Node3D
+		check(it.global_position.y > main.terrain.height_at(it.global_position.x, it.global_position.z) + 0.35, "the hatchet sits on top of the block")
+		var to := it.global_position - p2.cam.global_position
+		p2.set("_yaw", atan2(-to.x, -to.z))
+		p2.set("_pitch", atan2(to.y, Vector2(to.x, to.z).length()))
+		p2.rotation.y = atan2(-to.x, -to.z)
+		p2.head.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
+		await frames(2)
+		p2.interact()
+		await frames(10)
+		check(p2.tool == "hatchet", "looking at it and pressing E takes it")
+	main.queue_free()
+	await frames(2)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.save_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.save_path) + ".bak")
 	Game.save_enabled = false
 	print("TUTORIAL RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()
