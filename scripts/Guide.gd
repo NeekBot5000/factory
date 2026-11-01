@@ -28,7 +28,7 @@ const TOPICS := [
 [b]The wire spool[/b] connects machines (see Power).
 
 The [b]scale[/b] tells you what something weighs and is worth. The [b]ore detector[/b] shows how rich the ground under you is."""],
-	["Building", """Click with the [b]hammer[/b] to open the build menu and pick something. A hologram follows your aim: [b]R[/b] turns it, the mouse wheel resizes it (furniture and decorations only), click to place it.
+	["Building", """Click with the [b]hammer[/b] to open the build menu and pick something. A hologram follows your aim: [b]R[/b] turns it, the mouse wheel resizes it (anything but machines), click to place it.
 
 The placed plan shows what it needs. Drop the materials into it - bark, logs, leaves, stone, ore, planks or bars - and it builds itself.
 
