@@ -102,11 +102,22 @@ func _ready() -> void:
 	if fresh and Game.save_enabled:
 		_porch_hatchet()
 		# look down at the chopping block, so the first thing a new player sees is the hatchet in it
-		player.set("_pitch", deg_to_rad(-28.0))
+		# (not behind the title screen: a fresh world's title only offers New Game, which reloads straight into play)
+		_look_at_block = true
 	# the title screen (tests run without saving, and skip it)
 	if Game.save_enabled and not Game.skip_title:
 		open_title(not fresh)
+	elif _look_at_block:
+		_look_down_at_block()
 	Game.skip_title = false
+
+
+var _look_at_block := false
+
+
+func _look_down_at_block() -> void:
+	_look_at_block = false
+	player.set("_pitch", deg_to_rad(-28.0))
 
 
 const BLOCK_AT := Vector3(0.8, 0.0, Cabin.D * 0.5 + 2.6)
