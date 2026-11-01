@@ -495,6 +495,7 @@ static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Mat
 	for sx in [-1.0, 1.0]:
 		var border := _p(parts, root, LowPoly.box(Vector3(0.04, 0.1, run)), c + Vector3(sx * (BELT_W * 0.5 - 0.02), 0, 0) + nrm * 0.05, "bark", bark, rot)
 		border.name = "BorderL" if sx < 0 else "BorderR"
+		border.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# legs at each end, longer at the high end
 	for e in [-1.0, 1.0]:
 		var at: Vector3 = c + dir * run * 0.5 * e
@@ -515,6 +516,7 @@ static func _belt(root: Node3D, parts: Array, len: float, rise: float, bark: Mat
 	var slats := _node(root, "Slats")
 	for k in int(ceil(run * 4.0)):
 		var mi := LowPoly.mesh_instance(slats, LowPoly.box(Vector3(BELT_W - 0.1, 0.012, 0.03)), dark, c + dir * (-run * 0.5 + (k + 0.5) / 4.0) + nrm * 0.04, rot)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF      # paper-thin: no shadow worth drawing
 		parts.append({"mi": mi, "res": "", "real": dark})
 	slats.set_meta("run", run)
 	slats.set_meta("dir", dir)

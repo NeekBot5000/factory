@@ -211,6 +211,7 @@ func make_port() -> void:
 	add_child(n)
 	n.position = port_local()
 	Machine.socket_mesh(n)
+	LowPoly.bake(n, false)
 
 
 static func socket_mesh(n: Node3D) -> void:

@@ -7,7 +7,7 @@ const MAX_LEN := 14.0
 
 var a: Machine
 var b: Machine
-var _segs: Array[MeshInstance3D] = []
+var _cable: MeshInstance3D       # the whole sagging cable as one mesh (rebuilt only when an end moves)
 var _mat: StandardMaterial3D
 var _last := [Vector3.INF, Vector3.INF]
 var _live := false
@@ -24,13 +24,10 @@ func setup(p_a: Machine, p_b: Machine) -> void:
 	_mat.emission_enabled = true
 	_mat.emission = Color("ffb347")
 	_mat.emission_energy_multiplier = 0.0
-	for i in SEGMENTS:
-		var mi := MeshInstance3D.new()
-		mi.mesh = LowPoly.box(Vector3(0.035, 0.035, 1.0))
-		mi.material_override = _mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(mi)
-		_segs.append(mi)
+	_cable = MeshInstance3D.new()
+	_cable.material_override = _mat
+	_cable.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_cable)
 	for k in 2:
 		_plugs.append(_make_plug())
 	add_to_group("wires")
@@ -46,8 +43,7 @@ func _make_plug() -> Node3D:
 	LowPoly.mesh_instance(n, LowPoly.box(Vector3(w, 0.1, w)), dark, Vector3(0, -0.01, 0))
 	LowPoly.mesh_instance(n, LowPoly.box(Vector3(w + 0.006, 0.018, w + 0.006)), LowPoly.mat(Color("d8893f"), 0.3), Vector3(0, 0.028, 0))
 	LowPoly.mesh_instance(n, LowPoly.cyl(0.03, 0.05, 0.06, 8), LowPoly.mat(Color("1d1e22"), 0.8), Vector3(0, 0.07, 0))
-	for c in n.get_children():
-		(c as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	LowPoly.bake(n, false)
 	return n
 
 
@@ -98,15 +94,16 @@ func _redraw() -> void:
 	for i in SEGMENTS + 1:
 		var t := float(i) / SEGMENTS
 		pts.append(pa.lerp(pb, t) + Vector3.DOWN * sag * 4.0 * t * (1.0 - t))
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var seg := LowPoly.box(Vector3(0.035, 0.035, 1.0))
 	for i in SEGMENTS:
 		var p0 := pts[i]
 		var p1 := pts[i + 1]
 		var d := p1 - p0
-		var mi := _segs[i]
 		if d.length() < 0.001:
-			mi.visible = false
 			continue
-		mi.visible = true
 		# stretch along the segment's own length (Basis.scaled would stretch along the world's axes instead)
 		var b := Basis.looking_at(d.normalized(), Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT)
-		mi.global_transform = Transform3D(b * Basis.from_scale(Vector3(1, 1, d.length() + 0.02)), (p0 + p1) * 0.5)
+		st.append_from(seg, 0, Transform3D(b * Basis.from_scale(Vector3(1, 1, d.length() + 0.02)), (p0 + p1) * 0.5))
+	_cable.mesh = st.commit()

@@ -614,6 +614,9 @@ static func finish(id: String, world: Node, xform: Transform3D, height: float, c
 				Machines.finish(id, body as Machine)
 	body.add_to_group("builds")
 	body.set_meta("build", {"id": id, "height": height, "size": size, "colors": colors})
+	# machines are built from lots of little parts: merge the ones that never move into a few meshes
+	if body is Machine and body.get_node_or_null("Model") != null:
+		LowPoly.bake(body.get_node("Model"))
 	return body
 
 
