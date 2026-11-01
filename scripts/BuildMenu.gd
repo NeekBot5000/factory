@@ -204,7 +204,7 @@ func _pick(id: String) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		var k := (event as InputEventKey).keycode
+		var k := Player.key_of(event)
 		if k == KEY_ESCAPE or k == KEY_E or k == KEY_Q:
 			get_viewport().set_input_as_handled()
 			closed.emit()

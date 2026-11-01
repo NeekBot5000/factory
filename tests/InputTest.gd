@@ -93,6 +93,19 @@ func run() -> void:
 	var p0 := player.global_position
 	await key(KEY_W, 40)
 	check(player.global_position.distance_to(p0) > 0.5, "W walks (%.2f m)" % player.global_position.distance_to(p0))
+	# on an AZERTY keyboard the key in W's place says Z: it must walk too (keys go by position, not label)
+	var pz := player.global_position
+	var az := InputEventKey.new()
+	az.keycode = KEY_Z
+	az.physical_keycode = KEY_W
+	az.pressed = true
+	Input.parse_input_event(az)
+	await frames(40)
+	var azu := az.duplicate() as InputEventKey
+	azu.pressed = false
+	Input.parse_input_event(azu)
+	await frames(2)
+	check(player.global_position.distance_to(pz) > 0.5, "on an AZERTY keyboard the key in W's place walks too (%.2f m)" % player.global_position.distance_to(pz))
 	var y0 := player.global_position.y
 	var top := y0
 	var e := InputEventKey.new()

@@ -322,10 +322,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			cycle_tool(-1)
 		elif b.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			cycle_tool(1)
-	elif event is InputEventKey and not event.pressed and (event as InputEventKey).keycode == KEY_R:
+	elif event is InputEventKey and not event.pressed and key_of(event) == KEY_R:
 		_pouring = false
-	elif event is InputEventKey and event.pressed and (not event.echo or (event as InputEventKey).keycode == KEY_R):
-		var k := (event as InputEventKey).keycode
+	elif event is InputEventKey and event.pressed and (not event.echo or key_of(event) == KEY_R):
+		var k := key_of(event)
 		if not controls_enabled:
 			return
 		if k == KEY_E or k == KEY_F:
@@ -363,6 +363,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			var n := (k - KEY_1) + (9 if (event as InputEventKey).shift_pressed else 0)
 			if n < owned.size():
 				equip(owned[n])
+
+
+## Which key was pressed, by where it is on the keyboard rather than what's printed on it: WASD, E, Q, R and the
+## rest sit in the same place on AZERTY, QWERTZ and other layouts.
+static func key_of(event: InputEvent) -> Key:
+	var e := event as InputEventKey
+	return e.physical_keycode if e.physical_keycode != KEY_NONE else e.keycode
 
 
 ## Left click: click an object (box), throw what you hold, or swing the tool.
@@ -974,23 +981,23 @@ func _physics_process(delta: float) -> void:
 			return
 	var input := Vector2.ZERO
 	if controls_enabled:
-		if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+		if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
 			input.y -= 1
-		if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+		if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
 			input.y += 1
-		if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+		if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
 			input.x -= 1
-		if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+		if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 			input.x += 1
 	input = input.normalized()
-	var sprint := Input.is_key_pressed(KEY_SHIFT) and controls_enabled
+	var sprint := Input.is_physical_key_pressed(KEY_SHIFT) and controls_enabled
 	var speed := (SPRINT if sprint else WALK) * float(tdef().get("move", 1.0))
 	var dir := (global_transform.basis * Vector3(input.x, 0, input.y))
 	var accel := 12.0 if is_on_floor() else 3.0
 	velocity.x = lerpf(velocity.x, dir.x * speed, minf(1.0, accel * delta))
 	velocity.z = lerpf(velocity.z, dir.z * speed, minf(1.0, accel * delta))
 	if is_on_floor():
-		if Input.is_key_pressed(KEY_SPACE) and controls_enabled:
+		if Input.is_physical_key_pressed(KEY_SPACE) and controls_enabled:
 			velocity.y = JUMP
 	else:
 		velocity.y -= GRAVITY * delta

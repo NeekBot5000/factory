@@ -6,7 +6,7 @@ Peel bark off trees with your bare hands, sell it, buy better tools, and work yo
 sawmills, smelters, conveyor belts, logic circuits, mine carts on rails and flying drones.
 There is no inventory: everything is a physics object you pick up and carry.
 
-CONTROLS
+CONTROLS  (by key position, so on AZERTY/QWERTZ keyboards it's the same keys in the same place)
   Mouse ............ look
   W A S D .......... walk            Shift ... run        Space ... jump
   Left click ....... use your tool (chop, saw, mine, build, place wires...)
