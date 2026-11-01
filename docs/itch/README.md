@@ -94,7 +94,8 @@ Then automate it.
 Everything you see - every model, sound and song - is made from code inside the game. It saves by itself.
 
 **Controls:** mouse to look, WASD to move, left click to use your tool, E to pick up and use things, R to turn,
-Tab for the phone, Esc for the menu (with a field guide). Full list in the README inside the download.
+Tab for the phone, Esc for the menu. The in-game guide (Esc > Guide) has the full list and explains every machine.
+Keys go by position, so AZERTY and QWERTZ keyboards work too.
 
 Made by NeekBot5000 with Claude, in Godot 4.4.
 
@@ -110,8 +111,8 @@ if you started by hand, delete the hand-made uploads after the first butler push
 
 ## 6. Before you press Publish
 
-- Play the browser version on the itch page once (click, walk, open the computer) - itch's iframe is the one place
-  this hasn't been tested.
+- Play the browser version on the itch page once (click, walk, open the computer). The game was tested inside a
+  cross-origin iframe like itch's (it boots, starts a new game, walks and saves), but not on itch itself.
 - Saves in the browser are stored per site: the itch.io version and the GitHub Pages version don't share saves.
 - If you change the feedback link in the pause menu (it points at GitHub issues now), it's `FEEDBACK_URL` in
   `scripts/SettingsMenu.gd` - your itch page's comments, for example.
