@@ -18,6 +18,18 @@ const TOPICS := [
 [b]Selling[/b] - drop things into the back of the green truck, look at the truck and press [b]E[/b] to send it to the mill. You're paid when it gets there.
 
 [b]Buying[/b] - use the computer in the cabin. A van delivers your order to the dock in a box: click the box to open it."""],
+	["Controls", """[b]Mouse[/b] - look around. Click the game to capture the mouse.
+[b]W A S D[/b] - walk. [b]Shift[/b] runs, [b]Space[/b] jumps.
+[b]Left click[/b] - use your tool: chop, saw, mine, build, connect wires. Hold it for saws, drills and vacuums.
+[b]E[/b] or [b]right click[/b] - pick up, drop, or use what you're looking at.
+[b]R[/b] - turn the build you're placing or a laid rail; hold it to tip out what you're holding.
+[b]X[/b] with the hammer - take a build down (you get its value back).
+[b]Q[/b] - put your tool down.
+[b]1-9[/b] or the [b]mouse wheel[/b] - switch tools (Shift + 1-9 for tools 10-18).
+[b]Tab[/b] - the phone, once you've bought one.
+[b]F11[/b] - fullscreen.  [b]Esc[/b] - pause, settings and this guide.
+
+Keys go by where they are on the keyboard, so on AZERTY or QWERTZ keyboards it's the same keys in the same place."""],
 	["Tools", """Switch tools with [b]1-9[/b] (Shift for 10-18) or the mouse wheel. [b]Q[/b] puts the tool in your hand down.
 
 [b]Axes[/b] peel bark. Each one is different: some hit twice, some take a whole ring, some only take one layer.
