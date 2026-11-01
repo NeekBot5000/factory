@@ -47,4 +47,7 @@ func _physics_process(delta: float) -> void:
 	if low != null:
 		_cd = EVERY
 		low.sleeping = false
-		low.linear_velocity = -global_basis.z * 2.8 + Vector3.UP * 0.4
+		# a hop and a shove towards the middle of the door: rough ore chunks would scrape to a stop on the crate's
+		# floor otherwise, and need several goes to get out
+		var lp := to_local(low.global_position)
+		low.linear_velocity = -global_basis.z * 3.4 + Vector3.UP * 1.1 - global_basis.x * clampf(lp.x, -0.3, 0.3) * 2.5

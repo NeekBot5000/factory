@@ -286,6 +286,8 @@ func _roll(delta: float) -> void:
 	if _t >= 1.0:
 		_t = -1.0
 		_settle = SETTLE
+		# the wheels clack over the rail joint
+		Sfx.play_at("clink", global_position, randf_range(0.55, 0.65), -14.0)
 		# a curve (or a switched rail) turns the cart: the leading end follows the track's other way out
 		var ar := Rail.at(_arrive)
 		var mv := dir() if _forward else -dir()
