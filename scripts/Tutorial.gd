@@ -10,7 +10,7 @@ const STEPS := [
 	"Look at the truck and press E to send it to the mill. You're paid when it gets there.",
 	"Keep at it until you have $120 for a Builder's Hammer.",
 	"Go into the cabin, use the computer (E) and buy the Builder's Hammer from TimberMart.",
-	"The delivery van brings it to the dock. Open the box with E to get your hammer.",
+	"The delivery van brings it to the dock. Click the box to open it, then pick up your hammer.",
 	"Click with the hammer to open the build menu, pick the Bark Wreath, place it, then drop 12 bark into the hologram.",
 	"Decorations sell for much more than they cost. Look at your wreath with the hammer and press X to sell it.",
 ]
@@ -98,7 +98,7 @@ func _process(delta: float) -> void:
 		moved = true
 	if Game.tutorial >= STEPS.size():
 		Game.tutorial = -1
-		Game.toast.emit("That's the basics. The rest is yours to find out!", Color("7aff9a"))
+		Game.toast.emit("That's the basics. The rest is yours to find out - Esc > Guide if you get stuck.", Color("7aff9a"))
 		Sfx.play("reveal")
 		Game.save_game()
 		queue_free()

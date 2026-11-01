@@ -5,7 +5,7 @@ extends Control
 
 signal closed
 
-const BG := Color(0.08, 0.09, 0.12, 0.96)
+const BG := Color(0.08, 0.09, 0.12, 1.0)
 const ACCENT := Color("ffcf6a")
 const MADE_BY := "NeekBot5000"     # the name shown as the game's maker
 

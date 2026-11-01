@@ -34,8 +34,8 @@ func setup(p_main: Node) -> void:
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -270
 	panel.offset_right = 270
-	panel.offset_top = -305
-	panel.offset_bottom = 305
+	panel.offset_top = -285
+	panel.offset_bottom = 285
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = BG
 	sb.set_corner_radius_all(18)
@@ -104,7 +104,7 @@ func setup(p_main: Node) -> void:
 	v.add_child(resume)
 	# found a bug, or have an idea? opens the feedback page in the browser
 	var fb := Button.new()
-	fb.text = "Feedback / bugs"
+	fb.text = "Feedback"
 	fb.flat = true
 	fb.focus_mode = Control.FOCUS_NONE
 	fb.add_theme_font_override("font", font_bold)
@@ -115,6 +115,9 @@ func setup(p_main: Node) -> void:
 	var links := HBoxContainer.new()
 	links.alignment = BoxContainer.ALIGNMENT_CENTER
 	links.add_theme_constant_override("separation", 6)
+	links.add_child(_link("Guide", func():
+		var g := Guide.new()
+		add_child(g)))
 	links.add_child(fb)
 	links.add_child(_link("Credits", func():
 		var cr := Credits.new()
