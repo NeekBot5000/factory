@@ -134,6 +134,7 @@ jobs:
 
       - name: Export Web, Windows and Linux
         run: |
+          set -o pipefail
           mkdir -p build/web build/windows build/linux
           touch build/.gdignore      # keep Godot from importing the exported files (stray .import files in the zips)
           ${GODOT_BIN} --headless --path . --export-release "Web" build/web/index.html
