@@ -356,6 +356,7 @@ func run() -> void:
 	await yard_test()
 	await port_test()
 	await sweep_test()
+	await shop_sweep()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -1006,3 +1007,28 @@ func sweep_test() -> void:
 	Builds.load_world(main, data)
 	await frames(10)
 	check(get_tree().get_nodes_in_group("builds").size() - keep == n_saved and n_saved >= made.size() - 2, "and loaded back from the save (%d)" % n_saved)
+
+
+## Every item in the shop can be bought and delivered, and the build menu still opens with everything owned.
+func shop_sweep() -> void:
+	Game.money = 1e8
+	var bought := 0
+	for id in Tools.SHOP_ORDER:
+		if Game.is_owned(id) and int(Tools.SHOP[id].get("consumable", 0)) == 0:
+			continue
+		if Game.buy(id):
+			bought += 1
+			if not Tools.SHOP[id].has("vehicle"):
+				Game.receive(id)
+	await secs(2.0)
+	var missing: Array = Tools.SHOP_ORDER.filter(func(id): return not Game.is_owned(id) and id != "phone")
+	check(missing.is_empty(), "every shop item can be bought and delivered (%d bought; missing %s)" % [bought, str(missing)])
+	check(Builds.ORDER.all(func(id): return Builds.unlocked(id)), "with every blueprint, every build is unlocked")
+	main.call("open_build_menu")
+	await frames(10)
+	check(main.shop_ui != null, "the build menu opens with everything unlocked")
+	main.call("close_ui")
+	main.call("open_computer")
+	await frames(10)
+	check(main.shop_ui != null, "and so does the shop")
+	main.call("close_ui")
