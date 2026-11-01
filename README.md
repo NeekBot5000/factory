@@ -1,6 +1,8 @@
 # Timber
 
-A low-poly, first-person lumberjack game (prototype), built in **Godot 4.4**.
+A low-poly, first-person lumberjack and factory game, built in **Godot 4.4**. Version 1.0 (see `CHANGELOG.md`).
+
+**Play it in the browser:** https://neekbot5000.github.io/factory/ (the itch.io page kit is in `docs/itch/`).
 
 You start with nothing but your bare hands: a log cabin in a clearing, surrounded by forest.
 **Karate-chop trees to strip their bark**, and every chop hurts. You can see the layers come away: the dark
@@ -24,7 +26,7 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Inner Gouge | $380 | inner bark only, small strips that sell for 35% more |
 | Ringing Axe | $750 | slow; every hit takes a full ring of bark all the way round |
 | Greataxe | $900 | the biggest patch of all, but a long windup and you walk slowly |
-| Robo-Axe X9 | $6500 | automatic: hold the trigger, it chops ~7 times a second, each hit a 3x3 patch through both layers |
+| Robo-Axe X9 | $6500 | automatic: hold the trigger, it chops about 6 times a second, each hit a 3x3 patch through both layers |
 | Buck Saw | $280 | logs only (can't fell): one cut splits the whole log into carryable rounds |
 | Chainsaw | $1800 | fells and cuts about 3x faster than the bow saw |
 | Twin Auger | $3200 | two bits side by side: bores two strips at once |
@@ -87,6 +89,10 @@ Rocks around the forest are stone; some show orange **copper** veins, and the **
 (south-west of the cabin) is full of copper and silvery **iron**. Every pickaxe hit knocks off a chunk you can
 carry, sell, or drop into a machine's hologram.
 
+You can also **dig down**: hit the ground with a pickaxe or drill to sink a shaft. Copper starts about 1.5 m down,
+iron about 5 m (steel tools only), and the Ore Detector shows where the ground is rich. A **Drill Rig** with your
+drill in it digs by itself, but each spot only goes so deep (12 m with the rock drill, 30 m with the core drill).
+
 The simple machines take stone and copper; the advanced ones (piston, rotator, truck caller) need iron ore,
 which only the Steel Pickaxe or Steel Core Drill can get out of a vein.
 
@@ -125,6 +131,20 @@ Blueprints from TimberMart; build them with the hammer like the other machines.
   Tree Feller (put your saw in it; it fells the tree in front when powered).
 * **The Legendary Tree:** the golden giant on the far hill. Only the two-man crosscut gets through it.
 
+### Rails, carts, drones and power sockets
+
+* **Power sockets:** every machine has one. Wires plug into it; a **battery cell** (assembler: 1 copper bar + 1 iron
+  bar, charged in a **Charger**) clicks into it and powers that machine's network, or charges when there's other power.
+* **Rails:** rails and curved rails come out of the assembler. Click a loose rail with the hammer to lay it, click a
+  laid one to lift it, R to turn it.
+* **Minecarts** (1-4 squares long) run on a battery cell; machines on the deck share it without wires, except
+  **Go / Reverse**, logic blocks, transmitters and crates, which you wire yourself. A **rail layer** and **lifter**
+  let a cart walk forever on a few rails. **Rail switch**, **rail buffer**, **cart unloader**, **cart sensor** and
+  **level sensor** build stations.
+* **Drones** (small, medium, large) carry one thing up to a weight limit, steered by five wireless dials (front,
+  right, back, left, pad). A **drone pad** charges them. Wireless has 8 channels.
+* Design notes: `docs/vehicles-design.md`.
+
 ## Play
 
 * **Download a build:** open the latest successful run under the repo's *Actions* tab, scroll to *Artifacts*
@@ -135,7 +155,8 @@ Blueprints from TimberMart; build them with the hammer like the other machines.
 |---|---|
 | WASD / arrows | move |
 | Mouse | look (click the window to capture the mouse) |
-| Esc | pause: mouse sensitivity, field of view, volume, graphics, invert mouse, head bob, FPS counter (saved) |
+| Esc | pause: settings (saved), **Guide** (how everything works), credits, quit to title |
+| F11 | fullscreen |
 | Shift / Space | sprint / jump |
 | Left click | swing / hold for saw, auger, vacuum / open a box / use the computer / build |
 | E or right click | pick up / drop, ship the truck, take an item, cancel a build |
@@ -143,6 +164,7 @@ Blueprints from TimberMart; build them with the hammer like the other machines.
 | Spin and drop | things keep their momentum, so you can fling them |
 | Hold R while holding something | tip it over (pour a basket out) |
 | R while placing a build | turn it |
+| Hammer click on a rail | lay a loose rail / lift a laid one; R turns a laid rail |
 | Hammer click on a log | lock it in place (iron bands); click again to unlock |
 | Hammer click on a rotator | stick what's on it to the table / let go |
 | Hammer + X on a build | take it down (you get back what it would sell for); on a plan, knocks it down and drops the materials |
@@ -156,10 +178,11 @@ Progress autosaves every 15 seconds (a little white hammer taps in the corner): 
 built (machines, their settings and wires too), plans in progress, bark you've stripped, felled and grown trees,
 trimmed bushes, mined rocks, and every log, bark sheet, leaf, ore chunk, sapling and dropped tool lying around.
 
-## Roadmap
+## Releasing
 
-Saws that strip whole logs, chainsaws, a long axe that slices straight through, and drones that haul bark back
-to base.
+Every push runs the tests and exports Web, Windows and Linux builds. The **Timber-itch** artifact holds the three
+zips ready for itch.io; `docs/itch/README.md` has the upload settings, page text, screenshots and cover.
+The player-facing README and licence files that go in the downloads are in `dist/`.
 
 ## Code
 
@@ -186,9 +209,15 @@ scripts/SettingsMenu.gd  the Esc pause / settings menu
 scripts/ImpactSound.gd clunks and thuds when ore and logs hit something hard
 scripts/Builds.gd, Builder.gd, Blueprint.gd, BuildMenu.gd  hammer builds: catalogue + models, placement, plans, menu
 scripts/WorldSave.gd   everything you've done to the world, for the save file
+scripts/Rail.gd, Minecart.gd, CartPart.gd, TrackPart.gd  rails and curves, carts, deck parts, switches/buffers/unloaders/pads
+scripts/Drone.gd, Charger.gd, Sensor.gd, Wireless.gd     drones, the charger, sensors, transmitters/receivers
+scripts/TitleMenu.gd, Tutorial.gd, Guide.gd, Credits.gd  title screen, starting tutorial, field guide, credits
+scripts/LowPoly.gd     mesh helpers; LowPoly.bake merges a finished machine's parts into a few surfaces
 tests/*Test.tscn       headless gameplay tests (MachineTest: mining, wires, machines; InputTest: every control through
                        real input events; SoakTest: random inputs, then save + reload)
 tests/Bench.tscn       balance bench: $/minute for every stripping tool
+tests/PerfBench.tscn   frame time and draw calls for a big factory (xvfb)
+tests/StoreShots.tscn  the itch.io screenshots (xvfb)
 tests/Shot.tscn        screenshots (xvfb)
 ```
 All models and sounds are generated in code. The only external assets are two SIL OFL fonts.
