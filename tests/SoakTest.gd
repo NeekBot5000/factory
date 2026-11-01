@@ -66,7 +66,7 @@ func _ready() -> void:
 
 
 func _act() -> void:
-	var a := rng.randi() % 16
+	var a := rng.randi() % 20
 	actions[a] = actions.get(a, 0) + 1
 	if main.shop_ui != null and a != 12:
 		main.close_ui()
@@ -113,3 +113,33 @@ func _act() -> void:
 			if rng.randf() < 0.2:
 				Game.save_game()
 				main.ship_truck.ship()
+		16:
+			# a charged battery cell dropped on (or near) a random machine's socket, cart or drone
+			var ms := get_tree().get_nodes_in_group("machines")
+			if not ms.is_empty():
+				var m := ms[rng.randi() % ms.size()] as Machine
+				var c := Product.new()
+				main.add_child(c)
+				c.setup("battery_cell", 6.0, Color.WHITE)
+				c.set_charge(rng.randf())
+				c.global_position = m.terminal_world() + Vector3(rng.randf_range(-0.2, 0.2), 0.3, rng.randf_range(-0.2, 0.2))
+		17:
+			# a rail or curved rail dropped in front of you, then the hammer on it
+			var r := Product.new()
+			main.add_child(r)
+			r.setup("rail" if rng.randf() < 0.7 else "curved_rail", 2.0, Color.WHITE)
+			r.global_position = player.global_position - player.global_basis.z * 1.5 + Vector3.UP * 0.5
+		18:
+			if player.tool == "hammer" and not player.builder.busy():
+				var rl: Object = player.look_ray(4.0, 1).get("collider")
+				if rl is Rail:
+					(rl as Rail).turn()
+		19:
+			# turn a random wireless channel or drone dial
+			var ws := get_tree().get_nodes_in_group("machines").filter(func(m): return m is Wireless or m is Drone)
+			if not ws.is_empty():
+				var w: Machine = ws[rng.randi() % ws.size()]
+				if w is Wireless:
+					(w as Wireless).on_use(player)
+				else:
+					(w as Drone).dial[rng.randi() % 5] = rng.randi_range(-1, 7)
