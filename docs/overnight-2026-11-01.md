@@ -9,12 +9,12 @@ QUEUE
 [x] 5. Save robustness: corrupt/empty/old save files don't crash; test
 [x] 6. Save/load roundtrip for carts, drones, rails, curves, ports, deck machines (SaveTest)
 [x] 7. Performance: big-factory benchmark, find + fix hotspots
-[ ] 8. In-game Guide (computer/phone) explaining machines & systems
-[ ] 9. Progression/balance audit from a fresh game; fix walls
-[ ] 10. itch page copy, 5 screenshots, 630x500 cover in docs/itch/
-[ ] 11. Edge-case bug sweep (take down carts/drones with cells, wires to deleted machines, etc.)
-[ ] 12. Web input: pointer lock / click-to-play / focus loss pause
-[ ] 13. README update for rails/drones/ports; review tonight's diff
+[x] 8. In-game Guide (computer/phone) explaining machines & systems
+[x] 9. Progression/balance audit from a fresh game; fix walls
+[x] 10. itch page copy, 5 screenshots, 630x500 cover in docs/itch/
+[x] 11. Edge-case bug sweep (take down carts/drones with cells, wires to deleted machines, etc.)
+[x] 12. Web input: pointer lock / click-to-play / focus loss pause
+[x] 13. README update for rails/drones/ports; review tonight's diff
 
 DONE
 [x] Web export boots in headless Chromium, no errors; found NEW GAME BUG (title reappears, old world kept: reset() saved via scene savers). Fixed, SaveTest covers it — Game.gd, Main.gd — 03:40
@@ -23,5 +23,11 @@ DONE
 [x] CI: Timber-itch artifact (web/windows/linux zips + README.txt, THIRD-PARTY.txt, LICENSES) — dist/, build.yml; CHANGELOG.md — 03:55
 [x] Saves: temp file + swap + .bak fallback; wrong-typed values default; fullscreen remembered; verified rename works in browser IndexedDB — Game.gd, SaveTest — 04:00
 [x] Perf: CPU fine (2.7 ms/frame big factory). Draw calls 33.8k -> 12.2k: LowPoly.bake merges machine parts into vertex-colour surfaces, sockets/plugs baked, wire cable one mesh, no shadows on slats/borders — LowPoly.gd, Builds.gd, Wire.gd, Machine.gd, Machines.gd, tests/PerfBench — 04:25
+[x] Field Guide (12 topics) in Esc menu; tutorial step 7 text fixed (box opens with click, not E) — Guide.gd, Tutorial.gd — 04:27
+[x] Balance probe: $/min per axe; Combo Axe was 2x the $900 greataxe for $250 -> capped 4 hits, $550 — Player.gd, Tools.gd — 04:31
+[x] itch kit: 6 screenshots, 630x500 cover, page text + upload guide — docs/itch/, tests/StoreShots, tools/make_cover.py — 04:36
+[x] Pause on focus loss; tests for take-down of carts/drones/socketed machines — Main.gd, FactoryTest — 04:42
+[x] README updated (v1.0, rails/drones/sockets, menus, releasing) — 04:45
+[x] Timber icon + loading splash — icon.svg, assets/splash.png, project.godot — 04:39
 
 PARKED
