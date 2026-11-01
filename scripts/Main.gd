@@ -185,6 +185,10 @@ func _notification(what: int) -> void:
 	# keep what you built: save when the window closes or the tab loses focus (web builds never get a close event)
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
 		Game.save_game()
+		# alt-tab or another browser tab: pause, so you don't come back to find yourself walked off a cliff
+		if what == NOTIFICATION_APPLICATION_FOCUS_OUT and Game.save_enabled and player != null and is_instance_valid(player) \
+				and shop_ui == null and player.controls_enabled and player.lying == null:
+			open_settings()
 	elif what == NOTIFICATION_PREDELETE or what == NOTIFICATION_EXIT_TREE:
 		Game.world_saver = Callable()
 		Game.world_state_saver = Callable()

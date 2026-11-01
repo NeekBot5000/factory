@@ -923,3 +923,33 @@ func port_test() -> void:
 	l2.plug(c2)
 	var saved := Builds.save_world(main).filter(func(e): return e.get("uid", -1) == l2.uid)
 	check(saved.size() == 1 and float(saved[0].get("port", -1.0)) > 0.9, "a plugged-in cell is saved with its machine")
+	# taking things down gives back what was in them
+	player.take_down(l2)
+	await frames(3)
+	check(not is_instance_valid(l2) or l2.is_queued_for_deletion(), "(the lamp came down)")
+	check(is_instance_valid(c2) and not c2.freeze and c2.get_parent() == main and not c2.has_meta("in_port"), "a machine taken down drops the cell that was in its socket")
+	for z in range(int(B6.z) + 8, int(B6.z) + 11):
+		Rail.lay(main, Vector2i(int(B6.x) + 6, z), false, B6.y)
+	var ct := Builds.finish("minecart_2", main, Transform3D(Basis(), Vector3(B6.x + 6, Rail.at(Vector2i(int(B6.x) + 6, int(B6.z) + 9)).top(), B6.z + 9)), Builds.HOOP_DEFAULT, [], 1.0) as Minecart
+	var dl := on_deck("lamp", ct, 0)
+	var dg := on_deck("cart_go", ct, 1)
+	Minecart.adopt_all(get_tree())
+	var cc := product("battery_cell", ct.global_transform * (ct.cradle() + Vector3(0, 0.3, 0)), 6.0)
+	cc.set_charge(1.0)
+	await secs(0.5)
+	check(ct.cell == cc, "(the cart has its cell)")
+	player.take_down(ct)
+	await frames(3)
+	check((not is_instance_valid(dl) or dl.is_queued_for_deletion()) and (not is_instance_valid(dg) or dg.is_queued_for_deletion()), "taking a cart down takes its deck machines down too")
+	check(is_instance_valid(cc) and not cc.freeze and cc.get_parent() == main, "and its battery cell drops out")
+	var dn := place("drone_small", Vector3(10, 0, 0), 0.0, B6) as Drone
+	dn.dial = [-1, -1, -1, -1, -1]
+	var dcell := product("battery_cell", dn.global_transform * (dn.cradle() + Vector3(0, 0.3, 0)), 6.0)
+	dcell.set_charge(1.0)
+	var load := product("plank", dn.global_position + Vector3(0, 0.1, 0), 2.0)
+	await secs(0.5)
+	dn.call("_grab", load)
+	check(dn.carried == load, "(the drone is carrying a plank)")
+	player.take_down(dn)
+	await frames(3)
+	check(is_instance_valid(load) and not load.freeze and load.is_in_group("grabbable") and is_instance_valid(dcell) and not dcell.freeze, "taking a drone down drops what it carried and its cell")
