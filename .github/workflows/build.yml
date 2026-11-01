@@ -142,6 +142,25 @@ jobs:
           ${GODOT_BIN} --headless --path . --export-release "Linux" build/linux/Timber.x86_64
           ls -la build/*
 
+      - name: Package for itch.io
+        run: |
+          # itch wants one zip per platform; the web zip needs index.html at its root
+          mkdir -p build/itch dist/pkg/LICENSES
+          cp dist/README.txt dist/THIRD-PARTY.txt dist/pkg/
+          cp assets/fonts/OFL-*.txt dist/pkg/LICENSES/
+          (cd build/web && zip -qr ../itch/Timber-web.zip .)
+          for p in windows linux; do
+            cp -r dist/pkg/. build/$p/
+            (cd build/$p && zip -qr ../itch/Timber-$p.zip .)
+          done
+          ls -la build/itch
+
+      - name: Upload itch.io zips
+        uses: actions/upload-artifact@v4
+        with:
+          name: Timber-itch
+          path: build/itch
+
       - name: Upload web build
         uses: actions/upload-artifact@v4
         with:

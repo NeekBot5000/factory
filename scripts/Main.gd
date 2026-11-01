@@ -152,6 +152,7 @@ func open_title(has_save := true) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	title = TitleMenu.new()
 	shop_ui = title
+	player.arm.visible = false      # just the forest behind the menu
 	ui_layer.add_child(title)
 	title.setup(has_save)
 	title.chosen.connect(_on_title)
@@ -165,6 +166,12 @@ func _on_title(what: String) -> void:
 			Game.reset()
 			Game.skip_title = true
 			get_tree().reload_current_scene()
+		"credits":
+			var cr := Credits.new()
+			ui_layer.add_child(cr)
+		"quit":
+			Game.save_game()
+			get_tree().quit()
 		"settings":
 			title.queue_free()
 			shop_ui = null
@@ -762,6 +769,7 @@ func close_ui() -> void:
 	shop_ui = null
 	computer.set_on(false)
 	player.controls_enabled = true
+	player.arm.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 

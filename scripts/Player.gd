@@ -348,6 +348,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					Game.save_game()
 		elif k == KEY_ESCAPE:
 			get_parent().call("open_settings")
+		elif k == KEY_F11:
+			Game.settings["fullscreen"] = not bool(Game.settings.get("fullscreen", false))
+			SettingsMenu.set_fullscreen(bool(Game.settings.fullscreen))
+			Game.save_game()
 		elif k == KEY_TAB:
 			if Game.has_phone:
 				get_parent().call("open_phone")

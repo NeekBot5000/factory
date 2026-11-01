@@ -27,8 +27,8 @@ func setup(has_save: bool) -> void:
 	v.anchor_bottom = 0.5
 	v.offset_left = 64
 	v.offset_right = 420
-	v.offset_top = -190
-	v.offset_bottom = 230
+	v.offset_top = -230
+	v.offset_bottom = 270
 	v.add_theme_constant_override("separation", 14)
 	add_child(v)
 	var title := Label.new()
@@ -57,6 +57,20 @@ func setup(has_save: bool) -> void:
 		chosen.emit("new"))
 	v.add_child(_confirm)
 	v.add_child(_button("Settings", false, func(): chosen.emit("settings")))
+	v.add_child(_button("Credits", false, func(): chosen.emit("credits")))
+	# browsers can't close their own tab, so the web build has no Quit
+	if not OS.has_feature("web"):
+		v.add_child(_button("Quit", false, func(): chosen.emit("quit")))
+	var ver := Label.new()
+	ver.text = "v" + Credits.version()
+	ver.add_theme_font_override("font", _font_bold)
+	ver.add_theme_font_size_override("font_size", 14)
+	ver.add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
+	ver.anchor_top = 1.0
+	ver.anchor_bottom = 1.0
+	ver.offset_left = 64
+	ver.offset_top = -40
+	add_child(ver)
 
 
 func _button(text: String, primary: bool, cb: Callable) -> Button:

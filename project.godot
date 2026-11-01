@@ -4,7 +4,8 @@ config_version=5
 [application]
 
 config/name="Timber"
-config/description="First-person lumberjack prototype: karate-chop bark off trees, carry it by hand."
+config/description="First-person low-poly lumberjack and factory game: peel bark, fell trees, build machines, rails and drones."
+config/version="1.0.0"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"

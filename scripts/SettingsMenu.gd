@@ -34,8 +34,8 @@ func setup(p_main: Node) -> void:
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -270
 	panel.offset_right = 270
-	panel.offset_top = -320
-	panel.offset_bottom = 320
+	panel.offset_top = -305
+	panel.offset_bottom = 305
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = BG
 	sb.set_corner_radius_all(18)
@@ -44,7 +44,7 @@ func setup(p_main: Node) -> void:
 	panel.add_theme_stylebox_override("panel", sb)
 	add_child(panel)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 16)
+	v.add_theme_constant_override("separation", 13)
 	panel.add_child(v)
 	var head := HBoxContainer.new()
 	v.add_child(head)
@@ -82,6 +82,7 @@ func setup(p_main: Node) -> void:
 	toggles.add_child(_toggle("Invert mouse", "invert"))
 	toggles.add_child(_toggle("Head bob", "bob"))
 	toggles.add_child(_toggle("Show FPS", "fps"))
+	toggles.add_child(_toggle("Fullscreen", "fullscreen"))
 	v.add_child(toggles)
 	var resume := Button.new()
 	resume.text = "Resume"
@@ -103,7 +104,7 @@ func setup(p_main: Node) -> void:
 	v.add_child(resume)
 	# found a bug, or have an idea? opens the feedback page in the browser
 	var fb := Button.new()
-	fb.text = "Send feedback / report a bug"
+	fb.text = "Feedback / bugs"
 	fb.flat = true
 	fb.focus_mode = Control.FOCUS_NONE
 	fb.add_theme_font_override("font", font_bold)
@@ -111,7 +112,37 @@ func setup(p_main: Node) -> void:
 	fb.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
 	fb.add_theme_color_override("font_hover_color", ACCENT)
 	fb.pressed.connect(func(): OS.shell_open(FEEDBACK_URL))
-	v.add_child(fb)
+	var links := HBoxContainer.new()
+	links.alignment = BoxContainer.ALIGNMENT_CENTER
+	links.add_theme_constant_override("separation", 6)
+	links.add_child(fb)
+	links.add_child(_link("Credits", func():
+		var cr := Credits.new()
+		add_child(cr)))
+	if main != null and main.has_method("open_title"):
+		links.add_child(_link("Quit to title", func():
+			Game.save_game()
+			get_tree().reload_current_scene()))
+	if not OS.has_feature("web"):
+		links.add_child(_link("Quit game", func():
+			Game.save_game()
+			get_tree().quit()))
+	v.add_child(links)
+
+
+func _link(text: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", font_bold)
+	b.add_theme_font_size_override("font_size", 15)
+	b.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	b.add_theme_color_override("font_hover_color", ACCENT)
+	b.pressed.connect(func():
+		Sfx.play("click")
+		cb.call())
+	return b
 
 
 ## Applies the saved settings to the game (on start and whenever one changes).
@@ -124,7 +155,19 @@ static func apply_all(p_main: Node) -> void:
 		player.invert_y = bool(s.get("invert", false))
 		player.head_bob = 1.0 if bool(s.get("bob", true)) else 0.0
 	Sfx.set_volume(float(s.volume))
+	if not OS.has_feature("web"):
+		set_fullscreen(bool(s.get("fullscreen", false)))
 	Sfx.set_music_volume(float(s.get("music", 0.5)))
+
+
+## Fullscreen on or off (F11 does the same). Browsers only allow it right after a click or key press, which is
+## always when this runs from the menu or F11; on start-up the web build stays in the page until you ask.
+static func set_fullscreen(on: bool) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var now := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	if on != now:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_WINDOWED)
 
 
 func _change(k: String, x: float) -> void:
@@ -163,6 +206,8 @@ func _toggle(title: String, k: String) -> Button:
 	c.toggled.connect(func(on):
 		Game.settings[k] = on
 		apply_all(main)
+		if k == "fullscreen":
+			set_fullscreen(on)
 		Sfx.play("click")
 		Game.save_game())
 	return c
