@@ -119,6 +119,34 @@ func _ready() -> void:
 	var chip_pos := chip.global_position
 	var basket_pos: Vector3 = basket.global_position
 	var bark_in := int(bp.have.get("bark", 0))
+	# rails, a curve, a cart with a deck machine and a cell, a drone, a cell in a lamp's socket, a drilled spot
+	for z in range(14, 18):
+		Rail.lay(main, Vector2i(8, z), false)
+	Rail.lay_curve(main, Vector2i(8, 13), Vector2i(0, -1))
+	var r0 := Rail.at(Vector2i(8, 15))
+	var cart := Builds.finish("minecart_2", main, Transform3D(Basis(), Vector3(8, r0.top(), 15)), 0.0, [], 1.0) as Minecart
+	Builds.finish("lamp", main, cart.global_transform * Transform3D(Basis(), Vector3(0, Minecart.DECK_Y, 1)), 0.0, [], 1.0)
+	Minecart.adopt_all(get_tree())
+	var cc := Product.new()
+	main.add_child(cc)
+	cc.setup("battery_cell", 6.0, Color.WHITE)
+	cc.set_charge(0.75)
+	cc.global_position = cart.global_transform * (cart.cradle() + Vector3(0, 0.3, 0))
+	var dat := Vector3(11, 0, 15)
+	dat.y = main.terrain.height_at(dat.x, dat.z)
+	var dr := Builds.finish("drone_medium", main, Transform3D(Basis(), dat), 0.0, [], 1.0) as Drone
+	dr.dial[2] = 6
+	var lat := Vector3(11, 0, 18)
+	lat.y = main.terrain.height_at(lat.x, lat.z)
+	var lmp := Builds.finish("lamp", main, Transform3D(Basis(), lat), 0.0, [], 1.0) as Machine
+	var pc := Product.new()
+	main.add_child(pc)
+	pc.setup("battery_cell", 6.0, Color.WHITE)
+	pc.set_charge(0.4)
+	lmp.plug(pc)
+	Mining.drilled["5,5"] = 7.5
+	await frames(20)
+	check(cart.cell == cc and cart.deck_machines().size() == 1, "(setup) the cart has its cell and a lamp on its deck")
 	Game.save_game()
 	# "restart": throw the world away and load it again from the save file
 	main.queue_free()
@@ -165,6 +193,23 @@ func _ready() -> void:
 	var cr := get_tree().get_nodes_in_group("machines").filter(func(m): return m is Crank)
 	check(lv.size() == 1 and (lv[0] as Lever).on and cr.size() == 1 and (cr[0] as Crank).charge > 30.0, "machines keep their settings (lever on, crank wound)")
 	check(get_tree().get_nodes_in_group("wires").size() == 1, "and their wire")
+	# the moving stuff
+	check(get_tree().get_nodes_in_group("rails").size() == 5 and Rail.at(Vector2i(8, 13)) != null and Rail.at(Vector2i(8, 13)).curve >= 0, "rails and the curve are still laid")
+	var carts := get_tree().get_nodes_in_group("carts")
+	check(carts.size() == 1 and (carts[0] as Minecart).length == 2 and (carts[0] as Minecart).cell != null and absf((carts[0] as Minecart).cell.charge - 0.75) < 0.05, "the cart keeps its cell and charge")
+	check(carts.size() == 1 and (carts[0] as Minecart).deck_machines().size() == 1, "and the lamp on its deck still rides with it")
+	var drs := get_tree().get_nodes_in_group("drones")
+	check(drs.size() == 1 and int((drs[0] as Drone).dial[2]) == 6, "the drone keeps its dials")
+	var lamps := get_tree().get_nodes_in_group("machines").filter(func(m): return m is Lamp and (m as Machine).port_cell != null)
+	check(lamps.size() == 1 and absf((lamps[0] as Machine).port_cell.charge - 0.4) < 0.05, "a cell plugged into a lamp's socket is still plugged in")
+	check(absf(float(Mining.drilled.get("5,5", 0.0)) - 7.5) < 0.01, "drilled-out spots are remembered")
+	var cells := get_tree().get_nodes_in_group("products").filter(func(p): return (p as Product).kind == "battery_cell")
+	check(cells.size() == 2, "no duplicate cells appear after loading (%d)" % cells.size())
+	# New Game really starts over: the saved world is wiped, not read back from the scene
+	Game.reset()
+	var f := FileAccess.open(Game.save_path, FileAccess.READ)
+	var data = JSON.parse_string(f.get_as_text()) if f != null else {}
+	check(typeof(data) == TYPE_DICTIONARY and (data.get("builds", [1]) as Array).is_empty() and (data.get("world", {"x": 1}) as Dictionary).is_empty() and float(data.get("money", 1.0)) == 0.0, "New Game wipes the saved world")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.save_path))
 	print("SAVE RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()

@@ -102,8 +102,9 @@ func _ready() -> void:
 	if fresh and Game.save_enabled:
 		_porch_hatchet()
 	# the title screen (tests run without saving, and skip it)
-	if Game.save_enabled:
+	if Game.save_enabled and not Game.skip_title:
 		open_title(not fresh)
+	Game.skip_title = false
 
 
 const BLOCK_AT := Vector3(0.8, 0.0, Cabin.D * 0.5 + 2.6)
@@ -162,6 +163,7 @@ func _on_title(what: String) -> void:
 			close_ui()
 		"new":
 			Game.reset()
+			Game.skip_title = true
 			get_tree().reload_current_scene()
 		"settings":
 			title.queue_free()

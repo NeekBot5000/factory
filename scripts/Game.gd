@@ -17,6 +17,7 @@ var orders: Array = []          # {id, item, status: "processing"|"shipping"|"de
 var next_order := 1
 var total_earned := 0.0
 var save_enabled := true
+var skip_title := false         # New Game reloads the scene: go straight into the game this once (not saved)
 var land: Array = ["-1,-1", "-1,0", "0,-1", "0,0"]     # plots of land you own (Land.gd)
 var tutorial := 0               # starting tutorial step (-1 = finished, or an old save from before it existed)
 var trophies := {}              # milestones on the cabin's trophy wall
@@ -205,4 +206,7 @@ func reset() -> void:
 	has_phone = false
 	orders = []
 	total_earned = 0.0
+	# forget the scene's savers first, or saving would read the old world straight back in
+	world_saver = Callable()
+	world_state_saver = Callable()
 	save_game()
