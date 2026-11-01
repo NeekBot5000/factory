@@ -28,7 +28,7 @@ var world_saver := Callable()   # set by the scene: returns the current world_bu
 var world_state := {}           # trees stripped/felled/grown, bushes, loose bark, leaves, logs, saplings, dropped tools
 var world_state_saver := Callable()
 var quality := 0                # graphics level picked by Quality.gd (0 = full); remembered between sessions
-var settings := {"sens": 1.0, "fov": 75.0, "volume": 0.8, "auto_quality": true, "invert": false, "bob": true, "fps": false, "music": 0.5}   # the Esc menu
+var settings := {"sens": 1.0, "fov": 75.0, "volume": 0.8, "auto_quality": true, "invert": false, "bob": true, "fps": false, "music": 0.5, "fullscreen": false}   # the Esc menu
 
 
 func _ready() -> void:
@@ -135,53 +135,94 @@ func pending_orders() -> Array:
 func save_game() -> void:
 	if not save_enabled:
 		return
-	var f := FileAccess.open(save_path, FileAccess.WRITE)
-	if f == null:
-		return
 	if world_saver.is_valid():
 		world_builds = world_saver.call()
 	if world_state_saver.is_valid():
 		world_state = world_state_saver.call()
 	# orders still in transit are refunded into "processing" so they get re-delivered next session
-	f.store_string(JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings, "charges": charges, "land": land, "trophies": trophies, "tutorial": tutorial}))
+	var text := JSON.stringify({"money": money, "owned": owned.keys(), "phone": has_phone, "orders": orders, "next_order": next_order, "earned": total_earned, "builds": world_builds, "world": world_state, "quality": quality, "settings": settings, "charges": charges, "land": land, "trophies": trophies, "tutorial": tutorial})
+	# write the new save beside the old one, keep the old one as a backup, then swap: a save cut off half way
+	# (the tab closed, the power went) can never cost you your world
+	var tmp := save_path + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(text)
+	f.close()
+	var abs := ProjectSettings.globalize_path(save_path)
+	if FileAccess.file_exists(save_path):
+		DirAccess.remove_absolute(abs + ".bak")
+		DirAccess.rename_absolute(abs, abs + ".bak")
+	if DirAccess.rename_absolute(ProjectSettings.globalize_path(tmp), abs) != OK:
+		# a file system that can't rename: just write it in place
+		var f2 := FileAccess.open(save_path, FileAccess.WRITE)
+		if f2 != null:
+			f2.store_string(text)
 	saved.emit()
 
 
+## Reads a save file: the dictionary in it, or null if it's missing or broken.
+static func _read_save(path: String) -> Variant:
+	if not FileAccess.file_exists(path):
+		return null
+	var j := JSON.new()
+	if j.parse(FileAccess.get_file_as_string(path)) != OK:
+		return null
+	return j.data if typeof(j.data) == TYPE_DICTIONARY else null
+
+
+## A value from the save if it's the right kind of thing, else the default (old or damaged saves still load).
+static func _val(d: Dictionary, k: String, def: Variant) -> Variant:
+	var v: Variant = d.get(k, def)
+	if typeof(v) == typeof(def):
+		return v
+	if typeof(def) == TYPE_FLOAT and typeof(v) == TYPE_INT:
+		return float(v)
+	if typeof(def) == TYPE_INT and typeof(v) == TYPE_FLOAT:
+		return int(v)
+	return def
+
+
 func load_game() -> void:
-	if not save_enabled or not FileAccess.file_exists(save_path):
+	if not save_enabled:
 		return
-	var d: Variant = JSON.parse_string(FileAccess.get_file_as_string(save_path))
-	if typeof(d) != TYPE_DICTIONARY:
-		return
-	money = float(d.get("money", 0.0))
+	var d: Variant = _read_save(save_path)
+	if d == null:
+		# the save is broken (or gone): fall back to the one before it
+		d = _read_save(save_path + ".bak")
+		if d == null:
+			return
+	money = _val(d, "money", 0.0)
 	owned = {"hands": true}
-	for k in d.get("owned", []):
-		if Tools.TOOLS.has(k) or String(k).begins_with("bp_") or Tools.SHOP.has(k):
+	for k in _val(d, "owned", []):
+		if typeof(k) == TYPE_STRING and (Tools.TOOLS.has(k) or String(k).begins_with("bp_") or Tools.SHOP.has(k)):
 			owned[k] = true
-	has_phone = bool(d.get("phone", false))
+	has_phone = _val(d, "phone", false)
 	orders = []
-	for o in d.get("orders", []):
-		if o.status != "delivered":
+	for o in _val(d, "orders", []):
+		if typeof(o) != TYPE_DICTIONARY or not o.has("item") or not Tools.SHOP.has(String(o.item)):
+			continue
+		if o.get("status", "") != "delivered":
 			o.status = "processing"
 		orders.append(o)
-	next_order = int(d.get("next_order", 1))
-	total_earned = float(d.get("earned", 0.0))
-	world_builds = d.get("builds", [])
-	world_state = d.get("world", {})
-	quality = int(d.get("quality", 0))
+	next_order = _val(d, "next_order", 1)
+	total_earned = _val(d, "earned", 0.0)
+	world_builds = _val(d, "builds", [])
+	world_state = _val(d, "world", {})
+	quality = clampi(_val(d, "quality", 0), 0, 3)
 	land = ["-1,-1", "-1,0", "0,-1", "0,0"]
-	for k in d.get("land", []):
+	for k in _val(d, "land", []):
 		if not land.has(String(k)):
 			land.append(String(k))
-	trophies = d.get("trophies", {})
-	tutorial = int(d.get("tutorial", -1))
+	trophies = _val(d, "trophies", {})
+	tutorial = _val(d, "tutorial", -1)
 	charges = {}
-	var ch: Dictionary = d.get("charges", {})
+	var ch: Dictionary = _val(d, "charges", {})
 	for k in ch:
-		charges[k] = int(ch[k])
-	var st: Dictionary = d.get("settings", {})
+		charges[k] = int(ch[k]) if typeof(ch[k]) in [TYPE_INT, TYPE_FLOAT] else 0
+	var st: Dictionary = _val(d, "settings", {})
 	for k in settings:
-		if st.has(k):
+		if st.has(k) and typeof(st[k]) in [TYPE_INT, TYPE_FLOAT, TYPE_BOOL]:
 			settings[k] = st[k]
 
 

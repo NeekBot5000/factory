@@ -210,6 +210,31 @@ func _ready() -> void:
 	var f := FileAccess.open(Game.save_path, FileAccess.READ)
 	var data = JSON.parse_string(f.get_as_text()) if f != null else {}
 	check(typeof(data) == TYPE_DICTIONARY and (data.get("builds", [1]) as Array).is_empty() and (data.get("world", {"x": 1}) as Dictionary).is_empty() and float(data.get("money", 1.0)) == 0.0, "New Game wipes the saved world")
+	# damaged saves: a cut-off file falls back to the backup; wrong kinds of values don't stop it loading
+	Game.money = 1234.0
+	Game.save_game()          # good save (becomes the backup next time)
+	Game.money = 99.0
+	Game.save_game()
+	var fw := FileAccess.open(Game.save_path, FileAccess.WRITE)
+	fw.store_string("{\"money\": 99.0, \"owned\": [\"hat")      # cut off half way
+	fw.close()
+	Game.reset_memory_only()
+	Game.load_game()
+	check(absf(Game.money - 1234.0) < 0.01, "a save cut off half way falls back to the backup (%.0f)" % Game.money)
+	fw = FileAccess.open(Game.save_path, FileAccess.WRITE)
+	fw.store_string(JSON.stringify({"money": "lots", "owned": [3, "hatchet", null], "orders": [5, {"item": "nope"}, {"item": "saw", "status": "shipping"}], "charges": [1, 2], "builds": {"x": 1}, "world": [], "land": "x", "settings": {"sens": "fast", "fov": 90}, "quality": 99, "trophies": 7}))
+	fw.close()
+	Game.reset_memory_only()
+	Game.load_game()
+	check(Game.money == 0.0 and Game.owned.has("hatchet") and Game.orders.size() == 1 and Game.world_builds.is_empty() and Game.quality == 3 and float(Game.settings.fov) == 90.0 and float(Game.settings.sens) == 1.0, "a save with the wrong kinds of values still loads what it can")
+	var main3: Node3D = load("res://scenes/Main.tscn").instantiate()
+	main2.queue_free()
+	await frames(2)
+	add_child(main3)
+	await frames(10)
+	check(main3.player != null and is_instance_valid(main3.player), "the game starts from that save")
+	main3.queue_free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.save_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.save_path) + ".bak")
 	print("SAVE RESULT: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 	get_tree().quit()
