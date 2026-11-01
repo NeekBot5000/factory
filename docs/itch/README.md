@@ -100,7 +100,13 @@ Made by NeekBot5000 with Claude, in Godot 4.4.
 
 ---
 
-## 5. Before you press Publish
+## 5. Later updates
+
+Once the page exists, `tools/push_itch.sh <your-itch-username> <folder with the three zips>` uploads a new version
+with [butler](https://itch.io/docs/butler/) (install it and run `butler login` once). Bump `config/version` in
+`project.godot` and add a line to `CHANGELOG.md` first.
+
+## 6. Before you press Publish
 
 - Play the browser version on the itch page once (click, walk, open the computer) - itch's iframe is the one place
   this hasn't been tested.
