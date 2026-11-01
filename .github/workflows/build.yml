@@ -142,6 +142,18 @@ jobs:
           ${GODOT_BIN} --headless --path . --export-release "Linux" build/linux/Timber.x86_64
           ls -la build/*
 
+      - name: Smoke test the exported Linux game
+        run: |
+          # the real shipped binary: start it (title screen, world, sounds) and run 600 frames without a display
+          set +e
+          timeout 180 ./build/linux/Timber.x86_64 --headless --quit-after 600 > smoke.log 2>&1
+          code=$?
+          set -e
+          cat smoke.log | head -40
+          echo "exit code: $code"
+          test $code -eq 0
+          ! grep -q "SCRIPT ERROR" smoke.log
+
       - name: Package for itch.io
         run: |
           # itch wants one zip per platform; the web zip needs index.html at its root
