@@ -74,7 +74,7 @@ const SHOP := {
 		"desc": "A two-handed axe with mirrored crescent blades. A spinning overhead slam strips a huge patch in one blow."},
 	"twins": {"name": "Twin Hatchets", "price": 300.0, "cat": "axes", "tag": "Fast",
 		"desc": "One in each hand. Lightning-quick left and right chops, small strips each - keep up the rhythm."},
-	"combo": {"name": "Combo Axe", "price": 250.0, "cat": "axes", "tag": "Rhythmic",
+	"combo": {"name": "Combo Axe", "price": 550.0, "cat": "axes", "tag": "Rhythmic",
 		"desc": "Every hit in quick succession makes the next one bigger, up to huge patches. Stop swinging and it resets."},
 	"scraper": {"name": "Bark Scraper", "price": 400.0, "cat": "axes", "tag": "Wide",
 		"desc": "A flat spud blade that lifts big clean sheets of outer bark only - it never digs into the inner layer."},

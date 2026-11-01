@@ -19,7 +19,7 @@ box with a drawing of what's inside. Click the box to unpack it, then pick up yo
 | Double-Bit Axe | $160 | every swing hits twice: forehand, then straight back with the other bit |
 | Crescent Labrys | $600 | big spinning diagonal slam, huge patch |
 | Twin Hatchets | $300 | one in each hand: very fast alternating small chops |
-| Combo Axe | $250 | each hit in quick succession grows the next one; pause and it resets |
+| Combo Axe | $550 | each hit in quick succession grows the next one; pause and it resets |
 | Bark Scraper | $400 | big sheets of outer bark only - never touches the inner layer |
 | Inner Gouge | $380 | inner bark only, small strips that sell for 35% more |
 | Ringing Axe | $750 | slow; every hit takes a full ring of bark all the way round |
