@@ -39,6 +39,79 @@ var legendary := false      # the one enormous golden tree on the far hill: the 
 var bark_mult := 1.0        # its bark sells for more
 const GIANT_R := 0.6
 
+## Every kind of tree: its colours, what each layer of its bark is worth (oak = 1), and a quirk:
+##   hickory    - shaggy strips you can pull off by hand without hurting yourself
+##   cedar      - long fibrous strips (each hit takes a taller patch), valuable
+##   cork       - its outer bark (cork) grows back on the standing tree: strip it again and again
+##   eucalyptus - the inner bark it shows turns from green through blue and purple to orange and red over a few
+##                minutes, and is worth more the further it has turned
+const SPECIES := {
+	"oak": {"name": "Oak", "bark": "5b4030", "inner": "b5653a", "wood": "e2c08d", "outer": 1.0, "inner_v": 1.0},
+	"pine": {"name": "Pine", "bark": "4d3a2e", "inner": "b7703f", "wood": "ead1a0", "outer": 1.0, "inner_v": 1.0},
+	"birch": {"name": "Birch", "bark": "e8e4da", "inner": "c9875a", "wood": "f0dcb4", "outer": 1.6, "inner_v": 1.0},
+	"hickory": {"name": "Shagbark Hickory", "bark": "6e6458", "inner": "d0a878", "wood": "e8d2a8", "outer": 1.1, "inner_v": 1.1},
+	"cedar": {"name": "Western Red Cedar", "bark": "7a4a35", "inner": "a5482e", "wood": "c98f6b", "outer": 1.6, "inner_v": 1.6},
+	"cork": {"name": "Cork Oak", "bark": "b09d80", "inner": "b5653a", "wood": "e2c08d", "outer": 1.5, "inner_v": 1.0},
+	"eucalyptus": {"name": "Rainbow Eucalyptus", "bark": "a9aca0", "inner": "6ccf6a", "wood": "efe2c4", "outer": 0.8, "inner_v": 1.0},
+}
+const EUCA_COLORS := [Color("6ccf6a"), Color("3fa3c8"), Color("7a5cc8"), Color("e8873a"), Color("c8402e")]
+const EUCA_FULL := 480.0       # seconds for eucalyptus inner bark to turn all the way to red
+const CORK_EVERY := 5.0        # seconds between cork regrowth steps
+
+var age := -1.0                # eucalyptus: seconds since its inner bark was first exposed (-1 = not yet)
+var _tick := 0.0
+
+
+## What a sheet of this kind's bark is worth per panel, relative to oak (Chip uses it).
+static func species_value(p_kind: String, layer: int) -> float:
+	var sp: Dictionary = SPECIES.get(p_kind, SPECIES.oak)
+	return float(sp.outer) if layer == OUTER else float(sp.inner_v)
+
+
+## Extra worth on top of the species (eucalyptus inner bark that has aged).
+func extra_value(layer: int) -> float:
+	if kind == "eucalyptus" and layer == INNER and age > 0.0:
+		return 1.0 + minf(1.0, age / EUCA_FULL)
+	return 1.0
+
+
+func _euca_color() -> Color:
+	var f := clampf(age / EUCA_FULL, 0.0, 1.0) * (EUCA_COLORS.size() - 1)
+	var i := mini(int(f), EUCA_COLORS.size() - 2)
+	return (EUCA_COLORS[i] as Color).lerp(EUCA_COLORS[i + 1], f - i)
+
+
+func _process(delta: float) -> void:
+	if felled or is_section:
+		set_process(false)
+		return
+	_tick += delta
+	if kind == "eucalyptus":
+		if age < 0.0:
+			if layers[OUTER].has(0):
+				age = 0.0
+			return
+		age += delta
+		if _tick >= 4.0 and age <= EUCA_FULL + 5.0:
+			_tick = 0.0
+			inner_color = _euca_color()
+			_rebuild(INNER)
+	elif kind == "cork" and _tick >= CORK_EVERY:
+		_tick = 0.0
+		# a few patches of cork grow back over bare inner bark (never over wood: that's dead)
+		var grew := 0
+		var o: PackedByteArray = layers[OUTER]
+		var inn: PackedByteArray = layers[INNER]
+		for k in o.size():
+			if o[k] == 0 and inn[k] == 1:
+				o[k] = 1
+				grew += 1
+				if grew >= 6:
+					break
+		if grew > 0:
+			layers[OUTER] = o
+			_rebuild(OUTER)
+
 
 func setup(rng: RandomNumberGenerator, p_kind: String, p_giant := false, p_legend := false) -> void:
 	kind = p_kind
@@ -54,19 +127,11 @@ func setup(rng: RandomNumberGenerator, p_kind: String, p_giant := false, p_legen
 	trunk_h = bands * BAND_H
 	r_mid = radius - OUTER_T
 	r_core = r_mid - INNER_T
-	match kind:
-		"pine":
-			bark_color = Color("4d3a2e")
-			inner_color = Color("b7703f")
-			wood_color = Color("ead1a0")
-		"birch":
-			bark_color = Color("e8e4da")
-			inner_color = Color("c9875a")
-			wood_color = Color("f0dcb4")
-		_:
-			bark_color = Color("5b4030")
-			inner_color = Color("b5653a")
-			wood_color = Color("e2c08d")
+	var sp: Dictionary = SPECIES.get(kind, SPECIES.oak)
+	bark_color = Color(String(sp.bark))
+	inner_color = Color(String(sp.inner))
+	wood_color = Color(String(sp.wood))
+	set_process(kind == "cork" or kind == "eucalyptus")
 	for l in 2:
 		var a := PackedByteArray()
 		a.resize(SECTORS * bands)
@@ -165,6 +230,11 @@ func hint_text() -> String:
 		return "The Legendary Tree  ·  only a two-man crosscut gets through it"
 	if giant and not felled:
 		return "Ancient tree  ·  too thick for most saws"
+	match kind:
+		"hickory": return "Shagbark Hickory  ·  its shaggy bark pulls off by hand"
+		"cedar": return "Western Red Cedar  ·  long, valuable strips"
+		"cork": return "Cork Oak  ·  the cork grows back"
+		"eucalyptus": return "Rainbow Eucalyptus  ·  %s" % ("the bare bark is turning colours - it's worth more the redder it gets" if age >= 0.0 else "its inner bark changes colour once it's showing")
 	return ""
 
 
@@ -180,6 +250,8 @@ func src_info() -> Dictionary:
 func layer_state() -> Dictionary:
 	var d := {"bands": bands, "felled": felled,
 		"outer": Marshalls.raw_to_base64(layers[OUTER]), "inner": Marshalls.raw_to_base64(layers[INNER])}
+	if age >= 0.0:
+		d["age"] = snappedf(age, 0.1)
 	if not felled and _had_fol:
 		# leaves snipped off the crown (an empty list: every last leaf is gone)
 		d["crown"] = _fol.state() if is_instance_valid(_fol) else []
@@ -207,6 +279,9 @@ func apply_layer_state(d: Dictionary) -> void:
 			_crown = null
 		else:
 			_fol.apply_state(st)
+	if d.has("age") and kind == "eucalyptus":
+		age = float(d.age)
+		inner_color = _euca_color()
 	if o.size() == SECTORS * bands and i.size() == SECTORS * bands:
 		layers[OUTER] = o
 		layers[INNER] = i
@@ -256,7 +331,7 @@ func shake_crown(dir: Vector3, amount: float) -> void:
 		_shake_tw.tween_property(_crown, "basis", Basis(axis, amp), 0.07 + k * 0.03).set_trans(Tween.TRANS_SINE)
 	_shake_tw.tween_property(_crown, "basis", Basis(), 0.15).set_trans(Tween.TRANS_SINE)
 	# a few leaves drift down
-	if kind != "pine":
+	if kind != "pine" and kind != "cedar":
 		var top := global_position + Vector3(0, trunk_h + 0.5, 0)
 		Nature.burst(get_parent(), top, Vector3.DOWN, Color("6aa846"), int(3 + amount * 4), 0.6, 0.06, 1.2, 2.2, 120.0)
 
@@ -275,12 +350,13 @@ func _build_static() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed
 	match kind:
-		"pine":
+		"pine", "cedar":
+			var green := Color("2f6b3a") if kind == "pine" else Color("3d6b45")
 			var base_y := trunk_h - 1.2
 			for k in 4:
 				var r := 2.0 - k * 0.42
-				LowPoly.mesh_instance(_crown, LowPoly.cyl(0.0, r, 1.9, 7), Nature.wind_mat(Color("2f6b3a").lightened(k * 0.04), 0.03 + k * 0.025, 1.9, -0.95), Vector3(0, base_y + k * 1.05 + 0.9, 0), Vector3(0, rng.randf() * 60.0, 0))
-		"birch":
+				LowPoly.mesh_instance(_crown, LowPoly.cyl(0.0, r, 1.9, 7), Nature.wind_mat(green.lightened(k * 0.04), 0.03 + k * 0.025, 1.9, -0.95), Vector3(0, base_y + k * 1.05 + 0.9, 0), Vector3(0, rng.randf() * 60.0, 0))
+		"birch", "eucalyptus":
 			for k in 4:
 				var off := Vector3(rng.randf_range(-0.8, 0.8), trunk_h + rng.randf_range(-0.6, 1.2), rng.randf_range(-0.8, 0.8))
 				LowPoly.mesh_instance(_crown, LowPoly.blob(1.0, 0.25, rng.randi() % 50), Nature.wind_mat(Color("7fb34a").lightened(snappedf(rng.randf() * 0.1, 0.02)), 0.07), off, Vector3.ZERO, Vector3.ONE * rng.randf_range(0.9, 1.4))

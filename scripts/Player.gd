@@ -613,7 +613,14 @@ func _do_impact() -> void:
 				match String(d.get("layer", "")):
 					"outer": only = ForestTree.OUTER
 					"inner": only = ForestTree.INNER
-				results.append(t.strip_circle(at, strip_radius(), only))
+				var r := strip_radius()
+				if tool == "hands" and t.kind == "hickory":
+					r = 0.17          # shagbark: the strips come away in your hands
+				results.append(t.strip_circle(at, r, only))
+				if t.kind == "cedar":
+					# cedar bark is stringy: a hit pulls a long strip, above and below
+					results.append(t.strip_circle(at + Vector3.UP * r * 1.3, r, only))
+					results.append(t.strip_circle(at - Vector3.UP * r * 1.3, r, only))
 		results = results.filter(func(r): return not (r as Dictionary).is_empty())
 		if tool == "combo":
 			_combo_n = mini(_combo_n + 1, COMBO_MAX)     # any hit on the trunk keeps the rhythm going
@@ -635,7 +642,7 @@ func _do_impact() -> void:
 				Game.toast.emit("The gouge only cuts inner bark - take the outer bark off first", Color("ffd27a"))
 		# heavier tools kick the view harder
 		_kick = 0.01 + strip_radius() * 0.09 + (0.03 if bool(d.get("through", false)) else 0.0)
-		if float(d.hurt) > 0.0:
+		if float(d.hurt) > 0.0 and t.kind != "hickory":
 			take_damage(float(d.hurt))
 		t.shake_crown(-cam.global_transform.basis.z, 0.4 + strip_radius())
 		if c is Log:
@@ -1232,7 +1239,7 @@ func spawn_bark(t: ForestTree, results: Array, at: Vector3, push: Vector3, mult 
 		if (res as Dictionary).is_empty():
 			continue
 		var data := t.piece_data(int(res.layer), res.panels)
-		data["value_mult"] = mult * t.bark_mult
+		data["value_mult"] = mult * t.bark_mult * t.extra_value(int(res.layer))
 		var chip: Chip = get_parent().call("spawn_chip", data, t.kind, push)
 		if fling != 1.0 and chip != null:
 			chip.linear_velocity *= fling

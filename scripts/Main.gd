@@ -343,6 +343,41 @@ func _forest() -> void:
 		gt.setup(gr, ["oak", "pine"][giants % 2], true)
 		trees.append(gt)
 	_legendary_tree(points)
+	_groves(points)
+
+
+## Groves of the rarer trees, out in the four corners of the woods (their own dice: the rest of the forest, and
+## old saves, stay as they were).
+const GROVES := [["hickory", Vector2(40, -36)], ["cedar", Vector2(-46, 32)], ["cork", Vector2(50, 44)], ["eucalyptus", Vector2(-54, -42)]]
+
+
+func _groves(points: Array[Vector2]) -> void:
+	var gr := RandomNumberGenerator.new()
+	gr.seed = 5150
+	for g in GROVES:
+		var center: Vector2 = g[1]
+		var placed := 0
+		var tries := 0
+		while placed < 8 and tries < 200:
+			tries += 1
+			var p := center + Vector2(gr.randf_range(-9, 9), gr.randf_range(-9, 9))
+			if absf(p.x - Terrain.road_x(p.y)) < 5.0 or _in_lot(p) or p.distance_to(QUARRY) < 12.0:
+				continue
+			var free := true
+			for q in points:
+				if q.distance_squared_to(p) < 3.2 * 3.2:
+					free = false
+					break
+			if not free:
+				continue
+			points.append(p)
+			placed += 1
+			var t := ForestTree.new()
+			add_child(t)
+			t.position = Vector3(p.x, terrain.height_at(p.x, p.y) - 0.05, p.y)
+			t.rotation.y = gr.randf() * TAU
+			t.setup(gr, String(g[0]))
+			trees.append(t)
 
 
 ## The Legendary Tree: one enormous, golden-crowned ancient tree on the far hill, in view from the porch.

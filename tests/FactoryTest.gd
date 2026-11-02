@@ -357,6 +357,7 @@ func run() -> void:
 	await port_test()
 	await sweep_test()
 	await shop_sweep()
+	await species_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -1032,3 +1033,75 @@ func shop_sweep() -> void:
 	await frames(10)
 	check(main.shop_ui != null, "and so does the shop")
 	main.call("close_ui")
+
+
+func trees_of(k: String) -> Array:
+	return main.trees.filter(func(t): return is_instance_valid(t) and (t as ForestTree).kind == k and not (t as ForestTree).felled)
+
+
+func aim_tree(t: ForestTree, h: float) -> void:
+	var tp := t.global_position
+	var stand := tp + Vector3(0, 0, t.radius + 0.9)
+	stand.y = main.terrain.height_at(stand.x, stand.z) + 0.05
+	player.global_position = stand
+	player.velocity = Vector3.ZERO
+	await frames(2)
+	var to := tp + Vector3(0, h, 0) - player.cam.global_position
+	player.set("_yaw", atan2(-to.x, -to.z))
+	player.set("_pitch", atan2(to.y, Vector2(to.x, to.z).length()))
+	player.rotation.y = atan2(-to.x, -to.z)
+	player.head.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
+	await frames(1)
+
+
+func species_test() -> void:
+	for k in ["hickory", "cedar", "cork", "eucalyptus"]:
+		check(trees_of(k).size() >= 5, "a grove of %s grows in the woods (%d)" % [k, trees_of(k).size()])
+	# hickory: bare hands pull big strips and don't hurt
+	var hk: ForestTree = trees_of("hickory")[0]
+	player.equip("hands")
+	await frames(20)
+	await aim_tree(hk, 1.2)
+	var hp0: float = player.health
+	var n0: int = main.chips.size()
+	player.call("_do_impact")
+	await frames(2)
+	var got: Array = main.chips.slice(n0)
+	var panels := 0
+	for c in got:
+		panels += (c as Chip).panels
+	check(player.health == hp0 and panels >= 3, "shagbark hickory: bare hands pull off a strip (%d panels) and don't hurt" % panels)
+	# cedar: tall strips, worth 1.6x
+	var cd: ForestTree = trees_of("cedar")[0]
+	player.equip("hatchet")
+	await frames(20)
+	await aim_tree(cd, 1.4)
+	n0 = main.chips.size()
+	player.call("_do_impact")
+	await frames(2)
+	var cp := 0
+	for c in main.chips.slice(n0):
+		cp += (c as Chip).panels
+	check(cp >= 6, "western red cedar: a hatchet hit pulls a long strip (%d panels)" % cp)
+	check(ForestTree.species_value("cedar", ForestTree.OUTER) > 1.5, "cedar bark is worth more")
+	# cork: the outer bark grows back
+	var ck: ForestTree = trees_of("cork")[0]
+	ck.strip_circle(ck.global_position + Vector3(ck.radius, 1.2, 0), 0.3, ForestTree.OUTER)
+	var bare0 := 0
+	for b in ck.layers[ForestTree.OUTER]:
+		bare0 += 1 - b
+	await secs(ForestTree.CORK_EVERY * 2 + 0.5)
+	var bare1 := 0
+	for b in ck.layers[ForestTree.OUTER]:
+		bare1 += 1 - b
+	check(bare0 > 0 and bare1 < bare0, "cork oak: stripped cork grows back (%d -> %d bare)" % [bare0, bare1])
+	# eucalyptus: once inner bark shows, it ages - changing colour and worth more
+	var eu: ForestTree = trees_of("eucalyptus")[0]
+	eu.strip_circle(eu.global_position + Vector3(eu.radius, 1.2, 0), 0.3, ForestTree.OUTER)
+	await frames(3)
+	var c0 := eu.inner_color
+	eu.age = ForestTree.EUCA_FULL * 0.75
+	eu.set("_tick", 10.0)
+	await frames(3)
+	check(eu.extra_value(ForestTree.INNER) > 1.7 and eu.inner_color != c0, "rainbow eucalyptus: aged inner bark has changed colour and is worth more (x%.2f)" % eu.extra_value(ForestTree.INNER))
+	check(eu.layer_state().has("age"), "and its age is saved")

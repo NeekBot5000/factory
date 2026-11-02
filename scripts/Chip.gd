@@ -25,8 +25,7 @@ func setup(data: Dictionary, p_kind: String) -> void:
 	panel_list = data.get("panel_list", [])
 	value_mult = float(data.get("value_mult", 1.0))
 	var per: float = PANEL_VALUE.outer if layer == 0 else PANEL_VALUE.inner
-	if kind == "birch" and layer == 0:
-		per *= 1.6
+	per *= ForestTree.species_value(kind, layer)
 	value = per * panels * float(data.get("value_mult", 1.0))
 	collision_layer = 2
 	collision_mask = 1 | 2
