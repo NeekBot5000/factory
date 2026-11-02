@@ -125,10 +125,13 @@ Roblox can't generate sound from code the way the Godot game does. You need audi
 - **Music:** use tracks from the Creator Store's licensed music library. Don't upload music you don't own.
 
 ### 10. Models: export the Godot models instead of remaking them
-Godot builds every model from code. Roblox Studio's 3D Importer reads `.glb`, `.fbx` and `.obj`, so a small Godot
-script can write each tool, machine and decoration out as a `.glb` file, and you import them as MeshParts. They look
-identical and cost one mesh each. This is the best way to keep the look. A suggested next task is adding
-`tools/export_models.gd` to the Godot project.
+Godot builds every model from code. Roblox Studio's 3D Importer reads `.glb`, so **this is already done**:
+- **Where they are:** `roblox/models/` holds all 116 models (every machine, decoration and tool) as `.glb` files,
+  already merged into a few meshes each.
+- **Importing:** **File > Import 3D** in Studio, with the scale set so 1 m = 3 studs.
+- **After the Godot game changes:** run `godot --headless --path . res://tools/ExportModels.tscn` to write them again.
+- **What doesn't export:** parts that move (arms, belt slats, drone rotors) come in as separate meshes inside each
+  model, so the Roblox scripts can animate them.
 
 ### 11. Mobile
 - **Controls:** Roblox gives a thumbstick and a jump button. `InputController` adds big on-screen buttons for Swing,
@@ -245,7 +248,9 @@ Oil works the same as in the Godot game (added there today too):
   (checked stripping, bark sheets, cork regrowth), `MachineService` (10 Hz power, belts), `OilService` (pumps).
 - **`src/client/`:** `InputController` (keyboard, gamepad and touch for each action), `ToolController`
   (screen-centre aiming), `TreeVisuals` (merged bark strips near you, plain trunks far away).
-- **`tests/run.luau`:** 18 tests of the shared logic. Run `luau tests/run.luau`; all pass.
+- **`tests/run.luau`:** 18 tests of the shared logic. Run `luau tests/run.luau`; all pass, and CI runs them on every
+  push.
+- **`models/`:** 116 `.glb` models exported from the Godot game, ready for Studio's 3D Importer.
 
 **Not checked:** the server and client scripts compile, but they haven't run in Roblox, because Studio can't run in
 this environment. Expect a round of small fixes the first time you connect Rojo and press Play.
