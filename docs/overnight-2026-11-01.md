@@ -76,7 +76,13 @@ run tonight was green.
 - **Soak test:** now also drops cells on sockets, lays and turns rails, and changes channels. 8 seeds clean.
 - **Repeat runs:** the whole suite ran 4 more times back to back with no failures.
 
-## Decisions waiting on you (my recommendation first)
+## Decisions (settled on 2 Nov)
+
+Free ("No payments"); AI disclosure: code. The rest was left to me: the credits keep "NeekBot5000"; the feedback
+link stays on GitHub issues until there's an itch page to point at; the Labrys, Ringing Axe and Greataxe got faster
+and bigger (now about $841, $633 and $914 a minute of peeling); rebinding and gamepads wait for player feedback.
+
+## Decisions that were waiting on you (my recommendation first)
 
 1. **Your name in the credits and on the page.** It says "Made by NeekBot5000, with Claude" (`MADE_BY` in
    `scripts/Credits.gd`, plus `dist/README.txt` and `docs/itch/README.md`). Recommendation: keep the handle unless you
