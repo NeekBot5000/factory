@@ -212,6 +212,8 @@ const SHOP := {
 		"desc": "Plans for two cart parts: a rail layer that lays a rail from a crate on the cart when the track runs out, and a rail lifter that picks up the rail behind into a crate."},
 	"bp_rail_extras": {"name": "Rail Yard Blueprint", "price": 1800.0, "cat": "blueprints", "tag": "Rails",
 		"desc": "Plans for a rail switch (branches the track while powered), a rail buffer (stops carts until powered) and a cart unloader (empties the crate on a cart beside it out of its front, onto a belt)."},
+	"bp_oil": {"name": "Oil Rig Blueprint", "price": 4500.0, "cat": "blueprints", "tag": "Oil",
+		"desc": "Plans for an oil pump (a pumpjack: build it over an oil pocket and power it to fill barrels) and a refinery (oil in, a fuel can and a plastic sheet out). Fuel burns four times as long as wood in a generator; plastic makes lawn chairs and buckets in the assembler. The ore detector hums low over oil."},
 	"bp_drones": {"name": "Drone Blueprint", "price": 4000.0, "cat": "blueprints", "tag": "Flying",
 		"desc": "Plans for small, medium and large drones. They run on a battery cell and carry one thing - as heavy as their size can lift. No wires: five dials on each drone listen to wireless channels, one per direction and one for the pad that picks up and drops. Includes a drone pad that charges drones over it."},
 	"bp_feller": {"name": "Tree Feller Blueprint", "price": 2200.0, "cat": "blueprints", "tag": "Tree Farm",
@@ -226,7 +228,7 @@ const SHOP_ORDER := ["hatchet", "double_bit", "twins", "combo", "throwing", "scr
 	"vacuum", "blower", "twinvac", "cyclone", "pickaxe", "sledge", "steel_pick", "rock_drill", "detector", "core_drill", "dynamite", "wires",
 	"hammer", "rake", "can", "scale", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_wheelbarrow", "bp_windmill", "bp_generator", "bp_battery", "bp_logic", "bp_sensors",
 	"bp_lamp", "bp_sawmill", "bp_chipper", "bp_planter", "bp_sprinkler", "bp_feller", "bp_smelter", "bp_kiln", "bp_assembler",
-	"bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig", "bp_charger", "bp_carts", "bp_rail_tools", "bp_rail_extras", "bp_drones",
+	"bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig", "bp_charger", "bp_carts", "bp_rail_tools", "bp_rail_extras", "bp_drones", "bp_oil",
 	"bp_truck_caller", "truck_big", "truck_hauler", "phone"]
 
 const WOOD := Color("a0703c")

@@ -5,7 +5,7 @@ extends Node3D
 const LIST := [
 	["first_tree", "your first tree felled"], ["first_machine", "your first machine"], ["thousand", "$1,000 earned"],
 	["first_plank", "your first planks"], ["first_iron", "your first iron bar"], ["first_furniture", "your first furniture"],
-	["giant", "an ancient giant felled"], ["legend", "the Legendary Tree felled"],
+	["giant", "an ancient giant felled"], ["legend", "the Legendary Tree felled"], ["first_oil", "your first barrel of oil"],
 ]
 
 static var _wall: Trophies = null
@@ -66,5 +66,7 @@ func _item(p: Node3D, id: String) -> void:
 		"giant":
 			LowPoly.mesh_instance(p, LowPoly.cyl(0.17, 0.17, 0.05, 12), LowPoly.mat(Color("b5653a"), 0.8), Vector3(0.04, 0, 0), r)
 			LowPoly.mesh_instance(p, LowPoly.cyl(0.1, 0.1, 0.052, 12), LowPoly.mat(Color("e2c08d"), 0.8), Vector3(0.04, 0, 0), r)
+		"first_oil":
+			LowPoly.mesh_instance(p, LowPoly.cyl(0.08, 0.08, 0.2, 10), LowPoly.mat(Color("2f3a48"), 0.5), Vector3(0.1, 0, 0))
 		"legend":
 			LowPoly.mesh_instance(p, LowPoly.blob(0.14, 0.2, 7), LowPoly.mat(Color("e0a43a"), 0.4, 0.8), Vector3(0.08, 0, 0))

@@ -15,12 +15,14 @@ const RECIPES := {
 	"battery_cell": {"copper_bar": 1, "iron_bar": 1},
 	"rail": {"iron_bar": 1},
 	"curved_rail": {"iron_bar": 1},
+	"lawn_chair": {"plastic": 2},
+	"bucket": {"plastic": 1, "iron_bar": 1},
 }
-const RECIPE_ORDER := ["chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail", "curved_rail"]
+const RECIPE_ORDER := ["chair", "table", "lantern", "cabinet", "toy_truck", "lawn_chair", "bucket", "battery_cell", "rail", "curved_rail"]
 ## Parts rather than furniture: they're for using, so they sell for little more than what went in.
 const PART_VALUE := {"battery_cell": 1.2, "rail": 0.7, "curved_rail": 0.7}
 const MAKES := {"rail": 2}
-const WORK_TIME := {"smelter": 3.0, "kiln": 4.0, "assembler": 3.0}
+const WORK_TIME := {"smelter": 3.0, "kiln": 4.0, "assembler": 3.0, "refinery": 4.0}
 
 var kind := "smelter"
 var recipe := 0
@@ -43,6 +45,8 @@ func terminal() -> Vector3:
 
 
 static func res_of(b: Node) -> String:
+	if b is Product and (b as Product).kind == "plastic":
+		return "plastic"
 	if b is Product:
 		return String(Product.KINDS[(b as Product).kind].res)
 	if b is Ore:
@@ -56,6 +60,8 @@ func hint_text() -> String:
 			return "Smelter  ·  copper or iron ore in, bars out%s" % ("  ·  %d waiting" % queue.size() if not queue.is_empty() else "")
 		"kiln":
 			return "Kiln  ·  planks in, dried planks out%s" % ("  ·  %d drying" % queue.size() if not queue.is_empty() else "")
+		"refinery":
+			return "Refinery  ·  a barrel of oil in, a fuel can and a plastic sheet out%s" % ("  ·  %d waiting" % queue.size() if not queue.is_empty() else "")
 	var r: String = RECIPE_ORDER[recipe]
 	var parts: Array[String] = []
 	for res in RECIPES[r]:
@@ -81,6 +87,8 @@ func _accepts(b: Node) -> bool:
 			return r == "copper" or r == "iron"
 		"kiln":
 			return b is Product and (b as Product).kind == "plank"
+		"refinery":
+			return b is Product and (b as Product).kind == "oil_barrel"
 		"assembler":
 			var need: Dictionary = RECIPES[RECIPE_ORDER[recipe]]
 			return need.has(r) and int(have.get(r, 0)) < int(need[r])
@@ -126,6 +134,10 @@ func _take(b: Node) -> void:
 			queue.append({"out": r + "_bar", "value": v * 2.2, "color": Machines.COPPER})
 		"kiln":
 			queue.append({"out": "dry_plank", "value": v * 1.4, "color": (b as Product).color})
+		"refinery":
+			# the oil's worth splits over what comes out, and gains on the way
+			queue.append({"out": "fuel_can", "value": v * 0.8, "color": Color.WHITE})
+			queue.append({"out": "plastic", "value": v * 0.6, "color": Color.WHITE})
 		"assembler":
 			have[r] = int(have.get(r, 0)) + 1
 			have_value += v

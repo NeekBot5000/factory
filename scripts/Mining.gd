@@ -8,6 +8,7 @@ const IRON_FROM := 5.0
 const MAX_DEPTH := 40.0
 
 static var drilled := {}       # "x,z" grid square -> how deep drill rigs have got there (it stays drilled out)
+static var _oil: FastNoiseLite
 static var _copper: FastNoiseLite
 static var _iron: FastNoiseLite
 
@@ -24,6 +25,11 @@ static func richness(kind: String, x: float, z: float) -> float:
 	if _copper == null:
 		_copper = _noise(4141)
 		_iron = _noise(9393)
+		_oil = _noise(7171)
+		_oil.frequency = 0.018
+	if kind == "oil":
+		# oil sits in a few big pockets: most ground has none at all
+		return clampf(_oil.get_noise_2d(x, z) * 2.2 - 0.25, 0.0, 1.0)
 	var n := (_copper if kind == "copper" else _iron).get_noise_2d(x, z)
 	return clampf(n * 1.3 + 0.45, 0.0, 1.0)
 

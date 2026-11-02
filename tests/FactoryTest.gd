@@ -358,6 +358,7 @@ func run() -> void:
 	await sweep_test()
 	await shop_sweep()
 	await species_test()
+	await oil_test()
 
 	# --- products survive a save
 	var ws := WorldSave.save(main)
@@ -1105,3 +1106,64 @@ func species_test() -> void:
 	await frames(3)
 	check(eu.extra_value(ForestTree.INNER) > 1.7 and eu.inner_color != c0, "rainbow eucalyptus: aged inner bark has changed colour and is worth more (x%.2f)" % eu.extra_value(ForestTree.INNER))
 	check(eu.layer_state().has("age"), "and its age is saved")
+
+
+func oil_test() -> void:
+	# find a rich oil pocket
+	var best := Vector3.ZERO
+	var br := 0.0
+	for x in range(-80, 81, 4):
+		for z in range(-80, 81, 4):
+			var r := Mining.richness("oil", x, z)
+			if r > br:
+				br = r
+				best = Vector3(x, 0, z)
+	check(br > 0.6, "there are rich oil pockets under the ground (%.2f at %s)" % [br, str(best)])
+	var dry := 0
+	for x in range(-80, 81, 8):
+		for z in range(-80, 81, 8):
+			if Mining.richness("oil", x, z) < OilPump.MIN_RICH:
+				dry += 1
+	check(dry > 150, "most ground has no oil (%d of 441 spots dry)" % dry)
+	var B8 := Vector3(best.x, 60, best.z)
+	var sb := LowPoly.static_box(main, Vector3(14, 1, 14), B8 + Vector3(0, -0.5, 0))
+	sb.collision_layer = 1
+	await frames(2)
+	var pump := place("oil_pump", Vector3(0, 0, 0), 0.0, B8) as OilPump
+	var ck := place("crank", Vector3(2, 0, 1), 0.0, B8) as Crank
+	ck.charge = 600.0
+	wire(ck, pump)
+	pump.fill = 0.97
+	await secs(2.0)
+	var barrels := products_of("oil_barrel")
+	check(barrels.size() >= 1 and Game.trophies.has("first_oil"), "a powered oil pump over a pocket fills barrels of oil")
+	# refine it
+	var rf := place("refinery", Vector3(-3, 0, 0), 0.0, B8) as Processor
+	wire(ck, rf)
+	var brl := barrels[0] as Product
+	brl.global_position = rf.global_transform * Vector3(0, 1.1, 0)
+	brl.linear_velocity = Vector3.ZERO
+	await secs(10.0)
+	check(products_of("fuel_can").size() >= 1 and products_of("plastic").size() >= 1, "the refinery turns a barrel into a fuel can and a plastic sheet")
+	# fuel in a generator lasts
+	var gen := place("generator", Vector3(3, 0, -3), 0.0, B8) as Generator
+	var can := products_of("fuel_can")[0] as Product
+	can.global_position = gen.global_transform * Vector3(0, 1.2, 0)
+	await secs(2.0)
+	check(gen.fuel > 200.0, "a fuel can runs a generator for minutes (%ds)" % int(gen.fuel))
+	# plastic into lawn chairs
+	var asm := place("assembler", Vector3(-3, 0, -4), 0.0, B8) as Processor
+	wire(ck, asm)
+	asm.recipe = Processor.RECIPE_ORDER.find("lawn_chair")
+	for k in 2:
+		product("plastic", asm.global_transform * Vector3(0, 1.2 + k * 0.2, 0), 3.0)
+	await secs(5.0)
+	check(products_of("lawn_chair").size() >= 1, "two plastic sheets make a lawn chair")
+	# a pump on dry ground does nothing
+	var dry_at := Vector3.ZERO
+	for x in range(-80, 81, 4):
+		if Mining.richness("oil", x, -60) < 0.01:
+			dry_at = Vector3(x, 60, -60)
+			break
+	var p2 := Builds.finish("oil_pump", main, Transform3D(Basis(), dry_at), Builds.HOOP_DEFAULT, [], 1.0) as OilPump
+	check(p2.hint_text().contains("no oil"), "an oil pump on dry ground says there's no oil")

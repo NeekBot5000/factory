@@ -17,6 +17,11 @@ const KINDS := {
 	"battery_cell": {"name": "Battery Cell", "fuel": 0.0, "res": ""},
 	"rail": {"name": "Rail", "fuel": 0.0, "res": ""},
 	"curved_rail": {"name": "Curved Rail", "fuel": 0.0, "res": ""},
+	"oil_barrel": {"name": "Barrel of Oil", "fuel": 90.0, "res": ""},
+	"fuel_can": {"name": "Fuel Can", "fuel": 240.0, "res": ""},
+	"plastic": {"name": "Plastic Sheet", "fuel": 0.0, "res": ""},
+	"lawn_chair": {"name": "Lawn Chair", "fuel": 0.0, "res": ""},
+	"bucket": {"name": "Bucket", "fuel": 0.0, "res": ""},
 }
 const RAIL_VALUE := 2.0
 
@@ -123,6 +128,38 @@ func setup(p_kind: String, p_value: float, p_color: Color) -> void:
 				var a := (k + 0.5) / 2.0 * PI * 0.5
 				var sl := LowPoly.mesh_instance(self, LowPoly.box(Vector3(0.55, 0.05, 0.12)), LowPoly.mat(Color("6b4a32"), 0.95), Vector3(0.35 - cos(a) * 0.35, -0.035, -0.35 + sin(a) * 0.35))
 				sl.rotation.y = -a + PI * 0.5
+		"oil_barrel":
+			mass = 9.0
+			size = Vector3(0.42, 0.6, 0.42)
+			var drum := LowPoly.mat(Color("2f3a48"), 0.5)
+			LowPoly.mesh_instance(self, LowPoly.cyl(0.21, 0.21, 0.6, 12), drum, Vector3.ZERO)
+			for y in [-0.2, 0.0, 0.2]:
+				LowPoly.mesh_instance(self, LowPoly.cyl(0.215, 0.215, 0.03, 12), LowPoly.mat(Color("1d242d"), 0.5), Vector3(0, y, 0))
+			LowPoly.mesh_instance(self, LowPoly.cyl(0.19, 0.19, 0.01, 12), LowPoly.mat(Color("111111"), 0.2), Vector3(0, 0.3, 0))
+			_box(Vector3(0.06, 0.02, 0.06), LowPoly.mat(Color("d64034"), 0.5), Vector3(0.1, 0.31, 0.05))
+		"fuel_can":
+			mass = 3.0
+			size = Vector3(0.26, 0.34, 0.14)
+			_box(size, LowPoly.mat(Color("c0392b"), 0.4), Vector3.ZERO)
+			_box(Vector3(0.05, 0.06, 0.05), LowPoly.mat(Color("f2c12e"), 0.4), Vector3(0.08, 0.2, 0))
+			_box(Vector3(0.12, 0.03, 0.04), dark, Vector3(-0.04, 0.185, 0))
+		"plastic":
+			mass = 0.6
+			size = Vector3(0.5, 0.03, 0.4)
+			_box(size, LowPoly.mat(Color("5cc8e0"), 0.25), Vector3.ZERO)
+		"lawn_chair":
+			mass = 2.0
+			size = Vector3(0.5, 0.7, 0.5)
+			var pl := LowPoly.mat(Color("5cc8e0"), 0.3)
+			_box(Vector3(0.5, 0.04, 0.45), pl, Vector3(0, -0.05, 0))
+			_box(Vector3(0.5, 0.4, 0.04), pl, Vector3(0, 0.15, 0.22))
+			for k in 4:
+				_box(Vector3(0.04, 0.3, 0.04), pl, Vector3(0.22 if k & 1 else -0.22, -0.2, 0.2 if k & 2 else -0.2))
+		"bucket":
+			mass = 1.0
+			size = Vector3(0.3, 0.32, 0.3)
+			LowPoly.mesh_instance(self, LowPoly.cyl(0.16, 0.12, 0.32, 10), LowPoly.mat(Color("f2c12e"), 0.3), Vector3.ZERO)
+			LowPoly.mesh_instance(self, LowPoly.cyl(0.14, 0.14, 0.01, 10), LowPoly.mat(Color("8a6d1a"), 0.5), Vector3(0, 0.16, 0))
 		"toy_truck":
 			mass = 1.0
 			size = Vector3(0.18, 0.16, 0.36)

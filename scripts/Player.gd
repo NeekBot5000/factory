@@ -1450,6 +1450,11 @@ func _detector_step(delta: float) -> void:
 		(lamp.material_override as StandardMaterial3D).emission_energy_multiplier = _beep_glow * 4.0
 	# how rich the ground under your feet is: the richer, the faster it beeps (iron counts a bit more)
 	var r := maxf(Mining.richness("copper", global_position.x, global_position.z), Mining.richness("iron", global_position.x, global_position.z) * 1.1)
+	# oil hums low instead
+	var oil := Mining.richness("oil", global_position.x, global_position.z)
+	var low := oil > 0.2 and oil + 0.3 > r
+	if low:
+		r = oil + 0.3
 	if r < 0.3:
 		return
 	_beep_t -= delta
@@ -1457,7 +1462,7 @@ func _detector_step(delta: float) -> void:
 		var k := clampf((r - 0.3) / 0.7, 0.0, 1.0)
 		_beep_t = lerpf(1.3, 0.09, k)
 		_beep_glow = 1.0
-		Sfx.play("beep", lerpf(0.8, 1.5, k), lerpf(-12.0, -4.0, k))
+		Sfx.play("beep", lerpf(0.4, 0.6, k) if low else lerpf(0.8, 1.5, k), lerpf(-12.0, -4.0, k))
 
 
 ## Pole saw: held up in the leaves of a standing tree, it cuts the whole crown off.

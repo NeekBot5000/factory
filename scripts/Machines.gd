@@ -10,7 +10,7 @@ const IDS := ["crank", "lever", "button", "piston", "rotator", "conveyor", "ramp
 	"smelter", "kiln", "assembler", "grabber", "sorter", "splitter", "crate", "transmitter", "receiver", "drill_rig",
 	"minecart_1", "minecart_2", "minecart_3", "minecart_4", "cart_go", "cart_back", "cart_sensor", "rail_layer", "rail_lifter",
 	"charger", "level_sensor", "drone_small", "drone_medium", "drone_large",
-	"rail_switch", "rail_buffer", "cart_unloader", "drone_pad"]
+	"rail_switch", "rail_buffer", "cart_unloader", "drone_pad", "oil_pump", "refinery"]
 const GATE_COLOR := {"diode": Color("f2c12e"), "and": Color("3fa66b"), "not": Color("d64034"), "timer": Color("4fa3e3"),
 	"delay": Color("9b6ad6"), "latch": Color("e8642b"), "counter": Color("e2e2e2")}
 
@@ -314,6 +314,27 @@ static func model(id: String, root: Node3D, parts: Array) -> void:
 			_p(parts, root, LowPoly.box(Vector3(0.08, 0.025, 0.5)), Vector3(-0.15, 0.125, 0), "", yel)
 			_p(parts, root, LowPoly.box(Vector3(0.08, 0.025, 0.5)), Vector3(0.15, 0.125, 0), "", yel)
 			_p(parts, root, LowPoly.box(Vector3(0.3, 0.025, 0.08)), Vector3(0, 0.125, 0), "", yel)
+		"oil_pump":
+			# a pumpjack: a frame, a nodding walking beam with a horse head, and the wellhead below the head
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.12, 1.0)), Vector3(0, 0.06, 0), "stone", stone)
+			for sx in [-0.18, 0.18]:
+				var post := _p(parts, root, LowPoly.box(Vector3(0.07, 1.2, 0.07)), Vector3(sx, 0.66, 0.08), "iron_bar", iron)
+				post.rotation.x = deg_to_rad(-8.0)
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.3, 0.3)), Vector3(0, 0.27, 0.32), "copper_bar", copper)
+			var beam := _node(root, "Beam", Vector3(0, 1.22, 0.0))
+			_p(parts, beam, LowPoly.box(Vector3(0.1, 0.1, 1.1)), Vector3(0, 0, -0.05), "iron_bar", iron)
+			_p(parts, beam, LowPoly.box(Vector3(0.14, 0.32, 0.12)), Vector3(0, -0.08, -0.6), "", LowPoly.mat(Color("f2c12e"), 0.5))
+			_p(parts, beam, LowPoly.box(Vector3(0.16, 0.18, 0.22)), Vector3(0, -0.05, 0.42), "", dark)
+			_p(parts, root, LowPoly.cyl(0.07, 0.09, 0.3, 8), Vector3(0, 0.27, -0.6), "", iron)
+			_p(parts, root, LowPoly.cyl(0.015, 0.015, 0.75, 6), Vector3(0, 0.75, -0.6), "", dark)
+			_p(parts, root, LowPoly.box(Vector3(0.36, 0.04, 0.4)), Vector3(0, 0.3, -0.78), "", logm, Vector3(-18, 0, 0))
+		"refinery":
+			_p(parts, root, LowPoly.box(Vector3(0.9, 0.75, 0.9)), Vector3(0, 0.375, 0), "stone", stone)
+			_p(parts, root, LowPoly.box(Vector3(0.92, 0.06, 0.92)), Vector3(0, 0.72, 0), "iron_bar", iron)
+			_hopper(root, parts, 0.75, 0.75, iron)
+			_p(parts, root, LowPoly.cyl(0.12, 0.12, 1.3, 10), Vector3(0.36, 1.4, 0.36), "copper_bar", copper)
+			_p(parts, root, LowPoly.cyl(0.05, 0.06, 0.8, 8), Vector3(-0.36, 1.15, 0.36), "iron_bar", iron)
+			_p(parts, root, LowPoly.box(Vector3(0.3, 0.2, 0.04)), Vector3(0, 0.3, -0.46), "", LowPoly.mat(Color("5cc8e0"), 0.4))
 		"drill_rig":
 			_p(parts, root, LowPoly.box(Vector3(1.0, 0.12, 1.0)), Vector3(0, 0.06, 0), "stone", stone)
 			for k in 4:
@@ -556,7 +577,8 @@ static func new_body(id: String) -> Machine:
 		"planter": return Planter.new()
 		"sprinkler": return Sprinkler.new()
 		"feller": return Feller.new()
-		"smelter", "kiln", "assembler": return Processor.new()
+		"smelter", "kiln", "assembler", "refinery": return Processor.new()
+		"oil_pump": return OilPump.new()
 		"grabber": return Grabber.new()
 		"sorter", "splitter": return Sorter.new()
 		"crate": return Crate.new()
@@ -616,7 +638,7 @@ static func finish(id: String, body: Machine) -> void:
 		"windmill":
 			Builds._box_col(body, Vector3(0.8, 0.2, 0.8), Vector3(0, 0.1, 0))
 			Builds._box_col(body, Vector3(0.25, 2.6, 0.25), Vector3(0, 1.4, 0))
-		"generator", "chipper", "planter", "smelter", "kiln", "assembler":
+		"generator", "chipper", "planter", "smelter", "kiln", "assembler", "refinery":
 			var hy := 0.8 if id == "generator" else (0.5 if id == "planter" else 0.75)
 			var hw := 0.7 if id == "generator" or id == "planter" else 0.75
 			Builds._box_col(body, Vector3(0.9, hy, 0.9), Vector3(0, hy * 0.5, 0))
@@ -683,6 +705,9 @@ static func finish(id: String, body: Machine) -> void:
 			Builds._box_col(body, Vector3(0.8, 1.45, 0.12), Vector3(0, 0.72, 0.2))
 		"drone_pad":
 			Builds._box_col(body, Vector3(1.0, 0.12, 1.0), Vector3(0, 0.06, 0))
+		"oil_pump":
+			Builds._box_col(body, Vector3(0.9, 0.12, 1.0), Vector3(0, 0.06, 0))
+			Builds._box_col(body, Vector3(0.4, 1.3, 0.3), Vector3(0, 0.65, 0.1))
 		"feller":
 			Builds._box_col(body, Vector3(0.9, 0.3, 0.9), Vector3(0, 0.15, 0))
 			Builds._box_col(body, Vector3(0.2, 1.2, 0.5), Vector3(0, 0.75, 0.1))
