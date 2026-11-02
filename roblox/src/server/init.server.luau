@@ -1,0 +1,19 @@
+--!strict
+-- Server entry point: makes the remote events, then starts each service in order.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local remotes = Instance.new("Folder")
+remotes.Name = "Remotes"
+for _, name in { "StripRequest", "TreeChanged", "Buy", "Ship", "Fx", "Notify" } do
+	local e = Instance.new("RemoteEvent")
+	e.Name = name
+	e.Parent = remotes
+end
+remotes.Parent = ReplicatedStorage
+
+local services = script:WaitForChild("Services")
+local order = { "DataService", "EconomyService", "TreeService", "MachineService", "OilService" }
+for _, name in order do
+	local svc = require(services:WaitForChild(name)) :: any
+	svc.start()
+end
