@@ -93,12 +93,23 @@ local function load(player: Player)
 	end
 	profiles[player] = data
 	DataService.publish(player)
+	for _, f in DataService.onLoaded do
+		task.spawn(f, player, data)
+	end
 end
+
+-- other services keep parts of the save up to date just before it's written (BuildService: your builds), and
+-- put things back once it's loaded
+DataService.beforeSave = {} :: { (Player, any) -> () }
+DataService.onLoaded = {} :: { (Player, any) -> () }
 
 local function save(player: Player, release: boolean)
 	local data = profiles[player]
 	if not data or not storeOk then
 		return
+	end
+	for _, f in DataService.beforeSave do
+		pcall(f, player, data)
 	end
 	retry(function()
 		return store:UpdateAsync("p_" .. player.UserId, function(old)

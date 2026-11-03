@@ -365,7 +365,114 @@ local function near(player: Player, m: Model): boolean
 	return head ~= nil and (m:GetPivot().Position - head.Position).Magnitude < 6 * M * math.max(1, m:GetAttribute("Size") :: number? or 1)
 end
 
+-- ------------------------------------------------------------------ saving (Godot's Builds.save_world / load_world)
+-- Your builds and plans are saved with you: where they are, how big, and (builds) the colours of what went in or
+-- (plans) what's in them so far. They come back when you play again, and go with you when you leave.
+local function cfArr(cf: CFrame): { number }
+	return { cf:GetComponents() }
+end
+
+function BuildService.serialize(userId: number): { any }
+	local out = {}
+	for _, name in { "Builds", "Plans" } do
+		local f = workspace:FindFirstChild(name)
+		for _, m in if f then f:GetChildren() else {} do
+			if m:IsA("Model") and m:GetAttribute("Owner") == userId then
+				local e: any = { id = m:GetAttribute("Build"), cf = cfArr(m:GetPivot()), size = m:GetAttribute("Size"), kind = m:GetAttribute("Kind") }
+				if e.kind == "build" then
+					local colors = {}
+					for _, p in m:GetChildren() do
+						if p:IsA("BasePart") and p:GetAttribute("Index") ~= nil then
+							colors[tostring(p:GetAttribute("Index"))] = p.Color:ToHex()
+						end
+					end
+					e.colors = colors
+					e.sale = m:GetAttribute("SaleValue")
+					e.stock = m:GetAttribute("Stock")
+				else
+					e.have = m:GetAttribute("Have")
+					e.filled = m:GetAttribute("Filled")
+					e.worth = m:GetAttribute("Worth")
+				end
+				table.insert(out, e)
+			end
+		end
+	end
+	-- baskets and wheelbarrows you carry about: a build too
+	local loose = workspace:FindFirstChild("Loose")
+	for _, p in if loose then loose:GetChildren() else {} do
+		if p:IsA("BasePart") and p:GetAttribute("Kind") == "basket" and p:GetAttribute("Owner") == userId then
+			table.insert(out, { id = p:GetAttribute("Build"), cf = cfArr(p.CFrame), size = 1, kind = "carry", sale = p:GetAttribute("SaleValue") })
+		end
+	end
+	return out
+end
+
+function BuildService.restore(player: Player, list: { any })
+	for _, e in list or {} do
+		if typeof(e) ~= "table" or not Builds.def(e.id) then
+			continue
+		end
+		local c = e.cf
+		local cf = CFrame.new(c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12])
+		if e.kind == "plan" then
+			local m = BuildService.make(e.id, cf, e.size or 1, player.UserId)
+			if m then
+				m:SetAttribute("Have", e.have or "{}")
+				m:SetAttribute("Filled", e.filled or "{}")
+				m:SetAttribute("Worth", e.worth or 0)
+				for k, hex in decode(e.filled) do
+					local p = m:FindFirstChild(k) :: BasePart?
+					if p then
+						p.Color = Color3.fromHex(hex)
+						p.Transparency = 0
+						p.CastShadow = true
+					end
+				end
+				updateLabel(m)
+			end
+		elseif e.kind == "carry" then
+			local m = BuildService.make(e.id, cf, e.size or 1, player.UserId, true, {})
+			if m then
+				m:SetAttribute("SaleValue", e.sale or 0)
+				require(script.Parent.BuildBehaviors).activate(m)
+			end
+		else
+			local m = BuildService.make(e.id, cf, e.size or 1, player.UserId, true, e.colors or {})
+			if m then
+				m:SetAttribute("SaleValue", e.sale or 0)
+				if e.stock then
+					m:SetAttribute("Stock", e.stock)
+				end
+				require(script.Parent.BuildBehaviors).activate(m)
+			end
+		end
+	end
+end
+
 function BuildService.start()
+	table.insert(DataService.beforeSave, function(player, data)
+		data.builds = BuildService.serialize(player.UserId)
+	end)
+	table.insert(DataService.onLoaded, function(player, data)
+		-- (old saves kept other things in "builds")
+		if typeof(data.builds) == "table" and (data.builds[1] == nil or typeof(data.builds[1]) == "table") then
+			BuildService.restore(player, data.builds)
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		-- (saved just now: their builds go with them)
+		task.defer(function()
+			for _, name in { "Builds", "Plans" } do
+				local f = workspace:FindFirstChild(name)
+				for _, m in if f then f:GetChildren() else {} do
+					if m:GetAttribute("Owner") == player.UserId then
+						m:Destroy()
+					end
+				end
+			end
+		end)
+	end)
 	remotes.Build.OnServerEvent:Connect(place)
 	remotes.PlanCancel.OnServerEvent:Connect(function(player, target)
 		local m = buildOf(target)

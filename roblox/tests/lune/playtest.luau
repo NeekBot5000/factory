@@ -745,6 +745,41 @@ do
 		end
 		check(ball ~= nil and ball.Shape.Name == "Ball" and ball:GetAttribute("Value") == 4, "a finished leaf ball is a real ball you can pick up (and sell)")
 	end
+	-- your builds and plans are saved with you, and come back
+	do
+		local BS = A.service("BuildService")
+		local b = BS.make("rack", roblox.CFrame.new(spot + V3(-12, 0, 12)), 1.5, 101, true, { ["0"] = "123456" })
+		b:SetAttribute("SaleValue", 7.5)
+		local pl = BS.make("bench", roblox.CFrame.new(spot + V3(12, 0, 12)), 1, 101)
+		pl:SetAttribute("Have", '{"bark":3}')
+		pl:SetAttribute("Filled", '{"2":"8a5a36"}')
+		local saved = BS.serialize(101)
+		local n = 0
+		for _, e in saved do
+			if (e.id == "rack" and e.kind == "build" and e.size == 1.5) or (e.id == "bench" and e.kind == "plan") then
+				n += 1
+			end
+		end
+		b:Destroy()
+		pl:Destroy()
+		BS.restore(alice, saved)
+		local back, plan2 = nil, nil
+		for _, m in ws.Builds:GetChildren() do
+			if m:GetAttribute("Build") == "rack" then
+				back = m
+			end
+		end
+		for _, m in ws.Plans:GetChildren() do
+			if m:GetAttribute("Build") == "bench" and m:GetAttribute("Have") == '{"bark":3}' then
+				plan2 = m
+			end
+		end
+		check(n == 2 and back ~= nil and back:GetAttribute("SaleValue") == 7.5 and plan2 ~= nil and plan2:GetAttribute("Left") == "1 log  ·  3 bark",
+			"your builds and half-filled plans are saved with you and come back as they were")
+		if plan2 then
+			plan2:Destroy()
+		end
+	end
 	-- a cancelled plan gives everything back
 	build:Fire(alice, "basket", roblox.CFrame.new(spot + V3(9, 0, 0)), 1)
 	task.wait(0.1)

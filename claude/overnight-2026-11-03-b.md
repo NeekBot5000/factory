@@ -13,7 +13,7 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
 [ ] 4. Small tools: leaf rake, leaf blower, watering can (saplings grow 2x), scale
 [ ] 5. Bushes you can snip (Godot's Bush), trophies (Godot's Trophies)
 [ ] 6. Mining: rocks/ore, pickaxe, sledge, steel pick, rock drill, core drill, detector, dynamite
-[ ] 7. Building: hammer, build menu, hologram placement, blueprints filled by dropping resources (Godot's Builder,
+[x] 7. Building: hammer, build menu, hologram placement, blueprints filled by dropping resources (Godot's Builder,
        Blueprint, Builds) with the simple builds first (basket, bench, wheelbarrow...)
 [ ] 8. Machines on top of building: crank, lever, button, conveyor, ramp, piston, rotator, windmill, generator,
        battery, logic, sensors, lamp, sawmill, chipper, planter, sprinkler, feller, smelter, kiln, assembler,
@@ -30,5 +30,13 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
     Godot's puffs). Matches now: ground, grass, trees and bark panels, crowns, cabin inside and out, truck, dock,
     rocks, bushes, sky. Commits c8642ec + next. Not checkable here: Roblox's own lighting/renderer (render uses
     Godot's sun and fog for both), and the glTF UV orientation of the ground textures in Roblox's importer.
+
+[x] Lamp light + glow, chimney smoke (client animates Godot's puffs), props in ReplicatedStorage. Commit 2e645c4
+[x] Building: hammer, Godot's build menu, hologram placement (R/wheel/click/E), plans filled part by part with
+    dropped bark/logs/leaves, completion toast, E cancel, X take-down; all 76 builds' models exported part by part
+    (props.glb + GodotBuilds.luau); land: 4 start plots, per-player for-sale signs and stakes, buying plots.
+    Commits 448b10d, client test.
+[x] Finished builds: campfire, compost, catapult, hoop + ball, hammock, basket/wheelbarrow (carry), truck sells
+    builds. Commit 41e3527. Checkpoint 16:08 UTC: 141 server + 38 client checks.
 
 ## Parked
