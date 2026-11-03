@@ -130,6 +130,11 @@ end
 -- Converts a value from the project file to the type the property already has (Rojo's short forms).
 function Core.convert(value, current, types)
 	local t = typeof(current)
+	-- Rojo's explicit form: { "CFrame": { position = {x, y, z}, orientation = {{...}, {...}, {...}} } }
+	if type(value) == "table" and value.CFrame and type(value.CFrame) == "table" then
+		local p, o = value.CFrame.position, value.CFrame.orientation
+		return types.CFrame.new(p[1], p[2], p[3], o[1][1], o[1][2], o[1][3], o[2][1], o[2][2], o[2][3], o[3][1], o[3][2], o[3][3])
+	end
 	if t == "Vector3" and type(value) == "table" then
 		return types.Vector3.new(value[1], value[2], value[3])
 	elseif t == "Color3" and type(value) == "table" then
@@ -287,7 +292,7 @@ local function sync(sha: string)
 			if inst then
 				for prop, value in p.properties do
 					local okProp = pcall(function()
-						(inst :: any)[prop] = Core.convert(value, (inst :: any)[prop], { Vector3 = Vector3, Color3 = Color3 })
+						(inst :: any)[prop] = Core.convert(value, (inst :: any)[prop], { Vector3 = Vector3, Color3 = Color3, CFrame = CFrame })
 					end)
 					if not okProp then
 						table.insert(skipped, inst.Name .. "." .. prop)

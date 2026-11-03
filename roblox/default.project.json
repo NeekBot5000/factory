@@ -49,18 +49,39 @@
             16,
             1024
           ],
-          "Position": [
-            0,
-            -8,
-            0
-          ],
           "Color": [
             0.36,
             0.62,
             0.29
           ],
           "Material": "Grass",
-          "Locked": true
+          "Locked": true,
+          "CFrame": {
+            "CFrame": {
+              "position": [
+                0,
+                -8,
+                0
+              ],
+              "orientation": [
+                [
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          }
         }
       },
       "SpawnLocation": {
@@ -72,18 +93,39 @@
             1,
             8
           ],
-          "Position": [
-            0,
-            0.5,
-            14
-          ],
           "Color": [
             0.55,
             0.45,
             0.35
           ],
           "Material": "WoodPlanks",
-          "Duration": 0
+          "Duration": 0,
+          "CFrame": {
+            "CFrame": {
+              "position": [
+                0,
+                0.5,
+                14
+              ],
+              "orientation": [
+                [
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            }
+          }
         }
       }
     },

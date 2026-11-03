@@ -33,7 +33,6 @@ local function use(player: Player, target: unknown)
 	if not near(player, part) then
 		return
 	end
-	local model = part:FindFirstAncestorOfClass("Model")
 	-- a tool you put down
 	local item = part:FindFirstAncestorWhichIsA("Model")
 	while item and item:GetAttribute("Kind") ~= "tool" do
@@ -50,7 +49,8 @@ local function use(player: Player, target: unknown)
 		EconomyService.ship(player)
 		return
 	end
-	if model and model.Name == "ChoppingBlock" then
+	-- the block, or the hatchet stuck in it
+	if part:FindFirstAncestor("ChoppingBlock") then
 		local data = DataService.get(player)
 		if data and not data.owned.hatchet then
 			ToolService.grant(player, "hatchet")

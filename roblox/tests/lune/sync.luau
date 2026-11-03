@@ -81,11 +81,14 @@ end
 check(fails == before and count > 20, "builds the same " .. count .. " scripts as Rojo, in the same places")
 
 -- property short forms
-local types = { Vector3 = roblox.Vector3, Color3 = roblox.Color3 }
+local types = { Vector3 = roblox.Vector3, Color3 = roblox.Color3, CFrame = roblox.CFrame }
 local v = Core.convert({ 1, 2, 3 }, roblox.Vector3.new(0, 0, 0), types)
 local c = Core.convert({ 0.5, 0.25, 1 }, roblox.Color3.new(0, 0, 0), types)
 local e = Core.convert("Grass", roblox.Enum.Material.Plastic, types)
 check(v == roblox.Vector3.new(1, 2, 3) and c == roblox.Color3.new(0.5, 0.25, 1) and e == roblox.Enum.Material.Grass and Core.convert(2.4, 1, types) == 2.4, "turns the project file's numbers into Vector3s, Colors and Enums")
+
+local cf = Core.convert({ CFrame = { position = { 0, -8, 0 }, orientation = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } } } }, roblox.CFrame.new(), types)
+check(cf.Position == roblox.Vector3.new(0, -8, 0) and place.Workspace.Baseplate.CFrame.Position == roblox.Vector3.new(0, -8, 0), "puts the Baseplate where Rojo does (its top at ground level, y = 0)")
 
 print(string.format("\nSYNC RESULT: %s", if fails == 0 then "PASS" else "FAIL"))
 process.exit(if fails == 0 then 0 else 1)

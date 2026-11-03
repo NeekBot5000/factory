@@ -1,0 +1,142 @@
+-- The client playtest: the real client scripts, joined to the real server scripts, driven with key presses, clicks
+-- and the camera, the way a player would. Checks the HUD, the keys, swinging, the bark drawing and the shop.
+--   lune run tests/lune/client.luau <path to Timber.rbxl>
+local process = require("@lune/process")
+local task = require("@lune/task")
+local roblox = require("@lune/roblox")
+local Harness = require("./harness")
+local ClientHarness = require("./clientharness")
+
+local place = process.args[1] or "Timber.rbxl"
+local fails, passes = 0, 0
+local function check(ok: any, msg: string)
+	if ok then
+		passes += 1
+		print("PASS " .. msg)
+	else
+		fails += 1
+		print("FAIL " .. msg)
+	end
+end
+local V3 = roblox.Vector3.new
+local K = roblox.Enum.KeyCode
+
+local S = Harness.boot(place, "client-test")
+S.start()
+task.wait(0.1)
+local alice = S.join(101, "Alice", V3(0, 5, 14))
+task.wait(0.6)
+local C = ClientHarness.start(S, alice)
+C.boot()
+C.frames(5)
+task.wait(2.5)
+C.frames(3)
+check(#ClientHarness.errors == 0, "the client starts with no errors (" .. #ClientHarness.errors .. ")")
+for _, e in ClientHarness.errors do
+	print("   " .. e)
+end
+
+local ws = S.workspace
+local hud = C.gui("Hud")
+check(hud ~= nil, "the HUD is on screen")
+check(C.coreOff.PlayerList and C.coreOff.Backpack and C.coreOff.Health, "Roblox's player list, backpack and health bar are off")
+local function text(pred)
+	local l = C.find(hud, function(d)
+		return d:IsA("TextLabel") and pred(d.Text)
+	end)
+	return l
+end
+local function hint(): string
+	-- the hint line sits above the tool bar (bottom centre)
+	local l = C.find(hud, function(d)
+		return d:IsA("TextLabel") and d.AnchorPoint == roblox.Vector2.new(0.5, 1) and d.Position.Y.Offset == -110
+	end)
+	return if l then l.Text else "<no hint label>"
+end
+check(text(function(t) return t == "$0.00" end), "the money counter says $0.00")
+check(text(function(t) return string.find(t, "Getting started", 1, true) ~= nil end), "Getting started shows, top left")
+
+-- walk up to the chopping block and look at it
+local block = ws.ChoppingBlock
+local stump = block.Stump
+S.stand(alice, stump.CFrame.Position + V3(0, 3.5, 4))
+C.look(stump.CFrame.Position + V3(0, 1, 0))
+C.frames(3)
+check(hint() == "[E] take", "looking at the hatchet in the block: '[E] take' (" .. hint() .. ")")
+C.press(K.E)
+task.wait(0.2)
+C.frames(3)
+check(alice:GetAttribute("Tool") == "hatchet", "E takes the hatchet: it's in your hand")
+check(text(function(t) return string.find(t, "Trusty Hatchet", 1, true) ~= nil end), "and the tool bar shows it, named, in gold")
+
+-- number keys and Q
+C.press(K.One)
+task.wait(0.1)
+C.frames(2)
+check(alice:GetAttribute("Tool") == "hands", "1: bare hands")
+C.press(K.Two)
+task.wait(0.1)
+C.frames(2)
+check(alice:GetAttribute("Tool") == "hatchet", "2: the hatchet")
+C.look(stump.CFrame.Position + V3(0, 1, 0) + V3(0, 0, 3))
+C.press(K.Q)
+task.wait(0.1)
+C.frames(2)
+local item = ws.Loose:FindFirstChild("Tool_hatchet")
+check(item ~= nil and alice:GetAttribute("Tool") == "hands", "Q puts the hatchet down on the ground")
+if item then
+	C.look(item.Handle.CFrame.Position)
+	S.stand(alice, item.Handle.CFrame.Position + V3(0, 3, 3))
+	C.frames(3)
+	check(hint() == "[E] take", "looking at it: '[E] take' (" .. hint() .. ")")
+	C.press(K.E)
+	task.wait(0.2)
+	C.frames(2)
+	check(alice:GetAttribute("Tool") == "hatchet" and ws.Loose:FindFirstChild("Tool_hatchet") == nil, "E picks it back up, into your hand")
+end
+
+-- Shift sprints
+local hum = alice.Character.Humanoid
+C.frames(1)
+local walk = hum.WalkSpeed
+C.hold(K.LeftShift, true)
+C.frames(1)
+local run = hum.WalkSpeed
+C.hold(K.LeftShift, false)
+C.frames(1)
+check(math.abs(walk - 12.6) < 0.01 and math.abs(run - 20.4) < 0.01 and math.abs(hum.WalkSpeed - 12.6) < 0.01, string.format("Shift sprints: %.1f -> %.1f studs a second", walk, run))
+
+-- swing at a tree: the blade lands partway through, the server takes the bark, the client draws it
+local tree, td = nil, math.huge
+for _, t in ws.Forest:GetChildren() do
+	if t:HasTag("Tree") then
+		local d = (t.WorldPivot.Position - alice.Character.Head.CFrame.Position).Magnitude
+		if d < td then
+			tree, td = t, d
+		end
+	end
+end
+local base = tree.WorldPivot.Position
+local r = tree:GetAttribute("Radius")
+S.stand(alice, base + V3(r + 3, 4.5, 0))
+C.look(base + V3(0, 4.5, 0))
+C.frames(20)       -- (a tool you just took out has to come up into view before you can swing it, like Godot's)
+local sent0 = #C.sent
+C.click()
+for _ = 1, 40 do
+	C.frame(1 / 60)
+	task.wait()
+end
+local stripped = false
+for k = sent0 + 1, #C.sent do
+	stripped = stripped or C.sent[k].remote == "StripRequest"
+end
+check(stripped, "a click swings, and the blade landing asks the server for the bark")
+task.wait(0.2)
+C.frames(3)
+check(#ws.Loose:GetChildren() > 0, "bark comes off")
+local panels = tree:FindFirstChild("BarkPanels")
+check(panels ~= nil, "the tree is redrawn with its bark panels")
+
+print(string.format("\nCLIENT RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
+process.exit(if fails == 0 then 0 else 1)

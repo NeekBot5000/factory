@@ -60,9 +60,15 @@ function Harness.boot(placePath: string, jobId: string)
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })
+			if server.toClient then
+				server.toClient(name, player, ...)
+			end
 		end
 		function ev:FireAllClients(...)
 			table.insert(server.clientLog, { remote = name, all = true, args = { ... } })
+			if server.toClient then
+				server.toClient(name, nil, ...)
+			end
 		end
 		remotes[name] = ev
 	end
@@ -264,6 +270,10 @@ function Harness.boot(placePath: string, jobId: string)
 		head.Name = "Head"
 		head.CFrame = roblox.CFrame.new(at or roblox.Vector3.new(0, 5, 14))
 		head.Parent = char
+		local root = roblox.Instance.new("Part")
+		root.Name = "HumanoidRootPart"
+		root.CFrame = head.CFrame * roblox.CFrame.new(0, -1.5, 0)
+		root.Parent = char
 		local hum = roblox.Instance.new("Humanoid")
 		hum.MaxHealth = 100
 		hum.Health = 100
