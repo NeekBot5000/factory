@@ -396,7 +396,8 @@ function BuildService.serialize(userId: number): { any }
 					-- a machine's state: a wound crank, a lever that's on, a generator's fuel, a battery's charge
 					e.state = { charge = m:GetAttribute("Charge"), on = m:GetAttribute("On"), fuel = m:GetAttribute("Fuel"),
 						setting = m:GetAttribute("Setting"), latch = m:GetAttribute("LatchOn"), count = m:GetAttribute("Count"), recipe = m:GetAttribute("Recipe"),
-						channel = m:GetAttribute("Channel"), filter = m:GetAttribute("Filter"), fill = m:GetAttribute("Fill") }
+						channel = m:GetAttribute("Channel"), filter = m:GetAttribute("Filter"), fill = m:GetAttribute("Fill"),
+						holds = m:GetAttribute("Holds"), depth = m:GetAttribute("Depth") }
 					e.uid = m:GetAttribute("Uid")
 				else
 					e.have = m:GetAttribute("Have")
@@ -485,6 +486,8 @@ function BuildService.restore(player: Player, list: { any })
 					m:SetAttribute("Channel", e.state.channel)
 					m:SetAttribute("Filter", e.state.filter)
 					m:SetAttribute("Fill", e.state.fill)
+					m:SetAttribute("Holds", e.state.holds)
+					m:SetAttribute("Depth", e.state.depth)
 				end
 				require(script.Parent.BuildBehaviors).activate(m)
 				made[k] = m

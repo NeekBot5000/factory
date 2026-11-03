@@ -1147,6 +1147,31 @@ do
 	task.wait(0.4)
 	check(sp:GetAttribute("Rooted") and (sp.CFrame.Position - planter:GetPivot().Position).Magnitude > 5, "the planter plants saplings in a row in front of it")
 	sp:Destroy()
+	-- the tree feller: a saw handed to it fells the tree standing in front of it
+	local tree = trees[#trees - 40]
+	local M = Cfg.StudsPerMetre
+	local fp = tree:GetPivot().Position + V3(0, 0, 1.5 * M)
+	local fel = BS.make("feller", roblox.CFrame.new(fp), 1, 101, true, {})
+	local crank2 = BS.make("crank", roblox.CFrame.new(fp + V3(3, 0, 3)), 1, 101, true, {})
+	for _ = 1, 8 do
+		CS.use(crank2)
+	end
+	CS.toggle(crank2, fel)
+	fel:SetAttribute("Holds", "chainsaw")
+	task.wait(5)
+	check(tree:GetAttribute("Felled") == true, "a powered tree feller holding a chainsaw fells the tree in front of it")
+	-- the drill rig: a rock drill handed to it bores down and throws out chunks
+	local rig = mk("drill_rig", V3(24, 0, 0))
+	rig:SetAttribute("Holds", "rock_drill")
+	local n0 = #loose:GetChildren()
+	task.wait(3)
+	local chunks = 0
+	for _, c in loose:GetChildren() do
+		if c:GetAttribute("Kind") == "ore" then
+			chunks += 1
+		end
+	end
+	check((rig:GetAttribute("Depth") or 0) > 0.25 and #loose:GetChildren() > n0 and chunks > 0, "a powered drill rig bores down and throws out chunks (" .. string.format("%.2f", rig:GetAttribute("Depth") or 0) .. " m)")
 end
 
 -- ---------------------------------------------------------------- production

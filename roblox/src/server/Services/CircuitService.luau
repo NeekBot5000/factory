@@ -92,6 +92,10 @@ local function conducts(m: Model): boolean
 		return m:GetAttribute("On") == true
 	elseif id == "button" then
 		return (m:GetAttribute("Pressed") :: number? or 0) > 0
+	elseif id == "drill_rig" then
+		local tool = m:GetAttribute("Holds") :: string?
+		local max = if tool == "rock_drill" then 12 elseif tool == "core_drill" then 30 else 0
+		return tool ~= nil and (m:GetAttribute("Depth") :: number? or 0) >= max
 	elseif id == "pressure_plate" or id == "item_sensor" or id == "level_sensor" then
 		return m:GetAttribute("Sensing") == true
 	end
@@ -687,6 +691,10 @@ function CircuitService.start()
 	remotes.UseMachine.OnServerEvent:Connect(function(player, target)
 		local m = machineOf(target)
 		if m and near(player, m, 6 * M) then
+			if m:GetAttribute("Build") == "feller" or m:GetAttribute("Build") == "drill_rig" then
+				(require(script.Parent.FactoryService) :: any).handOver(player, m)
+				return
+			end
 			if m:GetAttribute("Build") == "sorter" then
 				-- (E while holding something: sort that kind out to the left)
 				local held: BasePart? = nil

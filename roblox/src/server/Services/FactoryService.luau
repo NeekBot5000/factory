@@ -230,6 +230,120 @@ local function sorter(m: Model, id: string)
 	m:SetAttribute("Seen", table.concat(now, ","))
 end
 
+-- ------------------------------------------------------------------ machines you put a tool in
+-- the tree feller takes a saw, the drill rig a drill (Godot's hand_over_tool: it leaves your tool bar until you take
+-- it back out with empty hands)
+local SAWS = { saw = true, chainsaw = true, crosscut = true }
+local DRILLS = { rock_drill = { max = 12, tier = 1, rate = 0.12 }, core_drill = { max = 30, tier = 2, rate = 0.2 } }
+FactoryService.DRILLS = DRILLS
+local drilled: { [string]: number } = {}        -- (Godot's Mining.drilled: a spot stays drilled out)
+
+function FactoryService.handOver(player: Player, m: Model): boolean
+	local ToolService = require(script.Parent.ToolService) :: any
+	local DataService = require(script.Parent.DataService) :: any
+	local id = m:GetAttribute("Build")
+	local held = m:GetAttribute("Holds") :: string?
+	local tool = ToolService.current(player)
+	local fits = if id == "feller" then SAWS[tool] ~= nil else DRILLS[tool] ~= nil
+	local data = DataService.get(player)
+	if not data then
+		return false
+	end
+	if not held and fits then
+		m:SetAttribute("Holds", tool)
+		data.dropped = data.dropped or {}
+		data.dropped[tool] = true
+		ToolService.equip(player, "hands")
+		DataService.publish(player)
+		remotes.Fx:FireAllClients("clink", m:GetPivot().Position, 0.8, -2)
+		return true
+	elseif held and tool == "hands" then
+		m:SetAttribute("Holds", nil)
+		if data.dropped then
+			data.dropped[held] = nil
+		end
+		DataService.publish(player)
+		ToolService.equip(player, held)
+		remotes.Fx:FireAllClients("pickup", m:GetPivot().Position, 1.0, -2)
+		return true
+	end
+	return false
+end
+
+local function feller(m: Model, dt: number)
+	local saw = m:GetAttribute("Holds") :: string?
+	if not saw then
+		return
+	end
+	-- the nearest standing tree in front of it (Godot's _target: 0.3-2.6 m out, within 0.9 m to the side)
+	local CollectionService = game:GetService("CollectionService")
+	local best, bd = nil, math.huge
+	for _, t in CollectionService:GetTagged("Tree") do
+		local tr = t :: Model
+		if tr:GetAttribute("Log") or tr:GetAttribute("Felled") or (tr:GetAttribute("Bands") :: number? or 0) < 4 then
+			continue
+		end
+		local lp = m:GetPivot():PointToObjectSpace(tr:GetPivot().Position) / M
+		if lp.Z < -2.6 or lp.Z > -0.3 or math.abs(lp.X) > 0.9 then
+			continue
+		end
+		if -lp.Z < bd then
+			bd = -lp.Z
+			best = tr
+		end
+	end
+	if not best then
+		m:SetAttribute("Progress", 0)
+		return
+	end
+	local d = (Config.Tools :: any)[saw]
+	if best:GetAttribute("Giant") and not d.big and saw ~= "chainsaw" then
+		return
+	end
+	local radius = (best:GetAttribute("Radius") :: number? or 1.14) / M
+	local p = (m:GetAttribute("Progress") :: number? or 0) + dt / (Config.Saw.treeTime * 1.5 * (radius / 0.38)) * (d.speed or 1)
+	if math.random() < dt * 8 then
+		remotes.Fx:FireAllClients("saw", best:GetPivot().Position, 1.1, -4)
+	end
+	if p >= 1 then
+		p = 0
+		local LogService = require(script.Parent.LogService) :: any
+		local owner = game:GetService("Players"):GetPlayerByUserId(m:GetAttribute("Owner") :: number)
+		local log = LogService.fell(best, 2, m:GetPivot().LookVector, owner)
+		if log and d.clean then
+			log:SetAttribute("Clean", true)
+		end
+		remotes.Fx:FireAllClients("timber", best:GetPivot().Position, 1.0, 2)
+	end
+	m:SetAttribute("Progress", p)
+end
+
+local function drillRig(m: Model, dt: number)
+	local tool = m:GetAttribute("Holds") :: string?
+	local d = tool and DRILLS[tool]
+	if not d then
+		return
+	end
+	local at = m:GetPivot().Position
+	local key = string.format("%d,%d", math.round(at.X / M), math.round(at.Z / M))
+	local depth = math.max(m:GetAttribute("Depth") :: number? or 0, drilled[key] or 0)
+	if depth >= d.max then
+		m:SetAttribute("Depth", depth)
+		return
+	end
+	local nextAt = (math.floor(depth / 0.25) + 1) * 0.25
+	depth = math.min(d.max, depth + d.rate * dt)
+	drilled[key] = math.max(depth, drilled[key] or 0)
+	m:SetAttribute("Depth", depth)
+	if depth >= nextAt then
+		local Mining = require(ReplicatedStorage.Shared.Mining) :: any
+		local MiningService = require(script.Parent.MiningService) :: any
+		local kind = Mining.roll(at.X, at.Z, depth, d.tier)
+		MiningService.chunk(kind, 0.11 + math.random() * 0.04, m:GetPivot():PointToWorldSpace(Vector3.new(math.random() * 0.2 - 0.1, 0.75, -0.75) * M),
+			(m:GetPivot().LookVector * 1.4 + Vector3.new(0, 0.6, 0)) * M, m:GetAttribute("Owner") :: number)
+	end
+end
+
 -- E on a sorter while holding something: sort that kind off to the left; with empty hands, clear it
 function FactoryService.setFilter(m: Model, held: BasePart?)
 	if held then
@@ -263,6 +377,10 @@ function FactoryService.step(dt: number)
 			grabber(m, dt)
 		elseif id == "sorter" or id == "splitter" then
 			sorter(m, id)
+		elseif id == "feller" then
+			feller(m, dt)
+		elseif id == "drill_rig" then
+			drillRig(m, dt)
 		end
 	end
 	local _ = Builds

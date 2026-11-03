@@ -344,6 +344,32 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 		elseif mode == "counter" then
 			return string.format("Counter  ·  %d of %d pulses    [E] change", m:GetAttribute("Count") :: number? or 0, ({ 2, 3, 5, 10 })[setting]), true
 		end
+	elseif id == "feller" then
+		local saw = m:GetAttribute("Holds") :: string?
+		if not saw then
+			if State.tool == "saw" or State.tool == "chainsaw" or State.tool == "crosscut" then
+				return "[E] put your saw in", true
+			end
+			return "Tree Feller  ·  needs a saw (bow saw, chainsaw or crosscut)", false
+		end
+		local p = m:GetAttribute("Progress") :: number? or 0
+		return string.format("Tree Feller  ·  %s%s%s", (Config.Tools :: any)[saw].name, if State.tool == "hands" then "    [E] take the saw out" else "",
+			if p > 0 and powered then string.format("  ·  %d%%", math.floor(p * 100)) else ""), State.tool == "hands"
+	elseif id == "drill_rig" then
+		local drill = m:GetAttribute("Holds") :: string?
+		if not drill then
+			if State.tool == "rock_drill" or State.tool == "core_drill" then
+				return "[E] put your drill in", true
+			end
+			return "Drill Rig  ·  needs a rock drill or steel core drill", false
+		end
+		local depth = m:GetAttribute("Depth") :: number? or 0
+		local max = if drill == "rock_drill" then 12 else 30
+		local take = if State.tool == "hands" then "    [E] take the drill out" else ""
+		if depth >= max then
+			return string.format("Drill Rig  ·  drilled out at %d m - move it somewhere new%s", depth, take), State.tool == "hands"
+		end
+		return string.format("Drill Rig  ·  %.1f of %d m  ·  %s%s", depth, max, Mining.layerName(depth), take), State.tool == "hands"
 	elseif id == "transmitter" or id == "receiver" then
 		local names = { "red", "green", "blue", "yellow", "purple", "orange", "white", "pink" }
 		local ch = (m:GetAttribute("Channel") :: number? or 0) + 1
