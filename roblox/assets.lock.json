@@ -1,4 +1,16 @@
 {
+  "GodotTools": {
+    "id": "122305679607294",
+    "sha256": "b607f66a84dc9724af844d512c817c351116d352ace1fa371f5bf8ed62bd068a"
+  },
+  "GodotTrucks": {
+    "id": "128707536945262",
+    "sha256": "7ea0bbb92905b6003965f72e57aabfbfb2dad94957ecd49981613aa5f5d0d3c0"
+  },
+  "GodotWorld": {
+    "id": "74577339810456",
+    "sha256": "7b415061bdbc44685eb6e8e91eda40999aaa6a3dfad1cc6b558a50dee510563b"
+  },
   "SoundSheet": {
     "id": "118267500209887",
     "sha256": "b9c9fb1fd0cc1d0dd0ff9e46561c72b172f6456229f1ebb78b42a54264bf2d23"
