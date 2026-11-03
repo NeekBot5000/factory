@@ -5,7 +5,9 @@ key presses don't work (only clicking and moving), trees turn into lines when to
 STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
 
 ## Queue
-[ ] 9. Still to port: throwing hatchet, thunder axe, two-man crosscut, pole saw, the phone
+[x] 9. Throwing hatchet, thunder axe, two-man crosscut, pole saw, the phone (see Done)
+[ ] 11. Next from Godot: the shears (snip leaves off crowns and bushes), then whatever else the Godot shop sells
+    that fits (drill, planer, washer...) as time allows
 [ ] 10. Docs, playtest, CI; morning report
 
 ## Done
@@ -35,6 +37,13 @@ STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
 [x] Godot's title screen, settings, credits. Commit e391fa8
 [x] Felling and logs: bow saw, buck saw, chainsaw; stumps, logs with bark, cutting, bucking, carrying, selling;
     per-tree crowns (crowns.glb). Commit bfa6f25
+
+[x] Throwing hatchet (flies 20 m/s, sticks, returns), two-man crosscut (giants, the Legendary Tree, clean cut +20%),
+    TimberPhone (shop item, toast with [Tab], sends the truck), shop departments. Commit 8ff0195
+[x] Thunder Axe: hold to charge 1.2 s, lightning strips the whole tree, 6 s recharge, bolt/flash/glow. Commit 26b44e1
+[x] Pole saw: cuts the crown off; leaves ($0.05 clumps) and 1-2 saplings fall; saplings root and grow into trees in
+    5 min. Harness: server warnings shown, default velocity, seedless Random. Commit 9d2fe43
+    Checkpoint 07:40 UTC: playtests 109 server + 33 client checks pass locally.
 
 ## Parked
 - Checking the imports from CI: downloading an uploaded asset needs the API key to have the asset-delivery
