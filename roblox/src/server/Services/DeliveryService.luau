@@ -226,7 +226,7 @@ local function open(player: Player, box: unknown)
 		remotes.Fx:FireAllClients("reveal", b.Position)
 		task.spawn(function()
 			local t = 0
-			while m.Parent do
+			while m.Parent and m:IsDescendantOf(workspace) do
 				local dt = RunService.Heartbeat:Wait()
 				t += dt
 				local rise = math.min(1, t / 0.8)

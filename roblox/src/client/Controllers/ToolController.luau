@@ -169,8 +169,11 @@ local function predictLayer(tree: Model, at: Vector3, d: any): number?
 	local i = math.floor((math.atan2(loc.Z, loc.X) % (2 * math.pi)) / (2 * math.pi) * sectors)
 	local j = math.clamp(math.floor(loc.Y / (tree:GetAttribute("Height") :: number or 20) * bands), 0, bands - 1)
 	local species = (Config.Species :: any)[tree:GetAttribute("Species") or "oak"] or Config.Species.oak
-	local radius = if State.tool == "hands" and species.handsSafe then 1 else d.radius
-	local s = BarkGrid.stripCircle(g, i, j, radius, d.only)
+	local r = if State.tool == "hands" and species.handsSafe then 0.17 else d.stripRadius
+	local only = if d.only == "outer" then BarkGrid.OUTER elseif d.only == "inner" then BarkGrid.INNER else nil
+	local R = (tree:GetAttribute("Radius") :: number or 1.2) / M
+	local lm = loc / M
+	local s = BarkGrid.stripCircleAt(g, i, j, { x = lm.X, y = lm.Y, z = lm.Z }, r, R, R - Config.Tree.outerT, Config.Tree.bandH, only)
 	return if s then s.layer else nil
 end
 

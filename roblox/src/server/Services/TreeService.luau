@@ -16,6 +16,7 @@ local ToolService = require(script.Parent.ToolService)
 local TutorialService = require(script.Parent.TutorialService)
 
 local TreeService = {}
+local M = Config.StudsPerMetre
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local grids: { [Model]: BarkGrid.Grid } = {}
 local lastSwing: { [Player]: number } = {}
@@ -109,7 +110,6 @@ local function spawnSheet(player: Player, tree: Model, strip: any)
 	local first = strip.panels[1]
 	local a = (first[1] + 0.5) / sectors * 2 * math.pi
 	local out = base:VectorToWorldSpace(Vector3.new(math.cos(a), 0, math.sin(a)))
-	local M = Config.StudsPerMetre
 	sheet.AssemblyLinearVelocity = out * (0.8 + math.random() * 0.8) * M + Vector3.new(0, (0.6 + math.random() * 0.8) * M, 0)
 	sheet.AssemblyAngularVelocity = Vector3.new(math.random() * 10 - 5, math.random() * 10 - 5, math.random() * 10 - 5)
 	-- the player who peeled it simulates it, so carrying feels instant (can fail if the player just left)
@@ -161,24 +161,28 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 	end
 	local t = tree :: Model
 	local g = gridOf(t)
-	local i, j = panelAt(t, g, point :: Vector3)
 	local species = Config.Species[t:GetAttribute("Species") :: string or "oak"] or Config.Species.oak
-	local radius = tool.radius
-	if toolId == "hands" and species.handsSafe then
-		radius = 1
-	end
 	local strips = {}
-	local r = BarkGrid.stripCircle(g, i, j, radius, tool.only)
-	if r then
-		table.insert(strips, r)
+	-- Godot's strip_circle: a circle of the tool's size (metres) round the hit
+	local r = tool.stripRadius
+	if toolId == "hands" and species.handsSafe then
+		r = 0.17          -- shagbark: the strips come away in your hands
 	end
-	if species.tallStrips then
-		for _, dj in { -radius - 1, radius + 1 } do
-			local extra = BarkGrid.stripCircle(g, i, j + dj, radius, tool.only)
-			if extra then
-				table.insert(strips, extra)
-			end
+	local only = if tool.only == "outer" then BarkGrid.OUTER elseif tool.only == "inner" then BarkGrid.INNER else nil
+	local function strip(at: Vector3)
+		local i, j = panelAt(t, g, at)
+		local loc = t:GetPivot():PointToObjectSpace(at) / M
+		local R = (t:GetAttribute("Radius") :: number or 1.2) / M
+		local res = BarkGrid.stripCircleAt(g, i, j, { x = loc.X, y = loc.Y, z = loc.Z }, r, R, R - Config.Tree.outerT, Config.Tree.bandH, only)
+		if res then
+			table.insert(strips, res)
 		end
+	end
+	strip(point :: Vector3)
+	if species.tallStrips then
+		-- cedar bark is stringy: a hit pulls a long strip, above and below
+		strip((point :: Vector3) + Vector3.new(0, r * 1.3 * M, 0))
+		strip((point :: Vector3) - Vector3.new(0, r * 1.3 * M, 0))
 	end
 	if #strips > 0 then
 		-- the bark state first (clients redraw when it changes), then the effects event

@@ -75,6 +75,63 @@ function BarkGrid.stripCircle(g: Grid, i: number, j: number, radius: number, onl
 	return { layer = layer, panels = panels }
 end
 
+-- Godot's strip_circle (ForestTree.gd), exactly: takes one layer off every panel whose centre is within `circleR`
+-- metres of the hit point `hit` (tree-local, metres). The layer is the outermost one at the hit panel (i, j), or
+-- `only` (0 outer, 1 inner) for a specialist tool; the inner layer only comes away where the outer is already gone.
+-- rOuter / rMid are the outer radii of the outer and inner layers (metres), bandH a panel's height (metres).
+function BarkGrid.stripCircleAt(g: Grid, i: number, j: number, hit: { x: number, y: number, z: number }, circleR: number,
+	rOuter: number, rMid: number, bandH: number, only: number?): Strip?
+	local function strippable(l: number, pi: number, pj: number): boolean
+		if l == BarkGrid.OUTER then
+			return BarkGrid.has(g, BarkGrid.OUTER, pi, pj)
+		end
+		return BarkGrid.has(g, BarkGrid.INNER, pi, pj) and not BarkGrid.has(g, BarkGrid.OUTER, pi, pj)
+	end
+	if j < 0 or j >= g.bands then
+		return nil
+	end
+	local layer = -1
+	if only then
+		layer = only
+	elseif BarkGrid.has(g, BarkGrid.OUTER, i, j) then
+		layer = BarkGrid.OUTER
+	elseif BarkGrid.has(g, BarkGrid.INNER, i, j) then
+		layer = BarkGrid.INNER
+	end
+	if layer < 0 then
+		return nil
+	end
+	local ro = if layer == BarkGrid.OUTER then rOuter else rMid
+	local panels = {}
+	if strippable(layer, i, j) then
+		table.insert(panels, { i, j })
+	end
+	local reachJ = math.ceil(circleR / bandH) + 1
+	local reachI = math.ceil(circleR / (2 * math.pi * ro / g.sectors)) + 1
+	for dj = -reachJ, reachJ do
+		for di = -reachI, reachI do
+			if di ~= 0 or dj ~= 0 then
+				local pi, pj = (i + di) % g.sectors, j + dj
+				if pj >= 0 and pj < g.bands and strippable(layer, pi, pj) then
+					local a = 2 * math.pi * (pi + 0.5) / g.sectors
+					local cx, cy, cz = math.cos(a) * ro, (pj + 0.5) * bandH, math.sin(a) * ro
+					local dx, dy, dz = cx - hit.x, cy - hit.y, cz - hit.z
+					if dx * dx + dy * dy + dz * dz <= circleR * circleR then
+						table.insert(panels, { pi, pj })
+					end
+				end
+			end
+		end
+	end
+	if #panels == 0 then
+		return nil
+	end
+	for _, p in panels do
+		clear(g, layer, p[1], p[2])
+	end
+	return { layer = layer, panels = panels }
+end
+
 -- Cork: grows back up to `n` outer panels over still-living inner bark. Returns how many grew.
 function BarkGrid.regrow(g: Grid, n: number): number
 	local grew = 0
