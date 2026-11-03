@@ -11,6 +11,8 @@ local State = {
 	fainted = false,
 	sprinting = false,
 	bob = 0,                -- walking: the arm sways with it
+	combo = 0,              -- the combo axe: hits in a row
+	comboT = 0,
 }
 
 local toastEvent = Instance.new("BindableEvent")

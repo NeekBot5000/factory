@@ -393,7 +393,7 @@ function Hud.start()
 			local onTree, dist = ToolController.aimingAtTree()
 			local cam = workspace.CurrentCamera
 			local vh = cam.ViewportSize.Y
-			local r = math.max(def.stripRadius, 0.04)
+			local r = math.max(ToolController.stripRadius(), 0.04)
 			local want = math.clamp(r / (math.max(dist / M, 0.3) * math.tan(math.rad(cam.FieldOfView / 2))) * vh * 0.5, 5, 400)
 			ringPx += (want - ringPx) * 0.35
 			ring.Size = UDim2.fromOffset(ringPx * 2, ringPx * 2)

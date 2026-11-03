@@ -20,6 +20,9 @@ local M = Config.StudsPerMetre
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local grids: { [Model]: BarkGrid.Grid } = {}
 local lastSwing: { [Player]: number } = {}
+local comboOf: { [Player]: { n: number, t: number } } = {}
+local spiralOf: { [Player]: any } = {}
+local toldGouge: { [Player]: boolean } = {}
 
 local SLACK = 5               -- studs of reach allowed beyond the tool's own (lag, and the head isn't the camera)
 local CORK_EVERY = 5
@@ -58,7 +61,7 @@ end
 local MAX_CHIPS = 600          -- (Godot keeps the newest 600 sheets in the world)
 local chips: { BasePart } = {}
 
-local function spawnSheet(player: Player, tree: Model, strip: any)
+local function spawnSheet(player: Player, tree: Model, strip: any, mult: number)
 	local species = tree:GetAttribute("Species") :: string or "oak"
 	local seed = tree:GetAttribute("Seed") :: number or 1
 	local sectors = tree:GetAttribute("Sectors") :: number or 16
@@ -100,7 +103,7 @@ local function spawnSheet(player: Player, tree: Model, strip: any)
 		end
 	end
 	local sheet = root :: Part
-	sheet:SetAttribute("Value", Economy.barkValue(Config, species, strip.layer, #strip.panels))
+	sheet:SetAttribute("Value", math.floor(Economy.barkValue(Config, species, strip.layer, #strip.panels) * mult * 100 + 0.5) / 100)
 	sheet:SetAttribute("Owner", player.UserId)
 	sheet:SetAttribute("Kind", "bark")
 	sheet:SetAttribute("Layer", strip.layer)
@@ -163,33 +166,90 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 	local g = gridOf(t)
 	local species = Config.Species[t:GetAttribute("Species") :: string or "oak"] or Config.Species.oak
 	local strips = {}
-	-- Godot's strip_circle: a circle of the tool's size (metres) round the hit
+	local now2 = os.clock()
+	-- the combo axe: each hit in quick succession grows the next (Godot: +0.05 m a hit, up to 4, gone after 1.25 s)
+	local combo = comboOf[player]
+	if not combo or now2 - combo.t > 1.25 then
+		combo = { n = 0, t = now2 }
+		comboOf[player] = combo
+	end
 	local r = tool.stripRadius
+	if tool.combo then
+		r += 0.05 * combo.n
+	end
 	if toolId == "hands" and species.handsSafe then
 		r = 0.17          -- shagbark: the strips come away in your hands
 	end
 	local only = if tool.only == "outer" then BarkGrid.OUTER elseif tool.only == "inner" then BarkGrid.INNER else nil
-	local function strip(at: Vector3)
+	local R = (t:GetAttribute("Radius") :: number or 1.2) / M
+	local function hitAt(at: Vector3): (number, number, any)
 		local i, j = panelAt(t, g, at)
 		local loc = t:GetPivot():PointToObjectSpace(at) / M
-		local R = (t:GetAttribute("Radius") :: number or 1.2) / M
-		local res = BarkGrid.stripCircleAt(g, i, j, { x = loc.X, y = loc.Y, z = loc.Z }, r, R, R - Config.Tree.outerT, Config.Tree.bandH, only)
+		return i, j, { x = loc.X, y = loc.Y, z = loc.Z }
+	end
+	local function add(res: any)
 		if res then
 			table.insert(strips, res)
 		end
 	end
-	strip(point :: Vector3)
-	if species.tallStrips then
-		-- cedar bark is stringy: a hit pulls a long strip, above and below
-		strip((point :: Vector3) + Vector3.new(0, r * 1.3 * M, 0))
-		strip((point :: Vector3) - Vector3.new(0, r * 1.3 * M, 0))
+	local function circle(at: Vector3)
+		local i, j, loc = hitAt(at)
+		add(BarkGrid.stripCircleAt(g, i, j, loc, r, R, R - Config.Tree.outerT, Config.Tree.bandH, only))
+	end
+	if tool.ring then
+		local i, j = hitAt(point :: Vector3)
+		add(BarkGrid.stripRing(g, i, j))
+	elseif tool.through then
+		local i, j, loc = hitAt(point :: Vector3)
+		for _, res in BarkGrid.stripThrough(g, i, j, loc, r, R, Config.Tree.bandH, tool.grid) do
+			add(res)
+		end
+	elseif tool.spiral then
+		-- the stripe carries on from where the last hit on this trunk ended (Godot's _spiral_hit)
+		local i, j = hitAt(point :: Vector3)
+		local sp = spiralOf[player]
+		if sp and sp.tree == t and now2 - sp.t < 1.6 and sp.j < g.bands then
+			i, j = sp.i, sp.j
+			sp.n += 1
+		else
+			sp = { tree = t, n = 0, i = i, j = j, t = now2 }
+			spiralOf[player] = sp
+		end
+		local width = 1 + math.min(sp.n // 3, 2)
+		local list = {}
+		for k = 0, 3 do
+			for w = 0, width - 1 do
+				table.insert(list, { i + k, j + k - w })
+			end
+		end
+		sp.t = now2
+		sp.i, sp.j = (i + 4) % g.sectors, j + 4
+		for _, res in BarkGrid.stripPanels(g, list) do
+			add(res)
+		end
+	else
+		circle(point :: Vector3)
+		if species.tallStrips then
+			-- cedar bark is stringy: a hit pulls a long strip, above and below
+			circle((point :: Vector3) + Vector3.new(0, r * 1.3 * M, 0))
+			circle((point :: Vector3) - Vector3.new(0, r * 1.3 * M, 0))
+		end
+	end
+	if tool.combo then
+		-- any hit on the trunk keeps the rhythm going
+		combo.n = math.min(combo.n + 1, Config.ComboMax)
+		combo.t = now2
+	end
+	if #strips == 0 and tool.only == "inner" and not toldGouge[player] then
+		toldGouge[player] = true
+		remotes.Notify:FireClient(player, "The gouge only cuts inner bark - take the outer bark off first", "ffd27a")
 	end
 	if #strips > 0 then
 		-- the bark state first (clients redraw when it changes), then the effects event
 		t:SetAttribute("Bark", BarkGrid.encode(g))
 	end
 	for _, s in strips do
-		spawnSheet(player, t, s)
+		spawnSheet(player, t, s, tool.value or 1)
 		remotes.TreeChanged:FireAllClients(t, s.layer, s.panels)
 	end
 	if #strips > 0 then
@@ -206,6 +266,9 @@ function TreeService.start()
 	remotes.StripRequest.OnServerEvent:Connect(onStrip)
 	Players.PlayerRemoving:Connect(function(p)
 		lastSwing[p] = nil
+		comboOf[p] = nil
+		spiralOf[p] = nil
+		toldGouge[p] = nil
 		-- their bark goes with them
 		for _, s in loose:GetChildren() do
 			if s:GetAttribute("Kind") == "bark" and s:GetAttribute("Owner") == p.UserId then

@@ -70,7 +70,7 @@ check(sp and (sp.CFrame.Position - wv(W.spawn.at)).Magnitude < 1, "you start on 
 check(ws:FindFirstChild("TimberMart") ~= nil and ws.TimberMart:FindFirstChild("Computer") ~= nil, "TimberMart is on the computer in the cabin")
 local block = ws:FindFirstChild("ChoppingBlock")
 check(block and block:FindFirstChild("Hatchet") ~= nil, "the chopping block has the hatchet stuck in it")
-check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == 6, "every shop tool has a model (first-person view, tool bar, shop)")
+check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == #require("../../src/shared/Config").ShopOrder, "every shop tool has a model (first-person view, tool bar, shop)")
 local prompts = 0
 for _, d in ws:GetDescendants() do
 	if d:IsA("ProximityPrompt") then
@@ -276,6 +276,95 @@ A.stand(alice, item.Handle.CFrame.Position + V3(0, 3, 2))
 A.remotes.Use.OnServerEvent:Fire(alice, item.Handle)
 task.wait(0.05)
 check(item.Parent == nil and alice:GetAttribute("Tool") == "double_bit" and alice:GetAttribute("Dropped") == "", "E on it: back in your hand and your tool bar")
+
+-- ---------------------------------------------------------------- Godot's other axes
+local Tools = A.service("ToolService")
+local function freshTree(k)
+	local t = trees[#trees - k]
+	return t, t.WorldPivot.Position, t:GetAttribute("Radius")
+end
+local function bark(t)
+	local Grid = require("../../src/shared/BarkGrid")
+	return Grid.decode(t:GetAttribute("Sectors"), t:GetAttribute("Bands"), t:GetAttribute("Bark") or "")
+end
+local function hitWith(id, t, at)
+	Tools.grant(alice, id)
+	task.wait(1.3)
+	local n0 = #loose:GetChildren()
+	strip:Fire(alice, t, at, id)
+	task.wait(0.1)
+	local made = {}
+	for k = n0 + 1, #loose:GetChildren() do
+		table.insert(made, loose:GetChildren()[k])
+	end
+	return made
+end
+do
+	local G = require("../../src/shared/BarkGrid")
+	-- the ringing axe: a whole ring of bark, all the way round
+	local t, b, rr = freshTree(1)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	local made = hitWith("ringer", t, b + V3(rr, 6, 0))
+	local g = bark(t)
+	local band = math.floor(6 / 0.54)
+	local gone = 0
+	for i = 0, 15 do
+		if g and not G.has(g, 0, i, band) then
+			gone += 1
+		end
+	end
+	check(#made == 1 and gone == 16, "the ringing axe takes a whole ring of bark, all the way round (" .. gone .. " of 16)")
+	-- the robo-axe: a 3x3 patch through both layers
+	t, b, rr = freshTree(2)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	made = hitWith("robo", t, b + V3(rr, 6, 0))
+	local layers = {}
+	for _, m in made do
+		layers[m:GetAttribute("Layer")] = (layers[m:GetAttribute("Layer")] or 0) + 1
+	end
+	check(#made == 2 and layers[0] == 1 and layers[1] == 1, "the robo-axe punches through both layers in one hit (outer and inner sheets)")
+	-- the gouge: only inner bark, so on fresh bark it says so
+	t, b, rr = freshTree(3)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	made = hitWith("gouge", t, b + V3(rr, 6, 0))
+	check(#made == 0 and count("Notify", alice, "gouge only cuts inner bark") == 1, "the gouge can't bite outer bark, and says to take that off first")
+	-- the spud: sheets worth half as much again
+	t, b, rr = freshTree(4)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	made = hitWith("spud", t, b + V3(rr, 6, 0))
+	local spudSheet = made[1]
+	local Econ = require("../../src/shared/Economy")
+	local Cfg = require("../../src/shared/Config")
+	local plain = spudSheet and Econ.barkValue(Cfg, t:GetAttribute("Species"), 0, #spudSheet:GetChildren() // 2 + 1)
+	check(spudSheet and math.abs(spudSheet:GetAttribute("Value") - plain * 1.5) < 0.02, string.format("the spud's sheets sell for 50%% more ($%.2f)", spudSheet and spudSheet:GetAttribute("Value") or 0))
+	-- the spiral axe: each hit carries the stripe on up and round
+	t, b, rr = freshTree(5)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	local first = hitWith("spiral", t, b + V3(rr, 4, 0))
+	task.wait(0.5)
+	local n1 = #loose:GetChildren()
+	strip:Fire(alice, t, b + V3(rr, 4, 0), "spiral")
+	task.wait(0.1)
+	check(#first >= 1 and #loose:GetChildren() > n1, "the spiral axe takes a slanted stripe, and the next hit carries it on")
+	-- the combo axe: each hit in a row is bigger
+	t, b, rr = freshTree(6)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	local sizes = {}
+	Tools.grant(alice, "combo")
+	task.wait(1.3)
+	for k = 1, 4 do
+		local n0 = #loose:GetChildren()
+		strip:Fire(alice, t, b + V3(rr, 2 + k * 2.4, 0), "combo")
+		task.wait(0.45)
+		local panels = 0
+		for q = n0 + 1, #loose:GetChildren() do
+			panels += #loose:GetChildren()[q]:GetChildren() // 2 + 1
+		end
+		sizes[k] = panels
+	end
+	check(sizes[4] > sizes[1], string.format("the combo axe's hits grow as the rhythm goes on (%d -> %d panels)", sizes[1], sizes[4]))
+	Tools.equip(alice, "double_bit")
+end
 
 -- ---------------------------------------------------------------- trying to cheat
 local m1 = data.money

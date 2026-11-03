@@ -132,6 +132,106 @@ function BarkGrid.stripCircleAt(g: Grid, i: number, j: number, hit: { x: number,
 	return { layer = layer, panels = panels }
 end
 
+-- Godot's strip_through: every panel in the area loses its outer bark AND the inner bark under it in one go. The
+-- area is a circle of `circleR` metres round the hit, or (grid > 0) a square of grid x grid panels centred on (i, j).
+-- Returns a strip per layer that lost something.
+function BarkGrid.stripThrough(g: Grid, i: number, j: number, hit: { x: number, y: number, z: number }, circleR: number,
+	rOuter: number, bandH: number, grid: number?): { Strip }
+	local area = {}
+	if grid and grid > 0 then
+		local h = grid // 2
+		for dj = -h, grid - h - 1 do
+			for di = -h, grid - h - 1 do
+				local pj = j + dj
+				if pj >= 0 and pj < g.bands then
+					table.insert(area, { (i + di) % g.sectors, pj })
+				end
+			end
+		end
+	else
+		local reachJ = math.ceil(circleR / bandH) + 1
+		local reachI = math.ceil(circleR / (2 * math.pi * rOuter / g.sectors)) + 1
+		for dj = -reachJ, reachJ do
+			for di = -reachI, reachI do
+				local pi, pj = (i + di) % g.sectors, j + dj
+				if pj >= 0 and pj < g.bands then
+					local a = 2 * math.pi * (pi + 0.5) / g.sectors
+					local dx, dy, dz = math.cos(a) * rOuter - hit.x, (pj + 0.5) * bandH - hit.y, math.sin(a) * rOuter - hit.z
+					if (di == 0 and dj == 0) or dx * dx + dy * dy + dz * dz <= circleR * circleR then
+						table.insert(area, { pi, pj })
+					end
+				end
+			end
+		end
+	end
+	local out = {}
+	for _, layer in { BarkGrid.OUTER, BarkGrid.INNER } do
+		local got = {}
+		for _, p in area do
+			if BarkGrid.has(g, layer, p[1], p[2]) then
+				table.insert(got, p)
+			end
+		end
+		if #got > 0 then
+			for _, p in got do
+				clear(g, layer, p[1], p[2])
+			end
+			table.insert(out, { layer = layer, panels = got })
+		end
+	end
+	return out
+end
+
+-- Godot's strip_ring (the ringing axe): the whole band at the hit height, all the way round, from the outermost
+-- layer at the hit.
+function BarkGrid.stripRing(g: Grid, i: number, j: number): Strip?
+	if j < 0 or j >= g.bands then
+		return nil
+	end
+	local layer = if BarkGrid.has(g, BarkGrid.OUTER, i, j) then BarkGrid.OUTER elseif BarkGrid.has(g, BarkGrid.INNER, i, j) then BarkGrid.INNER else -1
+	if layer < 0 then
+		return nil
+	end
+	local panels = {}
+	for k = 0, g.sectors - 1 do
+		local pi = (i + k) % g.sectors
+		if BarkGrid.has(g, layer, pi, j) and (layer == BarkGrid.OUTER or not BarkGrid.has(g, BarkGrid.OUTER, pi, j)) then
+			table.insert(panels, { pi, j })
+		end
+	end
+	for _, p in panels do
+		clear(g, layer, p[1], p[2])
+	end
+	return if #panels > 0 then { layer = layer, panels = panels } else nil
+end
+
+-- Godot's strip_panels: the given panels, each from whichever layer is outermost there. A strip per layer.
+function BarkGrid.stripPanels(g: Grid, list: { { number } }): { Strip }
+	local got: { [number]: { { number } } } = { [0] = {}, [1] = {} }
+	local seen = {}
+	for _, p in list do
+		local pi, pj = p[1] % g.sectors, p[2]
+		if pj >= 0 and pj < g.bands then
+			local layer = if BarkGrid.has(g, BarkGrid.OUTER, pi, pj) then BarkGrid.OUTER elseif BarkGrid.has(g, BarkGrid.INNER, pi, pj) then BarkGrid.INNER else -1
+			local key = layer .. ":" .. pi .. ":" .. pj
+			if layer >= 0 and not seen[key] then
+				seen[key] = true
+				table.insert(got[layer], { pi, pj })
+			end
+		end
+	end
+	local out = {}
+	for _, layer in { BarkGrid.OUTER, BarkGrid.INNER } do
+		if #got[layer] > 0 then
+			for _, p in got[layer] do
+				clear(g, layer, p[1], p[2])
+			end
+			table.insert(out, { layer = layer, panels = got[layer] })
+		end
+	end
+	return out
+end
+
 -- Cork: grows back up to `n` outer panels over still-living inner bark. Returns how many grew.
 function BarkGrid.regrow(g: Grid, n: number): number
 	local grew = 0

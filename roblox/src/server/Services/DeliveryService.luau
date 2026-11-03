@@ -226,8 +226,17 @@ local function open(player: Player, box: unknown)
 		remotes.Fx:FireAllClients("reveal", b.Position)
 		task.spawn(function()
 			local t = 0
-			while m.Parent and m:IsDescendantOf(workspace) do
+			local function alive(): boolean
+				local ok, inWorld = pcall(function()
+					return m.Parent ~= nil and m:IsDescendantOf(workspace)
+				end)
+				return ok and inWorld
+			end
+			while alive() do
 				local dt = RunService.Heartbeat:Wait()
+				if not alive() then
+					break     -- (taken while we waited)
+				end
 				t += dt
 				local rise = math.min(1, t / 0.8)
 				local k = 1 + 2.70158 * (rise - 1) ^ 3 + 1.70158 * (rise - 1) ^ 2      -- (Godot's back ease-out)

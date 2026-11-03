@@ -21,21 +21,41 @@ Config.Tools = {
 		desc = "Two balanced heads on a straight handle. Swing it sideways in a wide arc to peel off big strips of bark.",
 		look = { handle = 3.4, head = { 0.25, 0.9, 1.1 }, headColor = { 170, 176, 186 }, handleColor = { 185, 138, 82 }, double = true } },
 	scraper = { name = "Bark Scraper", price = 400, radius = 2, stripRadius = 0.3, cooldown = 0.42, impact = 0.45, hurt = 0, only = "outer", anim = "chop", reach = 2.3, tag = "Wide",
-		desc = "A wide flat blade that lifts big sheets of outer bark and never touches the inner layer.",
+		desc = "A flat spud blade that lifts big clean sheets of outer bark only - it never digs into the inner layer.",
 		look = { handle = 2.4, head = { 1.6, 0.3, 0.6 }, headColor = { 120, 126, 136 }, handleColor = { 110, 78, 50 } } },
-	combo = { name = "Combo Axe", price = 550, radius = 1, stripRadius = 0.12, cooldown = 0.4, impact = 0.45, hurt = 0, anim = "chop", reach = 2.3, tag = "Rhythmic",
-		desc = "Keep the rhythm going and every hit grows the next.",
+	combo = { name = "Combo Axe", price = 550, radius = 1, stripRadius = 0.12, cooldown = 0.4, impact = 0.45, hurt = 0, anim = "chop", reach = 2.3, combo = true, tag = "Rhythmic",
+		desc = "Every hit in quick succession makes the next one bigger, up to huge patches. Stop swinging and it resets.",
 		look = { handle = 3.0, head = { 0.25, 1.0, 1.2 }, headColor = { 110, 180, 230 }, handleColor = { 70, 50, 40 }, band = { 110, 200, 255 } } },
 	labrys = { name = "Crescent Labrys", price = 600, radius = 2, stripRadius = 0.38, cooldown = 0.72, impact = 0.55, hurt = 0, anim = "slam", reach = 2.6, tag = "Heavy",
 		desc = "A two-handed axe with mirrored crescent blades. A spinning overhead slam strips a huge patch in one blow.",
 		look = { handle = 4.2, head = { 0.3, 1.6, 1.4 }, headColor = { 196, 202, 212 }, handleColor = { 60, 44, 36 }, double = true, band = { 220, 170, 60 } } },
 	greataxe = { name = "Greataxe", price = 900, radius = 3, stripRadius = 0.58, cooldown = 1.2, impact = 0.62, hurt = 0, anim = "slam", reach = 2.7, move = 0.55, tag = "Massive",
-		desc = "The biggest bite of all. Slow, and you walk slower carrying it.",
+		desc = "The biggest bite in the forest. A long windup, and you walk slowly while you lug it around.",
 		look = { handle = 4.8, head = { 0.35, 2.0, 1.8 }, headColor = { 90, 96, 106 }, handleColor = { 90, 60, 40 }, band = { 150, 40, 30 } } },
+	-- (the axes below are drawn by their Godot models; `look` is only a stand-in until those load)
+	twins = { name = "Twin Hatchets", price = 300, radius = 1, stripRadius = 0.15, cooldown = 0.22, impact = 0.45, hurt = 0, anim = "twin", reach = 2.2, tag = "Fast",
+		desc = "One in each hand. Lightning-quick left and right chops, small strips each - keep up the rhythm.",
+		look = { handle = 2.4, head = { 0.25, 0.7, 0.9 }, headColor = { 150, 158, 170 }, handleColor = { 70, 140, 80 } } },
+	gouge = { name = "Inner Gouge", price = 380, radius = 1, stripRadius = 0.13, cooldown = 0.34, impact = 0.45, hurt = 0, anim = "chop", reach = 2.2, only = "inner", value = 1.35, tag = "Precise",
+		desc = "A curved gouge for the prized orange inner bark only - it can't bite through outer bark, so pair it with the scraper or an axe. Small strips, but each sells for 35% more.",
+		look = { handle = 2.2, head = { 0.3, 0.3, 0.8 }, headColor = { 180, 120, 60 }, handleColor = { 120, 80, 50 } } },
+	ringer = { name = "Ringing Axe", price = 750, radius = 0, stripRadius = 0.0, cooldown = 0.9, impact = 0.55, hurt = 0, anim = "sweep", reach = 2.4, ring = true, tag = "Sweeping",
+		desc = "A long curved blade: every swing takes a whole ring of bark off all the way round the trunk. Slow.",
+		look = { handle = 3.6, head = { 0.2, 0.5, 1.6 }, headColor = { 190, 196, 206 }, handleColor = { 90, 60, 40 } } },
+	spud = { name = "Bark Spud", price = 1100, radius = 1, stripRadius = 0.22, cooldown = 1.05, impact = 0.55, hurt = 0, anim = "thrust", reach = 2.4, value = 1.5, tag = "Careful",
+		desc = "The proper tool for peeling bark: a spoon-shaped blade you push under it. Slow, but the sheets come off clean and sell for 50% more.",
+		look = { handle = 3.4, head = { 0.6, 0.15, 0.6 }, headColor = { 160, 166, 176 }, handleColor = { 150, 110, 60 } } },
+	spiral = { name = "Spiral Axe", price = 1400, radius = 1, stripRadius = 0.1, cooldown = 0.45, impact = 0.45, hurt = 0, anim = "chop", reach = 2.4, spiral = true, tag = "Pattern",
+		desc = "Every hit takes a slanted stripe that carries on from where the last one ended. Keep hitting the same trunk and the stripe winds round and up it in a spiral.",
+		look = { handle = 3.0, head = { 0.25, 0.9, 1.0 }, headColor = { 120, 200, 180 }, handleColor = { 60, 50, 70 } } },
+	robo = { name = "Robo-Axe X9", price = 6500, radius = 1, stripRadius = 0.0, cooldown = 0.16, impact = 0.5, hurt = 0, anim = "chop", reach = 2.4, through = true, grid = 3, auto = true, tag = "Automatic",
+		desc = "Servo-driven and relentless. Hold the trigger: it chops on its own several times a second, punching a 3x3 patch through BOTH layers of bark every hit.",
+		look = { handle = 3.0, head = { 0.4, 0.9, 1.1 }, headColor = { 230, 200, 60 }, handleColor = { 50, 52, 58 } } },
 }
--- the tool bar's order (Godot's TOOL_ORDER) and the shop's
-Config.ToolOrder = { "hands", "hatchet", "double_bit", "combo", "scraper", "labrys", "greataxe" }
-Config.ShopOrder = { "hatchet", "double_bit", "combo", "scraper", "labrys", "greataxe" }
+-- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
+Config.ToolOrder = { "hands", "hatchet", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo" }
+Config.ComboMax = 4             -- the combo axe grows 0.05 m a hit in a row, up to 4 (and resets after 1.25 s)
 
 -- the player (Godot's Player.gd, in metres; x3 for studs)
 Config.Player = { walk = 4.2, sprint = 6.8, jump = 4.6, gravity = 12, grabReach = 2.6, fov = 75, regenDelay = 3, regenPerSecond = 5, faintSeconds = 2.2 }

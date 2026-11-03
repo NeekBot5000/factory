@@ -30,20 +30,32 @@ local ARCS = {
 	sweep = { pivot = Vector3.new(-0.3, -0.65, -0.28), axis = Vector3.new(-0.87, 0.5, 0.0), r0 = Vector3.new(0.5, 0.87, 0.0), len = 0.32, a = { -75, 36, 90 } },
 	sweep_back = { pivot = Vector3.new(0.3, -0.65, -0.28), axis = Vector3.new(-0.87, -0.5, 0.0), r0 = Vector3.new(-0.5, 0.87, 0.0), len = 0.32, a = { -75, 36, 90 } },
 	slam = { pivot = Vector3.new(-0.3, -0.7, -0.25), axis = Vector3.new(-0.87, 0.5, 0.0), r0 = Vector3.new(0.5, 0.87, 0.0), len = 0.32, a = { -85, 36, 90 } },
+	twin = { pivot = Vector3.new(-0.15, -0.45, -0.35), axis = Vector3.new(-0.87, 0.5, 0.0), r0 = Vector3.new(0.5, 0.87, 0.0), len = 0.3, a = { -60, 36, 85 } },
 }
--- bare hands: { offset, rotation in degrees } for rest, wind-up and strike (Godot's default _poses)
+-- { offset, rotation in degrees } for rest, wind-up and strike (Godot's _poses): bare hands, and the spud's thrust
 local POSES = {
-	{ Vector3.new(0, 0, 0), Vector3.new(4, 6, 0) },
-	{ Vector3.new(0.06, 0.24, 0.1), Vector3.new(55, -5, 30) },
-	{ Vector3.new(-0.2, -0.02, -0.26), Vector3.new(-20, 25, -15) },
+	karate = {
+		{ Vector3.new(0, 0, 0), Vector3.new(4, 6, 0) },
+		{ Vector3.new(0.06, 0.24, 0.1), Vector3.new(55, -5, 30) },
+		{ Vector3.new(-0.2, -0.02, -0.26), Vector3.new(-20, 25, -15) },
+	},
+	-- draw the spud back, then push it in under the bark
+	thrust = {
+		{ Vector3.new(-0.02, 0.0, 0.08), Vector3.new(4, 14, 0) },
+		{ Vector3.new(-0.01, 0.02, 0.18), Vector3.new(6, 12, 0) },
+		{ Vector3.new(-0.07, -0.02, -0.2), Vector3.new(-3, 4, 0) },
+	},
 }
 
 local model: Model
+local leftArm: Model          -- the left arm: only out for the twin hatchets
 local handFlat: { BasePart } = {}
 local handFist: { BasePart } = {}
 local toolModel: Model? = nil
+local leftTool: Model? = nil
 local shownTool = ""
 local armCf = CFrame.new(ARM_BASE * M)        -- the arm, camera space, as drawn last frame
+local leftCf = CFrame.new(ARM_BASE * Vector3.new(-1, 1, 1) * M)
 
 -- Godot's ease(x, curve)
 local function ease(x: number, c: number): number
@@ -100,6 +112,12 @@ local function raised(t: CFrame, raise: number): CFrame
 	return CFrame.new(t.Position - Vector3.new(0, raise * M, 0)) * CFrame.Angles(-raise * 1.1, 0, 0) * t.Rotation
 end
 
+-- left <-> right (Godot's _mirror: x flips, and the rotation is reflected through the YZ plane)
+local function mirror(t: CFrame): CFrame
+	local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = t:GetComponents()
+	return CFrame.new(-x, y, z, r00, -r01, -r02, -r10, r11, r12, -r20, r21, r22)
+end
+
 local function euler(deg: Vector3): CFrame
 	-- Godot's rotation_degrees: Y, then X, then Z
 	return CFrame.fromEulerAnglesYXZ(math.rad(deg.X), math.rad(deg.Y), math.rad(deg.Z))
@@ -140,6 +158,15 @@ local function build()
 	table.insert(handFist, piece(Enum.PartType.Block, Vector3.new(0.06, 0.075, 0.08) * M, CFrame.new(0, 0, -0.12 * M), SKIN))
 	table.insert(handFist, piece(Enum.PartType.Block, Vector3.new(0.062, 0.03, 0.05) * M, CFrame.new(0, -0.035 * M, -0.15 * M), SKIN))
 	model.WorldPivot = CFrame.new()
+	-- the left arm: the same arm with a fist (Godot duplicates it)
+	leftArm = Instance.new("Model")
+	leftArm.Name = "LeftArm"
+	for _, p in model:GetChildren() do
+		if p:IsA("BasePart") and not table.find(handFlat, p) then
+			p:Clone().Parent = leftArm
+		end
+	end
+	leftArm.WorldPivot = CFrame.new()
 end
 
 local function setTool(id: string)
@@ -153,6 +180,10 @@ local function setTool(id: string)
 	end
 	for _, p in handFist do
 		p.Transparency = if id == "hands" then 1 else 0
+	end
+	if leftTool then
+		leftTool:Destroy()
+		leftTool = nil
 	end
 	local models = ReplicatedStorage:FindFirstChild("ToolModels")
 	local src = models and models:FindFirstChild(id)
@@ -171,6 +202,10 @@ local function setTool(id: string)
 		end
 		m.Parent = model
 		toolModel = m
+		if id == "twins" then
+			leftTool = m:Clone()
+			leftTool.Parent = leftArm
+		end
 	end
 end
 
@@ -180,12 +215,13 @@ local function target(def: any): (CFrame, number, number)
 	local impact = def.impact
 	local raise = (1 - ease(State.equipT, 0.4)) * 0.35
 	local spin = 0
-	if anim == "karate" then
-		-- bare hands: Godot's poses
+	if POSES[anim] then
+		-- bare hands and the spud: Godot's poses
+		local P = POSES[anim]
 		local base = ARM_BASE
-		local restP, restR = base + POSES[1][1] + sway(), POSES[1][2]
-		local upP, upR = base + POSES[2][1], POSES[2][2]
-		local hitP, hitR = base + POSES[3][1], POSES[3][2]
+		local restP, restR = base + P[1][1] + sway(), P[1][2]
+		local upP, upR = base + P[2][1], P[2][2]
+		local hitP, hitR = base + P[3][1], P[3][2]
 		local p, r = restP, restR
 		local t = State.swing
 		if t >= 0 then
@@ -206,7 +242,8 @@ local function target(def: any): (CFrame, number, number)
 		return CFrame.new(p * M) * euler(r), 55, 0
 	end
 	-- axes: Godot's arcs
-	local arc = ARCS[if anim == "double" then "sweep" else anim] or ARCS.chop
+	local name = if anim == "double" then "sweep" elseif anim == "sweep" and State.backhand then "sweep_back" else anim
+	local arc = ARCS[name] or ARCS.chop
 	local t = State.swing
 	if anim == "double" then
 		-- forehand into the trunk, then straight back across with the other bit
@@ -238,7 +275,14 @@ local function target(def: any): (CFrame, number, number)
 		end
 	end
 	-- fast while swinging so the arc stays crisp, softer when settling back to rest
-	return raised(swing, raise), if State.swing >= 0 then 85 else 22, spin
+	local rate = if State.swing >= 0 then 85 else 22
+	if anim == "twin" then
+		-- twin hatchets: the hands take turns (the left one mirrors the right one's arc)
+		local right = if State.backhand then rest else swing
+		local left = mirror(if State.backhand then swing else rest)
+		return raised(right, raise), rate, spin, raised(left, raise)
+	end
+	return raised(swing, raise), rate, spin
 end
 
 function ViewModel.start()
@@ -249,6 +293,7 @@ function ViewModel.start()
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if not camera or not hum or hum.Health <= 0 or State.uiOpen or State.fainted then
 			model.Parent = nil
+			leftArm.Parent = nil
 			return
 		end
 		model.Parent = camera
@@ -256,15 +301,29 @@ function ViewModel.start()
 			setTool(State.tool)
 		end
 		local def = (Config.Tools :: any)[State.tool] or Config.Tools.hands
-		local want, rate, spin = target(def)
+		local want, rate, spin, left = target(def)
 		armCf = armCf:Lerp(want, follow(rate, dt))
+		if left then
+			leftCf = leftCf:Lerp(left, follow(rate, dt))
+			leftArm.Parent = camera
+			local lw = camera.CFrame * leftCf
+			leftArm:PivotTo(lw)
+			if leftTool then
+				leftTool:PivotTo(lw * TOOL_ROOT * mirror(TOOL_IN_ARM))
+			end
+		else
+			leftArm.Parent = nil
+			leftCf = mirror(armCf)
+		end
 		-- a jolt on impact (heavier tools kick harder)
 		local jolt = CFrame.new(0, 0, State.kick * M * 0.5)
 		State.kick = math.max(0, State.kick - dt * 0.6)
 		local world = camera.CFrame * armCf * jolt
 		model:PivotTo(world)
 		if toolModel then
-			local inArm = if def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0) else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)
+			local inArm = if def.anim == "thrust" then CFrame.new(0, -0.02 * M, 0)
+				elseif def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0)
+				else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)
 			toolModel:PivotTo(world * TOOL_ROOT * inArm)
 		end
 	end)

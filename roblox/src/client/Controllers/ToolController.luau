@@ -97,6 +97,16 @@ function ToolController.aim(reach: number): RaycastResult?
 	return workspace:Raycast(cam.CFrame.Position, cam.CFrame.LookVector * reach, params)
 end
 
+-- the bark circle right now (the combo axe's grows with each hit in a row: Godot's strip_radius)
+function ToolController.stripRadius(): number
+	local d = def()
+	local r = d.stripRadius
+	if d.combo then
+		r += 0.05 * State.combo
+	end
+	return r
+end
+
 function ToolController.aimingAtTree(): (boolean, number)
 	local d = def()
 	local hit = ToolController.aim(math.min(d.reach, 3) * M)
@@ -169,7 +179,12 @@ local function predictLayer(tree: Model, at: Vector3, d: any): number?
 	local i = math.floor((math.atan2(loc.Z, loc.X) % (2 * math.pi)) / (2 * math.pi) * sectors)
 	local j = math.clamp(math.floor(loc.Y / (tree:GetAttribute("Height") :: number or 20) * bands), 0, bands - 1)
 	local species = (Config.Species :: any)[tree:GetAttribute("Species") or "oak"] or Config.Species.oak
-	local r = if State.tool == "hands" and species.handsSafe then 0.17 else d.stripRadius
+	if d.ring or d.through or d.spiral then
+		-- (these take bark wherever there's some near the hit: the outermost layer there)
+		local i2, j2 = i, j
+		return if BarkGrid.has(g, BarkGrid.OUTER, i2, j2) then BarkGrid.OUTER elseif BarkGrid.has(g, BarkGrid.INNER, i2, j2) then BarkGrid.INNER else nil
+	end
+	local r = if State.tool == "hands" and species.handsSafe then 0.17 else ToolController.stripRadius()
 	local only = if d.only == "outer" then BarkGrid.OUTER elseif d.only == "inner" then BarkGrid.INNER else nil
 	local R = (tree:GetAttribute("Radius") :: number or 1.2) / M
 	local lm = loc / M
@@ -190,15 +205,23 @@ local function impact()
 	local tree = treeOf(hit.Instance)
 	if tree then
 		local layer = predictLayer(tree, hit.Position, d)
-		if layer ~= nil then
+		if layer ~= nil and State.tool == "robo" then
+			Sfx.play("clink", 1.6, -8)
+			Sfx.play("axe", 1.3, -4)
+			burst(hit.Position, hit.Normal, hit.Instance.Color, 10, 22)
+		elseif layer ~= nil then
 			Sfx.play(if State.tool == "hands" then "chop" else "axe", if layer == BarkGrid.OUTER then 1 else 1.15)
 			burst(hit.Position, hit.Normal, hit.Instance.Color, 10, 22)
 		else
 			Sfx.play("chop_wood")
 			burst(hit.Position, hit.Normal, Color3.fromRGB(214, 176, 128), 8, 20)
 		end
-		State.kick = 0.01 + d.stripRadius * 0.09
-		shake(tree, 0.4 + d.stripRadius)
+		State.kick = 0.01 + ToolController.stripRadius() * 0.09 + (if d.through then 0.03 else 0)
+		shake(tree, 0.4 + ToolController.stripRadius())
+		if d.combo then
+			State.combo = math.min(State.combo + 1, Config.ComboMax)
+			State.comboT = 0
+		end
 		remotes.StripRequest:FireServer(tree, hit.Position, State.tool)
 	elseif hit.Instance == workspace.Terrain or hit.Material == Enum.Material.Grass or hit.Material == Enum.Material.Ground then
 		-- dirt and grass fly where you hit the ground
@@ -237,7 +260,7 @@ local function startSwing()
 	end
 	State.swing = 0
 	impacts = 0
-	if d.anim == "double" then
+	if d.anim == "double" or d.anim == "sweep" or d.anim == "twin" then
 		State.backhand = not State.backhand
 	end
 	if State.tool ~= "hands" then
@@ -246,9 +269,21 @@ local function startSwing()
 end
 
 function ToolController.start()
+	local pressing = false
 	InputController.on("Swing", function(state)
+		pressing = state == Enum.UserInputState.Begin
 		if state == Enum.UserInputState.Begin then
 			startSwing()
+		end
+	end)
+	RunService.Heartbeat:Connect(function(dt)
+		if pressing and def().auto and State.swing < 0 then
+			startSwing()
+		end
+		State.comboT += dt
+		if State.comboT > 1.25 and State.combo > 0 then
+			State.combo = 0
+			Sfx.play("click", 0.5, -8)
 		end
 	end)
 	InputController.on("NextTool", function(state)
