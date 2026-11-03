@@ -91,6 +91,7 @@ func _ready() -> void:
 		var parts: Array = Builds.make(id, root, Builds.HOOP_DEFAULT, 1.0)
 		var inv := root.global_transform.affine_inverse()
 		var info: Array = []
+		var groups_at := {}
 		var top := 0.3
 		for k in parts.size():
 			var mi: MeshInstance3D = parts[k].mi
@@ -99,9 +100,13 @@ func _ready() -> void:
 			var real: Material = parts[k].real
 			var col := (real as StandardMaterial3D).albedo_color if real is StandardMaterial3D else Color(0.6, 0.6, 0.6)
 			var a: AABB = (inv * mi.global_transform) * mi.get_aabb()
-			info.append({"res": res, "color": col.to_html(false), "arrow": mi.has_meta("arrow"), "at": a.get_center() * S, "size": a.size * S})
+			var pn := String(mi.get_parent().name)
+			info.append({"res": res, "color": col.to_html(false), "arrow": mi.has_meta("arrow"), "at": a.get_center() * S, "size": a.size * S,
+				"group": pn if pn != "Model" else ""})
+			if pn != "Model" and not groups_at.has(pn):
+				groups_at[pn] = (inv * (mi.get_parent() as Node3D).global_transform).origin * S
 			top = maxf(top, a.end.y)
-		builds_info[id] = {"parts": info, "top": top}
+		builds_info[id] = {"parts": info, "top": top, "groups": groups_at}
 		root.free()
 	_write_builds(builds_info)
 	# the land's for-sale sign and a corner stake (Land.rebuild), around their own origins
@@ -496,8 +501,12 @@ func _write_builds(info: Dictionary) -> void:
 			id, b.name, ", ".join(needs), "\", \"".join(b.needs.keys()), ("\"%s\"" % b.bp) if b.has("bp") else "nil", str(b.get("sell", 0.85)),
 			str(Builds.fixed(id)), str(Machines.is_machine(id)), float(info[id].top) * S])
 		for p in info[id].parts:
-			L.append("\t\t\t{ res = \"%s\", color = \"%s\", at = %s, size = %s%s }," % [p.res, p.color, _v3(p.at), _v3(p.size), ", arrow = true" if p.arrow else ""])
-		L.append("\t\t} },")
+			L.append("\t\t\t{ res = \"%s\", color = \"%s\", at = %s, size = %s%s%s }," % [p.res, p.color, _v3(p.at), _v3(p.size), ", arrow = true" if p.arrow else "",
+				(", group = \"%s\"" % p.group) if p.group != "" else ""])
+		var gs := PackedStringArray()
+		for g in info[id].groups:
+			gs.append("%s = %s" % [g, _v3(info[id].groups[g])])
+		L.append("\t\t}, groups = { %s } }," % ", ".join(gs))
 	L.append("\t},")
 	L.append("}")
 	var f := FileAccess.open(ProjectSettings.globalize_path("res://roblox/src/shared/GodotBuilds.luau"), FileAccess.WRITE)

@@ -161,6 +161,14 @@ function InteractController.target(): (string, (() -> ())?)
 		end
 	elseif b and b:GetAttribute("Kind") == "build" and State.tool == "hammer" then
 		return string.format("[X] take down  +$%.2f", b:GetAttribute("SaleValue") :: number? or 0), nil
+	elseif b and b:GetAttribute("Build") == "catapult" then
+		return if b:GetAttribute("Busy") then "" else "[Click] fire", nil
+	elseif b and b:GetAttribute("Build") == "compost" then
+		return string.format("%d/%d leaves", b:GetAttribute("Stock") :: number? or 0, 8), nil
+	elseif b and b:GetAttribute("Build") == "hammock" then
+		return "[E] lie down", function()
+			remotes.Lie:FireServer(part)
+		end
 	end
 	local item = toolItem(part)
 	if item then

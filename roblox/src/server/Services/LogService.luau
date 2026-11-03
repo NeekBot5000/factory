@@ -319,7 +319,7 @@ function LogService.buildSprout(root: BasePart, species: string, scale: number)
 	piece("Leaf", Enum.PartType.Ball, Vector3.one * 0.14 * s, Vector3.new(-0.04 * s, 0.26 * s, 0.03 * s), green)
 end
 
-local function sapling(at: Vector3, species: string): BasePart
+function LogService.sapling(at: Vector3, species: string): BasePart
 	-- the clod of earth is the sapling (what you grab); the sprout rides on it
 	local root = Instance.new("Part")
 	root.Name = "Sapling"
@@ -367,7 +367,7 @@ function LogService.cutCrown(tree: Model, player: Player?): boolean
 	local base = tree:GetPivot().Position
 	for _ = 1, math.random(1, 2) do
 		local a = math.random() * 2 * math.pi
-		sapling(Vector3.new(base.X + math.cos(a) * 1.4 * M, centre.Y - 2.5 * M, base.Z + math.sin(a) * 1.4 * M), tree:GetAttribute("Species") :: string or "oak")
+		LogService.sapling(Vector3.new(base.X + math.cos(a) * 1.4 * M, centre.Y - 2.5 * M, base.Z + math.sin(a) * 1.4 * M), tree:GetAttribute("Species") :: string or "oak")
 	end
 	tree:SetAttribute("CrownCut", true)
 	remotes.Fx:FireAllClients("timber", centre, 1.4, -4)
@@ -415,7 +415,7 @@ function LogService.snip(player: Player?, tree: Model, at: Vector3): boolean
 				standin:Destroy()
 			end
 			for _ = 1, math.random(1, 2) do
-				sapling(at + Vector3.new(math.random() * 0.4 - 0.2, 0.1, math.random() * 0.4 - 0.2) * M, tree:GetAttribute("Species") :: string or "oak")
+				LogService.sapling(at + Vector3.new(math.random() * 0.4 - 0.2, 0.1, math.random() * 0.4 - 0.2) * M, tree:GetAttribute("Species") :: string or "oak")
 			end
 			tree:SetAttribute("CrownCut", true)
 			remotes.Fx:FireAllClients("reveal", at, 1.3, -6)

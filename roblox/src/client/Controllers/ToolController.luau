@@ -442,6 +442,15 @@ local function startSwing()
 		remotes.Open:FireServer(near.Instance)
 		return
 	end
+	-- (a click on a catapult fires it: Godot's Catapult.on_click)
+	local b = near and near.Instance:FindFirstAncestorWhichIsA("Model")
+	while b and b:GetAttribute("Kind") ~= "build" do
+		b = b:FindFirstAncestorWhichIsA("Model")
+	end
+	if near and b and b:GetAttribute("Build") == "catapult" then
+		remotes.Click:FireServer(near.Instance)
+		return
+	end
 	State.swing = 0
 	impacts = 0
 	if d.anim == "double" or d.anim == "sweep" or d.anim == "twin" then

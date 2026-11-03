@@ -690,6 +690,61 @@ do
 			check(gone and math.abs(data.money - before - value) < 0.01, "X with the hammer takes it down and pays what it would have sold for")
 		end
 	end
+	-- what finished builds do: the campfire burns what's dropped on it, the compost turns 8 leaves into a sapling
+	do
+		local BS = A.service("BuildService")
+		local fire = BS.make("campfire", roblox.CFrame.new(spot + V3(0, 0, -12)), 1, 101, true, {})
+		A.service("BuildBehaviors").activate(fire)
+		local light = fire:FindFirstChild("FireLight")
+		check(fire:FindFirstChild("Flames") ~= nil and light and light:FindFirstChildOfClass("PointLight") ~= nil, "a campfire burns with flames and a warm light")
+		local leafy = roblox.Instance.new("Part")
+		leafy.Size = V3(0.5, 0.5, 0.5)
+		leafy.CFrame = fire:GetPivot() * roblox.CFrame.new(0, 1.3, 0)
+		leafy.Position = leafy.CFrame.Position
+		leafy:SetAttribute("Kind", "leaf")
+		leafy.Parent = loose
+		task.wait(0.5)
+		check(leafy.Parent ~= nil and leafy:GetAttribute("Burning"), "leaves dropped on it start to burn")
+		task.wait(1.4)
+		check(not pcall(function() return leafy.Parent.Name end), "and burn away (Godot's 0.9 s for leaves)")
+		local pile = BS.make("compost", roblox.CFrame.new(spot + V3(12, 0, -12)), 1, 101, true, {})
+		A.service("BuildBehaviors").activate(pile)
+		for k = 1, 8 do
+			local l = roblox.Instance.new("Part")
+			l.Size = V3(0.5, 0.5, 0.5)
+			l.CFrame = pile:GetPivot() * roblox.CFrame.new(0, 1.5, 0)
+			l.Position = l.CFrame.Position
+			l:SetAttribute("Kind", "leaf")
+			l.Parent = loose
+		end
+		task.wait(0.4)
+		check(pile:GetAttribute("Stock") == 8, "the compost pile takes the leaves (8/8)")
+		local saps0 = 0
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "sapling" then
+				saps0 += 1
+			end
+		end
+		pile:SetAttribute("Rot", 7.9)
+		task.wait(0.4)
+		local saps = 0
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "sapling" then
+				saps += 1
+			end
+		end
+		check(saps == saps0 + 1 and pile:GetAttribute("Stock") == 0, "and 8 s later a sapling pops out of the top")
+		local hoopB = BS.make("ball", roblox.CFrame.new(spot + V3(-12, 0, -12)), 1, 101, true, {})
+		hoopB:SetAttribute("SaleValue", 4)
+		A.service("BuildBehaviors").activate(hoopB)
+		local ball = nil
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "ball" then
+				ball = c
+			end
+		end
+		check(ball ~= nil and ball.Shape.Name == "Ball" and ball:GetAttribute("Value") == 4, "a finished leaf ball is a real ball you can pick up (and sell)")
+	end
 	-- a cancelled plan gives everything back
 	build:Fire(alice, "basket", roblox.CFrame.new(spot + V3(9, 0, 0)), 1)
 	task.wait(0.1)

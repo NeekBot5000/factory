@@ -191,8 +191,10 @@ local function complete(plan: Model)
 	local owner = plan:GetAttribute("Owner") :: number
 	local b = BuildService.make(id, plan:GetPivot(), plan:GetAttribute("Size") :: number, owner, true, colors)
 	if b then
+		b:SetAttribute("SaleValue", 0)
 		-- machines sell back for a bit less than their materials, decorations for far more (the work adds value)
 		b:SetAttribute("SaleValue", math.floor((plan:GetAttribute("Worth") :: number) * def.sell * 100 + 0.5) / 100)
+		require(script.Parent.BuildBehaviors).activate(b)
 	end
 	local s = store(plan)
 	s:Destroy()

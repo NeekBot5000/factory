@@ -114,6 +114,10 @@ function Builds.model(id: string): Model?
 	m.WorldPivot = CFrame.new()
 	for _, p in m:GetDescendants() do
 		if p:IsA("BasePart") then
+			local pd = d.parts[(p:GetAttribute("Index") :: number? or -1) + 1]
+			if pd and pd.group then
+				p:SetAttribute("Group", pd.group)      -- (the catapult's Arm, the compost's Mound: parts that move)
+			end
 			p.Anchored = true
 			p.Material = Enum.Material.SmoothPlastic
 			p.TopSurface = Enum.SurfaceType.Smooth
