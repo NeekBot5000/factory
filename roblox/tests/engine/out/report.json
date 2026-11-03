@@ -1,54 +1,34 @@
 {
  "steps": [
   {
-   "step": "Roblox's render of GodotCrowns",
+   "step": "Roblox's render of GodotCrowns (uncoloured: WorldMeshes colours it in the game)",
    "ok": true,
    "detail": "Completed"
   },
   {
-   "step": "Roblox's 3D version of GodotCrowns",
-   "ok": false,
-   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
-  },
-  {
-   "step": "Roblox's render of GodotProps",
-   "ok": false,
-   "detail": "429 {\"errors\":[{\"code\":0,\"message\":\"\"}]}\n"
-  },
-  {
-   "step": "Roblox's 3D version of GodotProps",
-   "ok": false,
-   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
-  },
-  {
-   "step": "Roblox's render of GodotTools",
+   "step": "Roblox's render of GodotProps (uncoloured: WorldMeshes colours it in the game)",
    "ok": true,
    "detail": "Completed"
   },
   {
-   "step": "Roblox's 3D version of GodotTools",
-   "ok": false,
-   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+   "step": "Roblox's render of GodotTools (uncoloured: WorldMeshes colours it in the game)",
+   "ok": true,
+   "detail": "Completed"
   },
   {
-   "step": "Roblox's render of GodotTrucks",
-   "ok": false,
-   "detail": "429 {\"errors\":[{\"code\":0,\"message\":\"\"}]}\n"
+   "step": "Roblox's render of GodotTrucks (uncoloured: WorldMeshes colours it in the game)",
+   "ok": true,
+   "detail": "Completed"
   },
   {
-   "step": "Roblox's 3D version of GodotTrucks",
-   "ok": false,
-   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+   "step": "Roblox's render of GodotWorld (uncoloured: WorldMeshes colours it in the game)",
+   "ok": true,
+   "detail": "Completed"
   },
   {
-   "step": "Roblox's render of GodotWorld",
+   "step": "download what Roblox made of the uploads",
    "ok": false,
-   "detail": "429 {\"errors\":[{\"code\":0,\"message\":\"\"}]}\n"
-  },
-  {
-   "step": "Roblox's 3D version of GodotWorld",
-   "ok": false,
-   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+   "detail": "27 failed, e.g. GodotCrowns: 403 {\"errors\":[{\"code\":0,\"message\":\"Scope not authorized.\"}]}\n - the key needs the legacy-asset:manage permission (Legacy Assets > Manage)"
   },
   {
    "step": "run the game in a Roblox server",
