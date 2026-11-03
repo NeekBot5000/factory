@@ -50,15 +50,26 @@ local function machines(): { Model }
 	return out
 end
 
+local function isCart(m: Model): boolean
+	return string.sub(m:GetAttribute("Build") :: string? or "", 1, 9) == "minecart_"
+end
+
 function CircuitService.terminal(m: Model): Vector3
-	local t = TERMINAL[m:GetAttribute("Build") :: string] or { 0, 0.4, 0 }
+	local id = m:GetAttribute("Build") :: string
+	local t = TERMINAL[id] or { 0, 0.4, 0 }
+	if isCart(m) then
+		t = { 0.3, 0.5, (tonumber(string.sub(id, 10)) or 1) - 0.45 }
+	end
 	local size = m:GetAttribute("Size") :: number? or 1
 	return m:GetPivot():PointToWorldSpace(Vector3.new(t[1], t[2], t[3]) * M * size)
 end
 
 local function isSource(m: Model): boolean
 	local id = m:GetAttribute("Build")
-	if id == "crank" then
+	if isCart(m) then
+		-- (Godot's Minecart.is_source: a charged battery cell in its cradle)
+		return (m:GetAttribute("Cell") :: number? or 0) > 0
+	elseif id == "crank" then
 		return (m:GetAttribute("Charge") :: number? or 0) > 0
 	elseif id == "windmill" then
 		return CircuitService.wind() >= CircuitService.MIN_WIND
@@ -85,7 +96,7 @@ end
 
 local function conducts(m: Model): boolean
 	local id = m:GetAttribute("Build")
-	if isGate(m) or id == "transmitter" or id == "receiver" then
+	if isGate(m) or id == "transmitter" or id == "receiver" or isCart(m) then
 		return false          -- (a logic block only lets power out of its front, and only when its logic says so)
 	end
 	if id == "lever" then
@@ -96,7 +107,7 @@ local function conducts(m: Model): boolean
 		local tool = m:GetAttribute("Holds") :: string?
 		local max = if tool == "rock_drill" then 12 elseif tool == "core_drill" then 30 else 0
 		return tool ~= nil and (m:GetAttribute("Depth") :: number? or 0) >= max
-	elseif id == "pressure_plate" or id == "item_sensor" or id == "level_sensor" then
+	elseif id == "pressure_plate" or id == "item_sensor" or id == "level_sensor" or id == "cart_sensor" then
 		return m:GetAttribute("Sensing") == true
 	end
 	return true
@@ -107,6 +118,16 @@ end
 CircuitService.LEVELS = { 5, 10, 20, 30 }
 local function sense(m: Model)
 	local id = m:GetAttribute("Build")
+	if id == "cart_sensor" then
+		-- a minecart on the rail in front of it (a station)
+		local Rail = require(ReplicatedStorage.Shared.Rail) :: any
+		local on = (require(script.Parent.RailService) :: any).cartAt(Rail.cellOf(m:GetPivot():PointToWorldSpace(Vector3.new(0, 0, -1) * M))) ~= nil
+		if m:GetAttribute("Sensing") ~= on then
+			m:SetAttribute("Sensing", on)
+			remotes.Fx:FireAllClients("click", m:GetPivot().Position, if on then 1.2 else 0.8, -8)
+		end
+		return
+	end
 	if id == "level_sensor" then
 		-- the storage crate in front of it holds at least N things (Godot: a ray 0.1-1.1 m out at 0.4 m up)
 		local n = -1
@@ -514,6 +535,19 @@ function CircuitService.step(dt: number)
 			end
 		end
 	end
+	-- a minecart's battery powers the machines on its deck, no wire needed (Minecart.auto_linked)
+	local RailService = require(script.Parent.RailService) :: any
+	for _, m in list do
+		if isCart(m) then
+			for _, d in RailService.deck(m) do
+				local b = uids[d:GetAttribute("Uid") :: string]      -- (the same Model as in the list)
+				if b and RailService.autoLinked(b) then
+					table.insert(links[m], b)
+					table.insert(links[b], m)
+				end
+			end
+		end
+	end
 	for _, m in list do
 		sense(m)
 	end
@@ -672,6 +706,8 @@ function CircuitService.use(m: Model): boolean
 	elseif id == "assembler" then
 		(require(script.Parent.ProductionService) :: any).cycle(m)
 		return true
+	elseif isCart(m) then
+		return (require(script.Parent.RailService) :: any).takeCell(m)
 	elseif id == "level_sensor" then
 		local s = ((m:GetAttribute("Setting") :: number? or 1) + 1) % #CircuitService.LEVELS
 		m:SetAttribute("Setting", s)

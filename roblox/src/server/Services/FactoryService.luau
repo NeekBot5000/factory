@@ -42,6 +42,8 @@ local function within(m: Model, off: Vector3, box: Vector3, players: boolean?): 
 	return out
 end
 
+FactoryService.within = within
+
 local function cd(m: Model, dt: number): boolean
 	local c = (m:GetAttribute("Cd") :: number? or 0) - dt
 	m:SetAttribute("Cd", c)
@@ -552,29 +554,29 @@ function FactoryService.step(dt: number)
 	local _ = Builds
 end
 
+-- the hammer swung at a rotator, or at something sitting on (or stuck to) one (RailService's Hammer handler asks
+-- here first). True if it was one.
+function FactoryService.onHammer(player: Player, target: BasePart): boolean
+	local m = target:FindFirstAncestorWhichIsA("Model")
+	while m and m:GetAttribute("Kind") ~= "build" do
+		m = m:FindFirstAncestorWhichIsA("Model")
+	end
+	if not (m and m:GetAttribute("Build") == "rotator") then
+		local item: BasePart = if target.Parent and target.Parent:IsA("BasePart") then target.Parent :: BasePart else target
+		m = FactoryService.rotatorOf(item)
+	end
+	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+	if m and head and (head.CFrame.Position - m:GetPivot().Position).Magnitude < 6 * M then
+		local n = FactoryService.hammer(m)
+		if n > 0 then
+			remotes.Notify:FireClient(player, string.format("Stuck %d to the rotator", n), "bfeaff")
+		end
+		return true
+	end
+	return false
+end
+
 function FactoryService.start()
-	-- the hammer swung at a rotator, or at something sitting on (or stuck to) one
-	remotes.Hammer.OnServerEvent:Connect(function(player, target)
-		local ToolService = require(script.Parent.ToolService) :: any
-		if typeof(target) ~= "Instance" or not target:IsA("BasePart") or ToolService.current(player) ~= "hammer" then
-			return
-		end
-		local m = target:FindFirstAncestorWhichIsA("Model")
-		while m and m:GetAttribute("Kind") ~= "build" do
-			m = m:FindFirstAncestorWhichIsA("Model")
-		end
-		if not (m and m:GetAttribute("Build") == "rotator") then
-			local item: BasePart = if target.Parent and target.Parent:IsA("BasePart") then target.Parent :: BasePart else target
-			m = FactoryService.rotatorOf(item)
-		end
-		local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
-		if m and head and (head.CFrame.Position - m:GetPivot().Position).Magnitude < 6 * M then
-			local n = FactoryService.hammer(m)
-			if n > 0 then
-				remotes.Notify:FireClient(player, string.format("Stuck %d to the rotator", n), "bfeaff")
-			end
-		end
-	end)
 	task.spawn(function()
 		local last = os.clock()
 		while true do

@@ -11,6 +11,7 @@ local CollectionService = game:GetService("CollectionService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Builds = require(ReplicatedStorage.Shared.Builds)
 local Land = require(ReplicatedStorage.Shared.Land)
+local Rail = require(ReplicatedStorage.Shared.Rail)
 local W = require(ReplicatedStorage.Shared.GodotWorld) :: any
 local InputController = require(script.Parent.InputController)
 local UiKit = require(script.Parent.Parent.Ui.UiKit)
@@ -31,9 +32,11 @@ local turn = 0
 local holo: Model? = nil
 local valid = false
 local offLand = false
+local onRails = true
 local menu: ScreenGui? = nil
 local spinning: { { cam: Camera, center: Vector3, dist: number } } = {}
 local rotatorAimed: () -> BasePart?
+local railAimed: () -> BasePart?
 
 local function size(): number
 	return GB.sizes[sizeI]
@@ -53,6 +56,9 @@ local function hint(): string
 	end
 	if offLand then
 		return "This isn't your land - buy it at a for-sale sign    [E] cancel"
+	end
+	if not onRails then
+		return "A minecart goes on rails, along the track, with rail under every square of it    [R] turn    [E] cancel"
 	end
 	local def = Builds.def(buildId)
 	if def and def.fixed then
@@ -376,7 +382,7 @@ function BuildController.update()
 	local def = Builds.def(buildId) :: Builds.Def
 	if def.fixed then
 		-- machines sit on a 1 m grid and face one of the four directions, so belts line up end to end
-		pos = Vector3.new((math.floor(pos.X / M) + 0.5) * M, pos.Y, (math.floor(pos.Z / M) + 0.5) * M)
+		pos = Vector3.new(math.round(pos.X / M) * M, pos.Y, math.round(pos.Z / M) * M)
 		local a = math.round(math.atan2(flat.X, flat.Z) / (math.pi / 2)) * (math.pi / 2)
 		flat = Vector3.new(math.sin(a), 0, math.cos(a))
 	end
@@ -385,7 +391,19 @@ function BuildController.update()
 	if offLand then
 		valid = false
 	end
-	holo:PivotTo(CFrame.lookAt(pos, pos + flat) * CFrame.Angles(0, turn, 0))
+	local cf = CFrame.lookAt(pos, pos + flat) * CFrame.Angles(0, turn, 0)
+	onRails = true
+	if string.sub(buildId, 1, 9) == "minecart_" then
+		-- a cart goes on rails that run its way, under every square of it
+		local c = Rail.cellOf(pos)
+		onRails = Rail.fits(c, Rail.dirOf(cf), tonumber(string.sub(buildId, 10)) or 1)
+		if onRails then
+			cf = cf.Rotation + Rail.centre(c, Rail.top(Rail.at(c) :: Model))
+		else
+			valid = false
+		end
+	end
+	holo:PivotTo(cf)
 	paint(valid)
 	State.buildHint = hint()
 end
@@ -427,13 +445,36 @@ function rotatorAimed(): BasePart?
 	return nil
 end
 
+-- a laid rail, or a loose rail item, under the crosshair (the hammer lays / picks up / turns it)
+function railAimed(): BasePart?
+	local cam = workspace.CurrentCamera
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = { player.Character :: Instance, cam }
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local hit = workspace:Raycast(cam.CFrame.Position, cam.CFrame.LookVector * (Config.Player.grabReach + 1) * M, params)
+	if not hit then
+		return nil
+	end
+	local part = hit.Instance
+	local m = part:FindFirstAncestorWhichIsA("Model")
+	if m and m:GetAttribute("Kind") == "rail" then
+		return part
+	end
+	local item = if part.Parent and part.Parent:IsA("BasePart") then part.Parent :: BasePart else part
+	local kind = item:GetAttribute("Product")
+	if kind == "rail" or kind == "curved_rail" then
+		return item
+	end
+	return nil
+end
+
 function BuildController.click(): boolean
 	if (Config.Tools :: any)[State.tool] == nil or not (Config.Tools :: any)[State.tool].build or State.uiOpen then
 		return false
 	end
 	if mode == "idle" then
 		-- the hammer on a rotator, or on something sitting on (or stuck to) one: stick it on / let go (Godot's Player)
-		local rot = rotatorAimed()
+		local rot = rotatorAimed() or railAimed()
 		if rot then
 			remotes.Hammer:FireServer(rot)
 			State.swing = 0
@@ -461,6 +502,14 @@ function BuildController.start()
 		end
 	end)
 	InputController.on("Turn", function(state)
+		if state == Enum.UserInputState.Begin and mode == "idle" and (Config.Tools :: any)[State.tool] and (Config.Tools :: any)[State.tool].build then
+			-- R with the hammer on a laid rail turns it
+			local r = railAimed()
+			if r and r:FindFirstAncestorWhichIsA("Model") and (r:FindFirstAncestorWhichIsA("Model") :: Model):GetAttribute("Kind") == "rail" then
+				remotes.Hammer:FireServer(r, "turn")
+				Sfx.play("click", 1.1, -4)
+			end
+		end
 		if state == Enum.UserInputState.Begin and mode == "place" then
 			local def = Builds.def(buildId) :: Builds.Def
 			turn += math.rad(if def.fixed then 90 else 45)

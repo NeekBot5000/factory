@@ -1232,6 +1232,81 @@ do
 	end
 end
 
+-- ---------------------------------------------------------------- rails and minecarts
+do
+	local BS, CS, RS = A.service("BuildService"), A.service("CircuitService"), A.service("RailService")
+	local Rail = A.shared("Rail")
+	local PS = A.service("ProductionService")
+	local M = Cfg.StudsPerMetre
+	local prev = alice:GetAttribute("Tool")
+	Tools.grant(alice, "hammer")
+	task.wait(1.3)
+	-- the hammer on a loose rail lays it on the grid square it's lying on (alice faces -Z: it runs along Z)
+	local c0 = { x = 15, z = 12 }
+	local item = PS.product("rail", 2, roblox.Color3.new(0.55, 0.58, 0.62), roblox.CFrame.new(Rail.centre(c0, 2)), V3(0, 0, 0), alice.UserId)
+	item.Position = item.CFrame.Position
+	A.stand(alice, Rail.centre(c0, 5) + V3(0, 0, 6))
+	A.remotes.Hammer.OnServerEvent:Fire(alice, item)
+	task.wait(0.1)
+	local r0 = Rail.at(c0)
+	check(r0 ~= nil and r0:GetAttribute("AlongX") == false and item.Parent == nil, "the hammer lays a loose rail on its grid square, the way you face")
+	A.remotes.Hammer.OnServerEvent:Fire(alice, r0:FindFirstChildWhichIsA("Part"), "turn")
+	task.wait(0.05)
+	local turned = r0:GetAttribute("AlongX") == true
+	RS.turn(r0)
+	check(turned and r0:GetAttribute("AlongX") == false, "R turns a laid rail")
+	for z = 13, 17 do
+		RS.lay({ x = 15, z = z }, true, nil, nil)       -- (lines up with the track: along Z, whatever it's asked)
+	end
+	check(Rail.at({ x = 15, z = 17 }) and Rail.at({ x = 15, z = 17 }):GetAttribute("AlongX") == false, "a rail laid next to track lines up with it")
+	-- a 2-long cart on the track, a Go block and a lever on its deck, a charged cell in its cradle
+	local front = { x = 15, z = 16 }
+	local cart = BS.make("minecart_2", roblox.CFrame.new(Rail.centre(front, Rail.top(Rail.at(front)))), 1, 101, true, {})
+	local deckY = RS.DECK_Y * M
+	local go = BS.make("cart_go", cart:GetPivot() * roblox.CFrame.new(0, deckY, 0), 1, 101, true, {})
+	local lever = BS.make("lever", cart:GetPivot() * roblox.CFrame.new(0, deckY, 1 * M), 1, 101, true, {})
+	CS.toggle(lever, go)
+	task.wait(0.2)
+	check(go:GetAttribute("Deck") == cart:GetAttribute("Uid") and lever:GetAttribute("Deck") == cart:GetAttribute("Uid"), "machines built on a cart's deck become part of it")
+	local cell = PS.product("battery_cell", 1.2, roblox.Color3.new(1, 1, 1), cart:GetPivot() * roblox.CFrame.new(0, 0.47 * M, 1.72 * M), V3(0, 0, 0), 101)
+	cell.Position = cell.CFrame.Position
+	cell:SetAttribute("Charge", 1)
+	task.wait(0.3)
+	check(cell.Parent == nil and cart:GetAttribute("Cell") ~= nil, "a battery cell dropped in the cradle snaps in")
+	check(Rail.same(RS.frontCell(cart), front), "with the lever off it stays put")
+	CS.use(lever)
+	local fc = RS.frontCell(cart)
+	for _ = 1, 60 do
+		task.wait(0.25)
+		fc = RS.frontCell(cart)
+		if fc.z == 12 then
+			break
+		end
+	end
+	task.wait(1)
+	fc = RS.frontCell(cart)
+	check(fc.x == 15 and fc.z == 12, "lever on: it rolls along the track, a square at a time, and stops where it ends (" .. fc.x .. "," .. fc.z .. ")")
+	check(Rail.same(Rail.cellOf(go:GetPivot().Position), fc) and (cart:GetAttribute("Cell") or 1) < 1, "its deck rides along, and the cell runs down")
+	-- E takes the cell out again
+	CS.use(cart)
+	task.wait(0.1)
+	check(cart:GetAttribute("Cell") == nil, "[E] takes the battery cell out")
+	-- the hammer on a laid rail picks it up again
+	local n0 = #loose:GetChildren()
+	local r17 = Rail.at({ x = 15, z = 17 })
+	A.stand(alice, r17:GetPivot().Position + V3(0, 5, 6))
+	A.remotes.Hammer.OnServerEvent:Fire(alice, r17:FindFirstChildWhichIsA("Part"))
+	task.wait(0.1)
+	check(Rail.at({ x = 15, z = 17 }) == nil and #loose:GetChildren() > n0, "the hammer picks a laid rail up again")
+	-- your track is saved with you
+	local saved = RS.serialize(alice.UserId)
+	check(#saved == 1 and saved[1].kind == "rail" and saved[1].x == 15 and saved[1].z == 12, "the track you laid is saved with you")
+	Tools.equip(alice, prev)
+	for _, m in { cart, go, lever } do
+		m:Destroy()
+	end
+end
+
 -- ---------------------------------------------------------------- production
 do
 	local BS, PS = A.service("BuildService"), A.service("ProductionService")

@@ -180,6 +180,10 @@ function InteractController.target(): (string, (() -> ())?)
 		end
 		return string.format("Mine shaft  ·  %.1f m deep  ·  %s", depth, Mining.layerName(depth)), nil
 	end
+	if sh and sh:GetAttribute("Kind") == "rail" then
+		local nm = if (sh:GetAttribute("Curve") :: number? or -1) >= 0 then "Curved Rail" else "Rail"
+		return if State.tool == "hammer" then nm .. "    [Click] pick it up    [R] turn it" else nm, nil
+	end
 	local b = buildOf(part)
 	if b and b:GetAttribute("Kind") == "forsale" then
 		local land = string.split(player:GetAttribute("Land") :: string? or "", ";")
@@ -273,6 +277,9 @@ function InteractController.target(): (string, (() -> ())?)
 			elseif sheet:GetAttribute("Product") == "battery_cell" then "[E] grab    Battery Cell  ·  " .. (if (sheet:GetAttribute("Charge") :: number? or 0) <= 0
 				then "empty - charge it in a charger" else string.format("%d%% charged", math.floor((sheet:GetAttribute("Charge") :: number) * 100)))
 			elseif typeof(value) == "number" then string.format("[E] grab    $%.2f", value) else "[E] grab"
+		if State.tool == "hammer" and (sheet:GetAttribute("Product") == "rail" or sheet:GetAttribute("Product") == "curved_rail") then
+			label ..= "    [Click] lay it"
+		end
 		return label, function()
 			remotes.Grab:FireServer(sheet)
 			Sfx.play("pickup")
@@ -326,6 +333,29 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 	elseif id == "battery" then
 		local c = m:GetAttribute("Charge") :: number? or 0
 		return string.format("Battery  ·  %d%%  ·  %s", math.floor(c / 180 * 100), if m:GetAttribute("Feeding") then "powering" elseif powered then "charging" else "idle"), false
+	elseif string.sub(id, 1, 9) == "minecart_" then
+		local c = m:GetAttribute("Cell") :: number?
+		return string.format("Minecart (%s long)  ·  %s%s", string.sub(id, 10), if c then string.format("battery %d%%", math.floor(c * 100)) else "no battery cell",
+			if c then "    [E] take the cell out" else "    drop a charged battery cell in the cradle at the back"), c ~= nil
+	elseif id == "cart_go" or id == "cart_back" or id == "rail_layer" or id == "rail_lifter" then
+		local what = ({
+			cart_go = "Go  ·  the cart rolls forward while this is powered (wire a switch into it)",
+			cart_back = "Reverse  ·  the cart rolls backward while this is powered (wire a switch into it)",
+			rail_layer = "Rail Layer  ·  lays a rail ahead from a crate on the cart when the track runs out",
+			rail_lifter = "Rail Lifter  ·  picks up the rail behind the cart into a crate on the cart",
+		})[id]
+		return string.format("%s  ·  %s", what, if powered then "powered" else "off"), false
+	elseif id == "cart_sensor" then
+		return "Cart Sensor  ·  " .. (if m:GetAttribute("Sensing") then "a cart is here" else "lets power through while a cart is on the rail in front"), false
+	elseif id == "rail_switch" then
+		return "Rail Switch  ·  " .. (if not m:GetAttribute("Works") then "build it beside a straight rail, pointing along it"
+			elseif powered then "branching" else "straight on - power it to branch"), false
+	elseif id == "rail_buffer" then
+		return "Rail Buffer  ·  " .. (if powered then "open - carts go by" else "down - carts stop here (power it to open)"), false
+	elseif id == "cart_unloader" then
+		return "Cart Unloader  ·  " .. (if powered then "emptying the crate on the cart behind it" else "power it to empty a cart's crate out of its front"), false
+	elseif id == "drone_pad" then
+		return "Drone Pad  ·  " .. (if powered then "charging battery cells left on it" else "power it to charge drones over it"), false
 	elseif id == "rotator" then
 		return string.format("Rotator  ·  %s    [Hammer] %s", if powered then "powered" else "no power", if m:GetAttribute("Stuck") then "let go" else "stick what's on it"), false
 	elseif id == "truck_caller" then

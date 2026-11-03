@@ -165,6 +165,15 @@ local function place(player: Player, id: unknown, cf: unknown, size: unknown)
 	end
 	-- (upright: only turned about the vertical)
 	local look = (cf :: CFrame).LookVector * Vector3.new(1, 0, 1)
+	if string.sub(id :: string, 1, 9) == "minecart_" then
+		-- a cart goes on rails that run its way, under every square of it (Godot's Minecart.fits)
+		local Rail = require(ReplicatedStorage.Shared.Rail) :: any
+		local c = Rail.cellOf(at)
+		if not Rail.fits(c, Rail.dirOf(cf :: CFrame), tonumber(string.sub(id :: string, 10)) or 1) then
+			return
+		end
+		at = Rail.centre(c, Rail.top(Rail.at(c)))
+	end
 	local flat = if look.Magnitude > 0.01 then CFrame.lookAt(at, at + look.Unit) else CFrame.new(at)
 	BuildService.make(id :: string, flat, size :: number, player.UserId)
 	remotes.Fx:FireAllClients("thud", at, 1.6)
@@ -398,7 +407,7 @@ function BuildService.serialize(userId: number): { any }
 						setting = m:GetAttribute("Setting"), latch = m:GetAttribute("LatchOn"), count = m:GetAttribute("Count"), recipe = m:GetAttribute("Recipe"),
 						channel = m:GetAttribute("Channel"), filter = m:GetAttribute("Filter"), fill = m:GetAttribute("Fill"),
 						holds = m:GetAttribute("Holds"), depth = m:GetAttribute("Depth"),
-						angle = m:GetAttribute("Angle"), stuck = m:GetAttribute("Stuck") }
+						angle = m:GetAttribute("Angle"), stuck = m:GetAttribute("Stuck"), cell = m:GetAttribute("Cell") }
 					e.uid = m:GetAttribute("Uid")
 				else
 					e.have = m:GetAttribute("Have")
@@ -439,7 +448,7 @@ end
 function BuildService.restore(player: Player, list: { any })
 	local made: { [number]: Model } = {}
 	for k, e in list or {} do
-		if typeof(e) == "table" and e.kind == "wire" then
+		if typeof(e) == "table" and (e.kind == "wire" or e.kind == "rail") then
 			continue
 		end
 		if typeof(e) ~= "table" or not Builds.def(e.id) then
@@ -491,6 +500,7 @@ function BuildService.restore(player: Player, list: { any })
 					m:SetAttribute("Depth", e.state.depth)
 					m:SetAttribute("Angle", e.state.angle)
 					m:SetAttribute("Restick", e.state.stuck)
+					m:SetAttribute("Cell", e.state.cell)
 				end
 				require(script.Parent.BuildBehaviors).activate(m)
 				made[k] = m
@@ -507,11 +517,15 @@ end
 function BuildService.start()
 	table.insert(DataService.beforeSave, function(player, data)
 		data.builds = BuildService.serialize(player.UserId)
+		for _, e in (require(script.Parent.RailService) :: any).serialize(player.UserId) do
+			table.insert(data.builds, e)
+		end
 	end)
 	table.insert(DataService.onLoaded, function(player, data)
 		-- (old saves kept other things in "builds")
 		if typeof(data.builds) == "table" and (data.builds[1] == nil or typeof(data.builds[1]) == "table") then
 			BuildService.restore(player, data.builds)
+			;(require(script.Parent.RailService) :: any).restore(player, data.builds)
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
@@ -525,6 +539,7 @@ function BuildService.start()
 					end
 				end
 			end
+			;(require(script.Parent.RailService) :: any).removeFor(player.UserId)
 		end)
 	end)
 	remotes.Build.OnServerEvent:Connect(place)
