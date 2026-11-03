@@ -149,7 +149,11 @@ If Rokit gives you trouble, you can skip it: the **Rojo** extension in VS Code c
    - **E** on a bark sheet picks it up, and **E** again drops it. Put some in the back of the truck.
    - **E** on the truck sends it to the mill. It honks and drives off down the road, and you're paid when it gets
      there.
-   - **E** on the computer in the cabin opens TimberMart. **Shift** sprints.
+   - **E** on the computer in the cabin opens TimberMart. Buying puts in an order: the delivery van brings a box to
+     the dock; click it to open it and **E** takes what's inside. **Shift** sprints.
+   - **Hold** the button with saws, drills, the planer, the pressure washer and the vacuums; **hold and let go** with
+     the Thunder Axe. **Tab** opens the TimberPhone once you have one.
+   - Put a sapling down on open ground and leave it: it grows into a tree in five minutes.
 4. **Two players:** go to the **Test** tab > **Clients and Servers** > **2 Players** > **Start**. Peel a tree in one
    window and watch the bark come off in the other.
 

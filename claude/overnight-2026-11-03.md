@@ -6,9 +6,8 @@ STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
 
 ## Queue
 [x] 9. Throwing hatchet, thunder axe, two-man crosscut, pole saw, the phone (see Done)
-[ ] 11. Next from Godot: the shears (snip leaves off crowns and bushes), then whatever else the Godot shop sells
-    that fits (drill, planer, washer...) as time allows
-[ ] 10. Docs, playtest, CI; morning report
+[x] 11. Shears, drills, vacuums, planer, washer (see Done)
+[x] 10. Docs, playtest, CI; morning report
 
 ## Done
 [x] Keys: input now comes straight from UserInputService; E on the hatchet itself takes it (it only worked on the
@@ -44,7 +43,36 @@ STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
 [x] Pole saw: cuts the crown off; leaves ($0.05 clumps) and 1-2 saplings fall; saplings root and grow into trees in
     5 min. Harness: server warnings shown, default velocity, seedless Random. Commit 9d2fe43
     Checkpoint 07:40 UTC: playtests 109 server + 33 client checks pass locally.
+[x] Bark drills: Timber Auger, Twin Auger, Hole Saw. Commit cb8e3e4
+[x] Pruning shears: snip leaves off crowns; the last clump holds saplings. Commit fd4f67b
+[x] Leaf vacuums: Leaf Vacuum, Twin-Nozzle Vac, Cyclone Vac (server moves the things). Commit 98b8526
+[x] Electric Planer (logs only, one long strip) and Pressure Washer (soft patch from 6 m). Commits fb24e7f, 34e0ffe
+    (34e0ffe fixes a luau-analyze type error I pushed in fb24e7f)
+[x] Docs: docs/roblox-style.md "Not in the Roblox version yet" rewritten; SETUP.md play-test controls.
 
 ## Parked
 - Checking the imports from CI: downloading an uploaded asset needs the API key to have the asset-delivery
   ("legacy-asset") permission, which it doesn't. Optional; the game measures the import itself with marker cubes.
+
+## Morning report
+**Goal:** make the Roblox version the same game as the Godot one, after fixing keys, trees turning into lines and
+the look. 22 commits, 04:06 - 10:45 UTC, all on `claude/roblox-islands-factory-game-u7anm4`.
+
+**Fixed what you reported**
+- Keys: input comes straight from UserInputService now, so nothing can swallow E/Q/1-9/Shift/Tab. The ground was
+  also 8 studs too high (Rojo ignored the Baseplate's Position), which buried everything.
+- Trees "turning into lines": trunks are drawn panel by panel like Godot's (16 round, 0.18 m bands, per-panel
+  shades, inner layer, wood), and sheets are the exact panels that came off.
+- Graphics: the Godot world itself is exported (ground, ~240 trees in place, cabin, rocks, clouds, sky, fog, truck,
+  van, every tool model) and uploaded to Roblox automatically by GitHub.
+
+**Now the Godot way:** title screen and settings, first-person arm (Godot's swing arcs), HUD, Getting started,
+TimberMart delivery by van, TimberPhone, the log truck route, felling, logs, crowns, leaves and growing saplings,
+and 30 of the Godot tools: all axes (incl. throwing hatchet, Thunder Axe), five saws, three drills, planer, washer,
+shears and three vacuums, at Godot's numbers.
+
+**Tests:** 123 server + 35 client playtest checks run the real scripts in Lune; CI runs them on every push.
+
+**Not done / check in Studio:** building, machines, mining and the small tools aren't ported (list in
+docs/roblox-style.md). Nothing has been seen in real Studio tonight: please press Play and look at the meshes, the
+arm and how things fly. Parked: reading assets back from CI needs an extra API key permission.

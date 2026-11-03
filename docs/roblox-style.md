@@ -68,13 +68,22 @@ It also covers the Godot rules: taking the hatchet from the chopping block, the 
 and picking up a tool, the double-bit's two hits a swing, and fainting.
 
 ## Not in the Roblox version yet
-- **The rest of the Godot game:** the cabin and its computer, the delivery van and boxes, the hammer and building,
-  machines, rails, drones, the phone, most of the 40-odd tools, saws and felling, weather, the title menu and
-  settings. The Roblox version has the first part of the game, the axes and the truck, built the Godot way.
-- **The world's look:** trees, rocks, the truck and the stall are built from Roblox parts in the Godot colours, not
-  the Godot models themselves. There's no cabin and no grass tufts yet.
-- **The client side** (HUD, arm, shop window, effects) compiles, but only Studio can show it. The playtest drives
-  the server, the way a client would.
+The Roblox version now plays the Godot game's forest part the Godot way: the same world (exported from Godot),
+title screen and settings, first-person arm and HUD, the sounds, the chopping block, the cabin computer and
+TimberMart, the delivery van and boxes, the log truck, the TimberPhone, and these tools: every axe (including the
+throwing hatchet and the Thunder Axe), the bow saw, buck saw, pole saw, two-man crosscut and chainsaw, the three bark
+drills, the planer, the pressure washer, the pruning shears and the three leaf vacuums. Felling, logs, crowns,
+leaves and saplings that grow into trees work too. Still missing:
+- **Building and everything after it:** the hammer, blueprints, machines, wires, power, rails and carts, drones, the
+  oil rig, the truck upgrades and the truck caller. (MachineService, OilService and PowerGrid exist as groundwork,
+  but nothing in the game builds a machine yet.)
+- **Mining:** the pickaxes, sledge, rock and core drills, the detector and dynamite.
+- **The smaller tools:** the leaf rake, leaf blower, watering can and scale.
+- **Bushes** you can snip, and **trophies**.
+- **The world isn't saved:** stumps, felled logs and grown trees come back as they were when the server restarts
+  (your money, tools and orders are saved).
+- **Not checked in Studio yet:** the playtests run the real scripts in Lune without Roblox's physics or renderer,
+  so how the imported meshes look, how things fall and fly, and the feel of the arm still need a look in Studio.
 
 ## Sources
 - [Exitlag: Roblox genres in 2026](https://www.exitlag.com/blog/roblox-game-genres-and-popularity/)
