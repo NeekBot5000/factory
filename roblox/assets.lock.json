@@ -1,15 +1,39 @@
 {
   "GodotTools": {
     "id": "122305679607294",
-    "sha256": "b607f66a84dc9724af844d512c817c351116d352ace1fa371f5bf8ed62bd068a"
+    "sha256": "2a3bee95afa0ead8ff1f1135443dcd53fb9858f9520a6ee37d863511413ec603"
   },
   "GodotTrucks": {
     "id": "128707536945262",
-    "sha256": "7ea0bbb92905b6003965f72e57aabfbfb2dad94957ecd49981613aa5f5d0d3c0"
+    "sha256": "df9ae20f6d5ac2bc74886eb56b9175c9e3ff5402c731417757b8be242c136b76"
   },
   "GodotWorld": {
     "id": "74577339810456",
-    "sha256": "7b415061bdbc44685eb6e8e91eda40999aaa6a3dfad1cc6b558a50dee510563b"
+    "sha256": "5212167a1eb546aeef1d655a92b001a83fe01ebbdd089700019f794062acbfb1"
+  },
+  "SkyBk": {
+    "id": "88616338987174",
+    "sha256": "d8d593b8d4252bb2c373d70b89169598064fd006c4d1f4119bda7e8d93a35cba"
+  },
+  "SkyDn": {
+    "id": "132463313635708",
+    "sha256": "fd1fa2ebb853aabcec656ee87a0c49055b0fe9286874a86424b87b289e2a9d42"
+  },
+  "SkyFt": {
+    "id": "103752761011985",
+    "sha256": "d8d593b8d4252bb2c373d70b89169598064fd006c4d1f4119bda7e8d93a35cba"
+  },
+  "SkyLf": {
+    "id": "99168452743552",
+    "sha256": "d8d593b8d4252bb2c373d70b89169598064fd006c4d1f4119bda7e8d93a35cba"
+  },
+  "SkyRt": {
+    "id": "77591660814221",
+    "sha256": "d8d593b8d4252bb2c373d70b89169598064fd006c4d1f4119bda7e8d93a35cba"
+  },
+  "SkyUp": {
+    "id": "103322617598992",
+    "sha256": "1c988b82b4a076693fa624cc15444d17536b7017e76c69785360e63c6cf2c567"
   },
   "SoundSheet": {
     "id": "118267500209887",
