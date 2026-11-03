@@ -1,0 +1,59 @@
+{
+ "steps": [
+  {
+   "step": "Roblox's render of GodotCrowns",
+   "ok": true,
+   "detail": "Completed"
+  },
+  {
+   "step": "Roblox's 3D version of GodotCrowns",
+   "ok": false,
+   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+  },
+  {
+   "step": "Roblox's render of GodotProps",
+   "ok": false,
+   "detail": "429 {\"errors\":[{\"code\":0,\"message\":\"\"}]}\n"
+  },
+  {
+   "step": "Roblox's 3D version of GodotProps",
+   "ok": false,
+   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+  },
+  {
+   "step": "Roblox's render of GodotTools",
+   "ok": true,
+   "detail": "Completed"
+  },
+  {
+   "step": "Roblox's 3D version of GodotTools",
+   "ok": false,
+   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+  },
+  {
+   "step": "Roblox's render of GodotTrucks",
+   "ok": false,
+   "detail": "429 {\"errors\":[{\"code\":0,\"message\":\"\"}]}\n"
+  },
+  {
+   "step": "Roblox's 3D version of GodotTrucks",
+   "ok": false,
+   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+  },
+  {
+   "step": "Roblox's render of GodotWorld",
+   "ok": false,
+   "detail": "429 {\"errors\":[{\"code\":0,\"message\":\"\"}]}\n"
+  },
+  {
+   "step": "Roblox's 3D version of GodotWorld",
+   "ok": false,
+   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Invalid authentication data provided\"}]}\n"
+  },
+  {
+   "step": "run the game in a Roblox server",
+   "ok": false,
+   "detail": "set ROBLOX_UNIVERSE_ID and ROBLOX_PLACE_ID (repository variables) and ROBLOX_API_KEY"
+  }
+ ]
+}
