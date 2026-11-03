@@ -18,8 +18,8 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
 [x] 8. Machines on top of building: crank, lever, button, conveyor, ramp, piston, rotator, windmill, generator,
        battery, logic, sensors, lamp, sawmill, chipper, planter, sprinkler, feller, smelter, kiln, assembler,
        grabber, sorter, crate, wireless, drill rig, charger
-[ ] 9. Rails and carts, drones, oil, truck upgrades, truck caller
-[ ] 10. Docs, ledger, morning report
+[x] 9. Rails and carts, drones, oil, truck upgrades, truck caller
+[x] 10. Docs, ledger, morning report
 
 ## Done
 [x] Visual check: tools/roblox_view.sh (RobloxView.gd + roblox/tests/lune/dump.luau) renders Godot and the Roblox
@@ -52,5 +52,40 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
     charge hints (46ad2ac); rotator: hammer sticks/lets go, spins powered, saved (latest). The playtest now clears
     up the drill rig, which kept adding chunks and broke the anti-cheat counts in CI run 156.
     Checkpoint 18:53 UTC: 187 server + 38 client checks.
+[x] Rails and minecarts (a16f310): shared Rail module, RailService. Hammer lays / lifts / R turns rails (curves join
+    up as in Godot); carts 1-4 long with the battery cradle, deck machines on the cart's power, Go/Reverse, curves,
+    riders; Rail Layer/Lifter, Switch, Buffer, Cart Unloader, Cart Sensor, Drone Pad; track saved per player. The build
+    grid now snaps to whole metres like Godot's (it was off by half a metre).
+[x] Drones (dfdcf07, 9f3ac36): DroneService + shared Drones: cell, 3 m cruise, five wireless dials, pad pick-up
+    (logs too), too-heavy strain, dials saved; pads charge drones; rotors spin on the client.
+[x] Dynamite (ef72d7a): box of 5, plant on any surface, wire to power, fuse, blast bursts rocks, throws things,
+    hurts, chains to other charges.
+[x] Hammer locks logs; pistons clamp things to the rotator; slippery chute (18b75d9, ba239cc, afd37bc).
+[x] Docs: roblox/README.md (services + tests), docs/roblox-style.md (what's still different) (afd37bc).
+    Final: 210 server + 38 client checks, logic 25, sync, assets - all passing locally.
 
 ## Parked
+- Side-mounted rotators (Godot's _place_on_side, a rotator flat on a wall): not ported, ground only.
+- Removing the superseded MachineService / OilService (+ PowerGrid, OilField and their old playtest block): left in
+  place, since deleting files unattended is out of bounds. Nothing in the game uses them now. Recommend removing.
+
+## Morning report
+GOAL: make the Roblox version look exactly like the Godot game, then port everything still missing.
+HOURS: 14:22-21:15 UTC (about 7 hours of work, then this report).
+
+Done:
+- **Visual parity check:** tools/roblox_view.sh renders both games from the same cameras. Ground, grass, trees,
+  bark, cabin, truck, dock, rocks, bushes and sky now match.
+- **Ported and tested in Lune:** saving the world, small tools, bushes, trophies, all of mining, building and land,
+  and every Godot machine (power, logic, sensors, production, logistics, feller, drill rig, charger, rotator).
+  Also rails and minecarts, drones, dynamite, oil, the bigger trucks and the truck caller.
+- **CI:** green up to run 160 (rails). Run 161 failed only in the Godot ItemTest
+  ("wheelbarrow on the ground, not floating"); that test passed in runs 157-160, and no Godot script changed
+  tonight, so it looks like a physics flake. Runs 162-164 were cancelled by newer pushes; check 165/166.
+
+Open questions for you:
+1. Remove MachineService/OilService/PowerGrid/OilField? Recommendation: yes, they're dead code now.
+2. Side-mounted rotators: worth porting? Recommendation: only if you use them in Godot; it's a placement mode.
+3. Needs Studio: lighting of the imported meshes, physics feel (chute, catapult, dynamite), smoothness of carts and
+   drones (moved by the server at 20 Hz; if they stutter, the fix is client-side smoothing).
+
