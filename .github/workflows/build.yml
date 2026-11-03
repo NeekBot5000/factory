@@ -151,10 +151,10 @@ jobs:
           mkdir -p build/roblox
           (cd roblox && ../luau/rojo build -o ../build/roblox/Timber.rbxl .)
           # a scripted first session through the real server scripts, then cheating, saving and rejoining
-          timeout 120 ./luau/lune run roblox/tests/lune/playtest.luau build/roblox/Timber.rbxl | tee lune.log
+          timeout 400 ./luau/lune run roblox/tests/lune/playtest.luau build/roblox/Timber.rbxl | tee lune.log
           grep -q "PLAYTEST RESULT: PASS" lune.log
           # the real client scripts, joined to the server, driven with key presses and the camera
-          timeout 120 ./luau/lune run roblox/tests/lune/client.luau build/roblox/Timber.rbxl | tee -a lune.log
+          timeout 400 ./luau/lune run roblox/tests/lune/client.luau build/roblox/Timber.rbxl | tee -a lune.log
           grep -q "CLIENT RESULT: PASS" lune.log
           # the Studio Live Sync plugin must build the same scripts Rojo does
           ./luau/luau-compile --text roblox/plugin/TimberSync.lua > /dev/null

@@ -18,6 +18,10 @@ local function check(ok: any, msg: string)
 	end
 end
 local V3 = roblox.Vector3.new
+local W = require("../../src/shared/GodotWorld")
+local function wv(t)
+	return V3(t[1], t[2], t[3])
+end
 
 local A = Harness.boot(place, "server-A")
 A.start()
@@ -44,10 +48,25 @@ for _, t in forest:GetChildren() do
 		table.insert(trees, t)
 	end
 end
-check(#trees == 40, "the test world grows 40 trees (" .. #trees .. ")")
+check(#trees == #W.trees and #trees > 200, "every tree of the Godot forest stands where it does in Godot (" .. #trees .. ")")
+local placed = true
+for k = 1, 5 do
+	local t = W.trees[k]
+	local found = false
+	for _, tr in trees do
+		if (tr.WorldPivot.Position - wv(t.at)).Magnitude < 0.01 and tr:GetAttribute("Bands") == t.bands then
+			found = true
+		end
+	end
+	placed = placed and found
+end
+check(placed, "with its Godot size (bands of bark) and place")
 check(ws:FindFirstChild("Truck") and ws.Truck:FindFirstChild("Bed") and ws.Truck:GetAttribute("State") == "parked", "the log truck is parked by the spawn")
-check(ws:FindFirstChild("Road") ~= nil, "on a dirt road it can drive down")
-check(ws:FindFirstChild("TimberMart") ~= nil and ws.TimberMart:FindFirstChild("Counter") ~= nil, "the TimberMart stall is there")
+check((ws.Truck.WorldPivot.Position - wv(W.truck.at)).Magnitude < 0.01, "in Godot's parking spot beside the cabin")
+check(ws:FindFirstChild("Solids") and #ws.Solids:GetChildren() == #W.solid, "the cabin walls, porch and rocks are solid where Godot's are (" .. #W.solid .. " boxes)")
+local sp = ws:FindFirstChildOfClass("SpawnLocation")
+check(sp and (sp.CFrame.Position - wv(W.spawn.at)).Magnitude < 1, "you start on the cabin porch, like in Godot")
+check(ws:FindFirstChild("TimberMart") ~= nil and ws.TimberMart:FindFirstChild("Computer") ~= nil, "TimberMart is on the computer in the cabin")
 local block = ws:FindFirstChild("ChoppingBlock")
 check(block and block:FindFirstChild("Hatchet") ~= nil, "the chopping block has the hatchet stuck in it")
 check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == 6, "every shop tool has a model (first-person view, tool bar, shop)")
@@ -58,7 +77,7 @@ for _, d in ws:GetDescendants() do
 	end
 end
 check(prompts == 0, "no Roblox prompts: everything is 'look at it and press E', like Godot")
-local spawn = V3(0, 0, 14)
+local spawn = wv(W.spawn.at)
 local nearest, nearestD = nil, math.huge
 for _, t in trees do
 	local d = (t.WorldPivot.Position - spawn).Magnitude
@@ -66,7 +85,7 @@ for _, t in trees do
 		nearest, nearestD = t, d
 	end
 end
-check(nearestD < 45, string.format("a tree is a few steps from the spawn (%d studs)", nearestD))
+check(nearestD < 60, string.format("a tree is a few steps from the spawn (%d studs)", nearestD))
 
 -- ---------------------------------------------------------------- a new player
 local alice = A.join(101, "Alice")
@@ -160,7 +179,7 @@ while ws.Truck:GetAttribute("State") ~= "parked" and waited < 60 do
 end
 local sold = A.last(alice, "Sold")
 check(sold and math.abs(sold - load) < 0.02 and math.abs(data.money - (before + load)) < 0.02, string.format("paid at the mill: +$%.2f", sold or 0))
-check(ws.Truck:GetAttribute("State") == "parked" and (ws.Truck.WorldPivot.Position - V3(-18, 0, 4)).Magnitude < 30, "and the truck comes back and parks")
+check(ws.Truck:GetAttribute("State") == "parked" and (ws.Truck.WorldPivot.Position - wv(W.truck.at)).Magnitude < 0.01, "and the truck comes back and parks in its spot")
 check(alice:GetAttribute("Money") == data.money, "the money counter has the new total")
 tut = A.last(alice, "Tutorial")
 check(tut and tut.i == 5 and string.find(tut.text, "/ $160", 1, true), "step 5: save up for the Double-Bit Axe (with the count)")

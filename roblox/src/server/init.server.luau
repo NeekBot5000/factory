@@ -12,7 +12,7 @@ end
 remotes.Parent = ReplicatedStorage
 
 local services = script:WaitForChild("Services")
-local order = { "DataService", "ToolService", "TutorialService", "EconomyService", "InteractService", "TreeService", "CarryService", "MachineService", "OilService", "TestWorld" }
+local order = { "DataService", "ToolService", "TutorialService", "EconomyService", "InteractService", "TreeService", "CarryService", "MachineService", "OilService", "WorldService", "WorldMeshes" }
 for _, name in order do
 	local svc = require(services:WaitForChild(name)) :: any
 	svc.start()

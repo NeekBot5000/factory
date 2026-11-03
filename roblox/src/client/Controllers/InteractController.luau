@@ -133,7 +133,7 @@ function InteractController.target(): (string, (() -> ())?)
 		end
 		return "", nil
 	end
-	if part.Name == "Counter" and part.Parent and part.Parent.Name == "TimberMart" then
+	if part.Name == "Computer" and part.Parent and part.Parent.Name == "TimberMart" then
 		return "[E] use", ShopController.open
 	end
 	local loose = workspace:FindFirstChild("Loose")

@@ -82,7 +82,9 @@ local function setTool(id: string)
 	local src = models and models:FindFirstChild(id)
 	if id ~= "hands" and src then
 		local m = (src :: Model):Clone()
-		m:ScaleTo(TOOL_SCALE)
+		if not m:GetAttribute("Godot") then
+			m:ScaleTo(TOOL_SCALE)      -- (the Godot models are already the Godot size)
+		end
 		for _, p in m:GetDescendants() do
 			if p:IsA("BasePart") then
 				p.Anchored = true

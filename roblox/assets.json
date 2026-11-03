@@ -5,5 +5,26 @@
     "type": "Audio",
     "name": "Timber sounds",
     "description": "Every sound effect and music note in Timber, in one file."
+  },
+  {
+    "key": "GodotWorld",
+    "file": "models/godot/world.glb",
+    "type": "Model",
+    "name": "Timber world",
+    "description": "The Godot game's meshes for Timber's Roblox version."
+  },
+  {
+    "key": "GodotTrucks",
+    "file": "models/godot/trucks.glb",
+    "type": "Model",
+    "name": "Timber trucks",
+    "description": "The Godot game's meshes for Timber's Roblox version."
+  },
+  {
+    "key": "GodotTools",
+    "file": "models/godot/tools.glb",
+    "type": "Model",
+    "name": "Timber tools",
+    "description": "The Godot game's meshes for Timber's Roblox version."
   }
 ]

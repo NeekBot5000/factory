@@ -49,6 +49,7 @@ end
 
 -- Boots one server. Returns a table with the place, fake services, remote logs and helpers.
 function Harness.boot(placePath: string, jobId: string)
+	require("./clientharness").install()
 	local game = roblox.deserializePlace(fs.readFile(placePath))
 	local workspace = game:GetService("Workspace")
 	local RS = game:GetService("ReplicatedStorage")

@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
+local W = require(ReplicatedStorage.Shared.GodotWorld) :: any
 local DataService = require(script.Parent.DataService)
 local ToolService = require(script.Parent.ToolService)
 local TutorialService = require(script.Parent.TutorialService)
@@ -15,7 +16,6 @@ local EconomyService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local GREEN = "7aff9a"
 local STUDS = Config.StudsPerMetre
-local ROAD = 150          -- studs the truck drives before it's out of sight
 
 -- the CarryService lets go of anything that drives off in the truck (set by CarryService)
 EconomyService.release = function(_part: BasePart) end
@@ -62,20 +62,51 @@ function EconomyService.bedValue(player: Player?): number
 	return v
 end
 
--- drives the truck `dist` studs along its forward direction, easing in and out
-local function drive(t: Model, from: CFrame, dist: number)
+-- Drives the truck along a road (Godot's waypoints, in studs), facing the way it goes: it pulls away gently, keeps to
+-- its speed and slows for the end, like Godot's Truck._drive.
+local function drive(t: Model, points: { Vector3 })
 	local speed = Config.Truck.speed * STUDS
+	local total = 0
+	local seg = {}
+	for k = 1, #points - 1 do
+		local d = (points[k + 1] - points[k]).Magnitude
+		table.insert(seg, d)
+		total += d
+	end
 	local s, v = 0, 0
-	while s < dist do
+	local heading = t:GetPivot().LookVector
+	while s < total do
 		local dt = RunService.Heartbeat:Wait()
-		local want = math.min(speed, math.max(3, (dist - s) * 0.9))
+		local want = math.min(speed, math.max(3, (total - s) * 0.9))
 		if s < 18 then
-			want = math.min(want, 6 + s * 1.2)          -- pull away gently
+			want = math.min(want, 6 + s * 1.2)
 		end
 		v += math.clamp(want - v, -dt * 12, dt * 12)
-		s = math.min(dist, s + v * dt)
-		t:PivotTo(from * CFrame.new(0, 0, -s))
+		s = math.min(total, s + v * dt)
+		-- where along the road that is
+		local k, left = 1, s
+		while k < #seg and left > seg[k] do
+			left -= seg[k]
+			k += 1
+		end
+		local a, b = points[k], points[k + 1]
+		local pos = a + (b - a) * math.clamp(left / math.max(seg[k], 0.001), 0, 1)
+		local dir = (b - a) * Vector3.new(1, 0, 1)
+		if dir.Magnitude > 0.01 then
+			heading = heading:Lerp(dir.Unit, math.min(1, dt * 6))
+		end
+		if heading.Magnitude > 0.01 then
+			t:PivotTo(CFrame.lookAt(pos, pos + heading.Unit))
+		end
 	end
+end
+
+local function route(list: { { number } }): { Vector3 }
+	local out = {}
+	for _, p in list do
+		table.insert(out, Vector3.new(p[1], p[2], p[3]))
+	end
+	return out
 end
 
 function EconomyService.ship(player: Player): boolean
@@ -101,7 +132,7 @@ function EconomyService.ship(player: Player): boolean
 	t:SetAttribute("State", "leaving")
 	remotes.Fx:FireAllClients("horn", t:GetPivot().Position + Vector3.new(0, 4.5, 0), 1, 4)
 	task.spawn(function()
-		drive(t, park, ROAD)
+		drive(t, route(W.truck.out))
 		t:SetAttribute("State", "away")
 		task.wait(Config.Truck.awaySeconds)
 		for _, p in cargo do
@@ -118,9 +149,11 @@ function EconomyService.ship(player: Player): boolean
 				TutorialService.check(who)
 			end
 		end
-		-- back it comes: in from the other end of the road, and parks where it was
+		-- back it comes, round the clearing and into its spot
 		t:SetAttribute("State", "returning")
-		drive(t, park * CFrame.new(0, 0, ROAD), ROAD)
+		local back = route(W.truck.back)
+		t:PivotTo(CFrame.lookAt(back[1], back[2]))
+		drive(t, back)
 		t:PivotTo(park)
 		t:SetAttribute("State", "parked")
 	end)

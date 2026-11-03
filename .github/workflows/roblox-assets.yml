@@ -12,6 +12,7 @@ on:
       - "roblox/assets.json"
       - "roblox/sounds/**"
       - "roblox/images/**"
+      - "roblox/models/godot/**"
   workflow_dispatch:
     inputs:
       publish:
@@ -56,6 +57,15 @@ jobs:
             sleep 5
           done
           exit 1
+
+      - name: Check what Roblox made of the uploaded models
+        continue-on-error: true
+        run: |
+          python3 tools/inspect_roblox_assets.py
+          mkdir -p luau
+          wget -q https://github.com/lune-org/lune/releases/download/v0.10.4/lune-0.10.4-linux-x86_64.zip -O luau/lune.zip
+          unzip -q -o luau/lune.zip -d luau
+          ./luau/lune run roblox/tests/lune/inspect.luau || true
 
       - name: Publish the place
         if: ${{ inputs.publish }}

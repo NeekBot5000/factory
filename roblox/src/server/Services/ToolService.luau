@@ -44,6 +44,21 @@ end
 -- A tool's model: the Handle along its Y axis (held upright, grip at the bottom), the head at the top with its
 -- blade facing forward (-Z). The model's pivot is where the hand holds it.
 function ToolService.build(id: string): Model?
+	-- the Godot game's own model, once it's loaded (WorldMeshes)
+	local models = ReplicatedStorage:FindFirstChild("ToolModels")
+	local godot = models and models:FindFirstChild(id)
+	if godot and godot:GetAttribute("Godot") then
+		local c = (godot :: Model):Clone()
+		for _, p in c:GetDescendants() do
+			if p:IsA("BasePart") then
+				p.Anchored = true
+				p.CanCollide = false
+				p.CanQuery = false
+				p.Massless = true
+			end
+		end
+		return c
+	end
 	local def = (Config.Tools :: any)[id]
 	if not def or not def.look then
 		return nil

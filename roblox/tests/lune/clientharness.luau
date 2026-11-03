@@ -87,6 +87,7 @@ local attrWatch: { { inst: any, name: string, last: any } } = {}
 
 local installed = false
 local function install()
+	-- (also used by the server harness: the Roblox methods Lune lacks)
 	if installed then
 		return
 	end
@@ -240,6 +241,8 @@ local function install()
 		return idOf(self)
 	end)
 end
+
+ClientHarness.install = install
 
 -- Starts a client for `player` (already joined on `server`). Returns the client: press/click/look/frame helpers.
 function ClientHarness.start(server: any, player: any)
