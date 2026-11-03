@@ -155,7 +155,8 @@ local function underPad(m: Model, ground: number): BasePart?
 	local FS = require(script.Parent.FactoryService) :: any
 	local bottom = (m:GetPivot().Position.Y - ground) / M
 	for _, b in FS.within(m, Vector3.new(0, -bottom * 0.5, 0), Vector3.new(sizeOf(m).w * 0.9, bottom + 0.1, sizeOf(m).w * 0.9)) do
-		if b:GetAttribute("Kind") ~= nil and not b:GetAttribute("Stuck") then
+		local isLog = b.Name == "Trunk" and b.Parent ~= nil and b.Parent:GetAttribute("Kind") == "log"
+		if (b:GetAttribute("Kind") ~= nil or isLog) and not b:GetAttribute("Stuck") and not (isLog and b.Parent:GetAttribute("Locked")) then
 			return b
 		end
 	end
