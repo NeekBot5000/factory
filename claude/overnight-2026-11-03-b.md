@@ -62,10 +62,10 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
     hurts, chains to other charges.
 [x] Hammer locks logs; pistons clamp things to the rotator; slippery chute (18b75d9, ba239cc, afd37bc).
 [x] Docs: roblox/README.md (services + tests), docs/roblox-style.md (what's still different) (afd37bc).
-    Final: 210 server + 38 client checks, logic 25, sync, assets - all passing locally.
+[x] Side-mounted rotators (Godot's _place_on_side): aim the hologram at a wall, its table faces out.
+    Final: 211 server + 38 client checks, logic 25, sync, assets - all passing locally.
 
 ## Parked
-- Side-mounted rotators (Godot's _place_on_side, a rotator flat on a wall): not ported, ground only.
 - Removing the superseded MachineService / OilService (+ PowerGrid, OilField and their old playtest block): left in
   place, since deleting files unattended is out of bounds. Nothing in the game uses them now. Recommend removing.
 
@@ -85,7 +85,6 @@ Done:
 
 Open questions for you:
 1. Remove MachineService/OilService/PowerGrid/OilField? Recommendation: yes, they're dead code now.
-2. Side-mounted rotators: worth porting? Recommendation: only if you use them in Godot; it's a placement mode.
-3. Needs Studio: lighting of the imported meshes, physics feel (chute, catapult, dynamite), smoothness of carts and
+2. Needs Studio: lighting of the imported meshes, physics feel (chute, catapult, dynamite), smoothness of carts and
    drones (moved by the server at 20 Hz; if they stutter, the fix is client-side smoothing).
 

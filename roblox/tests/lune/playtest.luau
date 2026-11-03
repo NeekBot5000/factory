@@ -1314,6 +1314,24 @@ do
 	A.remotes.Hammer.OnServerEvent:Fire(alice, r17:FindFirstChildWhichIsA("Part"))
 	task.wait(0.1)
 	check(Rail.at({ x = 15, z = 17 }) == nil and #loose:GetChildren() > n0, "the hammer picks a laid rail up again")
+	-- a rotator can go on the side of something, its spin axis pointing out of the face
+	local dd = A.service("DataService").get(alice)
+	dd.owned.bp_rotator = true
+	local sideAt = V3(45, 4, 50)
+	local nPlans = #ws.Plans:GetChildren()
+	A.remotes.Build.OnServerEvent:Fire(alice, "rotator", roblox.CFrame.new(sideAt) * roblox.CFrame.fromAxisAngle(V3(0, 0, -1), math.pi / 2), 1)
+	task.wait(0.1)
+	local side
+	for _, pl in ws.Plans:GetChildren() do
+		if pl:GetAttribute("Build") == "rotator" then
+			side = pl
+		end
+	end
+	check(#ws.Plans:GetChildren() == nPlans + 1 and side and math.abs(side:GetPivot().UpVector.Y) < 0.05 and math.abs(math.abs(side:GetPivot().UpVector.X) - 1) < 0.05,
+		"a rotator can be built on the side of something, its table facing out")
+	if side then
+		side:Destroy()
+	end
 	-- your track is saved with you
 	local saved = RS.serialize(alice.UserId)
 	check(#saved == 1 and saved[1].kind == "rail" and saved[1].x == 15 and saved[1].z == 12, "the track you laid is saved with you")

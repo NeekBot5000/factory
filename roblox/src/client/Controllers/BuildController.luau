@@ -373,6 +373,31 @@ function BuildController.update()
 	local hit = workspace:Raycast(cam.CFrame.Position, fwd * Builds.REACH * math.max(1, size()) * M, params)
 	local pos = cam.CFrame.Position + fwd * 4 * M
 	valid = false
+	-- a rotator can also go on the side of something (a pillar, a machine, a rock...), its table facing out
+	-- (Godot's Builder._place_on_side)
+	if buildId == "rotator" and hit and math.abs(hit.Normal.Y) < 0.3 and not treeOf(hit.Instance) then
+		local a = math.round(math.atan2(hit.Normal.X, hit.Normal.Z) / (math.pi / 2)) * (math.pi / 2)
+		local n = Vector3.new(math.sin(a), 0, math.cos(a))
+		local p = hit.Position / M
+		local alongAxis = Vector3.new(n.Z, 0, -n.X)
+		local along = p:Dot(alongAxis)
+		p += alongAxis * (math.round(along) - along)
+		p = Vector3.new(p.X, math.max(math.round(p.Y / 0.25) * 0.25, heightAt(p.X * M, p.Z * M) / M + 0.65), p.Z)
+		-- its up (the spin axis) points out of the face
+		local cf = CFrame.new(p * M) * CFrame.fromAxisAngle(Vector3.yAxis:Cross(n).Unit, math.pi / 2)
+		-- room in front of the face for the base and the table
+		local op = OverlapParams.new()
+		op.FilterDescendantsInstances = ignore
+		op.FilterType = Enum.RaycastFilterType.Exclude
+		local land = string.split(player:GetAttribute("Land") :: string? or table.concat(Land.START, ";"), ";")
+		offLand = not Land.owns(land, p * M)
+		valid = #workspace:GetPartBoundsInBox(cf * CFrame.new(0, 0.24 * M, 0), Vector3.new(0.8, 0.36, 0.8) * M, op) == 0 and not offLand
+		onRails = true
+		holo:PivotTo(cf)
+		paint(valid)
+		State.buildHint = hint()
+		return
+	end
 	if hit then
 		pos = hit.Position
 		valid = hit.Normal.Y > 0.75 and not treeOf(hit.Instance)

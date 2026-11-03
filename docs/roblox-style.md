@@ -74,8 +74,7 @@ It covers:
 
 ## What's still different from the Godot game
 Everything in the Godot game now has a Roblox version, built from Godot's own numbers and meshes. These are the
-known gaps:
-- **Side-mounted rotators:** Godot lets you put a rotator flat against a wall. In Roblox they only go on the ground.
+known gaps and differences:
 - **Studio-only checks:** the playtests run the real scripts in Lune, without Roblox's physics or renderer. These
   still need a look in Studio:
   - how the imported meshes look in Roblox's lighting;

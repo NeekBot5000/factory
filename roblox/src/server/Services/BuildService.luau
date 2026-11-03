@@ -175,6 +175,14 @@ local function place(player: Player, id: unknown, cf: unknown, size: unknown)
 		at = Rail.centre(c, Rail.top(Rail.at(c)))
 	end
 	local flat = if look.Magnitude > 0.01 then CFrame.lookAt(at, at + look.Unit) else CFrame.new(at)
+	if id == "rotator" and math.abs((cf :: CFrame).UpVector.Y) < 0.3 then
+		-- a rotator on the side of something: its spin axis points out of the face (Godot's _place_on_side),
+		-- snapped to one of the four directions
+		local up = (cf :: CFrame).UpVector
+		local a = math.round(math.atan2(up.X, up.Z) / (math.pi / 2)) * (math.pi / 2)
+		local n = Vector3.new(math.sin(a), 0, math.cos(a))
+		flat = CFrame.new(at) * CFrame.fromAxisAngle(Vector3.yAxis:Cross(n).Unit, math.pi / 2)
+	end
 	BuildService.make(id :: string, flat, size :: number, player.UserId)
 	remotes.Fx:FireAllClients("thud", at, 1.6)
 end
