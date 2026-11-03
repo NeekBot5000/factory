@@ -317,6 +317,10 @@ Config.Items = {
 		desc = "Plans for an automatic tree feller. Put your saw into it and power it: it saws down the tree in front of it." },
 	bp_wheelbarrow = { name = "Wheelbarrow Blueprint", price = 600, tag = "Hauling", blueprint = true,
 		desc = "Plans for a wheelbarrow: grab its handles and push it along the ground. It carries a big load of bark, ore or short logs." },
+	truck_big = { name = "Big Truck", price = 3500, tag = "Hauling", vehicle = 1,
+		desc = "A wider truck with tall sides: carries twice as much per trip. Your old truck drives off and this one comes back in its place." },
+	truck_hauler = { name = "Log Hauler", price = 14000, tag = "Hauling", vehicle = 2,
+		desc = "The biggest truck there is: a long, deep bed for whole factories' worth of goods. It replaces the truck you have." },
 	phone = { name = "TimberPhone", price = 350, tag = "Pocket-size",
 		desc = "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it." },
 }

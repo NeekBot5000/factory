@@ -29,16 +29,21 @@ ProductionService.KINDS = {
 	battery_cell = { name = "Battery Cell", fuel = 0, res = "", size = { 0.18, 0.32, 0.18 } },
 	rail = { name = "Rail", fuel = 0, res = "", size = { 0.8, 0.12, 1.0 } },
 	curved_rail = { name = "Curved Rail", fuel = 0, res = "", size = { 1.0, 0.12, 1.0 } },
+	oil_barrel = { name = "Barrel of Oil", fuel = 90, res = "", size = { 0.4, 0.6, 0.4 } },
+	fuel_can = { name = "Fuel Can", fuel = 240, res = "", size = { 0.25, 0.35, 0.15 } },
+	plastic = { name = "Plastic Sheet", fuel = 0, res = "", size = { 0.5, 0.03, 0.5 } },
+	lawn_chair = { name = "Lawn Chair", fuel = 0, res = "", size = { 0.5, 0.7, 0.5 } },
+	bucket = { name = "Bucket", fuel = 0, res = "", size = { 0.3, 0.3, 0.3 } },
 }
 ProductionService.RECIPES = {
 	chair = { plank = 2 }, table = { plank = 4, iron_bar = 1 }, lantern = { copper_bar = 1, plank = 1 },
 	cabinet = { plank = 6, copper_bar = 1 }, toy_truck = { plank = 2, iron_bar = 1 }, battery_cell = { copper_bar = 1, iron_bar = 1 },
-	rail = { iron_bar = 1 }, curved_rail = { iron_bar = 1 },
+	rail = { iron_bar = 1 }, curved_rail = { iron_bar = 1 }, lawn_chair = { plastic = 2 }, bucket = { plastic = 1, iron_bar = 1 },
 }
-ProductionService.RECIPE_ORDER = { "chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail", "curved_rail" }
+ProductionService.RECIPE_ORDER = { "chair", "table", "lantern", "cabinet", "toy_truck", "lawn_chair", "bucket", "battery_cell", "rail", "curved_rail" }
 local PART_VALUE = { battery_cell = 1.2, rail = 0.7, curved_rail = 0.7 }
 local MAKES = { rail = 2 }
-local WORK_TIME = { smelter = 3.0, kiln = 4.0, assembler = 3.0 }
+local WORK_TIME = { smelter = 3.0, kiln = 4.0, assembler = 3.0, refinery = 4.0 }
 local PLANK_LEN = 0.55
 
 local function loose(): Instance
@@ -191,7 +196,10 @@ end
 -- ------------------------------------------------------------------ smelter, kiln, assembler
 local function accepts(m: Model, kind: string, item: BasePart): boolean
 	local prod = item:GetAttribute("Product")
-	local res = if item:GetAttribute("Kind") == "ore" then item:GetAttribute("Ore") elseif prod then (ProductionService.KINDS[prod :: string] or {}).res else nil
+	local res = if item:GetAttribute("Kind") == "ore" then item:GetAttribute("Ore") elseif prod == "plastic" then "plastic" elseif prod then (ProductionService.KINDS[prod :: string] or {}).res else nil
+	if kind == "refinery" then
+		return prod == "oil_barrel"
+	end
 	if kind == "smelter" then
 		return res == "copper" or res == "iron"
 	elseif kind == "kiln" then
@@ -237,8 +245,12 @@ local function processor(m: Model, kind: string, dt: number)
 			end
 			local v = valueOf(item)
 			local prod = item:GetAttribute("Product")
-			local res = if item:GetAttribute("Kind") == "ore" then item:GetAttribute("Ore") :: string elseif prod then ProductionService.KINDS[prod :: string].res else ""
-			if kind == "smelter" then
+			local res = if item:GetAttribute("Kind") == "ore" then item:GetAttribute("Ore") :: string elseif prod == "plastic" then "plastic" elseif prod then ProductionService.KINDS[prod :: string].res else ""
+			if kind == "refinery" then
+				-- the oil's worth splits over what comes out, and gains on the way
+				table.insert(q, { out = "fuel_can", value = v * 0.8, color = "ffffff" })
+				table.insert(q, { out = "plastic", value = v * 0.6, color = "ffffff" })
+			elseif kind == "smelter" then
 				table.insert(q, { out = res .. "_bar", value = v * 2.2, color = if res == "copper" then COPPER:ToHex() else "9aa1ab" })
 			elseif kind == "kiln" then
 				table.insert(q, { out = "dry_plank", value = v * 1.4, color = item.Color:ToHex() })
@@ -312,11 +324,29 @@ local function chipper(m: Model)
 	m:SetAttribute("Stock", stock)
 end
 
+-- ------------------------------------------------------------------ the oil pump (OilPump.gd)
+local function oilPump(m: Model, dt: number)
+	local Mining = require(ReplicatedStorage.Shared.Mining) :: any
+	local at = m:GetPivot().Position
+	local r = Mining.richness("oil", at.X, at.Z)
+	if r < 0.12 then
+		return
+	end
+	local fill = (m:GetAttribute("Fill") :: number? or 0) + (1 / 25) * r * dt
+	if fill >= 1 then
+		fill = 0
+		ProductionService.product("oil_barrel", 8, Color3.new(1, 1, 1), outCF(m, -0.85, 0.4), m:GetPivot().LookVector * 1.0 * M, m:GetAttribute("Owner") :: number)
+		remotes.Fx:FireAllClients("thud", at, 0.7, -4)
+		award(m, "first_oil")
+	end
+	m:SetAttribute("Fill", fill)
+end
+
 -- E on the assembler: the next recipe (what was collected for the old one is used up)
 function ProductionService.cycle(m: Model)
 	local r = ((m:GetAttribute("Recipe") :: number? or 0) + 1) % #ProductionService.RECIPE_ORDER
 	m:SetAttribute("Recipe", r)
-	for res in pairs({ plank = 1, iron_bar = 1, copper_bar = 1 }) do
+	for res in pairs({ plank = 1, iron_bar = 1, copper_bar = 1, plastic = 1 }) do
 		m:SetAttribute("Have_" .. res, nil)
 	end
 	m:SetAttribute("HaveValue", 0)
@@ -332,8 +362,10 @@ function ProductionService.step(dt: number)
 		local id = m:GetAttribute("Build")
 		if id == "sawmill" then
 			sawmill(m, dt)
-		elseif id == "smelter" or id == "kiln" or id == "assembler" then
+		elseif id == "smelter" or id == "kiln" or id == "assembler" or id == "refinery" then
 			processor(m, id :: string, dt)
+		elseif id == "oil_pump" then
+			oilPump(m, dt)
 		elseif id == "chipper" then
 			chipper(m)
 		end

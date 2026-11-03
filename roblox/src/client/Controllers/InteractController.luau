@@ -378,15 +378,28 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 			return "Smelter  ·  copper or iron ore in, bars out" .. (if n > 0 then string.format("  ·  %d waiting", n) else ""), false
 		end
 		return "Kiln  ·  planks in, dried planks out" .. (if n > 0 then string.format("  ·  %d drying", n) else ""), false
+	elseif id == "oil_pump" then
+		local Mining = require(game:GetService("ReplicatedStorage").Shared.Mining) :: any
+		local at = m:GetPivot().Position
+		local r = Mining.richness("oil", at.X, at.Z)
+		if r < 0.12 then
+			return "Oil Pump  ·  no oil under here - look for it with the ore detector", false
+		end
+		return string.format("Oil Pump  ·  %s oil  ·  barrel %d%% full  ·  %s", if r > 0.6 then "rich" elseif r > 0.3 then "some" else "a little",
+			math.floor((m:GetAttribute("Fill") :: number? or 0) * 100), if powered then "pumping" else "power it to pump"), false
+	elseif id == "refinery" then
+		local q = m:GetAttribute("Queue") :: string? or ""
+		local n = if q == "" then 0 else #string.split(q, ";")
+		return "Refinery  ·  a barrel of oil in, a fuel can and a plastic sheet out" .. (if n > 0 then string.format("  ·  %d waiting", n) else ""), false
 	elseif id == "chipper" then
 		return string.format("Chipper  ·  %d%% of a bag    drop bark or leaves in the hopper", math.floor((m:GetAttribute("Stock") :: number? or 0) / 4 * 100)), false
 	elseif id == "assembler" then
-		local order = { "chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail", "curved_rail" }
-		local names = { chair = "Chair", table = "Table", lantern = "Lantern", cabinet = "Cabinet", toy_truck = "Toy Truck", battery_cell = "Battery Cell", rail = "Rail", curved_rail = "Curved Rail" }
+		local order = { "chair", "table", "lantern", "cabinet", "toy_truck", "lawn_chair", "bucket", "battery_cell", "rail", "curved_rail" }
+		local names = { chair = "Chair", table = "Table", lantern = "Lantern", cabinet = "Cabinet", toy_truck = "Toy Truck", lawn_chair = "Lawn Chair", bucket = "Bucket", battery_cell = "Battery Cell", rail = "Rail", curved_rail = "Curved Rail" }
 		local recipes = { chair = { { "plank", 2 } }, table = { { "plank", 4 }, { "iron_bar", 1 } }, lantern = { { "copper_bar", 1 }, { "plank", 1 } },
 			cabinet = { { "plank", 6 }, { "copper_bar", 1 } }, toy_truck = { { "plank", 2 }, { "iron_bar", 1 } }, battery_cell = { { "copper_bar", 1 }, { "iron_bar", 1 } },
-			rail = { { "iron_bar", 1 } }, curved_rail = { { "iron_bar", 1 } } }
-		local resName = { plank = "planks", copper_bar = "copper bars", iron_bar = "iron bars" }
+			rail = { { "iron_bar", 1 } }, curved_rail = { { "iron_bar", 1 } }, lawn_chair = { { "plastic", 2 } }, bucket = { { "plastic", 1 }, { "iron_bar", 1 } } }
+		local resName = { plank = "planks", copper_bar = "copper bars", iron_bar = "iron bars", plastic = "plastic" }
 		local r = order[(m:GetAttribute("Recipe") :: number? or 0) + 1]
 		local parts = {}
 		for _, need in recipes[r] do

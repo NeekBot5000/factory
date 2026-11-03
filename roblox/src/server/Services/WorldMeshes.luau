@@ -193,11 +193,23 @@ local function trucks()
 	local pivot = truck:GetPivot()
 	local van = workspace:FindFirstChild("Van") :: Model?
 	local vanPivot = if van then van:GetPivot() else CFrame.new()
+	-- (each truck you can own: "ship" is the log truck, "ship1" the Big Truck, "ship2" the Log Hauler; the one
+	-- you have rides on the truck, the others wait in ServerStorage)
+	local spare = Instance.new("Folder")
+	spare.Name = "TruckMeshes"
+	spare.Parent = game:GetService("ServerStorage")
 	for _, p in m:GetChildren() do
 		local base = WorldMeshes.parseName(p.Name)
-		if string.find(base, "^ship") then
-			(p :: BasePart).CFrame = pivot * (p :: BasePart).CFrame
-			p.Parent = truck
+		local lvl = string.match(base, "^ship(%d?)$")
+		if lvl then
+			p:SetAttribute("TruckLevel", tonumber(lvl) or 0)
+			p:SetAttribute("Local", (p :: BasePart).CFrame)
+			if (tonumber(lvl) or 0) == (truck:GetAttribute("Level") or 0) then
+				(p :: BasePart).CFrame = pivot * (p :: BasePart).CFrame
+				p.Parent = truck
+			else
+				p.Parent = spare
+			end
 		elseif van and string.find(base, "^van") then
 			(p :: BasePart).CFrame = vanPivot * (p :: BasePart).CFrame
 			p.Parent = van
@@ -215,6 +227,22 @@ local function trucks()
 			d.Transparency = 1
 		end
 	end
+	-- a new truck: its meshes on, the old ones off
+	truck:GetAttributeChangedSignal("Level"):Connect(function()
+		local lvl = truck:GetAttribute("Level") or 0
+		local piv = truck:GetPivot()
+		for _, p in truck:GetChildren() do
+			if p:GetAttribute("TruckLevel") ~= nil and p:GetAttribute("TruckLevel") ~= lvl then
+				p.Parent = spare
+			end
+		end
+		for _, p in spare:GetChildren() do
+			if p:GetAttribute("TruckLevel") == lvl then
+				(p :: BasePart).CFrame = piv * (p:GetAttribute("Local") :: CFrame)
+				p.Parent = truck
+			end
+		end
+	end)
 	m:Destroy()
 end
 

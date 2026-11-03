@@ -196,6 +196,46 @@ local function makeTruck()
 	truck.Parent = workspace
 end
 
+-- A bigger truck (Godot's Truck.BEDS: the Big Truck and the Log Hauler): its bed, and its stand-in, grow
+local BEDS = { { 2.2, 0.7, 4.0 }, { 2.6, 1.4, 4.6 }, { 2.9, 1.9, 5.2 } }
+local CAB = { "2f7d4a", "2e6fb3", "b3262e" }
+function WorldService.setTruckLevel(level: number)
+	local truck = workspace:FindFirstChild("Truck") :: Model?
+	if not truck then
+		return
+	end
+	local park = truck:GetPivot()
+	local b = BEDS[level + 1]
+	local w, h, len = b[1], b[2], b[3]
+	local function set(name: string, size: Vector3, at: Vector3)
+		local p = truck:FindFirstChild(name) :: BasePart?
+		if p then
+			p.Size = size * M
+			p.CFrame = park * CFrame.new(at * M)
+		end
+	end
+	set("Floor", Vector3.new(w, 0.15, len), Vector3.new(0, 1.0, 1.0))
+	set("SideL", Vector3.new(0.12, h + 0.1, len), Vector3.new(-w / 2 + 0.02, 1.1 + h / 2, 1.0))
+	set("SideR", Vector3.new(0.12, h + 0.1, len), Vector3.new(w / 2 - 0.02, 1.1 + h / 2, 1.0))
+	set("Tail", Vector3.new(w, h + 0.1, 0.12), Vector3.new(0, 1.1 + h / 2, 1.0 + len / 2))
+	local lv = W.truck.levels and W.truck.levels[level]
+	local bed = truck:FindFirstChild("Bed") :: BasePart?
+	if bed then
+		if level == 0 then
+			bed.Size = Vector3.new(2.0, 1.4, 3.8) * M
+			bed.CFrame = park * CFrame.new(Vector3.new(0, 1.75, 1.0) * M)
+		elseif lv then
+			bed.Size = v3(lv.size)
+			bed.CFrame = park * CFrame.new(v3(lv.center))
+		end
+	end
+	local cab = truck:FindFirstChild("Cab") :: BasePart?
+	if cab then
+		cab.Color = Color3.fromHex(CAB[level + 1])
+	end
+	truck:SetAttribute("Level", level)
+end
+
 -- TimberMart lives on the computer in the cabin (E on it opens the shop)
 local function makeComputer()
 	local m = Instance.new("Model")

@@ -22,6 +22,7 @@ var collide: Array = []           # solid boxes: {p, b, size}
 var computer: Array = []          # the computer's boxes (E on it opens TimberMart)
 var rocks: Array = []             # each rock: {at (studs), s (Godot's size), ore, hidden, hp}
 var bushes: Array = []            # each bush: {at, r (studs), color}
+var truck_beds: Array = []        # the bigger trucks' beds: {center, size} (studs, the truck's own frame)
 
 
 func _ready() -> void:
@@ -55,6 +56,15 @@ func _ready() -> void:
 		for mi in (t as Node3D).find_children("*", "MeshInstance3D", true, false):
 			if (mi as MeshInstance3D).visible:
 				_add_mesh("trucks", role, mi, inv * (mi as MeshInstance3D).global_transform)
+	# the bigger trucks you can buy (Big Truck, Log Hauler): ship1, ship2, around the same origin
+	for lvl in [1, 2]:
+		var t2: Truck = main.call("_new_truck", lvl)
+		var inv2: Transform3D = t2.global_transform.affine_inverse()
+		for mi in t2.find_children("*", "MeshInstance3D", true, false):
+			if (mi as MeshInstance3D).visible:
+				_add_mesh("trucks", "ship%d" % lvl, mi, inv2 * (mi as MeshInstance3D).global_transform)
+		truck_beds.append({"center": t2.to_local(t2.rear_point()) * S, "size": Vector3(Truck.BEDS[lvl].x - 0.2, 1.0 + Truck.BEDS[lvl].y * 0.5, Truck.BEDS[lvl].z - 0.2) * S})
+		t2.free()
 	_marker("trucks")
 	var nt := _write("trucks", out + "/trucks.glb")
 
@@ -632,7 +642,10 @@ func _write_luau(main: Node3D) -> void:
 	L.append("\t}, back = {")
 	for q in main.get("_truck_back"):
 		L.append("\t\t%s," % _v3((q as Vector3) * S))
-	L.append("\t}, bed = { center = %s, size = %s } }," % [_v3(tr.to_local(tr.rear_point()) * S), _v3(Vector3(1.9, 1.0, 2.6) * S)])
+	L.append("\t}, bed = { center = %s, size = %s }, levels = {" % [_v3(tr.to_local(tr.rear_point()) * S), _v3(Vector3(1.9, 1.0, 2.6) * S)])
+	for b in truck_beds:
+		L.append("\t\t{ center = %s, size = %s }," % [_v3(b.center), _v3(b.size)])
+	L.append("\t} },")
 	# the TimberMart van: in over the crest, U-turn, back onto the loading dock, then out again
 	var van: Truck = main.van
 	for route in [["inn", van.route_in], ["dock", van.route_dock], ["out", van.route_out]]:

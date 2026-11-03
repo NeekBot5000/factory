@@ -134,14 +134,14 @@ local function route(list: { { number } }): { Vector3 }
 	return out
 end
 
-function EconomyService.ship(player: Player): boolean
+function EconomyService.ship(player: Player, force: boolean?): boolean
 	local t = truck()
 	if not t or t:GetAttribute("State") ~= "parked" then
 		return false
 	end
 	local cargo = inBed(t)
-	if #cargo == 0 then
-		return false
+	if #cargo == 0 and not force then
+		return false         -- (an empty truck stays put; it only drives off empty to be swapped for a bigger one)
 	end
 	local owed: { [number]: number } = {}
 	for _, p in cargo do
@@ -192,8 +192,17 @@ function EconomyService.ship(player: Player): boolean
 				TutorialService.check(who)
 			end
 		end
-		-- back it comes, round the clearing and into its spot
+		-- back it comes, round the clearing and into its spot (a bigger one, if one's been bought)
 		t:SetAttribute("State", "returning")
+		local want = EconomyService.truckLevel()
+		if upgrading or want ~= (t:GetAttribute("Level") or 0) then
+			upgrading = false
+			if want ~= (t:GetAttribute("Level") or 0) then
+				local WorldService = require(script.Parent.WorldService) :: any
+				WorldService.setTruckLevel(want)
+				remotes.Notify:FireAllClients("Your new truck is on its way", "8fd0ff")
+			end
+		end
 		local back = route(W.truck.back)
 		t:PivotTo(CFrame.lookAt(back[1], back[2]))
 		drive(t, back)
@@ -223,11 +232,44 @@ local function buy(player: Player, item: unknown)
 		remotes.Notify:FireClient(player, "Not enough money", "ff7a7a")
 		return
 	end
+	if def.vehicle then
+		-- trucks don't come in a box: the old one drives off (selling what's on it) and the new one comes back
+		EconomyService.addMoney(player, -def.price)
+		data.owned[item] = true
+		DataService.publish(player)
+		remotes.Notify:FireClient(player, "Bought the " .. def.name, "8fd0ff")
+		EconomyService.upgradeTruck(player)
+		return
+	end
 	EconomyService.addMoney(player, -def.price)
 	table.insert(data.orders, { item = item, status = "processing" })
 	DataService.publish(player)
 	remotes.Notify:FireClient(player, "Ordered " .. def.name, "8fd0ff")
 	TutorialService.check(player)
+end
+
+-- the truck that comes back is the best one anyone here owns (Godot's Game.truck_level)
+function EconomyService.truckLevel(): number
+	local best = 0
+	for _, p in game:GetService("Players"):GetPlayers() do
+		local d = DataService.get(p)
+		if d then
+			best = math.max(best, if d.owned.truck_hauler then 2 elseif d.owned.truck_big then 1 else 0)
+		end
+	end
+	return best
+end
+
+local upgrading = false
+function EconomyService.upgradeTruck(player: Player)
+	local t = workspace:FindFirstChild("Truck") :: Model?
+	if not t then
+		return
+	end
+	upgrading = true
+	if t:GetAttribute("State") == "parked" then
+		EconomyService.ship(player, true)
+	end
 end
 
 -- the TimberPhone: send the truck off from anywhere
@@ -244,6 +286,14 @@ function EconomyService.start()
 		return EconomyService.bedValue(player) > 0
 	end
 	remotes.Buy.OnServerEvent:Connect(buy)
+	-- someone who owns a bigger truck joins: it's the one that's parked (or comes back next)
+	table.insert(DataService.onLoaded, function()
+		local t = workspace:FindFirstChild("Truck") :: Model?
+		local want = EconomyService.truckLevel()
+		if t and t:GetAttribute("State") == "parked" and want ~= (t:GetAttribute("Level") or 0) then
+			(require(script.Parent.WorldService) :: any).setTruckLevel(want)
+		end
+	end)
 end
 
 return EconomyService

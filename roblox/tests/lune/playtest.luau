@@ -1219,6 +1219,26 @@ do
 	check(asm:GetAttribute("Recipe") == 1, "E on the assembler changes what it makes")
 end
 
+-- ---------------------------------------------------------------- the bigger trucks
+do
+	local WS = A.service("WorldService")
+	local truck = ws.Truck
+	local bed0 = truck.Bed.Size
+	WS.setTruckLevel(1)
+	local bed1 = truck.Bed.Size
+	WS.setTruckLevel(2)
+	local bed2 = truck.Bed.Size
+	check(bed1.Z > bed0.Z and bed2.Z > bed1.Z and bed2.Y > bed0.Y, "the Big Truck and the Log Hauler have bigger beds (Godot's)")
+	WS.setTruckLevel(0)
+	if truck:GetAttribute("State") == "parked" then
+		data.money += 4000
+		A.remotes.Buy.OnServerEvent:Fire(alice, "truck_big")
+		task.wait(0.2)
+		check(data.owned.truck_big and count("Notify", alice, "Bought the Big Truck") == 1 and truck:GetAttribute("State") ~= "parked",
+			"buying the Big Truck: the old one drives off, and the new one will come back in its place")
+	end
+end
+
 -- ---------------------------------------------------------------- the leaf vacuums
 do
 	Tools.grant(alice, "vacuum")
