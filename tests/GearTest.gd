@@ -148,7 +148,9 @@ func _ready() -> void:
 		var bits: Array[Chip] = []
 		for i in 8:
 			var c: Chip = main.spawn_chip(t1.piece_data(0, [Vector2i(i, 0)]), "oak", Vector3.ZERO)
-			c.global_position = open + Vector3(randf_range(-1.2, 1.2), 0.4, -3.5 + randf_range(-0.5, 0.5))
+			# half on each side (random spots could all land on one side, and then one nozzle rightly takes them all)
+			var side := -1.0 if i % 2 == 0 else 1.0
+			c.global_position = open + Vector3(side * randf_range(0.6, 1.2), 0.4, -3.5 + randf_range(-0.5, 0.5))
 			c.linear_velocity = Vector3.ZERO
 			bits.append(c)
 		await frames(10)
