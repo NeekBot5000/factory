@@ -1,5 +1,29 @@
 # Setting up Timber for Roblox
 
+## Fastest: Live Sync (one-time setup, then nothing)
+Every push to GitHub shows up in your open Studio place within about 10 seconds. There's nothing to download each
+time, and nothing to run.
+
+**Once:**
+1. Download `TimberSync.lua`: on GitHub open `roblox/plugin/TimberSync.lua`, then click the **Download raw file**
+   button (the arrow at the top right of the code).
+2. In Studio, go to the **Plugins** tab > **Plugins Folder**. A folder opens. Move `TimberSync.lua` into it.
+3. Restart Studio.
+
+**Each time you test:**
+1. Open your Timber place (or **New > Baseplate**).
+2. Click **Plugins > Timber > Live Sync** so it lights up. Studio remembers this.
+   - The first time, Studio asks whether the plugin may use **github.com**, **api.github.com** and
+     **raw.githubusercontent.com**. Click **Allow** for each.
+3. The Output window says `[Timber] Synced to 1a2b3c4` within a few seconds. Press **Play**.
+
+After a push, Output prints a new "Synced" line. Stop the test and press Play again to get the new version. A sync
+only happens while you're editing, never in the middle of a Play test.
+
+What it changes: the three code folders (ReplicatedStorage > Shared, ServerScriptService > Server and
+StarterPlayerScripts > Client) are replaced, and the lighting and baseplate settings are applied. Anything else you
+build in the place stays. **Ctrl+Z** undoes a sync. **Sync Now** pulls once without turning Live Sync on.
+
 ## Quick start: no installs (2 minutes)
 1. Get `Timber.rbxl`, the whole game as one Roblox place file:
    - **On GitHub:** **Actions** > the latest green **Test & build** run > **Artifacts** > **Timber-roblox**.
