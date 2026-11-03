@@ -581,6 +581,30 @@ do
 	check(c.Parent == nil and t:GetAttribute("CrownCut") and saps >= 1, "snipped bare, the last clump holds a sapling or two (" .. saps .. ")")
 end
 
+-- ---------------------------------------------------------------- the company sign
+do
+	local sign = ws:FindFirstChild("CompanySign")
+	local SS = A.service("SignService")
+	local function width()
+		local w = 0
+		for _, p in sign:GetDescendants() do
+			if p:IsA("BasePart") then
+				w = math.max(w, p.Size.X)
+			end
+		end
+		return w
+	end
+	check(sign ~= nil and #sign:GetChildren() >= 2, "the company sign stands by the road: a scrap of board on a stake")
+	check(SS.tierFor(0) == 0 and SS.tierFor(499) == 0 and SS.tierFor(500) == 1 and SS.tierFor(10000) == 3 and SS.tierFor(250000) == 5, "Godot's tiers: 500, 2,500, 10,000, 50,000, 200,000 earned")
+	local w0 = width()
+	local before = count("Notify", nil, "company sign got an upgrade")
+	local saved = data.earned
+	data.earned = 3000
+	SS.step()
+	check(width() > w0 and count("Notify", nil, "company sign got an upgrade") == before + 1, "earn more and it grows, with Godot's toast")
+	data.earned = saved
+end
+
 -- ---------------------------------------------------------------- the leaf vacuums
 do
 	Tools.grant(alice, "vacuum")

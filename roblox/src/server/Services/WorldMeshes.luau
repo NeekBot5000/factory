@@ -23,6 +23,31 @@ function WorldMeshes.parseName(name: string): (string, string, Color3?)
 	return base, string.match(base, "^([%a]+)") or base, Color3.fromHex(hexs :: string)
 end
 
+-- the image a ground chunk's texture points at (its Decal asset, loaded once), or nil
+local groundTextures: { [string]: string } = {}
+local function groundTexture(ck: string): string?
+	if groundTextures[ck] then
+		return groundTextures[ck]
+	end
+	local ok, Assets = pcall(require, ReplicatedStorage.Shared.Assets)
+	local id = ok and (Assets :: any)["Ground_" .. ck]
+	if not id then
+		return nil
+	end
+	local got, container = pcall(function()
+		return InsertService:LoadAsset(tonumber(id) :: number)
+	end)
+	local decal = got and container and (container :: Instance):FindFirstChildWhichIsA("Decal", true)
+	local tex = if decal then (decal :: Decal).Texture else nil
+	if got and container then
+		(container :: Instance):Destroy()
+	end
+	if tex then
+		groundTextures[ck] = tex
+	end
+	return tex
+end
+
 -- Loads an uploaded glb and returns its MeshParts placed in studs around Godot's origin (or nil).
 function WorldMeshes.load(key: string): Model?
 	local ok, Assets = pcall(require, ReplicatedStorage.Shared.Assets)
@@ -77,6 +102,15 @@ function WorldMeshes.load(key: string): Model?
 		p.Material = Enum.Material.SmoothPlastic
 		if color then
 			p.Color = color
+		end
+		if kind == "ground" then
+			-- the forest floor: Godot paints it with a shader (lighter and darker patches, drier areas, grain, pebbles
+			-- on the dirt); its colours are baked into an image a chunk (ExportRobloxWorld), put on with TextureID
+			local ck = string.match(base, "^ground_(%-?%d+_%-?%d+)")
+			local tex = ck and groundTexture(ck)
+			if tex then
+				(p :: MeshPart).TextureID = tex
+			end
 		end
 		if p:IsA("MeshPart") then
 			p.TextureID = ""
@@ -271,9 +305,39 @@ local function sky()
 	s.Parent = Lighting
 end
 
+-- props: things the game puts up and changes (the company sign's tiers, ...), each a Model around its own origin
+-- in ServerStorage.Props, named after its group ("sign_3")
+local function props()
+	local m = WorldMeshes.load("GodotProps")
+	if not m then
+		return
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Props"
+	local byName: { [string]: Model } = {}
+	for _, p in m:GetChildren() do
+		local base = WorldMeshes.parseName(p.Name)
+		local name = string.gsub(base, "_p%d+$", "")
+		if string.find(name, "^marker") then
+			continue
+		end
+		local model = byName[name]
+		if not model then
+			model = Instance.new("Model")
+			model.Name = name
+			model.WorldPivot = CFrame.new()
+			model.Parent = folder
+			byName[name] = model
+		end
+		p.Parent = model
+	end
+	folder.Parent = game:GetService("ServerStorage")
+	m:Destroy()
+end
+
 function WorldMeshes.start()
 	task.spawn(function()
-		for _, f in { sky, world, crowns, trucks, tools } do
+		for _, f in { sky, world, crowns, trucks, tools, props } do
 			local ok, err = pcall(f)
 			if not ok then
 				warn("[Timber] Godot meshes: " .. tostring(err))

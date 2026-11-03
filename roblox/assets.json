@@ -35,6 +35,13 @@
     "description": "The Godot game's meshes for Timber's Roblox version."
   },
   {
+    "key": "GodotProps",
+    "file": "models/godot/props.glb",
+    "type": "Model",
+    "name": "Timber props",
+    "description": "Things Timber's Roblox version puts up and changes (the company sign's tiers...), from the Godot game."
+  },
+  {
     "key": "SkyUp",
     "file": "images/sky_up.png",
     "type": "Decal",
@@ -75,5 +82,117 @@
     "type": "Decal",
     "name": "Timber sky rt",
     "description": "The Godot game's sky, one face of the skybox."
+  },
+  {
+    "key": "Ground_1_1",
+    "file": "images/ground/ground_1_1.png",
+    "type": "Decal",
+    "name": "Timber ground 1_1",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_1_2",
+    "file": "images/ground/ground_1_2.png",
+    "type": "Decal",
+    "name": "Timber ground 1_2",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_1_3",
+    "file": "images/ground/ground_1_3.png",
+    "type": "Decal",
+    "name": "Timber ground 1_3",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_1_4",
+    "file": "images/ground/ground_1_4.png",
+    "type": "Decal",
+    "name": "Timber ground 1_4",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_2_1",
+    "file": "images/ground/ground_2_1.png",
+    "type": "Decal",
+    "name": "Timber ground 2_1",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_2_2",
+    "file": "images/ground/ground_2_2.png",
+    "type": "Decal",
+    "name": "Timber ground 2_2",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_2_3",
+    "file": "images/ground/ground_2_3.png",
+    "type": "Decal",
+    "name": "Timber ground 2_3",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_2_4",
+    "file": "images/ground/ground_2_4.png",
+    "type": "Decal",
+    "name": "Timber ground 2_4",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_3_1",
+    "file": "images/ground/ground_3_1.png",
+    "type": "Decal",
+    "name": "Timber ground 3_1",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_3_2",
+    "file": "images/ground/ground_3_2.png",
+    "type": "Decal",
+    "name": "Timber ground 3_2",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_3_3",
+    "file": "images/ground/ground_3_3.png",
+    "type": "Decal",
+    "name": "Timber ground 3_3",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_3_4",
+    "file": "images/ground/ground_3_4.png",
+    "type": "Decal",
+    "name": "Timber ground 3_4",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_4_1",
+    "file": "images/ground/ground_4_1.png",
+    "type": "Decal",
+    "name": "Timber ground 4_1",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_4_2",
+    "file": "images/ground/ground_4_2.png",
+    "type": "Decal",
+    "name": "Timber ground 4_2",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_4_3",
+    "file": "images/ground/ground_4_3.png",
+    "type": "Decal",
+    "name": "Timber ground 4_3",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
+  },
+  {
+    "key": "Ground_4_4",
+    "file": "images/ground/ground_4_4.png",
+    "type": "Decal",
+    "name": "Timber ground 4_4",
+    "description": "The forest floor's colours from the Godot game, one 55 m square of ground, for Timber's Roblox version."
   }
 ]

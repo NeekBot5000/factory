@@ -41,6 +41,7 @@ func _ready() -> void:
 		_walk(child, main, tree_index)
 	_marker("world")
 	var nw := _write("world", out + "/world.glb")
+	await _bake_ground(main, ProjectSettings.globalize_path("res://roblox/images/ground"))
 	_marker("crowns")
 	var nc := _write("crowns", out + "/crowns.glb")
 
@@ -69,15 +70,31 @@ func _ready() -> void:
 	_marker("tools")
 	var nl := _write("tools", out + "/tools.glb")
 
+	# ---------------------------------------------------------------- props: things the game shows and changes
+	# (each around its own origin: the company sign's six tiers, ...)
+	groups.clear()
+	for tier in 6:
+		var sign := CompanySign.new()
+		holder.add_child(sign)
+		sign.tier = tier
+		sign.call("_build")
+		for mi in sign.find_children("*", "MeshInstance3D", true, false):
+			if not (mi as Node).is_queued_for_deletion():
+				_add_mesh("props", "sign_%d" % tier, mi, sign.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
+		sign.free()
+	_marker("props")
+	var np := _write("props", out + "/props.glb")
+
 	# ---------------------------------------------------------------- where everything is
 	_write_luau(main)
-	print("EXPORT world %d, crowns %d, trucks %d, tools %d mesh groups" % [nw, nc, nt, nl])
+	print("EXPORT world %d, crowns %d, trucks %d, tools %d, props %d mesh groups" % [nw, nc, nt, nl, np])
 	get_tree().quit()
 
 
 # what each top-level node of the world is, and what to call its meshes
 func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
-	if n is Player or n is CanvasLayer or n is Truck or n is WorldEnvironment or n is DirectionalLight3D:
+	if n is Player or n is CanvasLayer or n is Truck or n is WorldEnvironment or n is DirectionalLight3D or n is CompanySign:
+		# (the company sign grows as you earn: it's in props.glb, tier by tier, and the game puts up the right one)
 		return
 	if n is ToolItem:
 		# the old hatchet stuck in the chopping block (each player's client hides it once they own a hatchet)
@@ -250,18 +267,84 @@ func _chunk_of(p: Vector3) -> String:
 	return "%d_%d" % [int(floor(p.x / CHUNK)) + 3, int(floor(p.z / CHUNK)) + 3]
 
 
+# The ground: one mesh a chunk, textured. Roblox can't run Godot's terrain shader (soft lighter and darker patches,
+# drier areas, grain, pebbles on the dirt), so the shader's colours are baked into a texture per chunk (_bake_ground)
+# and the mesh carries UVs onto it: u, v = x, z across the chunk plus a margin.
+const GROUND_MARGIN := 2.0
+const GROUND_PX := 1024
+var ground_chunks := {}           # "X_Z" -> Vector2 (the chunk's corner, metres)
+
+
+func _ground_uv(p: Vector3, corner: Vector2) -> Vector2:
+	var span := CHUNK + GROUND_MARGIN * 2.0
+	return Vector2((p.x - corner.x + GROUND_MARGIN) / span, (p.z - corner.y + GROUND_MARGIN) / span)
+
+
 func _add_terrain(mi: MeshInstance3D) -> void:
 	var arr := mi.mesh.surface_get_arrays(0)
 	var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 	var nrm: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
-	var cols: PackedColorArray = arr[Mesh.ARRAY_COLOR]
 	var xf := mi.global_transform
 	for k in range(0, v.size() - 2, 3):
 		var center := xf * ((v[k] + v[k + 1] + v[k + 2]) / 3.0)
-		var g := _group("world", "terrain_" + _chunk_of(center), _q(cols[k]))
+		var ck := _chunk_of(center)
+		var corner := Vector2((floor(center.x / CHUNK)) * CHUNK, (floor(center.z / CHUNK)) * CHUNK)
+		ground_chunks[ck] = corner
+		var g := _group("world", "ground_" + ck, "ffffff")
+		if not g.has("uvs"):
+			g["uvs"] = []
 		for i in 3:
-			(g.verts as Array).append(xf * v[k + i] * S)
+			var wp := xf * v[k + i]
+			(g.verts as Array).append(wp * S)
 			(g.norms as Array).append(nrm[k + i])
+			(g.uvs as Array).append(_ground_uv(wp, corner))
+
+
+## Renders each ground chunk from straight above with the terrain's own shader, unlit and at full detail, into
+## roblox/images/ground/ground_X_Z.png: exactly the colours Godot paints on the ground.
+func _bake_ground(main: Node3D, dir: String) -> void:
+	DirAccess.make_dir_recursive_absolute(dir)
+	var code: String = Ground.TERRAIN % Ground.NOISE
+	code = code.replace("render_mode diffuse_lambert;", "render_mode unshaded, cull_disabled;")
+	code = code.replace("float near = 1.0 - smoothstep(18.0, 55.0, dist);", "float near = 1.0;")
+	var sh := Shader.new()
+	sh.code = code
+	var mat := ShaderMaterial.new()
+	mat.shader = sh
+	mat.set_shader_parameter("detail", 1.0)
+	var terrain: Node = main.get("terrain")
+	for c in terrain.get_children():
+		if c is MeshInstance3D:
+			(c as MeshInstance3D).material_override = mat
+			(c as MeshInstance3D).layers = 1 << 19
+	var vp := SubViewport.new()
+	vp.size = Vector2i(GROUND_PX, GROUND_PX)
+	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	vp.transparent_bg = false
+	add_child(vp)
+	var cam := Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	cam.size = CHUNK + GROUND_MARGIN * 2.0
+	cam.cull_mask = 1 << 19
+	cam.near = 1.0
+	cam.far = 600.0
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color("4f8a35")
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	cam.environment = env
+	vp.add_child(cam)
+	cam.make_current()
+	for ck in ground_chunks.keys():
+		var corner: Vector2 = ground_chunks[ck]
+		var mid := corner + Vector2(CHUNK, CHUNK) * 0.5
+		# image right = +x, image down = +z
+		cam.transform = Transform3D(Basis(Vector3(1, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)), Vector3(mid.x, 300.0, mid.y))
+		for k in 3:
+			await RenderingServer.frame_post_draw
+		vp.get_texture().get_image().save_png("%s/ground_%s.png" % [dir, ck])
+	print("  ground: %d textures" % ground_chunks.size())
+	vp.queue_free()
 
 
 func _add_multimesh(mmi: MultiMeshInstance3D) -> void:
@@ -304,6 +387,8 @@ func _write(glb: String, path: String) -> int:
 			arrays.resize(Mesh.ARRAY_MAX)
 			arrays[Mesh.ARRAY_VERTEX] = verts.slice(start, start + count)
 			arrays[Mesh.ARRAY_NORMAL] = norms.slice(start, start + count)
+			if g.has("uvs"):
+				arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array(g.uvs).slice(start, start + count)
 			var am := ArrayMesh.new()
 			am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 			var mi := MeshInstance3D.new()
@@ -343,6 +428,9 @@ func _write_luau(main: Node3D) -> void:
 	# the player's start: on the porch, looking out
 	var p: Player = main.player
 	L.append("\tspawn = { at = %s, yaw = %.3f }," % [_v3(p.spawn_xform.origin * S), p.spawn_xform.basis.get_euler().y])
+	for c in main.get_children():
+		if c is CompanySign:
+			L.append("\tsign = { at = %s, yaw = %.3f }," % [_v3((c as Node3D).global_position * S), (c as Node3D).global_rotation.y])
 	var block: Vector3 = main.get("BLOCK_AT")
 	block.y = main.terrain.height_at(block.x, block.z)
 	L.append("\tblock = %s," % _v3(block * S))
