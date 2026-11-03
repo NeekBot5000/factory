@@ -84,6 +84,10 @@ def main() -> int:
     user = os.environ.get("ROBLOX_USER_ID", "")
     if not dry and (not key or not user):
         print("ROBLOX_API_KEY and ROBLOX_USER_ID aren't set: nothing uploaded (see roblox/SETUP.md).")
+        if os.environ.get("REQUIRE_KEY"):
+            print("::error::The ROBLOX_API_KEY secret is empty here. Add it under Settings > Secrets and variables >"
+                  " Actions > Secrets > New repository secret (not an Environment, Codespaces or Dependabot secret).")
+            return 1
         return 0
     changed = 0
     for a in wanted:

@@ -31,7 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-      ROBLOX_USER_ID: ${{ vars.ROBLOX_USER_ID || secrets.ROBLOX_USER_ID }}
+      # (a user id isn't secret: the default is Timber's owner, from the API key)
+      ROBLOX_USER_ID: ${{ vars.ROBLOX_USER_ID || secrets.ROBLOX_USER_ID || '1199254307' }}
+      # a run started by hand fails loudly when the key is missing; asset pushes just skip
+      REQUIRE_KEY: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
 
