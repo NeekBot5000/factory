@@ -64,6 +64,9 @@ Config.Tools = {
 	bucksaw = { name = "Buck Saw", price = 280, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.4, hold = true, kind = "saw", speed = 0.8, fell = false, buck = true, tag = "Long",
 		desc = "A long framed saw for lying logs only - it can't fell a tree. One cut splits the whole log into neat carryable rounds.",
 		look = { handle = 1.6, head = { 0.1, 0.6, 2.6 }, headColor = { 150, 110, 60 }, handleColor = { 120, 90, 60 } } },
+	pole_saw = { name = "Pole Saw", price = 380, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "polesaw", reach = 5.5, hold = true, kind = "polesaw", tag = "Long reach",
+		desc = "A curved saw on a long pole. Hold it up in the leaves of a standing tree to cut the whole crown off: the leaves, and a sapling or two, come raining down.",
+		look = { handle = 5.0, head = { 0.08, 0.5, 1.0 }, headColor = { 190, 196, 206 }, handleColor = { 150, 120, 80 } } },
 	crosscut = { name = "Two-Man Crosscut", price = 1600, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.5, hold = true, kind = "saw", speed = 0.9, big = true, clean = 1.2, tag = "Huge",
 		desc = "A giant old-fashioned blade, slow but steady: the only hand saw that gets through the ancient trees deep in the woods. Its clean cut makes logs worth 20% more.",
 		look = { handle = 1.4, head = { 0.1, 0.5, 3.6 }, headColor = { 190, 196, 206 }, handleColor = { 120, 80, 50 } } },
@@ -73,10 +76,14 @@ Config.Tools = {
 }
 -- Godot's saw times (Player.gd): seconds of sawing to fell an average tree (radius 0.38 m; bigger takes longer),
 -- and to cut through a log; logs up to 3 m can be carried; the buck saw cuts rounds of 7 bands
-Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7 }
+Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7, crownTime = 1.8, crownReach = 2.2 }
+-- a clump of leaves off a crown (Godot's Leaf: cheap, but there are lots) and the saplings that fall with it
+-- (Godot's Sapling: put it down on open ground and leave it, it roots after 1.5 s and is a full tree in 5 minutes)
+Config.Leaf = { value = 0.05 }
+Config.Sapling = { rest = 1.5, growTime = 300 }
 -- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "crosscut", "chainsaw" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "chainsaw", "crosscut", "phone" }
+Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "phone" }
 
 -- things you can buy that aren't tools (Godot's SHOP entries in "other")
 Config.Items = {

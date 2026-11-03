@@ -296,6 +296,20 @@ function WorldService.start()
 	choppingBlock()
 end
 
+-- a sapling has grown into a full tree (Godot's Sapling._become_tree: a new ForestTree of its kind, Godot's sizes)
+function WorldService.grow(species: string, at: Vector3): Model?
+	local forest = workspace:FindFirstChild("Forest")
+	if not forest or not (Config.Species :: any)[species] then
+		return nil
+	end
+	local rng = Random.new()
+	makeTree(forest, species, at, rng:NextNumber(0.3, 0.46), rng:NextInteger(26, 40), rng, rng:NextNumber(0, 2 * math.pi), true)
+	local made = forest:GetChildren()
+	local tree = made[#made] :: Model
+	tree:SetAttribute("Grown", true)
+	return tree
+end
+
 -- the Godot meshes have been uploaded (Shared.Assets has their ids): the world will show them
 function WorldService.meshesExpected(): boolean
 	local ok, Assets = pcall(require, ReplicatedStorage.Shared.Assets)

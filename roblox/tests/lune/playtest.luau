@@ -515,6 +515,71 @@ do
 		task.wait(0.1)
 		check(count("Fx", nil, "lightning") == fx0 + 1, "and it can't strike again until it has recharged")
 	end
+	-- the pole saw: held up in the leaves for 1.8 s, the crown comes off; the leaves rain down, with a sapling or two
+	do
+		local pt, pb, pr = freshTree(15)
+		Tools.grant(alice, "pole_saw")
+		task.wait(1.3)
+		A.stand(alice, pb + V3(pr + 6, 5, 0))
+		local top = pb + V3(pr, pt:GetAttribute("Height") - 3, 0)
+		-- (the Godot crown meshes don't load in Lune: give this tree a crown part named the way they are)
+		if not pt:FindFirstChild("Crown") then
+			local crowns = ws:FindFirstChild("GodotCrowns") or roblox.Instance.new("Model")
+			crowns.Name = "GodotCrowns"
+			crowns.Parent = ws
+			local c = roblox.Instance.new("Part")
+			c.Size = V3(9, 6, 9)
+			c.CFrame = roblox.CFrame.new(pb + V3(0, pt:GetAttribute("Height") + 2, 0))
+			c.Position = c.CFrame.Position
+			c.Color = roblox.Color3.fromHex("4f9a3c")
+			c:SetAttribute("GodotName", "crown_" .. tostring(pt:GetAttribute("Index")))
+			c.Parent = crowns
+		end
+		local start = A.remotes.SawStart.OnServerEvent
+		local sawn = A.remotes.Sawn.OnServerEvent
+		start:Fire(alice, pt.Trunk)
+		task.wait(0.5)
+		sawn:Fire(alice, pt.Trunk, top)
+		task.wait(0.1)
+		check(not pt:GetAttribute("CrownCut"), "the pole saw needs Godot's 1.8 s in the leaves")
+		start:Fire(alice, pt.Trunk)
+		task.wait(Cfg.Saw.crownTime * 0.85)
+		sawn:Fire(alice, pt.Trunk, top)
+		task.wait(0.1)
+		local nLeaves, nSaplings, sap = 0, 0, nil
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "leaf" and c:GetAttribute("Owner") == 101 and c:GetAttribute("Value") == 0.05 then
+				nLeaves += 1
+			elseif c:GetAttribute("Kind") == "sapling" then
+				nSaplings += 1
+				sap = c
+			end
+		end
+		check(pt:GetAttribute("CrownCut") and #A.service("LogService").crownParts(pt) == 0, "the crown comes off the standing tree")
+		check(nLeaves >= 4, string.format("its leaves come down as clumps worth $0.05 each (%d)", nLeaves))
+		check(nSaplings >= 1 and nSaplings <= 2 and sap:GetAttribute("Species") == pt:GetAttribute("Species"),
+			string.format("with a sapling or two of the tree's kind (%d)", nSaplings))
+		if sap then
+			-- put down on open ground and left there, it roots, then grows into a full tree
+			local WS = A.service("WorldService")
+			local x, z = pb.X + 20, pb.Z + 20
+			sap.CFrame = roblox.CFrame.new(x, WS.heightAt(x, z) + 0.2, z)
+			sap.Position = sap.CFrame.Position
+			task.wait(Cfg.Sapling.rest + 0.8)
+			check(sap:GetAttribute("Rooted") and sap.Anchored, "a sapling left on the ground takes root")
+			local before = #ws.Forest:GetChildren()
+			sap:SetAttribute("Grow", Cfg.Sapling.growTime - 0.1)
+			task.wait(0.8)
+			local grown = nil
+			for _, t in ws.Forest:GetChildren() do
+				if t:GetAttribute("Grown") then
+					grown = t
+				end
+			end
+			check(sap.Parent == nil and grown ~= nil and #ws.Forest:GetChildren() == before + 1 and grown:GetAttribute("Species") == pt:GetAttribute("Species"),
+				"and after five minutes it's a full-size tree of its kind")
+		end
+	end
 	-- the phone: bought like anything else, it never goes in your hand, and it sends the truck off from anywhere
 	data.money += 400
 	A.remotes.Buy.OnServerEvent:Fire(alice, "phone")

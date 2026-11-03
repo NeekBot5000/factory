@@ -87,9 +87,8 @@ local function makeLog(src: Model, g: BarkGrid.Grid, j0: number, j1: number, bas
 	return log
 end
 
--- the crown of a standing tree (the Godot mesh, or the stand-in parts) goes with the log
-local function moveCrown(tree: Model, log: Model)
-	local trunk = trunkOf(log) :: BasePart
+-- a standing tree's crown: its Godot mesh parts, or the stand-in parts
+function LogService.crownParts(tree: Model): { BasePart }
 	local parts: { BasePart } = {}
 	local crowns = workspace:FindFirstChild("GodotCrowns")
 	local idx = tree:GetAttribute("Index")
@@ -108,6 +107,14 @@ local function moveCrown(tree: Model, log: Model)
 			end
 		end
 	end
+	return parts
+end
+
+-- the crown of a standing tree goes with the log
+local function moveCrown(tree: Model, log: Model)
+	local trunk = trunkOf(log) :: BasePart
+	local parts = LogService.crownParts(tree)
+	local standin = tree:FindFirstChild("Crown")
 	for _, p in parts do
 		p.Anchored = false
 		p.Massless = true
@@ -233,6 +240,140 @@ function LogService.split(log: Model, cuts: { number }): { Model }
 end
 
 -- the client's saw is through: check it, then fell / cut / buck
+-- ------------------------------------------------------------------ the pole saw
+local MAX_LEAVES = 400
+local leaves: { BasePart } = {}
+
+local function looseFolder(): Instance
+	local f = workspace:FindFirstChild("Loose")
+	if not f then
+		f = Instance.new("Folder")
+		f.Name = "Loose"
+		f.Parent = workspace
+	end
+	return f
+end
+
+-- a clump of leaves (Godot's Leaf): a squashed little ball in the crown's green, a touch lighter or not
+local function leaf(at: Vector3, color: Color3, owner: number?): BasePart
+	local size = 0.12 + math.random() * 0.08
+	local p = Instance.new("Part")
+	p.Name = "Leaves"
+	p.Shape = Enum.PartType.Ball
+	p.Size = Vector3.one * size * 1.6 * M
+	p.CFrame = CFrame.new(at) * CFrame.Angles(math.random() * 6.3, math.random() * 6.3, 0)
+	p.Color = color:Lerp(color:Lerp(Color3.new(1, 1, 1), 0.15), math.random())
+	p.Material = Enum.Material.SmoothPlastic
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.CustomPhysicalProperties = PhysicalProperties.new(0.3, 0.6, 0.1)
+	p:SetAttribute("Kind", "leaf")
+	p:SetAttribute("Value", Config.Leaf.value)
+	if owner then
+		p:SetAttribute("Owner", owner)
+	end
+	p.Parent = looseFolder()
+	p.AssemblyLinearVelocity = Vector3.new(math.random() * 2 - 1, math.random() - 0.5, math.random() * 2 - 1) * M
+	p.AssemblyAngularVelocity = Vector3.new(math.random() * 6 - 3, math.random() * 6 - 3, math.random() * 6 - 3)
+	table.insert(leaves, p)
+	while #leaves > MAX_LEAVES do
+		local old = table.remove(leaves, 1)
+		if old and old.Parent and not old:GetAttribute("HeldBy") then
+			old:Destroy()
+		end
+	end
+	return p
+end
+
+-- a sapling (Godot's Sapling): a stem, two leafy blobs and a clod of earth, `scale` times the size
+function LogService.buildSprout(root: BasePart, species: string, scale: number)
+	for _, c in root:GetChildren() do
+		if c:IsA("BasePart") then
+			c:Destroy()
+		end
+	end
+	local green = Color3.fromHex(if species == "pine" or species == "cedar" then "2f6b3a" else "6aa846")
+	local s = scale * M
+	local upright = root.CFrame * CFrame.Angles(0, 0, math.rad(-90))     -- (the clod is a cylinder on its side)
+	local function piece(name: string, shape: Enum.PartType, size: Vector3, off: Vector3, color: Color3)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Shape = shape
+		p.Size = size
+		p.CFrame = upright * CFrame.new(off) * (if shape == Enum.PartType.Cylinder then CFrame.Angles(0, 0, math.rad(90)) else CFrame.identity)
+		p.Color = color
+		p.Material = Enum.Material.SmoothPlastic
+		p.CanCollide = false
+		p.Massless = true
+		p.Anchored = root.Anchored
+		p.Parent = root
+		if not root.Anchored then
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = root
+			w.Part1 = p
+			w.Parent = p
+		end
+	end
+	piece("Stem", Enum.PartType.Cylinder, Vector3.new(0.3 * s, 0.035 * s, 0.035 * s), Vector3.new(0, 0.15 * s, 0), Color3.fromHex("6b4a32"))
+	piece("Leaf", Enum.PartType.Ball, Vector3.one * 0.18 * s, Vector3.new(0.04 * s, 0.3 * s, 0), green)
+	piece("Leaf", Enum.PartType.Ball, Vector3.one * 0.14 * s, Vector3.new(-0.04 * s, 0.26 * s, 0.03 * s), green)
+end
+
+local function sapling(at: Vector3, species: string): BasePart
+	-- the clod of earth is the sapling (what you grab); the sprout rides on it
+	local root = Instance.new("Part")
+	root.Name = "Sapling"
+	root.Shape = Enum.PartType.Cylinder
+	root.Size = Vector3.new(0.08 * M, 0.14 * M, 0.14 * M)
+	root.CFrame = CFrame.new(at) * CFrame.Angles(0, 0, math.rad(90))
+	root.Color = Color3.fromHex("5a3d28")
+	root.Material = Enum.Material.SmoothPlastic
+	root:SetAttribute("Kind", "sapling")
+	root:SetAttribute("Species", species)
+	root:SetAttribute("Grow", 0)
+	LogService.buildSprout(root, species, 1)
+	root.Parent = looseFolder()
+	return root
+end
+
+-- Pole saw: the crown comes off a standing tree (Godot's ForestTree.cut_crown / Foliage.drop_all). Every clump of
+-- leaves rains down (2 to 6 a blob), with a sapling or two of the tree's kind.
+function LogService.cutCrown(tree: Model, player: Player?): boolean
+	if tree:GetAttribute("Log") or tree:GetAttribute("Felled") or tree:GetAttribute("CrownCut") then
+		return false
+	end
+	local parts = LogService.crownParts(tree)
+	if #parts == 0 then
+		return false
+	end
+	local owner = if player then player.UserId else nil
+	local centre = Vector3.zero
+	for _, p in parts do
+		centre += p.Position
+		-- a clump of leaves for every couple of metres of crown, spread through it
+		local n = math.clamp(math.floor(p.Size.Magnitude / M * 1.2), 2, 12)
+		for _ = 1, n do
+			local off = Vector3.new(math.random() - 0.5, math.random() - 0.5, math.random() - 0.5) * p.Size * 0.8
+			leaf(p.CFrame:PointToWorldSpace(off), p.Color, owner)
+		end
+		remotes.Fx:FireAllClients("rustle", p.Position, 0.7, 2)
+		p:Destroy()
+	end
+	centre /= #parts
+	local standin = tree:FindFirstChild("Crown")
+	if standin then
+		standin:Destroy()
+	end
+	local base = tree:GetPivot().Position
+	for _ = 1, math.random(1, 2) do
+		local a = math.random() * 2 * math.pi
+		sapling(Vector3.new(base.X + math.cos(a) * 1.4 * M, centre.Y - 2.5 * M, base.Z + math.sin(a) * 1.4 * M), tree:GetAttribute("Species") :: string or "oak")
+	end
+	tree:SetAttribute("CrownCut", true)
+	remotes.Fx:FireAllClients("timber", centre, 1.4, -4)
+	return true
+end
+
 local function sawn(player: Player, target: unknown, at: unknown)
 	if typeof(target) ~= "Instance" or typeof(at) ~= "Vector3" then
 		return
@@ -244,6 +385,16 @@ local function sawn(player: Player, target: unknown, at: unknown)
 	local id = ToolService.current(player)
 	local tool = (Config.Tools :: any)[id]
 	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+	if m and tool and tool.kind == "polesaw" and head and (head.Position - (at :: Vector3)).Magnitude <= tool.reach * M + 5 then
+		-- up in the leaves of a standing tree, for Godot's 1.8 s
+		local s = started[player]
+		local high = m:GetPivot():PointToObjectSpace(at :: Vector3).Y > (m:GetAttribute("Height") :: number) - Config.Saw.crownReach * M
+		if s and s.target == m and os.clock() - s.t >= Config.Saw.crownTime * 0.8 and high then
+			started[player] = nil
+			LogService.cutCrown(m, player)
+		end
+		return
+	end
 	if not m or not tool or tool.kind ~= "saw" or not head or (head.Position - (at :: Vector3)).Magnitude > tool.reach * M + 5 then
 		return
 	end

@@ -179,6 +179,10 @@ function InteractController.target(): (string, (() -> ())?)
 	if loose and part.Parent and part.Parent:IsA("BasePart") and part.Parent.Parent == loose then
 		sheet = part.Parent :: BasePart
 	end
+	if loose and sheet.Parent == loose and sheet:GetAttribute("Rooted") then
+		-- a sapling that has taken root: how far it has grown (Godot's Sapling.hint_text)
+		return string.format("%d%%", math.floor((sheet:GetAttribute("Grow") :: number? or 0) / Config.Sapling.growTime * 100)), nil
+	end
 	if loose and sheet.Parent == loose and sheet:IsA("BasePart") and not sheet.Anchored and not sheet:GetAttribute("HeldBy") then
 		local value = sheet:GetAttribute("Value")
 		return if typeof(value) == "number" then string.format("[E] grab    $%.2f", value) else "[E] grab", function()

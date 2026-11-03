@@ -45,6 +45,12 @@ local POSES = {
 		{ Vector3.new(-0.08, -0.04, 0.05), Vector3.new(-6, 3, 0) },
 		{ Vector3.new(-0.1, -0.06, -0.12), Vector3.new(-8, 0, 0) },
 	},
+	-- the pole saw: held up high, pushing and pulling up in the leaves
+	polesaw = {
+		{ Vector3.new(-0.05, -0.06, 0), Vector3.new(0, 5, 0) },
+		{ Vector3.new(-0.06, -0.05, 0.07), Vector3.new(2, 4, 0) },
+		{ Vector3.new(-0.07, -0.02, -0.12), Vector3.new(4, 2, 0) },
+	},
 	-- draw the spud back, then push it in under the bark
 	thrust = {
 		{ Vector3.new(-0.02, 0.0, 0.08), Vector3.new(4, 14, 0) },
@@ -240,7 +246,7 @@ local function target(def: any): (CFrame, number, number)
 		local hitP, hitR = base + P[3][1], P[3][2]
 		local p, r = restP, restR
 		local t = State.swing
-		if anim == "saw" then
+		if anim == "saw" or anim == "polesaw" then
 			-- Godot: back and forth while it cuts (the chainsaw just pushes in, buzzing)
 			if State.sawing then
 				if State.tool == "chainsaw" then
@@ -391,6 +397,7 @@ function ViewModel.start()
 		if toolModel then
 			local inArm = if def.anim == "thrust" or def.anim == "saw" then CFrame.new(0, -0.02 * M, 0)
 				elseif def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0)
+				elseif def.anim == "polesaw" then CFrame.Angles(math.rad(30), 0, 0)
 				else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)
 			toolModel:PivotTo(world * TOOL_ROOT * inArm)
 			local glow = toolModel:FindFirstChild("Glow", true) :: PointLight?

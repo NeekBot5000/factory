@@ -362,6 +362,41 @@ local function lightning(at: Vector3)
 end
 ToolController.lightning = lightning
 
+-- the standing tree whose crown is along your aim within `reach` metres, and the spot (the pole saw). The leaves
+-- don't stop rays, so this walks along the aim line: inside a crown means within 2 m of the trunk's line, from
+-- 2.2 m below its top to 3 m above it. A trunk in the way stops it.
+function ToolController.crownAt(reach: number): (Model?, Vector3?)
+	local cam = workspace.CurrentCamera
+	local from, dir = cam.CFrame.Position, cam.CFrame.LookVector
+	local hit = ToolController.aim(reach * M)
+	local stop = if hit then (hit.Position - from).Magnitude else reach * M
+	local near = {}
+	for _, t in CollectionService:GetTagged("Tree") do
+		if t:IsA("Model") and not t:GetAttribute("Log") and not t:GetAttribute("Felled") and not t:GetAttribute("CrownCut") then
+			local d = t:GetPivot().Position - from
+			if Vector2.new(d.X, d.Z).Magnitude < (reach + 3) * M then
+				table.insert(near, t)
+			end
+		end
+	end
+	if #near == 0 then
+		return nil, nil
+	end
+	local dist = 0.5 * M
+	while dist <= stop do
+		local at = from + dir * dist
+		for _, t in near do
+			local loc = t:GetPivot():PointToObjectSpace(at)
+			local h = t:GetAttribute("Height") :: number or 20
+			if Vector2.new(loc.X, loc.Z).Magnitude < 2 * M and loc.Y > h - Config.Saw.crownReach * M and loc.Y < h + 3 * M then
+				return t, at
+			end
+		end
+		dist += 0.25 * M
+	end
+	return nil, nil
+end
+
 local function startSwing()
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if State.swing >= 0 or State.equipT < 1 or State.uiOpen or State.fainted or not hum or hum.Health <= 0 or State.thrown then
@@ -472,7 +507,41 @@ function ToolController.start()
 		local d = def()
 		State.sawing = false
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		local on = pressing and d.hold and not State.uiOpen and not State.fainted and hum ~= nil and hum.Health > 0
+		local alive = pressing and not State.uiOpen and not State.fainted and hum ~= nil and hum.Health > 0
+		if d.kind == "polesaw" then
+			-- the pole saw: held up in the leaves of a standing tree (or the top of its trunk) for 1.8 s, the whole
+			-- crown comes off (Godot's _polesaw_step)
+			local tree, at = nil, nil
+			if alive then
+				tree, at = ToolController.crownAt(d.reach)
+			end
+			if not tree or not at then
+				State.sawProgress = math.max(0, State.sawProgress - dt * 2)
+				if State.sawProgress <= 0 then
+					sawTarget = nil
+				end
+			else
+				State.sawing = true
+				if tree ~= sawTarget then
+					sawTarget = tree
+					State.sawProgress = 0
+					remotes.SawStart:FireServer(tree:FindFirstChild("Trunk"))
+				end
+				State.sawProgress += dt / Config.Saw.crownTime
+				sawFx -= dt
+				if sawFx <= 0 then
+					sawFx = 0.12
+					Sfx.play("saw", 1 + math.random() * 0.2, -8)
+					burst(at, -Vector3.yAxis, Color3.fromHex("6aa846"), 5, 3)
+				end
+				if State.sawProgress >= 1 then
+					State.sawProgress = 0
+					sawTarget = nil
+					remotes.Sawn:FireServer(tree:FindFirstChild("Trunk"), at)
+				end
+			end
+		end
+		local on = alive and d.hold and d.kind ~= "polesaw"
 		local hit = if on then ToolController.aim(d.reach * M) else nil
 		local m = hit and treeOf(hit.Instance)
 		local canFell = d.fell ~= false
@@ -484,7 +553,9 @@ function ToolController.start()
 			tell("giant", "Too thick for this saw - it needs a two-man crosscut, or a chainsaw")
 			blocked = true
 		end
-		if not hit or not m or blocked then
+		if d.kind == "polesaw" then
+			-- (done above)
+		elseif not hit or not m or blocked then
 			State.sawProgress = math.max(0, State.sawProgress - dt * 2)
 			if State.sawProgress <= 0 then
 				sawTarget = nil

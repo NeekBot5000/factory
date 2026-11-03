@@ -213,7 +213,7 @@ function Harness.boot(placePath: string, jobId: string)
 		RaycastParams = { new = function() return {} end },
 		Random = {
 			new = function(seed)
-				local s = seed
+				local s = seed or math.random(1, 2 ^ 30)       -- (Roblox seeds it itself when given none)
 				local function nxt()
 					s = (s * 1103515245 + 12345) % 2147483648
 					return s / 2147483648
@@ -250,7 +250,10 @@ function Harness.boot(placePath: string, jobId: string)
 		__kick = function(p, reason)
 			table.insert(server.kicked, { player = p, reason = reason })
 		end,
-		warn = function() end,
+		-- (a server warning is shown: it's how a swallowed error says what went wrong)
+		warn = function(...)
+			print("[server warn]", ...)
+		end,
 	}, { __index = _G })
 
 	function server.service(name: string)
@@ -266,6 +269,12 @@ function Harness.boot(placePath: string, jobId: string)
 				pcall(function()
 					if p:IsA("BasePart") then
 						p.Position = p.CFrame.Position
+						-- (Lune has no default velocity: nothing moves here, so it's still)
+						if not pcall(function()
+							return p.AssemblyLinearVelocity
+						end) then
+							p.AssemblyLinearVelocity = roblox.Vector3.new(0, 0, 0)
+						end
 					end
 				end)
 			end
