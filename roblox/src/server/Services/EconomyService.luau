@@ -42,7 +42,7 @@ end
 -- Ship: sells every loose thing in the truck bed that belongs to this player (the value lives in an attribute
 -- the server set when it made the part, so a client can't change it).
 local function ship(player: Player)
-	local truck = workspace:FindFirstChild("Truck_" .. player.UserId)
+	local truck = workspace:FindFirstChild("Truck_" .. player.UserId) or workspace:FindFirstChild("Truck")
 	if not truck then
 		return
 	end
@@ -85,6 +85,13 @@ function EconomyService.start()
 	end
 	remotes.Ship.OnServerEvent:Connect(ship)
 	remotes.Buy.OnServerEvent:Connect(buy)
+	-- the truck's "Ship" prompt (a ProximityPrompt fires on the server, with the player who used it)
+	local ProximityPromptService = game:GetService("ProximityPromptService")
+	ProximityPromptService.PromptTriggered:Connect(function(prompt, player)
+		if prompt.ActionText == "Ship to the mill" then
+			ship(player)
+		end
+	end)
 end
 
 return EconomyService

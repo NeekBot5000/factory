@@ -34,7 +34,7 @@ local function deepCopy(t: any): any
 end
 
 local function retry<T>(f: () -> T): (boolean, T?)
-	for attempt = 1, 4 do
+	for attempt = 1, if RunService:IsStudio() then 1 else 4 do
 		local ok, res = pcall(f)
 		if ok then
 			return true, res
@@ -58,6 +58,12 @@ local function load(player: Player)
 			return old
 		end)
 	end)
+	if not ok and RunService:IsStudio() then
+		-- usually "Enable Studio Access to API Services" is off: play on without saving
+		warn("Timber: saving is off in this Studio session (Game Settings > Security > Enable Studio Access to API Services)")
+		profiles[player] = deepCopy(TEMPLATE)
+		return
+	end
 	if not ok or data == nil or (data :: any)._lock.job ~= game.JobId then
 		player:Kick("Your save is still being used by another server. Please rejoin in a minute.")
 		return
