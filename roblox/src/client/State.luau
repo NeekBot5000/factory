@@ -16,6 +16,7 @@ local State = {
 	thrown = false,         -- the throwing hatchet is out of your hand
 	catch = 0,              -- 1 -> 0 just after catching it
 	sawing = false,
+	drilling = false,       -- a bark drill is running
 	comboT = 0,
 	charge = 0,             -- the Thunder Axe: 0 -> 1 while you hold the button
 	thunderCd = 0,          -- seconds until it can strike again

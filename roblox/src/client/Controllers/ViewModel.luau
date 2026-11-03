@@ -45,6 +45,12 @@ local POSES = {
 		{ Vector3.new(-0.08, -0.04, 0.05), Vector3.new(-6, 3, 0) },
 		{ Vector3.new(-0.1, -0.06, -0.12), Vector3.new(-8, 0, 0) },
 	},
+	-- the drills: pushed in against the trunk, buzzing
+	drill = {
+		{ Vector3.new(-0.02, 0.02, 0), Vector3.new(2, 4, 0) },
+		{ Vector3.new(-0.04, 0.02, -0.06), Vector3.new(0, 2, 0) },
+		{ Vector3.new(-0.05, 0.02, -0.12), Vector3.new(0, 0, 0) },
+	},
 	-- the pole saw: held up high, pushing and pulling up in the leaves
 	polesaw = {
 		{ Vector3.new(-0.05, -0.06, 0), Vector3.new(0, 5, 0) },
@@ -246,7 +252,13 @@ local function target(def: any): (CFrame, number, number)
 		local hitP, hitR = base + P[3][1], P[3][2]
 		local p, r = restP, restR
 		local t = State.swing
-		if anim == "saw" or anim == "polesaw" then
+		if anim == "drill" then
+			if State.drilling then
+				p = hitP + Vector3.new(math.random() * 2 - 1, math.random() * 2 - 1, 0) * 0.004
+				r = hitR
+			end
+			t = -1
+		elseif anim == "saw" or anim == "polesaw" then
 			-- Godot: back and forth while it cuts (the chainsaw just pushes in, buzzing)
 			if State.sawing then
 				if State.tool == "chainsaw" then
@@ -395,7 +407,7 @@ function ViewModel.start()
 		local world = camera.CFrame * armCf * jolt
 		model:PivotTo(world)
 		if toolModel then
-			local inArm = if def.anim == "thrust" or def.anim == "saw" then CFrame.new(0, -0.02 * M, 0)
+			local inArm = if def.anim == "thrust" or def.anim == "saw" or def.anim == "drill" then CFrame.new(0, -0.02 * M, 0)
 				elseif def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0)
 				elseif def.anim == "polesaw" then CFrame.Angles(math.rad(30), 0, 0)
 				else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)

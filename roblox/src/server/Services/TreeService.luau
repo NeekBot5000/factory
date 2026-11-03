@@ -246,6 +246,12 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 		for _, res in BarkGrid.stripPanels(g, list) do
 			add(res)
 		end
+	elseif tool.bits == 2 then
+		-- the twin auger: two bits side by side, 0.17 m either side of the aim (Godot's camera right)
+		local look = ((point :: Vector3) - head.Position) * Vector3.new(1, 0, 1)
+		local side = if look.Magnitude > 0.01 then look.Unit:Cross(Vector3.yAxis) * 0.17 * M else Vector3.new(0.17 * M, 0, 0)
+		circle((point :: Vector3) - side)
+		circle((point :: Vector3) + side)
 	else
 		circle(point :: Vector3)
 		if species.tallStrips then

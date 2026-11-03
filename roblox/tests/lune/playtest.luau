@@ -444,6 +444,48 @@ do
 	Tools.equip(alice, "double_bit")
 end
 
+-- ---------------------------------------------------------------- the bark drills
+do
+	-- the hole saw bites through both layers at once; the twin auger bores two tracks side by side
+	local t, b, rr = freshTree(16)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	local made = hitWith("holesaw", t, b + V3(rr, 6, 0))
+	local layers = {}
+	for _, m in made do
+		layers[m:GetAttribute("Layer")] = true
+	end
+	check(layers[0] and layers[1], "the hole saw takes outer and inner bark together")
+	t, b, rr = freshTree(17)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	made = hitWith("twin_auger", t, b + V3(rr, 6, 0))
+	local G = require("../../src/shared/BarkGrid")
+	local g = bark(t)
+	local cols = {}
+	for i = 0, 15 do
+		for j = 0, t:GetAttribute("Bands") - 1 do
+			if g and not G.has(g, 0, i, j) then
+				cols[i] = true
+			end
+		end
+	end
+	local n = 0
+	for _ in cols do
+		n += 1
+	end
+	check(#made >= 1 and n >= 3, string.format("the twin auger bores two tracks at once (%d columns of panels)", n))
+	-- the timber auger, held: a bite every 0.2 s
+	t, b, rr = freshTree(18)
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	Tools.grant(alice, "drill")
+	task.wait(1.3)
+	local n0 = #loose:GetChildren()
+	for k = 0, 4 do
+		strip:Fire(alice, t, b + V3(rr, 3 + k * 0.6, 0), "drill")
+		task.wait(0.2)
+	end
+	check(#loose:GetChildren() - n0 >= 5, "the timber auger strips bark continuously while it's held (" .. (#loose:GetChildren() - n0) .. " bites)")
+end
+
 -- ---------------------------------------------------------------- the crosscut, the throwing hatchet, the phone
 do
 	local saw = A.remotes.Sawn.OnServerEvent

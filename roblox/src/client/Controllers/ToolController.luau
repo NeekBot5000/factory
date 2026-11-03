@@ -275,7 +275,10 @@ local function impact()
 	local tree = treeOf(hit.Instance)
 	if tree then
 		local layer = predictLayer(tree, hit.Position, d)
-		if layer ~= nil and State.tool == "robo" then
+		if layer ~= nil and d.anim == "drill" then
+			Sfx.play("drill", 1, -8)
+			burst(hit.Position, hit.Normal, hit.Instance.Color, 6, 16)
+		elseif layer ~= nil and State.tool == "robo" then
 			Sfx.play("clink", 1.6, -8)
 			Sfx.play("axe", 1.3, -4)
 			burst(hit.Position, hit.Normal, hit.Instance.Color, 10, 22)
@@ -444,6 +447,7 @@ function ToolController.start()
 		end
 	end)
 	local sawTarget: Model? = nil
+	local drillCd = 0
 	local sawFx = 0
 	local told: { [string]: number } = {}
 	local function tell(key: string, text: string)
@@ -541,7 +545,18 @@ function ToolController.start()
 				end
 			end
 		end
-		local on = alive and d.hold and d.kind ~= "polesaw"
+		-- the bark drills: a bite every `cooldown` seconds while the trigger is held on a trunk (Godot's _drilling)
+		State.drilling = alive and d.kind == "drill" and State.equipT >= 1
+		if State.drilling then
+			drillCd -= dt
+			if drillCd <= 0 then
+				drillCd = d.cooldown
+				if ToolController.aimingAtTree() then
+					impact()
+				end
+			end
+		end
+		local on = alive and d.hold and d.kind ~= "polesaw" and d.kind ~= "drill"
 		local hit = if on then ToolController.aim(d.reach * M) else nil
 		local m = hit and treeOf(hit.Instance)
 		local canFell = d.fell ~= false

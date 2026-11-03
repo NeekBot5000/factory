@@ -64,6 +64,16 @@ Config.Tools = {
 	bucksaw = { name = "Buck Saw", price = 280, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.4, hold = true, kind = "saw", speed = 0.8, fell = false, buck = true, tag = "Long",
 		desc = "A long framed saw for lying logs only - it can't fell a tree. One cut splits the whole log into neat carryable rounds.",
 		look = { handle = 1.6, head = { 0.1, 0.6, 2.6 }, headColor = { 150, 110, 60 }, handleColor = { 120, 90, 60 } } },
+	-- the bark drills: hold the trigger and sweep across the trunk, a bite every `cooldown` seconds
+	drill = { name = "Timber Auger", price = 2400, radius = 1, stripRadius = 0.24, cooldown = 0.2, impact = 0, hurt = 0, anim = "drill", reach = 2.2, hold = true, kind = "drill", tag = "Heavy",
+		desc = "A cordless rotary debarker. Hold the trigger and sweep it across the trunk to strip bark continuously.",
+		look = { handle = 1.2, head = { 0.3, 0.3, 0.9 }, headColor = { 230, 170, 40 }, handleColor = { 40, 40, 44 } } },
+	twin_auger = { name = "Twin Auger", price = 3200, radius = 1, stripRadius = 0.2, cooldown = 0.18, impact = 0, hurt = 0, anim = "drill", reach = 2.2, hold = true, kind = "drill", bits = 2, tag = "Wide",
+		desc = "Two counter-rotating bits side by side. Sweep it along a trunk to bore two tracks of bark off at once.",
+		look = { handle = 1.2, head = { 0.6, 0.3, 0.9 }, headColor = { 60, 140, 220 }, handleColor = { 40, 40, 44 } } },
+	holesaw = { name = "Hole Saw", price = 2100, radius = 1, stripRadius = 0.17, cooldown = 0.22, impact = 0, hurt = 0, anim = "drill", reach = 2.2, hold = true, kind = "drill", through = true, tag = "Deep",
+		desc = "A toothed cup that bites straight in: every spot it touches loses its outer AND inner bark together.",
+		look = { handle = 1.2, head = { 0.35, 0.35, 0.7 }, headColor = { 200, 60, 50 }, handleColor = { 40, 40, 44 } } },
 	pole_saw = { name = "Pole Saw", price = 380, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "polesaw", reach = 5.5, hold = true, kind = "polesaw", tag = "Long reach",
 		desc = "A curved saw on a long pole. Hold it up in the leaves of a standing tree to cut the whole crown off: the leaves, and a sapling or two, come raining down.",
 		look = { handle = 5.0, head = { 0.08, 0.5, 1.0 }, headColor = { 190, 196, 206 }, handleColor = { 150, 120, 80 } } },
@@ -82,8 +92,8 @@ Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7, cro
 Config.Leaf = { value = 0.05 }
 Config.Sapling = { rest = 1.5, growTime = 300 }
 -- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "phone" }
+Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "drill", "twin_auger", "holesaw" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "phone" }
 
 -- things you can buy that aren't tools (Godot's SHOP entries in "other")
 Config.Items = {

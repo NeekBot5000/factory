@@ -268,5 +268,28 @@ do
 	check(flash ~= nil and flash.BackgroundTransparency < 1, "and the lightning flashes white over the screen")
 end
 
+-- a bark drill: held on the trunk, it bites again and again (every 0.2 s for the timber auger)
+do
+	S.service("ToolService").grant(alice, "drill")
+	S.stand(alice, base + V3(r + 3, 7, 0))
+	C.look(base + V3(0, 7, 0))
+	task.wait(0.2)
+	C.frames(40)
+	local sent1 = #C.sent
+	C.hold(K.ButtonR2, true)
+	for _ = 1, 45 do       -- 0.75 s
+		C.frame(1 / 60)
+		task.wait()
+	end
+	C.hold(K.ButtonR2, false)
+	local bites = 0
+	for k = sent1 + 1, #C.sent do
+		if C.sent[k].remote == "StripRequest" and C.sent[k].args[3] == "drill" then
+			bites += 1
+		end
+	end
+	check(bites >= 3, "holding the timber auger on a trunk keeps boring (" .. bites .. " bites in 0.75 s)")
+end
+
 print(string.format("\nCLIENT RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
 process.exit(if fails == 0 then 0 else 1)
