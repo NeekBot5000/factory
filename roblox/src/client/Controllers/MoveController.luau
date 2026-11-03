@@ -60,7 +60,7 @@ function MoveController.start()
 	RunService.RenderStepped:Connect(function(dt)
 		local cam = workspace.CurrentCamera
 		if cam then
-			cam.FieldOfView = P.fov
+			cam.FieldOfView = (State :: any).settings and (State :: any).settings.fov or P.fov
 		end
 		-- the pointer only shows while a screen like the shop is open
 		UserInputService.MouseIconEnabled = State.uiOpen

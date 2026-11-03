@@ -32,6 +32,17 @@ C.frames(5)
 task.wait(2.5)
 C.frames(3)
 check(#ClientHarness.errors == 0, "the client starts with no errors (" .. #ClientHarness.errors .. ")")
+-- the title screen first: Timber, and (for a new player) only New Game
+local title = C.gui("TitleMenu")
+check(title ~= nil and C.find(title, function(d) return d:IsA("TextLabel") and d.Text == "Timber" end), "the Godot title screen shows first")
+local newGame = title and C.find(title, function(d) return d:IsA("TextButton") and d.Text == "New Game" end)
+local cont = title and C.find(title, function(d) return d:IsA("TextButton") and d.Text == "Continue" end)
+check(newGame ~= nil and cont == nil, "a new player gets New Game (and no Continue)")
+if newGame then
+	ClientHarness.signal(newGame, "Activated"):Fire()
+end
+C.frames(2)
+check(C.gui("TitleMenu") == nil, "New Game starts playing")
 for _, e in ClientHarness.errors do
 	print("   " .. e)
 end

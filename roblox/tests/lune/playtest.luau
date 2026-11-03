@@ -420,6 +420,24 @@ strip:Fire(alice, nearest, base + V3(r, 5, 0), "hands")
 task.wait(0.05)
 check(#loose:GetChildren() == nF, "and while fainted you can't peel")
 
+-- ---------------------------------------------------------------- the title screen's New Game and Settings
+do
+	local bd = Data.get(bob)
+	bd.money = 50
+	bd.owned.hatchet = true
+	A.remotes.Settings.OnServerEvent:Fire(bob, { fov = 200, volume = 0.3, music = "loud", bob = false, junk = 1 })
+	task.wait(0.05)
+	bd = Data.get(bob)
+	check(bd.settings.fov == 100 and bd.settings.volume == 0.3 and bd.settings.music == 0.5 and bd.settings.bob == false and bd.settings.junk == nil,
+		"Settings are saved, kept in range, and junk is ignored")
+	check(bob:GetAttribute("Fresh") == false, "someone who's played has something to Continue")
+	A.remotes.NewGame.OnServerEvent:Fire(bob)
+	task.wait(0.1)
+	bd = Data.get(bob)
+	check(bd.money == 0 and not bd.owned.hatchet and bd.tutorial == 1 and bd.settings.volume == 0.3, "New Game starts their save over (keeping their settings)")
+	check(bob:GetAttribute("Fresh") == true and bob:GetAttribute("Tool") == "hands", "bare-handed, back at Getting started")
+end
+
 -- ---------------------------------------------------------------- saving
 local moneyAtLeave = data.money
 A.leave(alice)

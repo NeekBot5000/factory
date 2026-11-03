@@ -72,6 +72,13 @@ end
 
 function InteractService.start()
 	remotes.Use.OnServerEvent:Connect(use)
+	-- the title screen's New Game: this player's save starts over, bare-handed, at Getting started
+	remotes.NewGame.OnServerEvent:Connect(function(player)
+		DataService.reset(player)
+		ToolService.equip(player, "hands")
+		TutorialService.check(player)
+	end)
+	remotes.Settings.OnServerEvent:Connect(DataService.setSettings)
 end
 
 return InteractService

@@ -96,7 +96,8 @@ local function arcXform(arc: any, deg: number): CFrame
 end
 
 local function sway(): Vector3
-	return Vector3.new(math.sin(State.bob * 0.5) * 0.012, -math.abs(math.sin(State.bob)) * 0.008, 0)
+	local on = if (State :: any).settings and (State :: any).settings.bob == false then 0 else 1
+	return Vector3.new(math.sin(State.bob * 0.5) * 0.012, -math.abs(math.sin(State.bob)) * 0.008, 0) * on
 end
 
 local function restXform(): CFrame

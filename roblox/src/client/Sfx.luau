@@ -13,13 +13,14 @@ local Sheet = require(ReplicatedStorage.Shared.SoundSheet)
 
 local Sfx = {}
 Sfx.musicVolume = 0.5
+Sfx.volume = 0.8          -- the Settings' volume (Godot's master volume)
 
 local SHEET = if Assets.SoundSheet then "rbxassetid://" .. Assets.SoundSheet else nil
 local BASE_VOLUME = 0.7          -- Godot's 0 dB
 local STUDS = 3                  -- studs per Godot metre
 
 local function volumeOf(db: number): number
-	return BASE_VOLUME * 10 ^ (db / 20)
+	return BASE_VOLUME * 10 ^ (db / 20) * Sfx.volume / 0.8
 end
 
 local function make(name: string, pitch: number, db: number): (Sound?, number)

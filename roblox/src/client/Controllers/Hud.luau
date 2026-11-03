@@ -224,6 +224,20 @@ function Hud.start()
 	State.toolChanged:Connect(rebuildBar)
 	rebuildBar()
 
+	-- frames a second, when the setting's on (Godot: top left, small)
+	local fps = UiKit.label(gui, "", 13, Color3.new(1, 1, 1), UiKit.Bold, { Position = UDim2.fromOffset(14, 10), TextTransparency = 0.25, Visible = false })
+	local frames, fpsT = 0, 0
+	RunService.RenderStepped:Connect(function(dt)
+		frames += 1
+		fpsT += dt
+		local on = (State :: any).settings and (State :: any).settings.fps
+		fps.Visible = on == true and not State.uiOpen
+		if fpsT >= 0.5 then
+			fps.Text = string.format("%d FPS", math.floor(frames / fpsT + 0.5))
+			frames, fpsT = 0, 0
+		end
+	end)
+
 	-- the hint line
 	local hint = UiKit.label(gui, "", 17, C.white, UiKit.Body, { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -110), TextStrokeTransparency = 0.3 })
 

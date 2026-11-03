@@ -6,6 +6,7 @@
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
 local DataService = {}
 -- (in a place that was never published, even asking for the store throws: then the game plays without saving)
@@ -27,7 +28,7 @@ local TEMPLATE = {
 	tutorial = 1,          -- which "Getting started" step you're on (-1 when you've finished it)
 	peeled = 0,            -- bark sheets peeled, ever
 	earned = 0,            -- money the truck has paid you, ever
-	settings = { sens = 1, music = 0.5, volume = 0.8 },
+	settings = { fov = 75, volume = 0.8, music = 0.5, bob = true, fps = false },
 }
 
 local function deepCopy(t: any): any
@@ -143,6 +144,55 @@ function DataService.publish(player: Player)
 		end
 	end
 	player:SetAttribute("Ordered", table.concat(ordered, ","))
+	-- nothing done yet (Godot's is_fresh): the title only offers New Game
+	local onlyHands = true
+	for id, yes in data.owned do
+		if yes and id ~= "hands" then
+			onlyHands = false
+		end
+	end
+	player:SetAttribute("Fresh", (data.earned or 0) <= 0 and onlyHands and #(data.orders or {}) == 0 and (data.tutorial or 1) == 1)
+	player:SetAttribute("Settings", HttpService:JSONEncode(data.settings or {}))
+end
+
+-- New Game: this player's save starts over (Godot's Game.reset), keeping only their settings
+function DataService.reset(player: Player)
+	local data = profiles[player]
+	if not data then
+		return
+	end
+	local fresh = deepCopy(TEMPLATE)
+	fresh.settings = data.settings
+	fresh._lock = data._lock
+	profiles[player] = fresh
+	DataService.publish(player)
+end
+
+-- the Settings page: only the known settings, of the right kinds
+function DataService.setSettings(player: Player, s: unknown)
+	local data = profiles[player]
+	if not data or type(s) ~= "table" then
+		return
+	end
+	local t = s :: any
+	local out = data.settings or {}
+	if type(t.fov) == "number" then
+		out.fov = math.clamp(t.fov, 60, 100)
+	end
+	if type(t.volume) == "number" then
+		out.volume = math.clamp(t.volume, 0, 1)
+	end
+	if type(t.music) == "number" then
+		out.music = math.clamp(t.music, 0, 1)
+	end
+	if type(t.bob) == "boolean" then
+		out.bob = t.bob
+	end
+	if type(t.fps) == "boolean" then
+		out.fps = t.fps
+	end
+	data.settings = out
+	DataService.publish(player)
 end
 
 function DataService.start()
