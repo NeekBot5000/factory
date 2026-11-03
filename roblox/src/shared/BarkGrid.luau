@@ -238,7 +238,7 @@ function BarkGrid.stripSoft(g: Grid, i: number, j: number, hit: { x: number, y: 
 	rOuter: number, bandH: number, most: number): { Strip }
 	local reachJ = math.ceil(circleR / bandH) + 1
 	local reachI = math.ceil(circleR / (2 * math.pi * rOuter / g.sectors)) + 1
-	local cand = {}
+	local cand: { { number } } = {}
 	for dj = -reachJ, reachJ do
 		for di = -reachI, reachI do
 			local pi, pj = (i + di) % g.sectors, j + dj
@@ -252,10 +252,10 @@ function BarkGrid.stripSoft(g: Grid, i: number, j: number, hit: { x: number, y: 
 			end
 		end
 	end
-	table.sort(cand, function(a, b)
+	table.sort(cand, function(a: { number }, b: { number }): boolean
 		return a[1] < b[1]
 	end)
-	local list = {}
+	local list: { { number } } = {}
 	for k = 1, math.min(most, #cand) do
 		table.insert(list, { cand[k][2], cand[k][3] })
 	end
