@@ -4,3 +4,6 @@
 build/
 export_presets.cfg.bak
 /tests/tmp/
+
+# Luau / Rojo / Lune binaries downloaded for the Roblox tests (CI fetches them itself)
+/luau/
