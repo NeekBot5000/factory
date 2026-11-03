@@ -133,13 +133,15 @@ Config.Sapling = { rest = 1.5, growTime = 300 }
 -- the tool bar's order and the shop's: Godot's TOOL_ORDER and SHOP_ORDER, for what the Roblox version has
 local GODOT_TOOL_ORDER = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "planer", "washer", "rake", "vacuum", "twinvac", "cyclone", "blower", "pickaxe", "sledge", "steel_pick", "rock_drill", "core_drill", "detector", "dynamite", "wires", "hammer", "can", "scale" }
 local GODOT_SHOP_ORDER = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "blower", "twinvac", "cyclone", "pickaxe", "sledge", "steel_pick", "rock_drill", "detector", "core_drill", "dynamite", "wires", "hammer", "rake", "can", "scale", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_wheelbarrow", "bp_windmill", "bp_generator", "bp_battery", "bp_logic", "bp_sensors", "bp_lamp", "bp_sawmill", "bp_chipper", "bp_planter", "bp_sprinkler", "bp_feller", "bp_smelter", "bp_kiln", "bp_assembler", "bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig", "bp_charger", "bp_carts", "bp_rail_tools", "bp_rail_extras", "bp_drones", "bp_oil", "bp_truck_caller", "truck_big", "truck_hauler", "phone" }
-Config.ToolOrder = {}
+Config.ToolOrder = {} :: { string }
+local allTools: { [string]: any } = Config.Tools :: any
 for _, id in GODOT_TOOL_ORDER do
-	if id == "hands" or (Config.Tools :: any)[id] then
+	local have: boolean = id == "hands" or allTools[id] ~= nil
+	if have then
 		table.insert(Config.ToolOrder, id)
 	end
 end
-Config.ShopOrder = {}        -- (filled in below, once Config.Items is known)
+Config.ShopOrder = {} :: { string }        -- (filled in below, once Config.Items is known)
 Config._godotShopOrder = GODOT_SHOP_ORDER
 Config.GodotToolOrder = GODOT_TOOL_ORDER    -- (the toast's number when a tool arrives is its place in this, like Godot's)
 
@@ -231,8 +233,10 @@ Config.Items = {
 	phone = { name = "TimberPhone", price = 350, tag = "Pocket-size",
 		desc = "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it." },
 }
+local allItems: { [string]: any } = Config.Items :: any
 for _, id in Config._godotShopOrder do
-	if (Config.Tools :: any)[id] or (Config.Items :: any)[id] then
+	local have: boolean = allTools[id] ~= nil or allItems[id] ~= nil
+	if have then
 		table.insert(Config.ShopOrder, id)
 	end
 end
