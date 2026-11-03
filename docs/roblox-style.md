@@ -55,35 +55,39 @@ game's own design, piece by piece:
 | TimberMart on the computer (ShopUI.gd) | The same layout and colours, opened with E on the computer in the cabin |
 
 ## The scripted playtest
-`roblox/tests/lune/playtest.luau` plays a first session through the real server scripts, with no Studio needed, and
-CI runs it on every push. It covers 61 checks:
+`roblox/tests/lune/playtest.luau` plays the game through the real server scripts, with no Studio needed, and CI
+runs it on every push (210 checks). `roblox/tests/lune/client.luau` runs the client scripts the same way (38 checks).
+It covers:
 - **A new player's first minutes:** take the hatchet, peel, carry, ship, save up, then buy the Double-Bit Axe.
+- **Every tool:** the axes, saws, drills, planer, washer, shears, vacuums and blower, rake, watering can, scale,
+  pickaxes, sledge, rock and core drills, detector and dynamite.
+- **Building:** plans filled with dropped materials, land plots, take-down, and builds that do things (campfire,
+  compost, catapult, hoop, hammock, baskets).
+- **Machines:** power (crank, windmill, generator, battery), switches and logic, sensors, belts, the sawmill,
+  smelter, kiln, chipper, assembler, oil pump and refinery, crate, planter, sprinkler, grabber, piston, sorter,
+  wireless, feller, drill rig, charger, rotator (and pistons clamping things to it), rails and minecarts, and drones.
 - **Cheating:** buying what you can't afford, swinging from too far away or with a tool that isn't in your hand,
   spamming 20 swings at once, taking someone else's dropped tool, and using things from across the map.
-- **Saves:** they survive leaving and rejoining on another server, and a second server can't load a save that's still
-  in use.
-- **Machines and oil:** power, levers and an oil pump filling a barrel.
+- **Saves:** money, tools, land, builds, machine state, wires and laid track survive leaving and rejoining on another
+  server, and a second server can't load a save that's still in use. The world (stumps, logs, grown trees) is saved
+  by the server.
 
-It also covers the Godot rules: taking the hatchet from the chopping block, the truck's trip to the mill, dropping
-and picking up a tool, the double-bit's two hits a swing, and fainting.
-
-## Not in the Roblox version yet
-The Roblox version now plays the Godot game's forest part the Godot way: the same world (exported from Godot),
-title screen and settings, first-person arm and HUD, the sounds, the chopping block, the cabin computer and
-TimberMart, the delivery van and boxes, the log truck, the TimberPhone, and these tools: every axe (including the
-throwing hatchet and the Thunder Axe), the bow saw, buck saw, pole saw, two-man crosscut and chainsaw, the three bark
-drills, the planer, the pressure washer, the pruning shears and the three leaf vacuums. Felling, logs, crowns,
-leaves and saplings that grow into trees work too. Still missing:
-- **Building and everything after it:** the hammer, blueprints, machines, wires, power, rails and carts, drones, the
-  oil rig, the truck upgrades and the truck caller. (MachineService, OilService and PowerGrid exist as groundwork,
-  but nothing in the game builds a machine yet.)
-- **Mining:** the pickaxes, sledge, rock and core drills, the detector and dynamite.
-- **The smaller tools:** the leaf rake, leaf blower, watering can and scale.
-- **Bushes** you can snip, and **trophies**.
-- **The world isn't saved:** stumps, felled logs and grown trees come back as they were when the server restarts
-  (your money, tools and orders are saved).
-- **Not checked in Studio yet:** the playtests run the real scripts in Lune without Roblox's physics or renderer,
-  so how the imported meshes look, how things fall and fly, and the feel of the arm still need a look in Studio.
+## What's still different from the Godot game
+Everything in the Godot game now has a Roblox version, built from Godot's own numbers and meshes. These are the
+known gaps:
+- **Side-mounted rotators:** Godot lets you put a rotator flat against a wall. In Roblox they only go on the ground.
+- **Studio-only checks:** the playtests run the real scripts in Lune, without Roblox's physics or renderer. These
+  still need a look in Studio:
+  - how the imported meshes look in Roblox's lighting;
+  - how things fall, slide (the chute) and fly (catapult, dynamite);
+  - whether carts and drones move smoothly on screen (the server moves them 20 times a second);
+  - the feel of the arm.
+- **Multiplayer choices:** land, builds, machines, track and trophies belong to each player and are saved with them.
+  The forest and rocks are shared by everyone on a server.
+- **Old groundwork:** `MachineService` and `OilService` (with `PowerGrid` and `OilField`) were the first machine
+  scripts. The real machines now live in `CircuitService`, `ProductionService` and `FactoryService`. The old two only
+  drive models tagged `Machine` or `OilPump`, which nothing in the game makes any more, so they could be removed
+  along with their old playtest block.
 
 ## Sources
 - [Exitlag: Roblox genres in 2026](https://www.exitlag.com/blog/roblox-game-genres-and-popularity/)

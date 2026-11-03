@@ -313,6 +313,15 @@ function BuildBehaviors.activate(m: Model)
 		makeBall(m, size)
 	elseif id == "basket" or id == "wheelbarrow" then
 		makeCarryable(m)
+	elseif id == "chute" then
+		-- (Godot's chute: a slippery board, friction 0.04, so things slide down it)
+		pcall(function()
+			for _, p in m:GetDescendants() do
+				if p:IsA("BasePart") then
+					p.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.04, 0.5, 100, 1)
+				end
+			end
+		end)
 	end
 end
 
