@@ -38,6 +38,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Which secrets and variables this run can see (names only, never values)
+        env:
+          SECRET_JSON: ${{ toJSON(secrets) }}
+          VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          python3 -c "import json,os; print('secrets:', sorted(json.loads(os.environ['SECRET_JSON']))); print('variables:', sorted(json.loads(os.environ['VARS_JSON'] or '{}')))"
+
       - name: Upload new or changed assets
         run: python3 tools/roblox_assets.py
 
