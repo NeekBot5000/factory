@@ -135,6 +135,38 @@ check(stripped, "a click swings, and the blade landing asks the server for the b
 task.wait(0.2)
 C.frames(3)
 check(#ws.Loose:GetChildren() > 0, "bark comes off")
+local sheet = nil
+for _, c in ws.Loose:GetChildren() do
+	if c:GetAttribute("Kind") == "bark" then
+		sheet = c
+	end
+end
+if sheet then
+	local Config = C.require(S.game.ReplicatedStorage.Shared.Config)
+	local want = roblox.Color3.fromHex(Config.Species[tree:GetAttribute("Species")].bark)
+	local faces = 0
+	for _, d in sheet:GetDescendants() do
+		if d:IsA("BasePart") then
+			faces += 1
+		end
+	end
+	check(faces >= 1 and math.abs(sheet.Size.Y - 0.54) < 0.01, string.format("the sheet is the panels that came off, 0.18 m high each (%d parts)", faces + 1))
+	check(math.abs(sheet.Color.R - want.R) < 0.15, "in the trunk's own bark colours")
+	-- (nothing moves in Lune: lift the sheet off the trunk, as it would have flown)
+	local away = (sheet.CFrame.Position - base) * V3(1, 0, 1)
+	local cf = sheet.CFrame + away.Unit * 4
+	for _, d in sheet:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CFrame = cf * sheet.CFrame:ToObjectSpace(d.CFrame)
+		end
+	end
+	sheet.CFrame = cf
+	C.look(sheet.CFrame.Position)
+	S.stand(alice, sheet.CFrame.Position + away.Unit * 3 + V3(0, 2, 0))
+	C.frames(2)
+	check(string.find(hint(), "%[E%] grab    %$%d+%.%d%d") ~= nil, "looking at it: Godot's '[E] grab    $0.60' (" .. hint() .. ")")
+	S.stand(alice, base + V3(r + 3, 4.5, 0))
+end
 C.frames(3)
 local panels = tree:FindFirstChild("BarkPanels")
 check(panels ~= nil, "the tree is redrawn with its bark panels")

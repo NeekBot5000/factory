@@ -10,6 +10,7 @@ local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
+local BarkLook = require(ReplicatedStorage.Shared.BarkLook)
 
 local TreeVisuals = {}
 local M = Config.StudsPerMetre
@@ -18,40 +19,11 @@ local DETAIL_RANGE = 110          -- studs: nearer trees get their panels
 local PER_FRAME = 2               -- trees built per frame, so walking into the forest doesn't hitch
 local queue: { Model } = {}
 
-local function shade(c: Color3, k: number): Color3
-	-- Godot's Color.lightened (k > 0) / darkened (k < 0)
-	return if k >= 0 then c:Lerp(Color3.new(1, 1, 1), k) else c:Lerp(Color3.new(0, 0, 0), -k)
-end
+-- the colour of one panel (Godot's _panel_color, shared with the server's bark sheets)
+TreeVisuals.panelColor = BarkLook.panelColor
 
--- a fixed pseudo-random 0..1 for a panel (Godot hashes (i, j, seed + layer * 7) the same way every time)
-local function hash01(i: number, j: number, seed: number): number
-	local h = bit32.bxor(bit32.band(i * 73856093, 0xFFFFFFFF), bit32.band(j * 19349663, 0xFFFFFFFF), bit32.band(seed * 83492791, 0xFFFFFFFF))
-	h = bit32.band(bit32.bxor(h, bit32.rshift(h, 13)) * 1274126177, 0xFFFFFFFF)
-	h = bit32.bxor(h, bit32.rshift(h, 16))
-	return (h % 1000) / 1000
-end
-
--- the colour of one panel (Godot's _panel_color)
-function TreeVisuals.panelColor(species: string, layer: number, i: number, j: number, seed: number): Color3
-	local sp = (Config.Species :: any)[species] or Config.Species.oak
-	local h = hash01(i, j, seed + layer * 7)
-	if layer == BarkGrid.OUTER then
-		local bark = Color3.fromHex(sp.bark)
-		if species == "birch" then
-			return if h < 0.12 then shade(bark, -0.35) else shade(bark, -h * 0.08)
-		end
-		return shade(bark, (h - 0.5) * 0.18)
-	end
-	return shade(Color3.fromHex(sp.inner), (h - 0.5) * 0.12)
-end
-
-local function panel(folder: Instance, base: CFrame, i: number, j: number, rOut: number, thick: number, color: Color3)
-	-- a flat panel whose outer face is the Godot quad between corners i and i+1 at radius rOut
-	local half = math.pi / T.sectors
-	local chord = 2 * rOut * math.sin(half)
-	local a = (i + 0.5) / T.sectors * 2 * math.pi
-	local bandH = T.bandH * M
-	local face = rOut * math.cos(half)
+local function panel(folder: Instance, base: CFrame, sectors: number, i: number, j: number, rOut: number, thick: number, color: Color3)
+	local cf, size = BarkLook.panel(base, sectors, i, j, rOut, thick)
 	local p = Instance.new("Part")
 	p.Anchored = true
 	p.CanCollide = false
@@ -61,12 +33,9 @@ local function panel(folder: Instance, base: CFrame, i: number, j: number, rOut:
 	p.Material = Enum.Material.SmoothPlastic
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
-	p.Size = Vector3.new(chord * 1.005, bandH, thick)
+	p.Size = size
 	p.Color = color
-	-- Godot's angle runs from +X towards +Z: x = cos(a) r, z = sin(a) r
-	local dir = Vector3.new(math.cos(a), 0, math.sin(a))
-	local center = base.Position + base:VectorToWorldSpace(dir * (face - thick / 2) + Vector3.new(0, (j + 0.5) * bandH, 0))
-	p.CFrame = CFrame.lookAt(center, center + base:VectorToWorldSpace(dir))
+	p.CFrame = cf
 	p.Parent = folder
 end
 
@@ -113,9 +82,9 @@ function TreeVisuals.build(tree: Model)
 	for j = 0, bands - 1 do
 		for i = 0, sectors - 1 do
 			if BarkGrid.has(g, BarkGrid.OUTER, i, j) then
-				panel(folder, base, i, j, R, T.outerT * M, TreeVisuals.panelColor(species, BarkGrid.OUTER, i, j, seed))
+				panel(folder, base, sectors, i, j, R, T.outerT * M, BarkLook.panelColor(species, BarkGrid.OUTER, i, j, seed))
 			elseif BarkGrid.has(g, BarkGrid.INNER, i, j) then
-				panel(folder, base, i, j, rMid, T.innerT * M, TreeVisuals.panelColor(species, BarkGrid.INNER, i, j, seed))
+				panel(folder, base, sectors, i, j, rMid, T.innerT * M, BarkLook.panelColor(species, BarkGrid.INNER, i, j, seed))
 			end
 		end
 	end

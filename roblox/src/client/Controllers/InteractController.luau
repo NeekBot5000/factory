@@ -137,9 +137,15 @@ function InteractController.target(): (string, (() -> ())?)
 		return "[E] use", ShopController.open
 	end
 	local loose = workspace:FindFirstChild("Loose")
-	if loose and part.Parent == loose and part:IsA("BasePart") and not part.Anchored and not part:GetAttribute("HeldBy") then
-		return "[E] grab", function()
-			remotes.Grab:FireServer(part)
+	-- (a sheet of several panels: the panels ride on the first one, which is the sheet)
+	local sheet = part
+	if loose and part.Parent and part.Parent:IsA("BasePart") and part.Parent.Parent == loose then
+		sheet = part.Parent :: BasePart
+	end
+	if loose and sheet.Parent == loose and sheet:IsA("BasePart") and not sheet.Anchored and not sheet:GetAttribute("HeldBy") then
+		local value = sheet:GetAttribute("Value")
+		return if typeof(value) == "number" then string.format("[E] grab    $%.2f", value) else "[E] grab", function()
+			remotes.Grab:FireServer(sheet)
 			Sfx.play("pickup")
 		end
 	end

@@ -195,7 +195,10 @@ function Harness.boot(placePath: string, jobId: string)
 			src = string.gsub(src, "%f[%w]" .. name .. "%.Position", name .. ".CFrame.Position")
 		end
 		src = string.gsub(src, "ReplicatedStorage:WaitForChild%(\"Remotes\"%)", "__REMOTES")
-		local fn = luau.load(src, { debugName = inst.Name, environment = env })
+		-- each module gets its own `script`, like in Roblox
+		local own = setmetatable(table.clone(env), getmetatable(env))
+		own.script = inst
+		local fn = luau.load(src, { debugName = inst.Name, environment = own })
 		modules[key] = fn()
 		return modules[key]
 	end

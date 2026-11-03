@@ -49,6 +49,10 @@ local function grab(player: Player, target: unknown)
 	end
 	local p = target :: BasePart
 	local loose = workspace:FindFirstChild("Loose")
+	-- (a sheet of several panels: the panels ride on the first one, which is the sheet)
+	if loose and p.Parent and p.Parent:IsA("BasePart") and p.Parent.Parent == loose then
+		p = p.Parent :: BasePart
+	end
 	if not loose or not p:IsDescendantOf(loose) or p.Anchored or p:GetAttribute("HeldBy") or p.Parent ~= loose then
 		return
 	end

@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
 local Economy = require(ReplicatedStorage.Shared.Economy)
+local BarkLook = require(ReplicatedStorage.Shared.BarkLook)
 local DataService = require(script.Parent.DataService)
 local ToolService = require(script.Parent.ToolService)
 local TutorialService = require(script.Parent.TutorialService)
@@ -18,10 +19,8 @@ local TreeService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local grids: { [Model]: BarkGrid.Grid } = {}
 local lastSwing: { [Player]: number } = {}
-local sheetsOf: { [Player]: { BasePart } } = {}
 
 local SLACK = 5               -- studs of reach allowed beyond the tool's own (lag, and the head isn't the camera)
-local MAX_SHEETS = 120        -- loose bark sheets per player; the oldest are tidied away past this
 local CORK_EVERY = 5
 
 local loose = Instance.new("Folder")
@@ -52,28 +51,75 @@ local function panelAt(tree: Model, g: BarkGrid.Grid, point: Vector3): (number, 
 	return i, j
 end
 
-local function spawnSheet(player: Player, tree: Model, layer: number, n: number, at: Vector3)
+-- A sheet of bark comes off (Godot's Chip): exactly the panels the hit took, where they were on the trunk, each in
+-- its own shade with the layer beneath showing on the back. It springs off the trunk and tumbles; its worth is in its
+-- attributes (set here on the server, so a client can't change it). The first panel is the sheet; the rest ride on it.
+local MAX_CHIPS = 600          -- (Godot keeps the newest 600 sheets in the world)
+local chips: { BasePart } = {}
+
+local function spawnSheet(player: Player, tree: Model, strip: any)
 	local species = tree:GetAttribute("Species") :: string or "oak"
-	local sheet = Instance.new("Part")
-	sheet.Size = Vector3.new(math.min(4, 0.6 + n * 0.25), 0.15, math.min(4, 0.6 + n * 0.2))
-	sheet.Color = if layer == BarkGrid.OUTER then Color3.fromRGB(91, 64, 48) else Color3.fromRGB(181, 101, 58)
-	sheet.Material = Enum.Material.Wood
-	sheet.CFrame = CFrame.new(at)
-	sheet.CastShadow = false          -- dozens of thin sheets: shadows cost more than they show
-	sheet:SetAttribute("Value", Economy.barkValue(Config, species, layer, n))
+	local seed = tree:GetAttribute("Seed") :: number or 1
+	local sectors = tree:GetAttribute("Sectors") :: number or 16
+	local base = tree:GetPivot()
+	local rOut, thick = BarkLook.layerRadius(tree:GetAttribute("Radius") :: number or 1.2, strip.layer)
+	local under = BarkLook.underColor(species, strip.layer)
+	local root: Part? = nil
+	for _, ij in strip.panels do
+		local cf, size = BarkLook.panel(base, sectors, ij[1], ij[2], rOut, thick)
+		-- the face (its own shade) and, behind it, the layer it came off
+		local face = Instance.new("Part")
+		face.Size = Vector3.new(size.X, size.Y, size.Z * 0.6)
+		face.CFrame = cf * CFrame.new(0, 0, -size.Z * 0.2)
+		face.Color = BarkLook.panelColor(species, strip.layer, ij[1], ij[2], seed)
+		face.Material = Enum.Material.SmoothPlastic
+		face.TopSurface = Enum.SurfaceType.Smooth
+		face.BottomSurface = Enum.SurfaceType.Smooth
+		face.CastShadow = false
+		local back = Instance.new("Part")
+		back.Size = Vector3.new(size.X, size.Y, size.Z * 0.4)
+		back.CFrame = cf * CFrame.new(0, 0, size.Z * 0.3)
+		back.Color = under
+		back.Material = Enum.Material.SmoothPlastic
+		back.CastShadow = false
+		back.CanQuery = false
+		if root then
+			face.Parent = root
+		else
+			root = face
+		end
+		back.Parent = root
+		for _, p in { face, back } do
+			if p ~= root then
+				local w = Instance.new("WeldConstraint")
+				w.Part0 = root
+				w.Part1 = p
+				w.Parent = p
+			end
+		end
+	end
+	local sheet = root :: Part
+	sheet:SetAttribute("Value", Economy.barkValue(Config, species, strip.layer, #strip.panels))
 	sheet:SetAttribute("Owner", player.UserId)
 	sheet:SetAttribute("Kind", "bark")
+	sheet:SetAttribute("Layer", strip.layer)
+	sheet:SetAttribute("Species", species)
 	sheet.Parent = loose
+	-- off it springs: out from the trunk, a little up, tumbling (Godot's Main.spawn_chip, in studs)
+	local first = strip.panels[1]
+	local a = (first[1] + 0.5) / sectors * 2 * math.pi
+	local out = base:VectorToWorldSpace(Vector3.new(math.cos(a), 0, math.sin(a)))
+	local M = Config.StudsPerMetre
+	sheet.AssemblyLinearVelocity = out * (0.8 + math.random() * 0.8) * M + Vector3.new(0, (0.6 + math.random() * 0.8) * M, 0)
+	sheet.AssemblyAngularVelocity = Vector3.new(math.random() * 10 - 5, math.random() * 10 - 5, math.random() * 10 - 5)
 	-- the player who peeled it simulates it, so carrying feels instant (can fail if the player just left)
 	pcall(function()
 		sheet:SetNetworkOwner(player)
 	end)
-	local list = sheetsOf[player] or {}
-	sheetsOf[player] = list
-	table.insert(list, sheet)
-	while #list > MAX_SHEETS do
-		local old = table.remove(list, 1)
-		if old and old.Parent then
+	table.insert(chips, sheet)
+	while #chips > MAX_CHIPS do
+		local old = table.remove(chips, 1)
+		if old and old.Parent and not old:GetAttribute("HeldBy") then
 			old:Destroy()
 		end
 	end
@@ -139,7 +185,7 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 		t:SetAttribute("Bark", BarkGrid.encode(g))
 	end
 	for _, s in strips do
-		spawnSheet(player, t, s.layer, #s.panels, point :: Vector3)
+		spawnSheet(player, t, s)
 		remotes.TreeChanged:FireAllClients(t, s.layer, s.panels)
 	end
 	if #strips > 0 then
@@ -156,12 +202,12 @@ function TreeService.start()
 	remotes.StripRequest.OnServerEvent:Connect(onStrip)
 	Players.PlayerRemoving:Connect(function(p)
 		lastSwing[p] = nil
-		for _, s in sheetsOf[p] or {} do
-			if s.Parent then
+		-- their bark goes with them
+		for _, s in loose:GetChildren() do
+			if s:GetAttribute("Kind") == "bark" and s:GetAttribute("Owner") == p.UserId then
 				s:Destroy()
 			end
 		end
-		sheetsOf[p] = nil
 	end)
 	-- cork grows back, slowly, on a low-rate loop (never per frame)
 	task.spawn(function()
