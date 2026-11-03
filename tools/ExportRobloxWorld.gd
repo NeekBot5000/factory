@@ -130,6 +130,14 @@ func _ready() -> void:
 		for mi in pl.find_children("*", "MeshInstance3D", true, false):
 			_add_mesh("props", "trophy_" + String(e[0]), mi, pl.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
 	tw.free()
+	# what the machines make (Product.setup), in Godot's plank colour: the game tints the wood to the log's
+	for kind in ["plank", "dry_plank", "mulch", "copper_bar", "iron_bar", "chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail", "curved_rail", "oil_barrel", "fuel_can", "plastic", "lawn_chair", "bucket"]:
+		var pr := Product.new()
+		holder.add_child(pr)
+		pr.setup(kind, 1.0, Color("e2c08d") if kind != "copper_bar" else Machines.COPPER)
+		for mi in pr.find_children("*", "MeshInstance3D", true, false):
+			_add_mesh("props", "product_" + kind, mi, pr.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
+		pr.free()
 	# an ore chunk of each kind (Ore.setup at its usual size, 0.14 m) and a mine shaft's rim and pit
 	for kind in ["stone", "copper", "iron"]:
 		var o := Ore.new()

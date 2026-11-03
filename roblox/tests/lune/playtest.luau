@@ -1068,6 +1068,76 @@ do
 	check(nw == #ws.Wires:GetChildren(), "and the wires are saved with your machines (" .. nw .. ")")
 end
 
+-- ---------------------------------------------------------------- production
+do
+	local BS, PS = A.service("BuildService"), A.service("ProductionService")
+	local base = V3(-30, 0, -45)
+	local CS = A.service("CircuitService")
+	local crank = BS.make("crank", roblox.CFrame.new(base + V3(0, 0, 9)), 1, 101, true, {})
+	for _ = 1, 8 do
+		CS.use(crank)          -- (wound right up: 2 minutes of power)
+	end
+	local function mk(id, off)
+		local m = BS.make(id, roblox.CFrame.new(base + off), 1, 101, true, {})
+		A.service("BuildBehaviors").activate(m)
+		CS.toggle(crank, m)
+		return m
+	end
+	-- the sawmill: a log on its table becomes planks
+	local mill = mk("sawmill", V3(0, 0, 0))
+	local log = nil
+	for _, l in ws.Logs:GetChildren() do
+		if l:GetAttribute("Kind") == "log" and (l:GetAttribute("Bands") or 0) <= 12 then
+			log = l
+		end
+	end
+	if log then
+		local target = (mill:GetPivot() * roblox.CFrame.new(0, 2.55, 0)).Position
+		log:PivotTo(log:GetPivot() + (target - log.Trunk.CFrame.Position))
+		local len = log:GetAttribute("Bands") * 0.18
+		task.wait(0.8 + len * 0.4 + 0.4)
+		local planks = 0
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Product") == "plank" then
+				planks += 1
+			end
+		end
+		check(planks >= 1 and not pcall(function() return log.Parent.Name end), string.format("a powered sawmill turns a log into planks (%d)", planks))
+		check(string.find(alice:GetAttribute("Trophies") or "", "first_plank", 1, true) ~= nil, "and your first planks go on the trophy wall")
+	end
+	-- the smelter: ore in, a bar out (2.2x)
+	local sm = mk("smelter", V3(9, 0, 0))
+	local ore = A.service("MiningService").chunk("iron", 0.14, (sm:GetPivot() * roblox.CFrame.new(0, 3, 0)).Position, V3(0, 0, 0), 101)
+	ore.Position = ore.CFrame.Position
+	local val = ore:GetAttribute("Value")
+	task.wait(3.5)
+	local bar = nil
+	for _, c in loose:GetChildren() do
+		if c:GetAttribute("Product") == "iron_bar" then
+			bar = c
+		end
+	end
+	check(bar ~= nil and math.abs(bar:GetAttribute("Value") - val * 2.2) < 0.02, "a smelter turns iron ore into an iron bar worth 2.2x")
+	-- the assembler: E picks what it makes; 2 planks make a chair
+	local asm = mk("assembler", V3(18, 0, 0))
+	check(asm:GetAttribute("Recipe") == nil, "the assembler starts on chairs")
+	for k = 1, 2 do
+		local p = PS.product("plank", 2, roblox.Color3.fromHex("c69a62"), asm:GetPivot() * roblox.CFrame.new(0, 3, 0), V3(0, 0, 0), 101)
+		p.Position = p.CFrame.Position
+		task.wait(0.2)
+	end
+	task.wait(3.5)
+	local chair = nil
+	for _, c in loose:GetChildren() do
+		if c:GetAttribute("Product") == "chair" then
+			chair = c
+		end
+	end
+	check(chair ~= nil and math.abs(chair:GetAttribute("Value") - 10) < 0.02, "2 planks make a chair worth 2.5x what went in")
+	A.service("CircuitService").use(asm)
+	check(asm:GetAttribute("Recipe") == 1, "E on the assembler changes what it makes")
+end
+
 -- ---------------------------------------------------------------- the leaf vacuums
 do
 	Tools.grant(alice, "vacuum")

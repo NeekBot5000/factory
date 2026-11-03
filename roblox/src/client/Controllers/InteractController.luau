@@ -318,6 +318,31 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 		return string.format("Battery  ·  %d%%  ·  %s", math.floor(c / 180 * 100), if m:GetAttribute("Feeding") then "powering" elseif powered then "charging" else "idle"), false
 	elseif id == "truck_caller" then
 		return "Truck Caller  ·  sends the log truck whenever it gets power", false
+	elseif id == "sawmill" then
+		return string.format("Sawmill  ·  %s", if m:GetAttribute("LogUid") then "cutting" else "lay a log on the table and power it"), false
+	elseif id == "smelter" or id == "kiln" then
+		local q = m:GetAttribute("Queue") :: string? or ""
+		local n = if q == "" then 0 else #string.split(q, ";")
+		if id == "smelter" then
+			return "Smelter  ·  copper or iron ore in, bars out" .. (if n > 0 then string.format("  ·  %d waiting", n) else ""), false
+		end
+		return "Kiln  ·  planks in, dried planks out" .. (if n > 0 then string.format("  ·  %d drying", n) else ""), false
+	elseif id == "chipper" then
+		return string.format("Chipper  ·  %d%% of a bag    drop bark or leaves in the hopper", math.floor((m:GetAttribute("Stock") :: number? or 0) / 4 * 100)), false
+	elseif id == "assembler" then
+		local order = { "chair", "table", "lantern", "cabinet", "toy_truck", "battery_cell", "rail", "curved_rail" }
+		local names = { chair = "Chair", table = "Table", lantern = "Lantern", cabinet = "Cabinet", toy_truck = "Toy Truck", battery_cell = "Battery Cell", rail = "Rail", curved_rail = "Curved Rail" }
+		local recipes = { chair = { { "plank", 2 } }, table = { { "plank", 4 }, { "iron_bar", 1 } }, lantern = { { "copper_bar", 1 }, { "plank", 1 } },
+			cabinet = { { "plank", 6 }, { "copper_bar", 1 } }, toy_truck = { { "plank", 2 }, { "iron_bar", 1 } }, battery_cell = { { "copper_bar", 1 }, { "iron_bar", 1 } },
+			rail = { { "iron_bar", 1 } }, curved_rail = { { "iron_bar", 1 } } }
+		local resName = { plank = "planks", copper_bar = "copper bars", iron_bar = "iron bars" }
+		local r = order[(m:GetAttribute("Recipe") :: number? or 0) + 1]
+		local parts = {}
+		for _, need in recipes[r] do
+			table.insert(parts, string.format("%d/%d %s", m:GetAttribute("Have_" .. need[1]) :: number? or 0, need[2], resName[need[1]]))
+		end
+		local what = if r == "rail" then "2 rails" else "a " .. string.lower(names[r])
+		return string.format("Assembler  ·  making %s  ·  %s    [E] change", what, table.concat(parts, ", ")), true
 	end
 	local GB = require(game:GetService("ReplicatedStorage").Shared.Builds) :: any
 	local def = GB.def(id)

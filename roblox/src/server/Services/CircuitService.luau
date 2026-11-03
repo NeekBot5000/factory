@@ -418,6 +418,8 @@ local function feedGenerators()
 				t = 1
 			elseif kind == "sapling" then
 				t = 3
+			elseif kind == "product" then
+				t = item:GetAttribute("Fuel") :: number? or 0
 			elseif item.Name == "Trunk" and item.Parent and item.Parent:GetAttribute("Kind") == "log" then
 				t = 25 * (item.Parent:GetAttribute("Bands") :: number? or 1) * Config.Tree.bandH
 			end
@@ -453,6 +455,9 @@ function CircuitService.use(m: Model): boolean
 	elseif id == "button" then
 		m:SetAttribute("Pressed", CircuitService.BUTTON_HOLD)
 		remotes.Fx:FireAllClients("click", at, 0.6, 0)
+		return true
+	elseif id == "assembler" then
+		(require(script.Parent.ProductionService) :: any).cycle(m)
 		return true
 	end
 	return false
