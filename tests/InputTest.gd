@@ -131,7 +131,11 @@ func run() -> void:
 	var items := get_tree().get_nodes_in_group("tool_items")
 	if not items.is_empty():
 		var it := items[0] as Node3D
-		await frames(60)        # it's thrown with your momentum and a spin: let it settle, then walk over
+		# it's thrown with your momentum and a spin: let it come to rest (not a fixed wait: it can roll), then walk over
+		for i in 240:
+			await frames(1)
+			if i > 30 and (it as RigidBody3D).linear_velocity.length() < 0.03:
+				break
 		var stand := it.global_position + Vector3(0, 0, 1.4)
 		stand.y = main.terrain.height_at(stand.x, stand.z) + 0.05
 		player.global_position = stand

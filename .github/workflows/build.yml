@@ -140,7 +140,8 @@ jobs:
           grep -q "ROBLOX LOGIC RESULT: PASS" luau.log
           python3 tools/tests/test_roblox_assets.py | tee assets.log
           grep -q "ASSETS TEST RESULT: PASS" assets.log
-          ./luau/luau-analyze roblox/src/shared/*.luau roblox/tests/run.luau
+          # (the pure-logic modules: BarkLook uses Roblox types, which plain Luau does not know)
+          ./luau/luau-analyze roblox/src/shared/Config.luau roblox/src/shared/BarkGrid.luau roblox/src/shared/Economy.luau roblox/src/shared/OilField.luau roblox/src/shared/PowerGrid.luau roblox/src/shared/GodotWorld.luau roblox/tests/run.luau
           for f in $(find roblox/src -name '*.luau'); do ./luau/luau-compile --text "$f" > /dev/null; done
 
       - name: Roblox version - build the place with Rojo and check it with Lune
