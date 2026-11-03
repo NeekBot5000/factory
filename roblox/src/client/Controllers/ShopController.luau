@@ -24,6 +24,11 @@ local function owns(id: string): boolean
 	return typeof(s) == "string" and table.find(string.split(s, ","), id) ~= nil
 end
 
+local function ordered(id: string): boolean
+	local s = player:GetAttribute("Ordered")
+	return typeof(s) == "string" and table.find(string.split(s, ","), id) ~= nil
+end
+
 local function money(): number
 	local m = player:GetAttribute("Money")
 	return if typeof(m) == "number" then m else 0
@@ -63,7 +68,7 @@ function ShopController.close()
 	State.uiOpen = false
 end
 
-local function card(grid: Instance, id: string, order: number)
+local function card(grid: Instance, id: string, order: number): GuiObject?
 	local def = (Config.Tools :: any)[id]
 	local c = frame(grid, C.card, { LayoutOrder = order })
 	UiKit.corner(c, 14)
@@ -105,7 +110,12 @@ local function card(grid: Instance, id: string, order: number)
 	statBar(c, "Strip size", def.stripRadius / 0.6, 5)
 	statBar(c, "Speed", (1.25 - def.cooldown) / 1.0, 6)
 	local have = owns(id)
+	local ordered = ordered(id)
 	local afford = money() >= def.price
+	if ordered then
+		UiKit.label(c, "Ordered - the delivery van is bringing it.", 14, Color3.fromHex("2e6da4"), UiKit.Bold, { LayoutOrder = 7, TextWrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0) })
+		return nil
+	end
 	local text = if have then "Owned" elseif afford then "Buy" else "Not enough money"
 	local b = UiKit.button(c, text, if have or not afford then C.owned else C.orange, if have or not afford then C.ink else C.white, function()
 		if not have and afford then
@@ -210,7 +220,7 @@ function ShopController.open()
 	end
 	-- the footer
 	local foot = frame(win, Color3.fromHex("e8e0d2"), { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 34) })
-	UiKit.label(foot, "Tools you buy go straight into your hands. Press Q to put one down, and E to pick it up again.", 14, C.muted, UiKit.Body, { Position = UDim2.fromOffset(12, 8) })
+	UiKit.label(foot, "Orders ship immediately. The orange delivery van drops your boxes at the loading dock by the cabin.", 14, C.muted, UiKit.Body, { Position = UDim2.fromOffset(12, 8) })
 	g.Parent = player:WaitForChild("PlayerGui")
 	-- gamepads: start on the first button
 	GuiService.SelectedObject = first or closeBtn

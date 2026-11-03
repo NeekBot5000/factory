@@ -23,6 +23,7 @@ local TEMPLATE = {
 	trees = {},            -- tree id -> BarkGrid string, for trees on the player's plot
 	trophies = {},
 	dropped = {},          -- tools you own but put down (Q): out of the tool bar until you pick them up again
+	orders = {},           -- TimberMart orders: { item, status = processing / shipping / boxed / delivered }
 	tutorial = 1,          -- which "Getting started" step you're on (-1 when you've finished it)
 	peeled = 0,            -- bark sheets peeled, ever
 	earned = 0,            -- money the truck has paid you, ever
@@ -135,6 +136,13 @@ function DataService.publish(player: Player)
 	table.sort(dropped)
 	player:SetAttribute("Owned", table.concat(owned, ","))
 	player:SetAttribute("Dropped", table.concat(dropped, ","))
+	local ordered = {}
+	for _, o in data.orders or {} do
+		if o.status ~= "delivered" then
+			table.insert(ordered, o.item)
+		end
+	end
+	player:SetAttribute("Ordered", table.concat(ordered, ","))
 end
 
 function DataService.start()

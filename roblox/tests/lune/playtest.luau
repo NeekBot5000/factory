@@ -26,6 +26,7 @@ end
 local A = Harness.boot(place, "server-A")
 A.start()
 local Data = A.service("DataService")
+local bob = nil
 local Carry = A.service("CarryService")
 task.wait(0.1)
 
@@ -191,9 +192,58 @@ tut = A.last(alice, "Tutorial")
 check(tut and tut.i == 6, "with $160, step 6: buy it at TimberMart")
 local buy = A.remotes.Buy.OnServerEvent
 buy:Fire(alice, "double_bit")
-task.wait(0.6)
-check(data.owned.double_bit and alice:GetAttribute("Tool") == "double_bit" and math.abs(data.money - 40) < 0.01, "bought: $160 off, and it's straight in your hand")
+task.wait(0.3)
+check(not data.owned.double_bit and math.abs(data.money - 40) < 0.01 and string.find(alice:GetAttribute("Ordered") or "", "double_bit", 1, true),
+	"bought: $160 off, and it's on order (like Godot, it comes by van)")
+check(count("Notify", alice, "Ordered Double-Bit Axe") == 1, "'Ordered Double-Bit Axe'")
+tut = A.last(alice, "Tutorial")
+check(tut and tut.i == 7 and string.find(tut.text, "delivery van", 1, true), "step 7: the van brings it")
+buy:Fire(alice, "double_bit")
+task.wait(0.1)
+check(math.abs(data.money - 40) < 0.01, "ordering it again while it's on its way does nothing")
+-- the van comes, backs onto the dock (beeping) and drops a box
+local box = nil
+for _ = 1, 240 do
+	for _, c in loose:GetChildren() do
+		if c:GetAttribute("Kind") == "box" and c:GetAttribute("Owner") == 101 then
+			box = c
+		end
+	end
+	if box then
+		break
+	end
+	task.wait(0.1)
+end
+check(box ~= nil and box:GetAttribute("Item") == "double_bit", "the van drops a TimberMart box with the axe in it at the dock")
+check(count("Fx", nil, "click") >= 1, "it beeps as it backs up")
+local dock = W.van_dock[#W.van_dock]
+check(box and (box.CFrame.Position - wv(dock)).Magnitude < 20, "right by the loading dock")
+if box then
+	-- someone else can't open it
+	A.stand(bob or A.join(303, "Carol"), box.CFrame.Position + V3(0, 3, 2))
+	A.stand(alice, box.CFrame.Position + V3(0, 3, 3))
+	A.remotes.Open.OnServerEvent:Fire(alice, box)
+	task.wait(1.5)
+	check(box.Parent == nil, "click: the box opens and folds away")
+	local pickup = nil
+	for _, c in loose:GetChildren() do
+		if c:GetAttribute("Kind") == "pickup" and c:GetAttribute("Owner") == 101 then
+			pickup = c
+		end
+	end
+	check(pickup ~= nil and count("Fx", nil, "rip") >= 1 and count("Fx", nil, "reveal") >= 1, "the tape rips and the axe rises out of it, glowing")
+	if pickup then
+		local part = pickup:FindFirstChildWhichIsA("BasePart", true)
+		A.remotes.Use.OnServerEvent:Fire(alice, part)
+		task.wait(0.6)
+	end
+end
+check(data.owned.double_bit and alice:GetAttribute("Tool") == "double_bit", "E takes it: it's yours, in your hand")
+check(count("Notify", alice, "Double-Bit Axe  [3]") == 1, "with Godot's toast: its name and its key")
 check(data.tutorial == -1 and count("Notify", alice, "basics") == 1, "Getting started is done (and says so once)")
+for _, o in data.orders do
+	check(o.status == "delivered", "and the order is marked delivered")
+end
 
 -- the double-bit hits twice a swing
 local fresh = trees[#trees]
@@ -216,7 +266,7 @@ check(alice:GetAttribute("Dropped") == "double_bit", "and leaves the tool bar")
 equip:Fire(alice, "double_bit")
 task.wait(0.05)
 check(alice:GetAttribute("Tool") == "hands", "you can't take it out of the bar while it's on the ground")
-local bob = A.join(202, "Bob")
+bob = A.join(202, "Bob")
 task.wait(0.6)
 A.stand(bob, item.Handle.CFrame.Position + V3(0, 3, 2))
 A.remotes.Use.OnServerEvent:Fire(bob, item.Handle)

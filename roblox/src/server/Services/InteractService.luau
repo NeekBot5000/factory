@@ -44,6 +44,16 @@ local function use(player: Player, target: unknown)
 		end
 		return
 	end
+	-- the tool rising out of an opened box
+	local pickup = part:FindFirstAncestorWhichIsA("Model")
+	while pickup and pickup:GetAttribute("Kind") ~= "pickup" do
+		pickup = pickup:FindFirstAncestorWhichIsA("Model")
+	end
+	if pickup then
+		local Delivery = require(script.Parent.DeliveryService) :: any
+		Delivery.take(player, pickup)
+		return
+	end
 	local truck = workspace:FindFirstChild("Truck")
 	if truck and part:IsDescendantOf(truck) then
 		EconomyService.ship(player)

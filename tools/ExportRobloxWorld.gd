@@ -341,6 +341,13 @@ func _write_luau(main: Node3D) -> void:
 	for q in main.get("_truck_back"):
 		L.append("\t\t%s," % _v3((q as Vector3) * S))
 	L.append("\t}, bed = { center = %s, size = %s } }," % [_v3(tr.to_local(tr.rear_point()) * S), _v3(Vector3(1.9, 1.0, 2.6) * S)])
+	# the TimberMart van: in over the crest, U-turn, back onto the loading dock, then out again
+	var van: Truck = main.van
+	for route in [["inn", van.route_in], ["dock", van.route_dock], ["out", van.route_out]]:
+		L.append("\tvan_%s = {" % route[0])
+		for q in route[1]:
+			L.append("\t\t%s," % _v3((q as Vector3) * S))
+		L.append("\t},")
 	# solid boxes
 	L.append("\tsolid = {")
 	for c in collide:

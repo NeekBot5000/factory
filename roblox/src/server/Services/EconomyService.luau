@@ -9,7 +9,6 @@ local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local W = require(ReplicatedStorage.Shared.GodotWorld) :: any
 local DataService = require(script.Parent.DataService)
-local ToolService = require(script.Parent.ToolService)
 local TutorialService = require(script.Parent.TutorialService)
 
 local EconomyService = {}
@@ -160,18 +159,30 @@ function EconomyService.ship(player: Player): boolean
 	return true
 end
 
+-- Buying puts in an order (Godot's Game.buy): the money goes now, the van brings it (DeliveryService).
 local function buy(player: Player, item: unknown)
 	if typeof(item) ~= "string" then
 		return
 	end
 	local def = (Config.Tools :: any)[item]
 	local data = DataService.get(player)
-	if not def or def.price <= 0 or not data or data.owned[item] or data.money < def.price then
+	if not def or def.price <= 0 or not data or data.owned[item] then
+		return
+	end
+	data.orders = data.orders or {}
+	for _, o in data.orders do
+		if o.item == item and o.status ~= "delivered" then
+			return        -- already on its way
+		end
+	end
+	if data.money < def.price then
+		remotes.Notify:FireClient(player, "Not enough money", "ff7a7a")
 		return
 	end
 	EconomyService.addMoney(player, -def.price)
-	ToolService.grant(player, item :: string)
-	remotes.Notify:FireClient(player, "Bought the " .. def.name, GREEN, "buy")
+	table.insert(data.orders, { item = item, status = "processing" })
+	DataService.publish(player)
+	remotes.Notify:FireClient(player, "Ordered " .. def.name, "8fd0ff")
 	TutorialService.check(player)
 end
 

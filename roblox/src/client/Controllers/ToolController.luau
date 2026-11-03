@@ -221,7 +221,17 @@ local function startSwing()
 			end
 		end
 	end
+	-- (a click on a TimberMart box opens it instead, like Godot's on_click)
 	local d = def()
+	local cam = workspace.CurrentCamera
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = { player.Character :: Instance, cam }
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local near = workspace:Raycast(cam.CFrame.Position, cam.CFrame.LookVector * math.min(d.reach, 3) * M, params)
+	if near and near.Instance:GetAttribute("Kind") == "box" and near.Instance:GetAttribute("Owner") == player.UserId then
+		remotes.Open:FireServer(near.Instance)
+		return
+	end
 	State.swing = 0
 	impacts = 0
 	if d.anim == "double" then

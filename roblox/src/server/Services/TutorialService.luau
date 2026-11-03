@@ -29,6 +29,16 @@ local function done(player: Player, data: any, step: any): boolean
 		return (data.earned or 0) > 0
 	elseif c == "money" then
 		return data.money >= step.goal or data.owned[step.next or "double_bit"] == true
+	elseif c == "ordered" then
+		if data.owned[step.item] then
+			return true
+		end
+		for _, o in data.orders or {} do
+			if o.item == step.item then
+				return true
+			end
+		end
+		return false
 	elseif c == "owns" then
 		return data.owned[step.item] == true
 	end

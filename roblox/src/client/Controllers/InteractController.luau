@@ -114,6 +114,23 @@ function InteractController.target(): (string, (() -> ())?)
 			remotes.Use:FireServer(part)
 		end
 	end
+	-- a TimberMart box: click to open it, or carry it
+	if part:GetAttribute("Kind") == "box" and part:GetAttribute("Owner") == player.UserId and not part:GetAttribute("Opened") then
+		return "[Click] open    [E] grab", function()
+			remotes.Grab:FireServer(part)
+			Sfx.play("pickup")
+		end
+	end
+	-- the tool rising out of an opened box
+	local pickup = part:FindFirstAncestorWhichIsA("Model")
+	while pickup and pickup:GetAttribute("Kind") ~= "pickup" do
+		pickup = pickup:FindFirstAncestorWhichIsA("Model")
+	end
+	if pickup and pickup:GetAttribute("Owner") == player.UserId then
+		return "[E] take", function()
+			remotes.Use:FireServer(part)
+		end
+	end
 	local t = truck()
 	if t and part:IsDescendantOf(t) then
 		local v = InteractController.truckValue()
@@ -218,7 +235,7 @@ function InteractController.start()
 			action()
 		end
 	end)
-	local engine: Sound? = nil
+	local engines: { [string]: Sound? } = {}
 	local acc = 0
 	RunService.RenderStepped:Connect(function(dt)
 		-- carry the held thing in front of you
@@ -256,17 +273,23 @@ function InteractController.start()
 			sign.Enabled = v > 0
 			(sign:FindFirstChild("Text") :: TextLabel).Text = string.format("$%.2f", v)
 		end
-		-- the diesel engine runs while it's on the road
-		local moving = t:GetAttribute("State") == "leaving" or t:GetAttribute("State") == "returning"
-		if moving and not engine then
-			engine = Sfx.loop("engine", -6, t:FindFirstChild("Cab") or t.PrimaryPart)
-			if engine then
-				engine.RollOffMaxDistance = 45 * M
-				engine.RollOffMinDistance = 4 * M
+		-- the diesel engines run while the truck or the van is on the road
+		for _, name in { "Truck", "Van" } do
+			local veh = workspace:FindFirstChild(name) :: Model?
+			local st = veh and veh:GetAttribute("State")
+			local moving = st == "leaving" or st == "returning" or st == "arriving" or st == "docking"
+			local snd = engines[name]
+			if veh and moving and not snd then
+				snd = Sfx.loop("engine", -6, veh:FindFirstChild("Cab") or veh:FindFirstChildWhichIsA("BasePart"))
+				if snd then
+					snd.RollOffMaxDistance = 45 * M
+					snd.RollOffMinDistance = 4 * M
+				end
+				engines[name] = snd
+			elseif not moving and snd then
+				snd:Destroy()
+				engines[name] = nil
 			end
-		elseif not moving and engine then
-			engine:Destroy()
-			engine = nil
 		end
 	end)
 	-- the server's sounds for things only it knows about (the horn as the truck leaves, a tutorial step done)

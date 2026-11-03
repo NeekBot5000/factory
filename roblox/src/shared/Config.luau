@@ -51,7 +51,8 @@ Config.Tutorial = {
 	{ text = "Pick the bark up (E), carry it to the green truck and drop it in the back (E again).", check = "loaded" },
 	{ text = "Look at the truck and press E to send it to the mill. You're paid when it gets there.", check = "earned" },
 	{ text = "Keep at it until you have $160 for a Double-Bit Axe.", check = "money", goal = 160 },
-	{ text = "Go into the cabin, use the computer (E) and buy the Double-Bit Axe from TimberMart.", check = "owns", item = "double_bit" },
+	{ text = "Go into the cabin, use the computer (E) and buy the Double-Bit Axe from TimberMart.", check = "ordered", item = "double_bit" },
+	{ text = "The delivery van brings it to the dock. Click the box to open it, then pick up your axe.", check = "owns", item = "double_bit" },
 }
 Config.TutorialDone = "That's the basics. The rest is yours to find out."
 

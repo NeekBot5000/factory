@@ -131,11 +131,23 @@ local function trucks()
 		return
 	end
 	local pivot = truck:GetPivot()
+	local van = workspace:FindFirstChild("Van") :: Model?
+	local vanPivot = if van then van:GetPivot() else CFrame.new()
 	for _, p in m:GetChildren() do
 		local base = WorldMeshes.parseName(p.Name)
 		if string.find(base, "^ship") then
 			(p :: BasePart).CFrame = pivot * (p :: BasePart).CFrame
 			p.Parent = truck
+		elseif van and string.find(base, "^van") then
+			(p :: BasePart).CFrame = vanPivot * (p :: BasePart).CFrame
+			p.Parent = van
+		end
+	end
+	if van then
+		for _, d in van:GetChildren() do
+			if d:IsA("BasePart") and d:GetAttribute("Standin") then
+				d.Transparency = 1
+			end
 		end
 	end
 	for _, d in truck:GetChildren() do
