@@ -1,0 +1,58 @@
+name: Roblox engine check
+
+# Looks at the Roblox version in Roblox itself (tools/roblox_engine.py): Roblox's renders and 3D versions of the
+# uploaded models, and the game running in a real Roblox server (a saved, unpublished version of the place) with
+# roblox/tests/engine/run.luau checking physics, meshes and errors. The results are committed to
+# roblox/tests/engine/out/. Needs the secret ROBLOX_API_KEY; the server part also needs the variables
+# ROBLOX_UNIVERSE_ID and ROBLOX_PLACE_ID (roblox/SETUP.md).
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "roblox/tests/engine/run.luau"
+      - "tools/roblox_engine.py"
+      - ".github/workflows/roblox-engine.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: roblox-engine
+  cancel-in-progress: false
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    env:
+      ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+      ROBLOX_UNIVERSE_ID: ${{ vars.ROBLOX_UNIVERSE_ID }}
+      ROBLOX_PLACE_ID: ${{ vars.ROBLOX_PLACE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the place with Rojo
+        run: |
+          mkdir -p luau
+          wget -q https://github.com/rojo-rbx/rojo/releases/download/v7.7.1/rojo-7.7.1-linux-x86_64.zip -O luau/rojo.zip
+          unzip -q -o luau/rojo.zip -d luau
+          (cd roblox && ../luau/rojo build -o ../Timber.rbxl .)
+
+      - name: Look at it in Roblox
+        run: python3 tools/roblox_engine.py
+
+      - name: Commit what Roblox showed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add roblox/tests/engine/out
+          if git diff --cached --quiet; then
+            echo "Nothing new."
+            exit 0
+          fi
+          git commit -m "Roblox engine check: results [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0
+            sleep 5
+          done
+          exit 1
