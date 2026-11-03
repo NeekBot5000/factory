@@ -5,8 +5,8 @@ key presses don't work (only clicking and moving), trees turn into lines when to
 STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
 
 ## Queue
-[ ] 6. Godot bark sheets (Chip.gd): shape, colours, how they fly off
-[ ] 9. Re-check every number and rule against the Godot scripts (swing poses, hints, sounds)
+[ ] 9. The rest of Godot's axes (14 in its shop): twins, throwing, gouge, ringer, spud, spiral, robo, thunder...
+[ ] 11. Godot's title screen
 [ ] 10. Docs, playtest, CI; morning report
 
 ## Done
@@ -24,6 +24,14 @@ STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
     Uploaded by the workflow: GodotWorld 74577339810456, GodotTrucks 128707536945262, GodotTools 122305679607294.
     Commits b872efb, ff03b6a
 [x] Godot's sky rendered into a skybox (tools/make_sky.py), uploaded; fog colour. Commit ff03b6a
+[x] Bark sheets are the exact panels torn off (Godot's Chip), '[E] grab    $0.60' hint. Commit a10d230
+[x] Godot's tree hints, Getting started wording with the cabin and computer. Commit 1dabeca
+[x] TimberMart delivery: order, van drives in and backs onto the dock beeping, box, click to open, tool rises, E
+    takes it. Commit 11d6313
+[x] The first-person arm ported from Godot's ARCS and poses. Commit 5addf03
+[x] CI fixes: analyze only pure-logic modules; InputTest waits for the dropped tool to settle. Commit 03d33c6
+[x] Drifting clouds, wood/stone footsteps, sturdier client start. Commit d5aeb17
+[x] Godot's strip_circle ported exactly (circle in metres). Commit b94b7fa
 
 ## Parked
 - Checking the imports from CI: downloading an uploaded asset needs the API key to have the asset-delivery
