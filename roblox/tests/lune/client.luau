@@ -121,8 +121,24 @@ local r = tree:GetAttribute("Radius")
 S.stand(alice, base + V3(r + 3, 4.5, 0))
 C.look(base + V3(0, 4.5, 0))
 C.frames(20)       -- (a tool you just took out has to come up into view before you can swing it, like Godot's)
+local vm = C.camera:FindFirstChild("ViewModel")
+check(vm ~= nil, "the first-person arm is in view")
+local function armAt()
+	return C.camera.CFrame:PointToObjectSpace(vm:GetPivot().Position)
+end
+local rest = vm and armAt()
+check(rest and rest.X > 0 and rest.Y < 0 and rest.Z < 0, "at rest it's lower right, in front of you (" .. tostring(rest) .. ")")
 local sent0 = #C.sent
 C.click()
+local moved = 0
+for _ = 1, 12 do
+	C.frame(1 / 60)
+	task.wait()
+	if vm then
+		moved = math.max(moved, (armAt() - rest).Magnitude)
+	end
+end
+check(moved > 0.5, string.format("a swing carries the arm along Godot's arc (moves %.1f studs)", moved))
 for _ = 1, 40 do
 	C.frame(1 / 60)
 	task.wait()
