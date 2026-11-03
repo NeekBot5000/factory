@@ -1,0 +1,9 @@
+[
+  {
+    "key": "SoundSheet",
+    "file": "sounds/timber-sounds.ogg",
+    "type": "Audio",
+    "name": "Timber sounds",
+    "description": "Every sound effect and music note in Timber, in one file."
+  }
+]

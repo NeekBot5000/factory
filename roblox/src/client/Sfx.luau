@@ -2,18 +2,19 @@
 -- The Godot game's own sounds, played on Roblox. They all live in one uploaded audio file (the "sound sheet",
 -- made by tools/export_sounds.sh): each sound is a stretch of it, played with PlaybackRegion.
 -- Also the forest: the breeze, birds now and then, and short pieces of plucked guitar with long quiet gaps.
--- Until the sheet is uploaded (Config.SoundSheetId is empty), a few built-in Roblox sounds stand in.
+-- GitHub uploads the sheet and writes its id into Shared.Assets (tools/roblox_assets.py). Until then, a few built-in
+-- Roblox sounds stand in.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
 
-local Config = require(ReplicatedStorage.Shared.Config)
+local Assets = require(ReplicatedStorage.Shared.Assets) :: { [string]: string }
 local Sheet = require(ReplicatedStorage.Shared.SoundSheet)
 
 local Sfx = {}
 Sfx.musicVolume = 0.5
 
-local SHEET = if Config.SoundSheetId ~= "" then "rbxassetid://" .. Config.SoundSheetId else nil
+local SHEET = if Assets.SoundSheet then "rbxassetid://" .. Assets.SoundSheet else nil
 local BASE_VOLUME = 0.7          -- Godot's 0 dB
 local STUDS = 3                  -- studs per Godot metre
 

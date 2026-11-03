@@ -24,16 +24,47 @@ What it changes: the three code folders (ReplicatedStorage > Shared, ServerScrip
 StarterPlayerScripts > Client) are replaced, and the lighting and baseplate settings are applied. Anything else you
 build in the place stays. **Ctrl+Z** undoes a sync. **Sync Now** pulls once without turning Live Sync on.
 
-## Turning on the game's own sounds (once)
-All the Godot game's sounds (chops, the axe, whooshes, coins, the breeze, birds and the guitar music) are in one
-audio file, `roblox/sounds/timber-sounds.ogg`. Roblox can only play audio that's been uploaded to it, so upload it
-once:
-1. In Studio, open **View > Asset Manager**, click **Bulk Import** (the button with the arrow), and pick
-   `timber-sounds.ogg`. (Or upload it on create.roblox.com > Creations > Development Items > Audio.)
-2. When it shows up under **Audio**, right-click it > **Copy Asset ID**.
-3. Send me the number. I'll put it in `Config.SoundSheetId`, and Live Sync brings it into your place.
+## Let GitHub upload assets for you (once, about 5 minutes)
+Sounds and other assets go up to Roblox automatically: whenever an asset in `roblox/assets.json` is new or changes,
+GitHub uploads it and commits its Roblox ID into the game, and Live Sync brings it into Studio. Right now that's the
+sound sheet: every sound from the Godot game in one audio file.
 
-Until then, a few of Roblox's built-in sounds stand in.
+**1. Make a Roblox API key**
+1. Go to https://create.roblox.com/dashboard/credentials and click **Create API Key**.
+2. Name it `Timber GitHub`.
+3. Under **Access Permissions**, choose **Assets API** in the drop-down, click **Add API System**, and tick
+   **Read** and **Write**.
+   - To let GitHub publish the game too, also add **universe-places**, pick your Timber experience, and tick **Write**.
+4. Under **Security**, add `0.0.0.0/0` to **Accepted IP Addresses** (GitHub's machines change address).
+5. Click **Save & Generate Key**, then **Copy Key to Clipboard**.
+
+**2. Give it to GitHub**
+1. On the repository page, go to **Settings > Secrets and variables > Actions**.
+2. **Secrets** tab > **New repository secret**: name `ROBLOX_API_KEY`, and paste the key.
+3. **Variables** tab > **New repository variable**: name `ROBLOX_USER_ID`, value your Roblox user ID. It's the number
+   in your profile's web address, `roblox.com/users/<this number>/profile`.
+
+**3. Run it**
+1. **Actions** tab > **Roblox assets and publishing** > **Run workflow**.
+2. In about a minute it commits `Roblox: new asset ids from the upload`. Live Sync picks that up, and the next Play
+   test has every sound: the breeze, the birds, the music, and each chop.
+
+After that it runs by itself whenever an asset changes.
+
+**Publishing the game from GitHub (optional):** add two more variables, `ROBLOX_UNIVERSE_ID` and `ROBLOX_PLACE_ID`.
+Find both in the Creator Dashboard: open the experience, then the **...** menu on it, or its place's **...** menu,
+and choose **Copy Universe ID** or **Copy Place ID**. Then **Run workflow** with **publish** ticked. It replaces the
+published place with the code from GitHub, so anything built only by hand in Studio isn't included.
+
+## Control Studio with Claude on your computer (optional)
+Roblox Studio has a built-in MCP server. With it, a Claude running *on your computer* (the Claude desktop app or
+Claude Code) can read your place, edit scripts, run Luau, insert assets and start Play tests.
+1. In Studio, open **Assistant**, then click **...** > **Manage MCP Servers**.
+2. Turn on **Enable Studio as MCP server**.
+3. Under **Quick connect**, turn on **Claude Desktop** or **Claude Code**, then restart that app.
+4. A green dot under the switch means it's connected.
+
+The cloud sessions that write this code can't reach your computer, so they use Live Sync and GitHub instead.
 
 ## Quick start: no installs (2 minutes)
 1. Get `Timber.rbxl`, the whole game as one Roblox place file:

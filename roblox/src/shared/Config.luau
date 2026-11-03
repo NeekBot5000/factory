@@ -41,9 +41,6 @@ Config.Quests = {
 }
 
 -- sounds that ship with every Roblox install (swap for uploaded ones later; a missing one just stays silent)
--- The uploaded sound sheet (roblox/sounds/timber-sounds.ogg): every sound from the Godot game in one audio file.
--- Empty until it's uploaded; then a few built-in Roblox sounds stand in.
-Config.SoundSheetId = ""
 
 Config.Species = {
 	oak = { name = "Oak", outer = 1.0, inner = 1.0 },

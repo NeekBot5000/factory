@@ -1,0 +1,75 @@
+name: Roblox assets and publishing
+
+# Uploads new or changed Roblox assets (roblox/assets.json) with Open Cloud and commits their ids into
+# roblox/src/shared/Assets.luau, so Live Sync brings them into Studio. Run it by hand with "publish" ticked to
+# publish the Rojo-built place to your experience.
+# Needs the repository secret ROBLOX_API_KEY and the variable ROBLOX_USER_ID (see roblox/SETUP.md);
+# publishing also needs the variables ROBLOX_UNIVERSE_ID and ROBLOX_PLACE_ID.
+
+on:
+  push:
+    paths:
+      - "roblox/assets.json"
+      - "roblox/sounds/**"
+      - "roblox/images/**"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Also publish the place to Roblox (replaces the published version)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: roblox-assets
+  cancel-in-progress: false
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    env:
+      ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+      ROBLOX_USER_ID: ${{ vars.ROBLOX_USER_ID || secrets.ROBLOX_USER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload new or changed assets
+        run: python3 tools/roblox_assets.py
+
+      - name: Commit the new asset ids
+        run: |
+          if [ -z "$(git status --porcelain roblox/assets.lock.json roblox/src/shared/Assets.luau)" ]; then
+            echo "No new asset ids."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add roblox/assets.lock.json roblox/src/shared/Assets.luau
+          git commit -m "Roblox: new asset ids from the upload"
+          for i in 1 2 3; do
+            git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0
+            sleep 5
+          done
+          exit 1
+
+      - name: Publish the place
+        if: ${{ inputs.publish }}
+        env:
+          UNIVERSE: ${{ vars.ROBLOX_UNIVERSE_ID }}
+          PLACE: ${{ vars.ROBLOX_PLACE_ID }}
+        run: |
+          if [ -z "$UNIVERSE" ] || [ -z "$PLACE" ] || [ -z "$ROBLOX_API_KEY" ]; then
+            echo "Set ROBLOX_API_KEY, ROBLOX_UNIVERSE_ID and ROBLOX_PLACE_ID first (roblox/SETUP.md)."
+            exit 1
+          fi
+          git pull --rebase origin "$GITHUB_REF_NAME" || true
+          mkdir -p luau
+          wget -q https://github.com/rojo-rbx/rojo/releases/download/v7.7.1/rojo-7.7.1-linux-x86_64.zip -O luau/rojo.zip
+          unzip -q -o luau/rojo.zip -d luau
+          (cd roblox && ../luau/rojo build -o ../Timber.rbxl .)
+          curl --fail-with-body -sS -X POST \
+            "https://apis.roblox.com/universes/v1/$UNIVERSE/places/$PLACE/versions?versionType=Published" \
+            -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" \
+            --data-binary @Timber.rbxl
