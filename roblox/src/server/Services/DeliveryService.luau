@@ -276,8 +276,12 @@ function DeliveryService.take(player: Player, pickup: Model): boolean
 	end
 	ToolService.grant(player, item)
 	local def = (Config.Tools :: any)[item]
+	local itemDef = (Config.Items :: any)[item]
 	if item == "phone" then
 		remotes.Notify:FireClient(player, "TimberPhone  [Tab]", "7aff9a")
+	elseif itemDef and itemDef.blueprint then
+		-- (Godot's ItemPickup: a blueprint is learned, not carried)
+		remotes.Notify:FireClient(player, string.format("Blueprint learned: %s - build it with the hammer", (string.gsub(itemDef.name, " Blueprint", ""))), "8fd0ff")
 	else
 		remotes.Notify:FireClient(player, string.format("%s  [%d]", def and def.name or item, (table.find(Config.GodotToolOrder, item) or 0)), "7aff9a")
 	end

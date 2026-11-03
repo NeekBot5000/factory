@@ -393,6 +393,9 @@ function BuildService.serialize(userId: number): { any }
 					e.colors = colors
 					e.sale = m:GetAttribute("SaleValue")
 					e.stock = m:GetAttribute("Stock")
+					-- a machine's state: a wound crank, a lever that's on, a generator's fuel, a battery's charge
+					e.state = { charge = m:GetAttribute("Charge"), on = m:GetAttribute("On"), fuel = m:GetAttribute("Fuel") }
+					e.uid = m:GetAttribute("Uid")
 				else
 					e.have = m:GetAttribute("Have")
 					e.filled = m:GetAttribute("Filled")
@@ -401,6 +404,23 @@ function BuildService.serialize(userId: number): { any }
 				table.insert(out, e)
 			end
 		end
+	end
+	-- wires between your machines: by where their ends are in this list
+	local at = {}
+	for k, e in out do
+		if e.uid then
+			at[e.uid] = k
+		end
+	end
+	local wires = workspace:FindFirstChild("Wires")
+	for _, w in if wires then wires:GetChildren() else {} do
+		local a, b = at[w:GetAttribute("A")], at[w:GetAttribute("B")]
+		if a and b then
+			table.insert(out, { kind = "wire", a = a, b = b })
+		end
+	end
+	for _, e in out do
+		e.uid = nil
 	end
 	-- baskets and wheelbarrows you carry about: a build too
 	local loose = workspace:FindFirstChild("Loose")
@@ -413,7 +433,11 @@ function BuildService.serialize(userId: number): { any }
 end
 
 function BuildService.restore(player: Player, list: { any })
-	for _, e in list or {} do
+	local made: { [number]: Model } = {}
+	for k, e in list or {} do
+		if typeof(e) == "table" and e.kind == "wire" then
+			continue
+		end
 		if typeof(e) ~= "table" or not Builds.def(e.id) then
 			continue
 		end
@@ -448,8 +472,19 @@ function BuildService.restore(player: Player, list: { any })
 				if e.stock then
 					m:SetAttribute("Stock", e.stock)
 				end
+				if typeof(e.state) == "table" then
+					m:SetAttribute("Charge", e.state.charge)
+					m:SetAttribute("On", e.state.on)
+					m:SetAttribute("Fuel", e.state.fuel)
+				end
 				require(script.Parent.BuildBehaviors).activate(m)
+				made[k] = m
 			end
+		end
+	end
+	for _, e in list or {} do
+		if typeof(e) == "table" and e.kind == "wire" and made[e.a] and made[e.b] then
+			require(script.Parent.CircuitService).toggle(made[e.a], made[e.b])
 		end
 	end
 end

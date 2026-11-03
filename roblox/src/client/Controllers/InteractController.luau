@@ -189,6 +189,11 @@ function InteractController.target(): (string, (() -> ())?)
 		end
 	elseif b and b:GetAttribute("Kind") == "build" and State.tool == "hammer" then
 		return string.format("[X] take down  +$%.2f", b:GetAttribute("SaleValue") :: number? or 0), nil
+	elseif b and b:GetAttribute("Kind") == "build" and InteractController.machineHint(b) then
+		local text, use = InteractController.machineHint(b)
+		return text :: string, if use then function()
+			remotes.UseMachine:FireServer(part)
+		end else nil
 	elseif b and b:GetAttribute("Build") == "catapult" then
 		return if b:GetAttribute("Busy") then "" else "[Click] fire", nil
 	elseif b and b:GetAttribute("Build") == "compost" then
@@ -283,6 +288,73 @@ function InteractController.target(): (string, (() -> ())?)
 		return InteractController.treeHint(tree), nil
 	end
 	return "", nil
+end
+
+-- what a machine says when you look at it (Godot's hint_text for each), and whether E does something
+function InteractController.machineHint(m: Model): (string?, boolean)
+	local id = m:GetAttribute("Build")
+	local powered = m:GetAttribute("Powered") == true
+	if State.tool == "wires" then
+		return InteractController.wireHint(m), false
+	end
+	if id == "crank" then
+		local c = m:GetAttribute("Charge") :: number? or 0
+		return if c > 0 then string.format("[E] wind    %ds left", math.ceil(c)) else "[E] wind", true
+	elseif id == "lever" then
+		return if m:GetAttribute("On") then "[E] switch off" else "[E] switch on", true
+	elseif id == "button" then
+		return "[E] press", true
+	elseif id == "lamp" or id == "bell" then
+		return string.format("%s  ·  %s", if id == "lamp" then "Lamp" else "Bell", if powered then "powered" else "no power"), false
+	elseif id == "windmill" then
+		local w = 0.55 + 0.3 * math.sin(os.clock() / 37) + 0.2 * math.sin(os.clock() / 11 + 1) + 0.08 * math.sin(os.clock() / 3.1)
+		w = math.clamp(w, 0, 1)
+		return string.format("Windmill  ·  %s  ·  wind %d%%", if w >= 0.35 then "turning" else "too calm", math.floor(w * 100)), false
+	elseif id == "generator" then
+		local f = m:GetAttribute("Fuel") :: number? or 0
+		return string.format("Generator  ·  %s    drop bark, leaves or wood in the hopper", if f > 0 then string.format("%ds of fuel", math.floor(f)) else "no fuel"), false
+	elseif id == "battery" then
+		local c = m:GetAttribute("Charge") :: number? or 0
+		return string.format("Battery  ·  %d%%  ·  %s", math.floor(c / 180 * 100), if m:GetAttribute("Feeding") then "powering" elseif powered then "charging" else "idle"), false
+	elseif id == "truck_caller" then
+		return "Truck Caller  ·  sends the log truck whenever it gets power", false
+	end
+	local GB = require(game:GetService("ReplicatedStorage").Shared.Builds) :: any
+	local def = GB.def(id)
+	if def and def.machine then
+		return string.format("%s  ·  %s", def.name, if powered then "powered" else "no power"), false
+	end
+	return nil, false
+end
+
+-- the Wire Spool (Godot's wire hints): start a wire, then connect or disconnect a second machine
+local wireFrom: Model? = nil
+function InteractController.wireHint(m: Model): string
+	local GB = require(game:GetService("ReplicatedStorage").Shared.Builds) :: any
+	local name = (GB.def(m:GetAttribute("Build")) or {}).name or "machine"
+	if wireFrom and wireFrom.Parent then
+		if wireFrom ~= m then
+			return "[Click] connect / disconnect " .. name
+		end
+		return "[Click] a second machine    [Click empty] cancel"
+	end
+	return "[Click] start a wire from " .. name
+end
+function InteractController.wireClick(m: Model?)
+	if not m then
+		if wireFrom then
+			wireFrom = nil
+			Sfx.play("click", 0.6, -6)
+		end
+		return
+	end
+	if wireFrom and wireFrom.Parent and wireFrom ~= m then
+		remotes.Wire:FireServer(wireFrom:FindFirstChildWhichIsA("BasePart"), m:FindFirstChildWhichIsA("BasePart"))
+		wireFrom = nil
+	else
+		wireFrom = m
+		Sfx.play("click", 1.2, -4)
+	end
 end
 
 local TREE_HINTS = {

@@ -269,6 +269,14 @@ local function impact()
 	if d.build then
 		return         -- (the hammer's swing is just the swing: Godot's _do_impact)
 	end
+	if d.wire then
+		-- the Wire Spool: click a machine, then another (Godot's wire_click)
+		local wh = ToolController.aim(d.reach * M)
+		local IC = require(script.Parent.InteractController) :: any
+		local m = wh and IC.buildOf(wh.Instance)
+		IC.wireClick(if m and m:GetAttribute("Kind") == "build" then m else nil)
+		return
+	end
 	if d.rake then
 		remotes.Rake:FireServer()
 		return

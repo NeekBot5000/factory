@@ -57,7 +57,7 @@ function Harness.boot(placePath: string, jobId: string)
 
 	-- remotes: OnServerEvent handlers we can call as a client would, and a log of what the server sent to clients
 	local remotes = {}
-	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip", "Snip", "Vacuum", "Build", "PlanCancel", "TakeDown", "BuyLand", "Click", "Lie", "Mine", "Rake", "Water" } do
+	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip", "Snip", "Vacuum", "Build", "PlanCancel", "TakeDown", "BuyLand", "Click", "Lie", "Mine", "Rake", "Water", "UseMachine", "Wire" } do
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })
@@ -224,6 +224,7 @@ function Harness.boot(placePath: string, jobId: string)
 		Instance = roblox.Instance, Vector3 = roblox.Vector3, CFrame = roblox.CFrame, Color3 = roblox.Color3,
 		Enum = roblox.Enum, UDim2 = roblox.UDim2, Vector2 = roblox.Vector2, NumberRange = roblox.NumberRange,
 		PhysicalProperties = roblox.PhysicalProperties, Region3 = roblox.Region3, Font = roblox.Font,
+		ColorSequence = roblox.ColorSequence, NumberSequence = roblox.NumberSequence, ColorSequenceKeypoint = roblox.ColorSequenceKeypoint, NumberSequenceKeypoint = roblox.NumberSequenceKeypoint,
 		OverlapParams = { new = function() return { FilterDescendantsInstances = {}, FilterType = nil } end },
 		RaycastParams = { new = function() return {} end },
 		Random = {

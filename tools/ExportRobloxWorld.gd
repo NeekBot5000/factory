@@ -62,7 +62,7 @@ func _ready() -> void:
 	groups.clear()
 	var holder := Node3D.new()
 	add_child(holder)
-	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "rake", "blower", "can", "scale", "pickaxe", "steel_pick", "sledge", "rock_drill", "core_drill", "detector", "dynamite", "phone"]:
+	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "wires", "hammer", "rake", "blower", "can", "scale", "pickaxe", "steel_pick", "sledge", "rock_drill", "core_drill", "detector", "dynamite", "phone", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_truck_caller", "bp_windmill", "bp_generator", "bp_battery", "bp_logic", "bp_sensors", "bp_lamp", "bp_sawmill", "bp_chipper", "bp_planter", "bp_sprinkler", "bp_smelter", "bp_kiln", "bp_assembler", "bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig", "bp_charger", "bp_carts", "bp_rail_tools", "bp_rail_extras", "bp_oil", "bp_drones", "bp_feller", "bp_wheelbarrow"]:
 		var root := Node3D.new()
 		holder.add_child(root)
 		Tools.build_model(id, root)

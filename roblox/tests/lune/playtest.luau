@@ -70,7 +70,16 @@ check(sp and (sp.CFrame.Position - wv(W.spawn.at)).Magnitude < 1, "you start on 
 check(ws:FindFirstChild("TimberMart") ~= nil and ws.TimberMart:FindFirstChild("Computer") ~= nil, "TimberMart is on the computer in the cabin")
 local block = ws:FindFirstChild("ChoppingBlock")
 check(block and block:FindFirstChild("Hatchet") ~= nil, "the chopping block has the hatchet stuck in it")
-check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == #require("../../src/shared/Config").ShopOrder - 1, "every shop tool has a model (first-person view, tool bar, shop)")
+do
+	local Cfg0 = require("../../src/shared/Config")
+	local tools = 0
+	for _, id in Cfg0.ShopOrder do
+		if Cfg0.Tools[id] then
+			tools += 1
+		end
+	end
+	check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == tools, "every shop tool has a model (first-person view, tool bar, shop)")
+end
 local prompts = 0
 for _, d in ws:GetDescendants() do
 	if d:IsA("ProximityPrompt") then
@@ -1001,6 +1010,62 @@ do
 		task.wait(0.1)
 		check(MS.rock(si) == nil and ores() - before >= 2, "a sledgehammer bursts a small rock in one blow, every chunk flying out")
 	end
+end
+
+-- ---------------------------------------------------------------- machines and power
+do
+	local BS, CS = A.service("BuildService"), A.service("CircuitService")
+	local base = V3(-30, 0, 30)
+	local function mk(id, off)
+		local m = BS.make(id, roblox.CFrame.new(base + off), 1, 101, true, {})
+		A.service("BuildBehaviors").activate(m)
+		return m
+	end
+	local crank, lever, lamp = mk("crank", V3(0, 0, 0)), mk("lever", V3(6, 0, 0)), mk("lamp", V3(12, 0, 0))
+	check(CS.toggle(crank, lever) == "added" and CS.toggle(lever, lamp) == "added", "wires run between machines")
+	CS.use(crank)
+	task.wait(0.2)
+	check(crank:GetAttribute("Charge") > 14 and not lamp:GetAttribute("Powered"), "a wound crank gives power, but a lever that's off stops it")
+	CS.use(lever)
+	task.wait(0.2)
+	local light = lamp:FindFirstChild("LampLight")
+	check(lamp:GetAttribute("Powered") and light and light:FindFirstChildOfClass("PointLight").Brightness > 2, "switch the lever on and the lamp lights")
+	-- a battery charges while its network has power, and powers it itself once the crank runs down
+	local bat = mk("battery", V3(18, 0, 0))
+	CS.toggle(lamp, bat)
+	task.wait(1.0)
+	local c = bat:GetAttribute("Charge") or 0
+	check(c > 0.5, string.format("a battery charges while the network has power (%.1f s)", c))
+	crank:SetAttribute("Charge", 0)
+	task.wait(0.3)
+	check(bat:GetAttribute("Feeding") and lamp:GetAttribute("Powered"), "and powers it itself when nothing else does")
+	-- a generator burns bark, leaves and wood from its hopper
+	local gen = mk("generator", V3(0, 0, 9))
+	local leafy = roblox.Instance.new("Part")
+	leafy.Size = V3(0.5, 0.5, 0.5)
+	leafy.CFrame = gen:GetPivot() * roblox.CFrame.new(0.3, 3.15, -0.15)
+	leafy.Position = leafy.CFrame.Position
+	leafy:SetAttribute("Kind", "leaf")
+	leafy.Parent = loose
+	task.wait(0.3)
+	check((gen:GetAttribute("Fuel") or 0) > 0.5 and not pcall(function() return leafy.Parent.Name end), "a generator burns what's dropped in its hopper (a leaf: 1 s of fuel)")
+	-- the Wire Spool
+	Tools.grant(alice, "wires")
+	task.wait(1.3)
+	A.stand(alice, base + V3(3, 5, 5))
+	local w0 = #ws.Wires:GetChildren()
+	A.remotes.Wire.OnServerEvent:Fire(alice, gen:FindFirstChildWhichIsA("BasePart"), crank:FindFirstChildWhichIsA("BasePart"))
+	task.wait(0.1)
+	check(#ws.Wires:GetChildren() == w0 + 1, "the Wire Spool runs a wire from one machine to another")
+	-- machines and their wires are saved with you
+	local saved = BS.serialize(101)
+	local nw = 0
+	for _, e in saved do
+		if e.kind == "wire" then
+			nw += 1
+		end
+	end
+	check(nw == #ws.Wires:GetChildren(), "and the wires are saved with your machines (" .. nw .. ")")
 end
 
 -- ---------------------------------------------------------------- the leaf vacuums
