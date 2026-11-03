@@ -486,6 +486,59 @@ do
 	check(#loose:GetChildren() - n0 >= 5, "the timber auger strips bark continuously while it's held (" .. (#loose:GetChildren() - n0) .. " bites)")
 end
 
+-- ---------------------------------------------------------------- the shears
+do
+	local t, b, rr = freshTree(19)
+	Tools.grant(alice, "shears")
+	task.wait(1.3)
+	A.stand(alice, b + V3(rr + 6, 5, 0))
+	-- (the Godot crown meshes don't load in Lune: a crown part named the way they are)
+	local crowns = ws:FindFirstChild("GodotCrowns") or roblox.Instance.new("Model")
+	crowns.Name = "GodotCrowns"
+	crowns.Parent = ws
+	local c = roblox.Instance.new("Part")
+	c.Size = V3(6, 4, 6)
+	c.CFrame = roblox.CFrame.new(b + V3(0, t:GetAttribute("Height") + 1, 0))
+	c.Position = c.CFrame.Position
+	c:SetAttribute("GodotName", "crown_" .. tostring(t:GetAttribute("Index")))
+	c.Parent = crowns
+	for _, s in t:GetChildren() do
+		if s.Name == "Crown" then
+			s:Destroy()
+		end
+	end
+	local at = c.CFrame.Position + V3(2, 0, 0)
+	local snip = A.remotes.Snip.OnServerEvent
+	local function leaves()
+		local n = 0
+		for _, x in loose:GetChildren() do
+			if x:GetAttribute("Kind") == "leaf" then
+				n += 1
+			end
+		end
+		return n
+	end
+	local l0, s0 = leaves(), c.Size.X
+	snip:Fire(alice, t, at)
+	task.wait(0.1)
+	check(leaves() - l0 >= 2 and leaves() - l0 <= 3 and c.Size.X < s0, "a snip tears 2 or 3 clumps of leaves off and the crown shrinks")
+	snip:Fire(alice, t, at)
+	task.wait(0.05)
+	check(leaves() - l0 <= 3, "the shears snip once per click (Godot's 0.32 s)")
+	for _ = 1, 20 do
+		task.wait(0.3)
+		snip:Fire(alice, t, at)
+	end
+	task.wait(0.1)
+	local saps = 0
+	for _, x in loose:GetChildren() do
+		if x:GetAttribute("Kind") == "sapling" and (x.Position - at).Magnitude < 6 then
+			saps += 1
+		end
+	end
+	check(c.Parent == nil and t:GetAttribute("CrownCut") and saps >= 1, "snipped bare, the last clump holds a sapling or two (" .. saps .. ")")
+end
+
 -- ---------------------------------------------------------------- the crosscut, the throwing hatchet, the phone
 do
 	local saw = A.remotes.Sawn.OnServerEvent
@@ -584,6 +637,12 @@ do
 		sawn:Fire(alice, pt.Trunk, top)
 		task.wait(0.1)
 		check(not pt:GetAttribute("CrownCut"), "the pole saw needs Godot's 1.8 s in the leaves")
+		local before = {}
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "sapling" then
+				before[c:GetAttribute("Id") or c:GetFullName() .. tostring(c.Position)] = true
+			end
+		end
 		start:Fire(alice, pt.Trunk)
 		task.wait(Cfg.Saw.crownTime * 0.85)
 		sawn:Fire(alice, pt.Trunk, top)
@@ -592,7 +651,7 @@ do
 		for _, c in loose:GetChildren() do
 			if c:GetAttribute("Kind") == "leaf" and c:GetAttribute("Owner") == 101 and c:GetAttribute("Value") == 0.05 then
 				nLeaves += 1
-			elseif c:GetAttribute("Kind") == "sapling" then
+			elseif c:GetAttribute("Kind") == "sapling" and not before[c:GetAttribute("Id") or c:GetFullName() .. tostring(c.Position)] then
 				nSaplings += 1
 				sap = c
 			end

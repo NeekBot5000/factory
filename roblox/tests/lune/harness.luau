@@ -57,7 +57,7 @@ function Harness.boot(placePath: string, jobId: string)
 
 	-- remotes: OnServerEvent handlers we can call as a client would, and a log of what the server sent to clients
 	local remotes = {}
-	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip" } do
+	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip", "Snip" } do
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })

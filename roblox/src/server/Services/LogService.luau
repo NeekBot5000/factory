@@ -374,6 +374,73 @@ function LogService.cutCrown(tree: Model, player: Player?): boolean
 	return true
 end
 
+-- Shears: one snip tears 2 or 3 clumps of leaves off the bit of crown you hit; it shrinks, and after 4 to 16 snips
+-- (more for a bigger crown) it's gone. The very last clump always holds a sapling or two (Godot's Foliage.snip).
+local lastSnip: { [Player]: number } = {}
+function LogService.snip(player: Player?, tree: Model, at: Vector3): boolean
+	if tree:GetAttribute("Log") or tree:GetAttribute("Felled") or tree:GetAttribute("CrownCut") then
+		return false
+	end
+	local best, bestD = nil, math.huge
+	for _, p in LogService.crownParts(tree) do
+		local d = (p.Position - at).Magnitude - p.Size.Magnitude / 2
+		if d < bestD then
+			best, bestD = p, d
+		end
+	end
+	if not best or bestD > 1.5 * M then
+		return false
+	end
+	local p = best :: BasePart
+	local hp = p:GetAttribute("Snips") :: number?
+	if not hp then
+		hp = math.clamp(math.floor(p.Size.Magnitude / M * 0.35 * 7), 4, 16)
+	end
+	local owner = if player then player.UserId else nil
+	local head = player and player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+	local out = if head then (head.Position - at).Unit else Vector3.yAxis
+	for _ = 1, math.random(2, 3) do
+		local lf = leaf(at + Vector3.new(math.random() * 0.3 - 0.15, math.random() * 0.2 - 0.1, math.random() * 0.3 - 0.15) * M, p.Color, owner)
+		lf.AssemblyLinearVelocity = (out * (0.5 + math.random()) + Vector3.new(math.random() - 0.5, 0.3, math.random() - 0.5)) * M
+	end
+	remotes.Fx:FireAllClients("rustle", at, 1.1 + math.random() * 0.2, -4)
+	hp -= 1
+	p:SetAttribute("Snips", hp)
+	p.Size *= 0.9
+	if hp <= 0 then
+		p:Destroy()
+		if #LogService.crownParts(tree) == 0 then
+			local standin = tree:FindFirstChild("Crown")
+			if standin then
+				standin:Destroy()
+			end
+			for _ = 1, math.random(1, 2) do
+				sapling(at + Vector3.new(math.random() * 0.4 - 0.2, 0.1, math.random() * 0.4 - 0.2) * M, tree:GetAttribute("Species") :: string or "oak")
+			end
+			tree:SetAttribute("CrownCut", true)
+			remotes.Fx:FireAllClients("reveal", at, 1.3, -6)
+		end
+	end
+	return true
+end
+
+local function onSnip(player: Player, target: unknown, at: unknown)
+	if typeof(target) ~= "Instance" or typeof(at) ~= "Vector3" or not (target :: Instance):IsA("Model") or not (target :: Instance):HasTag("Tree") then
+		return
+	end
+	local tool = (Config.Tools :: any)[ToolService.current(player)]
+	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+	if not tool or not tool.snip or not head or (head.Position - (at :: Vector3)).Magnitude > tool.reach * M + 5 then
+		return
+	end
+	local now = os.clock()
+	if now - (lastSnip[player] or 0) < tool.cooldown * 0.8 then
+		return
+	end
+	lastSnip[player] = now
+	LogService.snip(player, target :: Model, at :: Vector3)
+end
+
 local function sawn(player: Player, target: unknown, at: unknown)
 	if typeof(target) ~= "Instance" or typeof(at) ~= "Vector3" then
 		return
@@ -447,8 +514,10 @@ function LogService.start()
 		end
 	end)
 	remotes.Sawn.OnServerEvent:Connect(sawn)
+	remotes.Snip.OnServerEvent:Connect(onSnip)
 	game:GetService("Players").PlayerRemoving:Connect(function(p)
 		started[p] = nil
+		lastSnip[p] = nil
 	end)
 end
 

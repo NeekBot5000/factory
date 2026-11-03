@@ -45,6 +45,12 @@ local POSES = {
 		{ Vector3.new(-0.08, -0.04, 0.05), Vector3.new(-6, 3, 0) },
 		{ Vector3.new(-0.1, -0.06, -0.12), Vector3.new(-8, 0, 0) },
 	},
+	-- the shears: raised into the leaves, jaws snapping
+	snip = {
+		{ Vector3.new(-0.04, 0.04, 0), Vector3.new(14, 6, 0) },
+		{ Vector3.new(-0.05, 0.08, -0.02), Vector3.new(22, 4, 0) },
+		{ Vector3.new(-0.06, 0.12, -0.14), Vector3.new(28, 2, 0) },
+	},
 	-- the drills: pushed in against the trunk, buzzing
 	drill = {
 		{ Vector3.new(-0.02, 0.02, 0), Vector3.new(2, 4, 0) },

@@ -265,6 +265,17 @@ local function impact()
 		throw(d)
 		return
 	end
+	if d.snip then
+		-- the shears: a snip in the leaves of the crown you're looking at (Godot's _snip)
+		Sfx.play("click", 0.6, -2)
+		local tree, at = ToolController.crownAt(d.reach)
+		if tree and at then
+			Sfx.play("snip", 1)
+			burst(at, -workspace.CurrentCamera.CFrame.LookVector, Color3.fromHex("5aab44"), 8, 3)
+			remotes.Snip:FireServer(tree, at)
+		end
+		return
+	end
 	local hit = ToolController.aim(d.reach * M)
 	if not hit then
 		if State.tool == "hands" then
