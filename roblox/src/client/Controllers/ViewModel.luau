@@ -57,6 +57,17 @@ local POSES = {
 		{ Vector3.new(-0.08, 0.0, -0.04), Vector3.new(-2, 3, 0) },
 		{ Vector3.new(-0.1, 0.0, -0.06), Vector3.new(0, 0, 0) },
 	},
+	-- the pressure washer: held like the vacuum; the planer: pushed along the log
+	washer = {
+		{ Vector3.new(-0.06, 0.0, 0), Vector3.new(-2, 6, 0) },
+		{ Vector3.new(-0.08, 0.0, -0.04), Vector3.new(-2, 3, 0) },
+		{ Vector3.new(-0.1, 0.0, -0.06), Vector3.new(0, 0, 0) },
+	},
+	planer = {
+		{ Vector3.new(-0.05, 0.02, 0), Vector3.new(-6, 8, 0) },
+		{ Vector3.new(-0.06, 0.01, -0.05), Vector3.new(-10, 5, 0) },
+		{ Vector3.new(-0.07, 0.0, -0.1), Vector3.new(-14, 2, 0) },
+	},
 	-- the drills: pushed in against the trunk, buzzing
 	drill = {
 		{ Vector3.new(-0.02, 0.02, 0), Vector3.new(2, 4, 0) },
@@ -264,9 +275,9 @@ local function target(def: any): (CFrame, number, number)
 		local hitP, hitR = base + P[3][1], P[3][2]
 		local p, r = restP, restR
 		local t = State.swing
-		if anim == "drill" or anim == "vacuum" then
-			if State.drilling or State.vacuuming then
-				p = hitP + Vector3.new(math.random() * 2 - 1, math.random() * 2 - 1, 0) * (if anim == "drill" then 0.004 else 0.006)
+		if anim == "drill" or anim == "vacuum" or anim == "washer" or anim == "planer" then
+			if State.drilling or State.vacuuming or State.running then
+				p = hitP + Vector3.new(math.random() * 2 - 1, math.random() * 2 - 1, 0) * (if anim == "drill" or anim == "planer" then 0.004 else 0.006)
 				r = hitR
 			end
 			t = -1
@@ -419,7 +430,7 @@ function ViewModel.start()
 		local world = camera.CFrame * armCf * jolt
 		model:PivotTo(world)
 		if toolModel then
-			local inArm = if def.anim == "thrust" or def.anim == "saw" or def.anim == "drill" or def.anim == "vacuum" then CFrame.new(0, -0.02 * M, 0)
+			local inArm = if def.anim == "thrust" or def.anim == "saw" or def.anim == "drill" or def.anim == "vacuum" or def.anim == "washer" or def.anim == "planer" then CFrame.new(0, -0.02 * M, 0)
 				elseif def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0)
 				elseif def.anim == "polesaw" then CFrame.Angles(math.rad(30), 0, 0)
 				else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)

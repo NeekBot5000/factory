@@ -461,6 +461,8 @@ function ToolController.start()
 	local drillCd = 0
 	local vacSend, vacDust = 0, 0
 	local vacSound: Sound? = nil
+	local runCd, washFx = 0, 0
+	local washSound: Sound? = nil
 	local sawFx = 0
 	local told: { [string]: number } = {}
 	local function tell(key: string, text: string)
@@ -598,7 +600,55 @@ function ToolController.start()
 			vacSound = nil
 		end
 		State.vacuuming = vac
-		local on = alive and d.hold and d.kind ~= "polesaw" and d.kind ~= "drill" and d.kind ~= "vacuum"
+		-- the motor tools (Godot's _motor_step): the pressure washer's jet wanders a little round the aim and flakes
+		-- bark off where it lands; the planer takes a strip the length of a lying log every 0.45 s
+		local motor = alive and (d.kind == "washer" or d.kind == "planer") and State.equipT >= 1
+		State.running = motor
+		if motor then
+			local cf = workspace.CurrentCamera.CFrame
+			local hit: RaycastResult? = nil
+			if d.kind == "washer" then
+				local jet = (cf.LookVector + (cf.RightVector * (math.random() * 2 - 1) + cf.UpVector * (math.random() * 2 - 1)) * 0.022).Unit
+				local params = RaycastParams.new()
+				params.FilterDescendantsInstances = { player.Character :: Instance, workspace.CurrentCamera, workspace:FindFirstChild("Loose") :: Instance }
+				params.FilterType = Enum.RaycastFilterType.Exclude
+				hit = workspace:Raycast(cf.Position, jet * d.reach * M, params)
+				local nozzle = cf.Position + cf.LookVector * 0.9 * M - cf.UpVector * 0.16 * M + cf.RightVector * 0.08 * M
+				local stop = if hit then hit.Position else cf.Position + cf.LookVector * d.reach * M
+				washFx -= dt
+				if washFx <= 0 then
+					washFx = 0.04
+					burst(nozzle, (stop - nozzle).Unit, Color3.new(0.82, 0.9, 1), 4, (stop - nozzle).Magnitude * 2.6)
+					if hit then
+						burst(hit.Position, hit.Normal, Color3.new(0.85, 0.92, 1), 3, 4.5)
+					end
+				end
+				if not washSound then
+					washSound = Sfx.loop("washer", -10)
+				end
+			else
+				hit = ToolController.aim(d.reach * M)
+			end
+			runCd -= dt
+			if runCd <= 0 and hit then
+				runCd = d.cooldown
+				local tree = treeOf(hit.Instance)
+				if tree and d.kind == "planer" and not tree:GetAttribute("Log") then
+					tell("planer", "The planer only works on logs lying down - fell the tree first")
+				elseif tree then
+					if d.kind == "planer" then
+						Sfx.play("saw", 1.6, -4)
+						Sfx.play("drill", 1.3, -8)
+					end
+					remotes.StripRequest:FireServer(tree, hit.Position, State.tool)
+				end
+			end
+		end
+		if (not motor or d.kind ~= "washer") and washSound then
+			washSound:Destroy()
+			washSound = nil
+		end
+		local on = alive and d.hold and d.kind ~= "polesaw" and d.kind ~= "drill" and d.kind ~= "vacuum" and not motor
 		local hit = if on then ToolController.aim(d.reach * M) else nil
 		local m = hit and treeOf(hit.Instance)
 		local canFell = d.fell ~= false

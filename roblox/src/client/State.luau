@@ -18,6 +18,7 @@ local State = {
 	sawing = false,
 	drilling = false,       -- a bark drill is running
 	vacuuming = false,      -- a vacuum is sucking
+	running = false,        -- the planer or the pressure washer is running
 	comboT = 0,
 	charge = 0,             -- the Thunder Axe: 0 -> 1 while you hold the button
 	thunderCd = 0,          -- seconds until it can strike again

@@ -232,6 +232,84 @@ function BarkGrid.stripPanels(g: Grid, list: { { number } }): { Strip }
 	return out
 end
 
+-- Godot's strip_soft (the pressure washer): the `most` panels nearest the hit within `circleR` metres, each from
+-- whichever layer is outermost there. `hit` is in the tree's own frame, metres; rOuter is the bark's radius.
+function BarkGrid.stripSoft(g: Grid, i: number, j: number, hit: { x: number, y: number, z: number }, circleR: number,
+	rOuter: number, bandH: number, most: number): { Strip }
+	local reachJ = math.ceil(circleR / bandH) + 1
+	local reachI = math.ceil(circleR / (2 * math.pi * rOuter / g.sectors)) + 1
+	local cand = {}
+	for dj = -reachJ, reachJ do
+		for di = -reachI, reachI do
+			local pi, pj = (i + di) % g.sectors, j + dj
+			if pj >= 0 and pj < g.bands and (BarkGrid.has(g, BarkGrid.OUTER, pi, pj) or BarkGrid.has(g, BarkGrid.INNER, pi, pj)) then
+				local a = 2 * math.pi * (pi + 0.5) / g.sectors
+				local dx, dy, dz = math.cos(a) * rOuter - hit.x, (pj + 0.5) * bandH - hit.y, math.sin(a) * rOuter - hit.z
+				local d = math.sqrt(dx * dx + dy * dy + dz * dz)
+				if d <= circleR then
+					table.insert(cand, { d, pi, pj })
+				end
+			end
+		end
+	end
+	table.sort(cand, function(a, b)
+		return a[1] < b[1]
+	end)
+	local list = {}
+	for k = 1, math.min(most, #cand) do
+		table.insert(list, { cand[k][2], cand[k][3] })
+	end
+	return BarkGrid.stripPanels(g, list)
+end
+
+-- Godot's strip_column (the electric planer): the whole run of the outermost layer's panels in the hit's column
+-- (or the next column round that still has bark), top to bottom, as one long strip.
+function BarkGrid.stripColumn(g: Grid, i: number, j: number): Strip?
+	local function strippable(l: number, pi: number, pj: number): boolean
+		if l == BarkGrid.OUTER then
+			return BarkGrid.has(g, BarkGrid.OUTER, pi, pj)
+		end
+		return BarkGrid.has(g, BarkGrid.INNER, pi, pj) and not BarkGrid.has(g, BarkGrid.OUTER, pi, pj)
+	end
+	if j < 0 or j >= g.bands then
+		return nil
+	end
+	local function layerAt(pi: number): number
+		return if BarkGrid.has(g, BarkGrid.OUTER, pi, j) then BarkGrid.OUTER elseif BarkGrid.has(g, BarkGrid.INNER, pi, j) then BarkGrid.INNER else -1
+	end
+	local l = layerAt(i)
+	if l < 0 then
+		for _, k in { 1, -1, 2, -2 } do
+			if layerAt((i + k) % g.sectors) >= 0 then
+				i = (i + k) % g.sectors
+				l = layerAt(i)
+				break
+			end
+		end
+	end
+	if l < 0 then
+		return nil
+	end
+	i %= g.sectors
+	local j0 = j
+	while j0 > 0 and strippable(l, i, j0 - 1) do
+		j0 -= 1
+	end
+	local panels = {}
+	local k = j0
+	while k < g.bands and strippable(l, i, k) do
+		table.insert(panels, { i, k })
+		k += 1
+	end
+	if #panels == 0 then
+		return nil
+	end
+	for _, p in panels do
+		clear(g, l, p[1], p[2])
+	end
+	return { layer = l, panels = panels }
+end
+
 -- Godot's strip_all (the Thunder Axe): every panel left, both layers, in sheets of block x block panels.
 function BarkGrid.stripAll(g: Grid, block: number): { Strip }
 	local out = {}

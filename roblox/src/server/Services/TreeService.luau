@@ -246,6 +246,19 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 		for _, res in BarkGrid.stripPanels(g, list) do
 			add(res)
 		end
+	elseif tool.kind == "washer" then
+		-- the jet eats a soft round patch: the 3 panels nearest where it lands (Godot's strip_soft)
+		local i, j, loc = hitAt(point :: Vector3)
+		for _, res in BarkGrid.stripSoft(g, i, j, loc, r, R, Config.Tree.bandH, 3) do
+			add(res)
+		end
+	elseif tool.kind == "planer" then
+		-- logs lying down only: a strip the whole length of the log, in one long sheet (Godot's strip_column)
+		if not t:GetAttribute("Log") then
+			return
+		end
+		local i, j = hitAt(point :: Vector3)
+		add(BarkGrid.stripColumn(g, i, j))
 	elseif tool.bits == 2 then
 		-- the twin auger: two bits side by side, 0.17 m either side of the aim (Godot's camera right)
 		local look = ((point :: Vector3) - head.Position) * Vector3.new(1, 0, 1)

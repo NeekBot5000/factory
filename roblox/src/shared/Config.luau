@@ -77,6 +77,13 @@ Config.Tools = {
 	cyclone = { name = "Cyclone Vac", price = 3400, radius = 0, stripRadius = 0, cooldown = 0.1, impact = 0, hurt = 0, anim = "vacuum", reach = 12, hold = true, kind = "vacuum", range = 12, cone = 0.93, cap = 25, launch = true, tag = "Powerful",
 		desc = "A long-range cyclone with a narrow, strong pull. Let go of the trigger and it fires everything it caught straight ahead.",
 		look = { handle = 1.4, head = { 0.45, 0.45, 1.8 }, headColor = { 120, 90, 200 }, handleColor = { 40, 40, 44 } } },
+	-- the motor tools: run while the trigger is held
+	planer = { name = "Electric Planer", price = 1300, radius = 0, stripRadius = 0, cooldown = 0.45, impact = 0, hurt = 0, anim = "planer", reach = 2.3, hold = true, kind = "planer", tag = "Long strips",
+		desc = "For logs lying down. Hold it on one and it planes a strip off the whole length of the log at once, in one long sheet.",
+		look = { handle = 1.0, head = { 0.5, 0.4, 0.9 }, headColor = { 60, 120, 200 }, handleColor = { 40, 40, 44 } } },
+	washer = { name = "Pressure Washer", price = 2200, radius = 0, stripRadius = 0.2, cooldown = 0.07, impact = 0, hurt = 0, anim = "washer", reach = 6, hold = true, kind = "washer", tag = "Satisfying",
+		desc = "Hold the trigger to blast a jet of water from a good distance away. Bark flakes off wherever the spray lands.",
+		look = { handle = 1.6, head = { 0.2, 0.3, 1.2 }, headColor = { 230, 200, 40 }, handleColor = { 40, 40, 44 } } },
 	-- the bark drills: hold the trigger and sweep across the trunk, a bite every `cooldown` seconds
 	drill = { name = "Timber Auger", price = 2400, radius = 1, stripRadius = 0.24, cooldown = 0.2, impact = 0, hurt = 0, anim = "drill", reach = 2.2, hold = true, kind = "drill", tag = "Heavy",
 		desc = "A cordless rotary debarker. Hold the trigger and sweep it across the trunk to strip bark continuously.",
@@ -105,8 +112,8 @@ Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7, cro
 Config.Leaf = { value = 0.05 }
 Config.Sapling = { rest = 1.5, growTime = 300 }
 -- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "vacuum", "twinvac", "cyclone" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "shears", "vacuum", "twinvac", "cyclone", "phone" }
+Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "planer", "washer", "vacuum", "twinvac", "cyclone" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "phone" }
 
 -- things you can buy that aren't tools (Godot's SHOP entries in "other")
 Config.Items = {

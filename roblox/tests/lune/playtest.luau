@@ -484,6 +484,48 @@ do
 		task.wait(0.2)
 	end
 	check(#loose:GetChildren() - n0 >= 5, "the timber auger strips bark continuously while it's held (" .. (#loose:GetChildren() - n0) .. " bites)")
+	-- the pressure washer: each burst of the jet flakes off the 3 panels nearest where it lands
+	t, b, rr = freshTree(20)
+	A.stand(alice, b + V3(rr + 10, 5, 0))
+	made = hitWith("washer", t, b + V3(rr, 6, 0))
+	local panels = 0
+	for _, m in made do
+		for _, x in m:GetDescendants() do
+			if x:IsA("BasePart") and x.CanQuery ~= false then
+				panels += 1
+			end
+		end
+		panels += 1
+	end
+	check(#made >= 1 and panels <= 3, "the pressure washer flakes off a soft little patch from 3 m away (" .. panels .. " panels)")
+	-- the planer: logs only, a strip the whole length of the log in one sheet
+	t, b, rr = freshTree(21)
+	A.stand(alice, b + V3(rr + 2, 5, 0))
+	made = hitWith("planer", t, b + V3(rr, 6, 0))
+	check(#made == 0, "the planer does nothing to a standing tree")
+	local log = nil
+	for _, l in ws.Logs:GetChildren() do
+		if l:GetAttribute("Kind") == "log" and l:FindFirstChild("Trunk") then
+			log = l
+		end
+	end
+	if log then
+		local trunk = log.Trunk
+		local lp = log:GetPivot()
+		local hitAt = lp:PointToWorldSpace(V3(log:GetAttribute("Radius"), 1.5, 0))
+		A.stand(alice, hitAt + V3(0, 4, 0))
+		made = hitWith("planer", log, hitAt)
+		local n = 0
+		if made[1] then
+			for _, x in made[1]:GetDescendants() do
+				if x:IsA("BasePart") and x.CanQuery ~= false then
+					n += 1
+				end
+			end
+			n += 1
+		end
+		check(#made == 1 and n >= 3, "on a log it planes one long sheet down its length (" .. n .. " panels)")
+	end
 end
 
 -- ---------------------------------------------------------------- the shears
