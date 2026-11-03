@@ -1226,8 +1226,24 @@ do
 	A.remotes.Hammer.OnServerEvent:Fire(alice, thing2)
 	task.wait(0.1)
 	check(not thing2.Anchored and not rot:GetAttribute("Stuck"), "hammer it again and it lets go")
+	-- a piston pushed out against the table clamps what's on it to it, until it pulls back
+	local thing3 = drop("chair", (rot:GetPivot() * roblox.CFrame.new(0, 0.45 * M, 0)).Position)
+	local crank3 = BS.make("crank", roblox.CFrame.new(rot:GetPivot().Position + V3(9, 0, 9)), 1, 101, true, {})
+	for _ = 1, 8 do
+		CS.use(crank3)
+	end
+	local lever3 = BS.make("lever", roblox.CFrame.new(rot:GetPivot().Position + V3(6, 0, 9)), 1, 101, true, {})
+	local ps = BS.make("piston", rot:GetPivot() * roblox.CFrame.new(0, 0, 1.5 * M), 1, 101, true, {})
+	CS.toggle(crank3, lever3)
+	CS.toggle(lever3, ps)
+	CS.use(lever3)
+	task.wait(1.0)
+	check(thing3.Anchored and thing3:GetAttribute("Stuck") ~= nil, "a piston pushed out against a rotator's table clamps what's on it to it")
+	CS.use(lever3)
+	task.wait(1.0)
+	check(not thing3.Anchored, "and lets go when the piston pulls back")
 	Tools.equip(alice, prev)
-	for _, m in { rig, fel, ch, box, ls, rot } do      -- (the rig would keep throwing chunks out for the rest of the run)
+	for _, m in { rig, fel, ch, box, ls, rot, crank3, lever3, ps } do      -- (the rig would keep throwing chunks out for the rest of the run)
 		m:Destroy()
 	end
 end

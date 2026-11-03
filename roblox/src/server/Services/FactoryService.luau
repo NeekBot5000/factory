@@ -374,7 +374,9 @@ end
 FactoryService.SPIN = 1.2
 -- (kept by the rotator's Uid, and what's stuck as a list: the same part or model reached two ways isn't always the
 -- same table key in the test harness)
-type Table = { m: Model, parts: { { p: BasePart, off: CFrame } }, stuck: { { p: BasePart, off: CFrame } }, speed: number }
+-- (a stuck thing's clamp is the Uid of the piston pinning it to the table, or nil if the hammer stuck it on)
+type Stuck = { p: BasePart, off: CFrame, clamp: string? }
+type Table = { m: Model, parts: { { p: BasePart, off: CFrame } }, stuck: { Stuck }, speed: number }
 local tables: { [string]: Table } = {}      -- (taken-down rotators are dropped in step)
 
 local function hub(m: Model, angle: number): CFrame
@@ -431,27 +433,44 @@ local function letGo(p: BasePart)
 	end
 end
 
--- the hammer on a rotator: stick what's on it, or let go. Returns how many are stuck now.
+-- the hammer on a rotator: stick what's on it, or let go (things a piston is clamping stay clamped either way).
+-- Returns how many are stuck now.
+local function stick(m: Model, t: Table, p: BasePart, clamp: string?)
+	local h = hub(m, m:GetAttribute("Angle") :: number? or 0)
+	p.Anchored = true
+	p.AssemblyLinearVelocity = Vector3.zero
+	p:SetAttribute("Stuck", m:GetAttribute("Uid"))
+	table.insert(t.stuck, { p = p, off = h:ToObjectSpace(p.CFrame), clamp = clamp })
+end
+
+local function hammered(t: Table): number
+	local n = 0
+	for _, s in t.stuck do
+		if not s.clamp then
+			n += 1
+		end
+	end
+	return n
+end
+
 function FactoryService.hammer(m: Model): number
 	local t = tableOf(m)
 	local at = m:GetPivot().Position
-	if #t.stuck > 0 then
-		for _, s in t.stuck do
-			letGo(s.p)
+	if hammered(t) > 0 then
+		for i = #t.stuck, 1, -1 do
+			if not t.stuck[i].clamp then
+				letGo(t.stuck[i].p)
+				table.remove(t.stuck, i)
+			end
 		end
-		t.stuck = {}
 		m:SetAttribute("Stuck", false)
 		remotes.Fx:FireAllClients("clink", at, 1.2, 0)
 		return 0
 	end
-	local h = hub(m, m:GetAttribute("Angle") :: number? or 0)
 	for _, p in onTable(m) do
-		p.Anchored = true
-		p.AssemblyLinearVelocity = Vector3.zero
-		p:SetAttribute("Stuck", m:GetAttribute("Uid"))
-		table.insert(t.stuck, { p = p, off = h:ToObjectSpace(p.CFrame) })
+		stick(m, t, p, nil)
 	end
-	if #t.stuck > 0 then
+	if hammered(t) > 0 then
 		m:SetAttribute("Stuck", true)
 		remotes.Fx:FireAllClients("clink", at, 0.8, 0)
 	else
@@ -460,8 +479,49 @@ function FactoryService.hammer(m: Model): number
 	return #t.stuck
 end
 
+-- pistons pushed out against the table pin what's between them to it; when a piston pulls back, it lets go
+local function checkClamps(m: Model, t: Table)
+	local f = workspace:FindFirstChild("Builds")
+	local pistons: { [string]: Model } = {}
+	for _, ps in if f then f:GetChildren() else {} do
+		if ps:IsA("Model") and ps:GetAttribute("Build") == "piston" and ps:GetAttribute("Powered") == true and (ps:GetAttribute("Ext") :: number? or 0) > 0.05 then
+			pistons[ps:GetAttribute("Uid") :: string? or "?"] = ps
+		end
+	end
+	for i = #t.stuck, 1, -1 do
+		local c = t.stuck[i].clamp
+		if c and not pistons[c] then
+			letGo(t.stuck[i].p)
+			table.remove(t.stuck, i)
+		end
+	end
+	local h = hub(m, m:GetAttribute("Angle") :: number? or 0)
+	local on: { BasePart }? = nil
+	for uid, ps in pistons do
+		if (ps:GetPivot().Position - h.Position).Magnitude > 3.5 * M then
+			continue
+		end
+		on = on or onTable(m)
+		local ext = ps:GetAttribute("Ext") :: number? or 0
+		for _, b in within(ps, Vector3.new(0, 0.4, -0.55 - ext), Vector3.new(0.9, 0.9, 0.25)) do
+			-- pinned: right up against the table (not just somewhere in front of it)
+			local onIt = false
+			for _, q in on :: { BasePart } do
+				if q == b then
+					onIt = true
+				end
+			end
+			if onIt and not b:GetAttribute("Stuck") and h:PointToObjectSpace(b.CFrame.Position).Y < 0.4 * M then
+				stick(m, t, b, uid)
+				remotes.Fx:FireAllClients("clink", b.CFrame.Position, 0.7, -6)
+			end
+		end
+	end
+end
+
 local function rotator(m: Model, dt: number, on: boolean)
 	local t = tableOf(m)
+	checkClamps(m, t)      -- (every tick: a piston closes fast, and has to catch what it's pinning)
 	local re = m:GetAttribute("Restick") :: any
 	if re then
 		-- after loading: what was stuck is back on the table - stick it again, once it has had a moment to land
@@ -490,7 +550,7 @@ local function rotator(m: Model, dt: number, on: boolean)
 		-- gone: sold, or picked up
 		if not s.p.Parent or s.p:GetAttribute("HeldBy") or not s.p:GetAttribute("Stuck") then
 			table.remove(t.stuck, i)
-			if #t.stuck == 0 then
+			if hammered(t) == 0 then
 				m:SetAttribute("Stuck", false)
 			end
 			continue
