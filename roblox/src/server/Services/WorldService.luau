@@ -269,6 +269,12 @@ function WorldService.start()
 	local rng = Random.new(42)
 	for _, t in W.trees do
 		makeTree(forest, t.kind, v3(t.at), t.radius, t.bands, rng, t.yaw, not haveMeshes)
+		if t.giant then
+			local made = forest:GetChildren()
+			local tree = made[#made]
+			tree:SetAttribute("Giant", true)
+			tree:SetAttribute("Legendary", t.bands >= 90)
+		end
 	end
 	-- Godot's collision boxes: cabin walls and porch, rocks, the chopping block (visible stand-ins until meshes come)
 	local solids = Instance.new("Folder")

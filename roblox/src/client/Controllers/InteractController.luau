@@ -1,7 +1,7 @@
 --!strict
 -- E, the Godot way (Player.gd interact / look_target_text): with something in your hands, E drops it. Otherwise E
 -- uses what you're looking at within reach: a tool you put down ("[E] take"), the hatchet in the chopping block,
--- the truck when there's bark in the back ("[E] ship  $12.40"), the TimberMart counter ("[E] use"), or picks up
+-- the truck when there's bark in the back ("[E] ship  $12.40"), the cabin computer that runs TimberMart ("[E] use"), or picks up
 -- loose bark ("[E] grab"). The HUD shows the same hint text under the crosshair. A held thing floats in front of
 -- you where Godot holds it, and the truck shows what its load is worth (its sign) and runs its engine on the road.
 local Players = game:GetService("Players")
@@ -149,7 +149,28 @@ function InteractController.target(): (string, (() -> ())?)
 			Sfx.play("pickup")
 		end
 	end
+	-- a tree says what's special about it (Godot's ForestTree.hint_text)
+	local tree = part:FindFirstAncestorWhichIsA("Model")
+	if tree and tree:HasTag("Tree") then
+		return InteractController.treeHint(tree), nil
+	end
 	return "", nil
+end
+
+local TREE_HINTS = {
+	hickory = "Shagbark Hickory  ·  its shaggy bark pulls off by hand",
+	cedar = "Western Red Cedar  ·  long, valuable strips",
+	cork = "Cork Oak  ·  the cork grows back",
+	eucalyptus = "Rainbow Eucalyptus  ·  its inner bark changes colour once it's showing",
+}
+
+function InteractController.treeHint(tree: Instance): string
+	if tree:GetAttribute("Legendary") then
+		return "The Legendary Tree  ·  only a two-man crosscut gets through it"
+	elseif tree:GetAttribute("Giant") then
+		return "Ancient tree  ·  too thick for most saws"
+	end
+	return TREE_HINTS[tree:GetAttribute("Species") :: string] or ""
 end
 
 -- the truck's sign: what its load is worth, over the bed (the one floating number the Godot game has)

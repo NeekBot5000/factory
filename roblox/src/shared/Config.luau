@@ -46,12 +46,12 @@ Config.Truck = { speed = 10, awaySeconds = 4 }
 
 -- "Getting started" (Godot's Tutorial.gd), one step at a time; `check` is what the server tests to move on
 Config.Tutorial = {
-	{ text = "Take the hatchet from the chopping block: look at it and press E.", check = "hatchet" },
+	{ text = "Take the hatchet from the chopping block in front of the cabin: look at it and press E.", check = "hatchet" },
 	{ text = "Swing at a tree (left click) to peel off its bark. Peel off a few pieces.", check = "peeled", goal = 6 },
 	{ text = "Pick the bark up (E), carry it to the green truck and drop it in the back (E again).", check = "loaded" },
 	{ text = "Look at the truck and press E to send it to the mill. You're paid when it gets there.", check = "earned" },
 	{ text = "Keep at it until you have $160 for a Double-Bit Axe.", check = "money", goal = 160 },
-	{ text = "Walk over to the TimberMart stall, look at the counter, press E and buy the Double-Bit Axe.", check = "owns", item = "double_bit" },
+	{ text = "Go into the cabin, use the computer (E) and buy the Double-Bit Axe from TimberMart.", check = "owns", item = "double_bit" },
 }
 Config.TutorialDone = "That's the basics. The rest is yours to find out."
 

@@ -52,7 +52,7 @@ game's own design, piece by piece:
 | Health: bare hands hurt 6 a hit, it regrows after 3 s at 5 a second, "ouch" under 40, at 0 you faint and wake at the start (Player.gd) | A `Health` script replaces Roblox's, and fainting fades the screen to black and back |
 | Sounds: all made by Sfx.gd, footsteps by surface every 0.7 m (0.9 sprinting) | The same sounds from the uploaded sheet. Roblox's own character sounds (footsteps, jump, landing) are replaced with nothing |
 | Walk 4.2 m/s, sprint 6.8 (Shift), jump 4.6 m/s | 12.6 and 20.4 studs a second (3 studs to the metre), jump height matched |
-| TimberMart on the computer (ShopUI.gd) | The same layout and colours, opened with E at the stall's counter |
+| TimberMart on the computer (ShopUI.gd) | The same layout and colours, opened with E on the computer in the cabin |
 
 ## The scripted playtest
 `roblox/tests/lune/playtest.luau` plays a first session through the real server scripts, with no Studio needed, and

@@ -137,18 +137,19 @@ If Rokit gives you trouble, you can skip it: the **Rojo** extension in VS Code c
 
 ## 7. First play test
 1. Press **Play** (F5).
-2. You're in first person, like the Godot game. The server builds a test world:
-   - 40 trees of all seven species, with six right by the spawn
-   - a chopping block in front of you with the old hatchet in it
-   - the green log truck on its dirt road to your left, and the TimberMart tool stall on your right
+2. You're in first person on the cabin porch, like in the Godot game. The world is the Godot game's: the same
+   ground, every tree where it stands in Godot, the cabin, the chopping block with the old hatchet in it, and the
+   green log truck parked beside the cabin. (The Godot meshes load in a few seconds after you press Play; simple
+   stand-ins show until they do.)
 3. Follow **Getting started** at the top left. The controls are the Godot game's:
    - **E** on the chopping block takes the hatchet. **1**-**9** or the mouse wheel switch tools; **Q** puts the one in
      your hand down, and **E** on it picks it up again.
    - **Left click** a tree to peel its bark. Bare hands hurt on everything but the grey shagbark hickory, and if
-     you keep going you faint and wake up at the start.
+     you keep going you faint and wake up on the porch.
    - **E** on a bark sheet picks it up, and **E** again drops it. Put some in the back of the truck.
-   - **E** on the truck sends it to the mill. It honks and drives off, and you're paid when it gets there.
-   - **E** on the TimberMart counter opens the shop. **Shift** sprints.
+   - **E** on the truck sends it to the mill. It honks and drives off down the road, and you're paid when it gets
+     there.
+   - **E** on the computer in the cabin opens TimberMart. **Shift** sprints.
 4. **Two players:** go to the **Test** tab > **Clients and Servers** > **2 Players** > **Start**. Peel a tree in one
    window and watch the bark come off in the other.
 
