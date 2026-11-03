@@ -70,7 +70,7 @@ check(sp and (sp.CFrame.Position - wv(W.spawn.at)).Magnitude < 1, "you start on 
 check(ws:FindFirstChild("TimberMart") ~= nil and ws.TimberMart:FindFirstChild("Computer") ~= nil, "TimberMart is on the computer in the cabin")
 local block = ws:FindFirstChild("ChoppingBlock")
 check(block and block:FindFirstChild("Hatchet") ~= nil, "the chopping block has the hatchet stuck in it")
-check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == #require("../../src/shared/Config").ShopOrder, "every shop tool has a model (first-person view, tool bar, shop)")
+check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == #require("../../src/shared/Config").ShopOrder - 1, "every shop tool has a model (first-person view, tool bar, shop)")
 local prompts = 0
 for _, d in ws:GetDescendants() do
 	if d:IsA("ProximityPrompt") then
@@ -239,7 +239,7 @@ if box then
 	end
 end
 check(data.owned.double_bit and alice:GetAttribute("Tool") == "double_bit", "E takes it: it's yours, in your hand")
-check(count("Notify", alice, "Double-Bit Axe  [3]") == 1, "with Godot's toast: its name and its key")
+check(count("Notify", alice, "Double-Bit Axe  [4]") == 1, "with Godot's toast: its name and its key")
 check(data.tutorial == -1 and count("Notify", alice, "basics") == 1, "Getting started is done (and says so once)")
 for _, o in data.orders do
 	check(o.status == "delivered", "and the order is marked delivered")
@@ -441,6 +441,107 @@ do
 	saw:Fire(alice, t2.Trunk, b2 + V3(r2, 2, 0))
 	task.wait(0.1)
 	check(not t2:GetAttribute("Felled"), "the buck saw can't fell a standing tree")
+	Tools.equip(alice, "double_bit")
+end
+
+-- ---------------------------------------------------------------- the crosscut, the throwing hatchet, the phone
+do
+	local saw = A.remotes.Sawn.OnServerEvent
+	local start = A.remotes.SawStart.OnServerEvent
+	-- an ancient giant: too thick for the bow saw, but the crosscut gets through (and its clean cut pays 20% more)
+	local giant = nil
+	for _, t in trees do
+		if t:GetAttribute("Giant") and not t:GetAttribute("Legendary") then
+			giant = t
+		end
+	end
+	if giant then
+		local gb, gr = giant.WorldPivot.Position, giant:GetAttribute("Radius")
+		A.stand(alice, gb + V3(gr + 3, 5, 0))
+		Tools.grant(alice, "saw")
+		task.wait(0.1)
+		start:Fire(alice, giant.Trunk)
+		task.wait(A.service("LogService").sawTime(giant, Cfg.Tools.saw) * 0.9)
+		saw:Fire(alice, giant.Trunk, gb + V3(gr, 2, 0))
+		task.wait(0.1)
+		check(not giant:GetAttribute("Felled"), "an ancient tree is too thick for the bow saw")
+		Tools.grant(alice, "crosscut")
+		task.wait(0.1)
+		start:Fire(alice, giant.Trunk)
+		task.wait(A.service("LogService").sawTime(giant, Cfg.Tools.crosscut) * 0.85)
+		saw:Fire(alice, giant.Trunk, gb + V3(gr, 2, 0))
+		task.wait(0.1)
+		local glog = nil
+		for _, l in ws.Logs:GetChildren() do
+			if l:GetAttribute("Clean") then
+				glog = l
+			end
+		end
+		check(giant:GetAttribute("Felled") and glog ~= nil, "the two-man crosscut fells it, with a clean cut")
+		if glog then
+			local LS = A.service("LogService")
+			local v = LS.value(glog)
+			glog:SetAttribute("Clean", nil)
+			local plain = LS.value(glog)
+			check(math.abs(v - plain * 1.2) < 0.05, string.format("a clean-cut log is worth 20%% more ($%.2f vs $%.2f)", v, plain))
+		end
+	end
+	-- the throwing hatchet bites bark from across the clearing (up to 12 m)
+	local t, b, rr = freshTree(12)
+	Tools.grant(alice, "throwing")
+	task.wait(1.3)
+	A.stand(alice, b + V3(rr + 30, 5, 0))
+	local n0 = #loose:GetChildren()
+	strip:Fire(alice, t, b + V3(rr, 6, 0), "throwing")
+	task.wait(0.1)
+	check(#loose:GetChildren() > n0, "the throwing hatchet takes bark from 10 m away")
+	-- the phone: bought like anything else, it never goes in your hand, and it sends the truck off from anywhere
+	data.money += 400
+	A.remotes.Buy.OnServerEvent:Fire(alice, "phone")
+	local pbox = nil
+	for _ = 1, 240 do
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "box" and c:GetAttribute("Item") == "phone" then
+				pbox = c
+			end
+		end
+		if pbox then
+			break
+		end
+		task.wait(0.1)
+	end
+	if pbox then
+		A.stand(alice, pbox.CFrame.Position + V3(0, 3, 3))
+		A.remotes.Open.OnServerEvent:Fire(alice, pbox)
+		task.wait(1.5)
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "pickup" and c:GetAttribute("Item") == "phone" then
+				A.remotes.Use.OnServerEvent:Fire(alice, c:FindFirstChildWhichIsA("BasePart", true))
+			end
+		end
+		task.wait(0.3)
+	end
+	local toolBefore = alice:GetAttribute("Tool")
+	check(data.owned.phone and alice:GetAttribute("Tool") == toolBefore and count("Notify", alice, "TimberPhone  [Tab]") == 1, "the TimberPhone arrives by van: 'TimberPhone  [Tab]', and it's not a tool")
+	-- bark in the truck, and the phone sends it off from far away
+	local sheet = nil
+	for _, c in loose:GetChildren() do
+		if c:GetAttribute("Kind") == "bark" and c:GetAttribute("Owner") == 101 then
+			sheet = c
+		end
+	end
+	if sheet then
+		sheet.CFrame = ws.Truck.Bed.CFrame
+		A.stand(alice, V3(300, 10, 300))
+		A.remotes.PhoneShip.OnServerEvent:Fire(alice)
+		task.wait(0.1)
+		check(ws.Truck:GetAttribute("State") ~= "parked", "the phone sends the truck to the mill from anywhere")
+		local w2 = 0
+		while ws.Truck:GetAttribute("State") ~= "parked" and w2 < 60 do
+			task.wait(0.25)
+			w2 += 0.25
+		end
+	end
 	Tools.equip(alice, "double_bit")
 end
 

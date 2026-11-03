@@ -59,7 +59,7 @@ func _ready() -> void:
 	groups.clear()
 	var holder := Node3D.new()
 	add_child(holder)
-	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "saw", "bucksaw", "chainsaw"]:
+	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "saw", "bucksaw", "chainsaw", "throwing", "crosscut", "phone"]:
 		var root := Node3D.new()
 		holder.add_child(root)
 		Tools.build_model(id, root)

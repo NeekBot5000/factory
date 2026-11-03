@@ -50,7 +50,8 @@ function LogService.value(log: Model): number
 	local g = TreeService.gridOf(log)
 	local length = (log:GetAttribute("Bands") :: number) * T.bandH
 	local r = (log:GetAttribute("Radius") :: number) / M
-	return math.floor(BarkGrid.logValue(g, length, r) * 100 + 0.5) / 100
+	local clean = if log:GetAttribute("Clean") then 1.2 else 1
+	return math.floor(BarkGrid.logValue(g, length, r) * clean * 100 + 0.5) / 100
 end
 
 -- A log of bands j0..j1 of `src`'s bark, lying where that part of the trunk was (`base`: its bottom, +Y along it).
@@ -72,7 +73,7 @@ local function makeLog(src: Model, g: BarkGrid.Grid, j0: number, j1: number, bas
 	log.PrimaryPart = trunk
 	-- the pivot is the log's bottom end, +Y along it (like a standing tree's), so the bark grid fits it the same way
 	trunk.PivotOffset = CFrame.Angles(0, 0, math.rad(-90)) * CFrame.new(0, -L / 2, 0)
-	for _, k in { "Species", "Sectors", "Radius", "Seed" } do
+	for _, k in { "Species", "Sectors", "Radius", "Seed", "Clean" } do
 		log:SetAttribute(k, src:GetAttribute(k))
 	end
 	log:SetAttribute("Bands", bands)
@@ -258,7 +259,11 @@ local function sawn(player: Player, target: unknown, at: unknown)
 			LogService.buck(m)
 			remotes.Fx:FireAllClients("thud", at, 1.0)
 		else
-			LogService.cutAt(m, at :: Vector3)
+			for _, piece in LogService.cutAt(m, at :: Vector3) do
+				if tool.clean then
+					piece:SetAttribute("Clean", true)
+				end
+			end
 			remotes.Fx:FireAllClients("thud", at, 1.2)
 		end
 		return
@@ -266,11 +271,14 @@ local function sawn(player: Player, target: unknown, at: unknown)
 	if tool.fell == false or (m:GetAttribute("Bands") :: number) < 4 then
 		return
 	end
-	if m:GetAttribute("Legendary") or (m:GetAttribute("Giant") and id ~= "chainsaw") then
+	if (m:GetAttribute("Legendary") and not tool.big) or (m:GetAttribute("Giant") and not tool.big and id ~= "chainsaw") then
 		return
 	end
 	local cutJ = math.floor(m:GetPivot():PointToObjectSpace(at :: Vector3).Y / (T.bandH * M))
-	LogService.fell(m, cutJ, away, player)
+	local log = LogService.fell(m, cutJ, away, player)
+	if log and tool.clean then
+		log:SetAttribute("Clean", true)       -- the crosscut's clean cut: worth 20% more
+	end
 end
 
 function LogService.start()

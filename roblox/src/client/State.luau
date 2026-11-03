@@ -13,6 +13,8 @@ local State = {
 	bob = 0,                -- walking: the arm sways with it
 	combo = 0,              -- the combo axe: hits in a row
 	sawProgress = 0,        -- 0 -> 1 while a saw is cutting (shown round the crosshair)
+	thrown = false,         -- the throwing hatchet is out of your hand
+	catch = 0,              -- 1 -> 0 just after catching it
 	sawing = false,
 	comboT = 0,
 }

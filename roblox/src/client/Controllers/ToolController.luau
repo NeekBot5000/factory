@@ -192,9 +192,79 @@ local function predictLayer(tree: Model, at: Vector3, d: any): number?
 	return if s then s.layer else nil
 end
 
+-- the throwing hatchet: it spins out along your aim (20 m/s), bites a patch of bark off whatever trunk it hits,
+-- sticks there a moment, then flies back to your hand (Godot's ThrownHatchet)
+local function throw(d: any)
+	if State.thrown then
+		return
+	end
+	local cam = workspace.CurrentCamera
+	local hit = ToolController.aim(d.reach * M)
+	local from = (cam.CFrame * CFrame.new(0.12 * M, 0, -0.45 * M)).Position
+	local goal = if hit then hit.Position else cam.CFrame.Position + cam.CFrame.LookVector * d.reach * M
+	local models = ReplicatedStorage:FindFirstChild("ToolModels")
+	local src = models and models:FindFirstChild("throwing")
+	local flying = if src then (src :: Model):Clone() else nil
+	State.thrown = true
+	Sfx.play("whoosh", 0.75, -2)
+	task.spawn(function()
+		local speed = 20 * M
+		local dist = (goal - from).Magnitude
+		local t = 0
+		local dur = dist / speed
+		if flying then
+			for _, p in flying:GetDescendants() do
+				if p:IsA("BasePart") then
+					p.Anchored = true
+					p.CanCollide = false
+					p.CanQuery = false
+				end
+			end
+			flying.Parent = workspace
+		end
+		-- out, end over end, falling a little on the way
+		while t < dur do
+			t += RunService.Heartbeat:Wait()
+			local k = math.min(1, t / dur)
+			local at = from:Lerp(goal, k)
+			if flying then
+				flying:PivotTo(CFrame.lookAt(at, goal) * CFrame.Angles(-t * 22, 0, 0))
+			end
+		end
+		local tree = hit and treeOf(hit.Instance)
+		if tree and hit then
+			Sfx.playAt("axe", hit.Position, 1.05, 2)
+			burst(hit.Position, hit.Normal, hit.Instance.Color, 10, 22)
+			shake(tree, 0.5)
+			remotes.StripRequest:FireServer(tree, hit.Position, "throwing")
+		else
+			Sfx.playAt("thud", goal, 1.2, -2)
+		end
+		task.wait(0.32)         -- stuck a moment
+		-- then back to your hand
+		local back = 0
+		while flying and back < dur do
+			back += RunService.Heartbeat:Wait()
+			local hand = (workspace.CurrentCamera.CFrame * CFrame.new(0.26 * M, -0.3 * M, -0.5 * M)).Position
+			local k = math.min(1, back / dur)
+			flying:PivotTo(CFrame.new(goal:Lerp(hand, k)) * CFrame.Angles(back * 22, 0, 0))
+		end
+		if flying then
+			flying:Destroy()
+		end
+		State.thrown = false
+		State.catch = 1
+		Sfx.play("catch", 1, -3)
+	end)
+end
+
 -- the blade lands (Godot's _do_impact)
 local function impact()
 	local d = def()
+	if d.throw then
+		throw(d)
+		return
+	end
 	local hit = ToolController.aim(d.reach * M)
 	if not hit then
 		if State.tool == "hands" then
@@ -235,7 +305,7 @@ end
 
 local function startSwing()
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-	if State.swing >= 0 or State.equipT < 1 or State.uiOpen or State.fainted or not hum or hum.Health <= 0 then
+	if State.swing >= 0 or State.equipT < 1 or State.uiOpen or State.fainted or not hum or hum.Health <= 0 or State.thrown then
 		return
 	end
 	if def().hold then

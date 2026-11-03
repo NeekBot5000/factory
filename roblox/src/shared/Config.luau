@@ -51,6 +51,9 @@ Config.Tools = {
 	robo = { name = "Robo-Axe X9", price = 6500, radius = 1, stripRadius = 0.0, cooldown = 0.16, impact = 0.5, hurt = 0, anim = "chop", reach = 2.4, through = true, grid = 3, auto = true, tag = "Automatic",
 		desc = "Servo-driven and relentless. Hold the trigger: it chops on its own several times a second, punching a 3x3 patch through BOTH layers of bark every hit.",
 		look = { handle = 3.0, head = { 0.4, 0.9, 1.1 }, headColor = { 230, 200, 60 }, handleColor = { 50, 52, 58 } } },
+	throwing = { name = "Throwing Hatchet", price = 450, radius = 1, stripRadius = 0.2, cooldown = 0.62, impact = 0.42, hurt = 0, anim = "throw", reach = 12, throw = true, tag = "Reach",
+		desc = "A balanced little tomahawk. Click to throw it: it spins out to whatever you're aiming at, bites off a patch of bark (even at the top of a tall trunk) and flies back to your hand.",
+		look = { handle = 2.0, head = { 0.25, 0.7, 0.8 }, headColor = { 160, 166, 176 }, handleColor = { 140, 100, 60 } } },
 	-- saws: hold the button against a trunk (Godot's _saw_step)
 	saw = { name = "Bow Saw", price = 450, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.2, hold = true, kind = "saw", speed = 1, tag = "Long reach",
 		desc = "A steel bow saw. Hold it against a trunk to fell the whole tree, then saw the log into pieces. Logs sell by the metre.",
@@ -58,6 +61,9 @@ Config.Tools = {
 	bucksaw = { name = "Buck Saw", price = 280, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.4, hold = true, kind = "saw", speed = 0.8, fell = false, buck = true, tag = "Long",
 		desc = "A long framed saw for lying logs only - it can't fell a tree. One cut splits the whole log into neat carryable rounds.",
 		look = { handle = 1.6, head = { 0.1, 0.6, 2.6 }, headColor = { 150, 110, 60 }, handleColor = { 120, 90, 60 } } },
+	crosscut = { name = "Two-Man Crosscut", price = 1600, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.5, hold = true, kind = "saw", speed = 0.9, big = true, clean = 1.2, tag = "Huge",
+		desc = "A giant old-fashioned blade, slow but steady: the only hand saw that gets through the ancient trees deep in the woods. Its clean cut makes logs worth 20% more.",
+		look = { handle = 1.4, head = { 0.1, 0.5, 3.6 }, headColor = { 190, 196, 206 }, handleColor = { 120, 80, 50 } } },
 	chainsaw = { name = "Chainsaw", price = 1800, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.0, hold = true, kind = "saw", speed = 3.2, tag = "Loud",
 		desc = "A two-stroke chainsaw. Fells trees and cuts logs about three times faster than a bow saw. Ear defenders not included.",
 		look = { handle = 1.2, head = { 0.3, 0.3, 2.0 }, headColor = { 230, 120, 40 }, handleColor = { 40, 42, 46 } } },
@@ -66,8 +72,14 @@ Config.Tools = {
 -- and to cut through a log; logs up to 3 m can be carried; the buck saw cuts rounds of 7 bands
 Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7 }
 -- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "saw", "bucksaw", "chainsaw" }
+Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "crosscut", "chainsaw" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "saw", "bucksaw", "chainsaw", "crosscut", "phone" }
+
+-- things you can buy that aren't tools (Godot's SHOP entries in "other")
+Config.Items = {
+	phone = { name = "TimberPhone", price = 350, tag = "Pocket-size",
+		desc = "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it." },
+}
 Config.ComboMax = 4             -- the combo axe grows 0.05 m a hit in a row, up to 4 (and resets after 1.25 s)
 
 -- the player (Godot's Player.gd, in metres; x3 for studs)

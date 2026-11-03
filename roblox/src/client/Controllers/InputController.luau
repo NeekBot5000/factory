@@ -38,6 +38,7 @@ local KEYS: { [string]: string } = {
 	LeftShift = "Sprint", RightShift = "Sprint", ButtonL3 = "Sprint",
 	ButtonR2 = "Swing",
 	DPadRight = "NextTool", DPadLeft = "PrevTool",
+	Tab = "Phone", ButtonSelect = "Phone",
 }
 
 local function actionOf(input: InputObject): string?

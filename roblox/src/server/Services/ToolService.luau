@@ -129,7 +129,7 @@ end
 -- Puts a tool in the player's hand (it must be in their tool bar). Returns whether it did.
 function ToolService.equip(player: Player, id: string): boolean
 	local data = DataService.get(player)
-	if not data or not inBar(data, id) then
+	if not data or not inBar(data, id) or not table.find(Config.ToolOrder, id) then
 		return false
 	end
 	player:SetAttribute("Tool", id)

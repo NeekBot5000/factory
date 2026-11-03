@@ -197,6 +197,18 @@ local function open(player: Player, box: unknown)
 	-- ...and up comes the tool, turning, with a warm glow
 	local item = b:GetAttribute("Item") :: string
 	local m = ToolService.build(item)
+	if not m then
+		-- (the phone has no tool model until the Godot meshes load: a plain one stands in)
+		m = Instance.new("Model")
+		local body = Instance.new("Part")
+		body.Name = "Handle"
+		body.Size = Vector3.new(0.08, 0.15, 0.01) * M * 2.2
+		body.Color = Color3.fromHex("2a2c31")
+		body.Anchored = true
+		body.CanCollide = false
+		body.Parent = m
+		;(m :: Model).PrimaryPart = body
+	end
 	if m then
 		m.Name = "Pickup_" .. item
 		local glowAt = Instance.new("Part")
@@ -264,7 +276,11 @@ function DeliveryService.take(player: Player, pickup: Model): boolean
 	end
 	ToolService.grant(player, item)
 	local def = (Config.Tools :: any)[item]
-	remotes.Notify:FireClient(player, string.format("%s  [%d]", def and def.name or item, (table.find(Config.ToolOrder, item) or 0)), "7aff9a")
+	if item == "phone" then
+		remotes.Notify:FireClient(player, "TimberPhone  [Tab]", "7aff9a")
+	else
+		remotes.Notify:FireClient(player, string.format("%s  [%d]", def and def.name or item, (table.find(Config.ToolOrder, item) or 0)), "7aff9a")
+	end
 	TutorialService.check(player)
 	return true
 end

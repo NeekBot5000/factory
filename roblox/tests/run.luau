@@ -98,11 +98,14 @@ check(toolsOk, "every tool has its reach, swing timing, bark circle and swing sh
 local shopOk = true
 for _, id in Config.ShopOrder do
 	local t = (Config.Tools :: any)[id]
-	if not t or not t.look or not t.desc or not t.price or t.price <= 0 or not table.find(Config.ToolOrder, id) then
+	local item = (Config.Items :: any)[id]
+	if item then
+		shopOk = shopOk and item.desc ~= nil and item.price > 0
+	elseif not t or not t.look or not t.desc or not t.price or t.price <= 0 or not table.find(Config.ToolOrder, id) then
 		shopOk = false
 	end
 end
-check(shopOk, "every tool in the shop has a model, a description, a price and a tool bar place")
+check(shopOk, "everything in the shop has a description and a price, and every tool a model and a tool bar place")
 check(Config.Tools.double_bit.impacts and #Config.Tools.double_bit.impacts == 2, "the double-bit hits twice a swing")
 check(#Config.Tutorial >= 4 and Config.Tutorial[1].check == "hatchet", "Getting started begins with the hatchet in the chopping block")
 

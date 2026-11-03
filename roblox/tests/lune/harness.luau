@@ -57,7 +57,7 @@ function Harness.boot(placePath: string, jobId: string)
 
 	-- remotes: OnServerEvent handlers we can call as a client would, and a log of what the server sent to clients
 	local remotes = {}
-	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn" } do
+	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip" } do
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })
@@ -257,19 +257,32 @@ function Harness.boot(placePath: string, jobId: string)
 		return loadModule(servicesFolder[name])
 	end
 
-	-- (Lune keeps Position apart from CFrame; Roblox always has them agree: keep loose things' Positions up to date)
+	-- (Lune keeps Position apart from CFrame; Roblox always has them agree: keep moving things' Positions up to date,
+	-- now and then, and always just before a remote is handled)
+	local function syncPositions()
+		for _, name in { "Loose", "Logs", "Truck", "Van" } do
+			local folder = workspace:FindFirstChild(name)
+			for _, p in if folder then folder:GetDescendants() else {} do
+				pcall(function()
+					if p:IsA("BasePart") then
+						p.Position = p.CFrame.Position
+					end
+				end)
+			end
+		end
+	end
+	server.syncPositions = syncPositions
+	for _, ev in remotes do
+		local fire = ev.OnServerEvent.Fire
+		ev.OnServerEvent.Fire = function(self, ...)
+			syncPositions()
+			fire(self, ...)
+		end
+	end
 	task.spawn(function()
 		while true do
 			task.wait(0.05)
-			for _, folder in { workspace:FindFirstChild("Loose"), workspace:FindFirstChild("Truck"), workspace:FindFirstChild("Van") } do
-				for _, p in if folder then folder:GetDescendants() else {} do
-					pcall(function()
-						if p:IsA("BasePart") then
-							p.Position = p.CFrame.Position
-						end
-					end)
-				end
-			end
+			syncPositions()
 		end
 	end)
 

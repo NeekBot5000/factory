@@ -261,6 +261,34 @@ local function target(def: any): (CFrame, number, number)
 		r -= Vector3.new(raise * 60, 0, 0)
 		return CFrame.new(p * M) * euler(r), 55, 0
 	end
+	if anim == "throw" then
+		local arc = { pivot = ARCS.chop.pivot, axis = ARCS.chop.axis, r0 = ARCS.chop.r0, len = ARCS.chop.len }
+		local rest = restXform()
+		local target = rest
+		local t = State.swing
+		local release = impact
+		if t >= 0 then
+			local wEnd, followEnd = release * 0.72, release + 0.2
+			if t < wEnd then
+				target = rest:Lerp(arcXform(arc, -112), ease(t / wEnd, 0.4))
+			elseif t < release then
+				target = arcXform(arc, -112 + 120 * ease((t - wEnd) / (release - wEnd), 2.6))
+			elseif t < followEnd then
+				target = arcXform(arc, 8 + 56 * ease((t - release) / (followEnd - release), 0.45))
+			else
+				target = arcXform(arc, 64):Lerp(rest, ease((t - followEnd) / (1 - followEnd), 0.6))
+			end
+		elseif State.thrown then
+			-- the open hand held up and forward, ready to catch it
+			local radial = Vector3.new(0.05, 0.55, -0.83).Unit
+			target = armXform(ARM_BASE + Vector3.new(-0.03, 0.05 + math.sin(os.clock() * 3) * 0.006, -0.06), radial, radial:Cross(Vector3.xAxis))
+		elseif State.catch > 0 then
+			-- the catch: pushed back and down by its weight, then it settles
+			local c = State.catch * State.catch
+			target = CFrame.new(target.Position + Vector3.new(0.015, -0.06, 0.08) * c * M) * CFrame.Angles(0.45 * c, 0, 0) * target.Rotation
+		end
+		return raised(target, raise), if t >= 0 then 90 else 30, 0
+	end
 	-- axes: Godot's arcs
 	local name = if anim == "double" then "sweep" elseif anim == "sweep" and State.backhand then "sweep_back" else anim
 	local arc = ARCS[name] or ARCS.chop
@@ -321,6 +349,17 @@ function ViewModel.start()
 			setTool(State.tool)
 		end
 		local def = (Config.Tools :: any)[State.tool] or Config.Tools.hands
+		State.catch = math.max(0, State.catch - dt * 3.5)
+		-- the throwing hatchet out of your hand: the open hand, no tool
+		if toolModel then
+			toolModel.Parent = if State.thrown then nil else model
+		end
+		for _, p in handFlat do
+			p.Transparency = if State.tool == "hands" or State.thrown then 0 else 1
+		end
+		for _, p in handFist do
+			p.Transparency = if State.tool == "hands" or State.thrown then 1 else 0
+		end
 		local want, rate, spin, left = target(def)
 		armCf = armCf:Lerp(want, follow(rate, dt))
 		if left then

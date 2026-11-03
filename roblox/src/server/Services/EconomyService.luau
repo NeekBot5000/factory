@@ -208,7 +208,7 @@ local function buy(player: Player, item: unknown)
 	if typeof(item) ~= "string" then
 		return
 	end
-	local def = (Config.Tools :: any)[item]
+	local def = (Config.Tools :: any)[item] or (Config.Items :: any)[item]
 	local data = DataService.get(player)
 	if not def or def.price <= 0 or not data or data.owned[item] then
 		return
@@ -230,7 +230,16 @@ local function buy(player: Player, item: unknown)
 	TutorialService.check(player)
 end
 
+-- the TimberPhone: send the truck off from anywhere
+local function phoneShip(player: Player)
+	local data = DataService.get(player)
+	if data and data.owned.phone then
+		EconomyService.ship(player)
+	end
+end
+
 function EconomyService.start()
+	remotes.PhoneShip.OnServerEvent:Connect(phoneShip)
 	TutorialService.loaded = function(player)
 		return EconomyService.bedValue(player) > 0
 	end

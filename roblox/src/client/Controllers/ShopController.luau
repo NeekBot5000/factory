@@ -69,8 +69,8 @@ function ShopController.close()
 end
 
 local function card(grid: Instance, id: string, order: number): GuiObject?
-	local def = (Config.Tools :: any)[id]
-	local c = frame(grid, C.card, { LayoutOrder = order })
+	local def = (Config.Tools :: any)[id] or (Config.Items :: any)[id]
+	local c = frame(grid, C.card, { LayoutOrder = order, Name = id })
 	UiKit.corner(c, 14)
 	UiKit.stroke(c, 1, Color3.fromHex("e2d9cc"))
 	UiKit.pad(c, 14, 14)
@@ -107,8 +107,10 @@ local function card(grid: Instance, id: string, order: number): GuiObject?
 	end
 	UiKit.label(c, def.name, 19, C.ink, UiKit.Bold, { LayoutOrder = 3 })
 	UiKit.label(c, string.format("$%d", def.price), 20, C.price, UiKit.Title, { LayoutOrder = 4 })
-	statBar(c, "Strip size", def.stripRadius / 0.6, 5)
-	statBar(c, "Speed", (1.25 - def.cooldown) / 1.0, 6)
+	if def.stripRadius and def.stripRadius > 0 then
+		statBar(c, "Strip size", def.stripRadius / 0.6, 5)
+		statBar(c, "Speed", (1.25 - def.cooldown) / 1.0, 6)
+	end
 	local have = owns(id)
 	local ordered = ordered(id)
 	local afford = money() >= def.price
@@ -126,7 +128,7 @@ local function card(grid: Instance, id: string, order: number): GuiObject?
 	return b
 end
 
-function ShopController.open()
+function ShopController.open(fromPhone: boolean?)
 	if gui then
 		return
 	end
@@ -160,6 +162,14 @@ function ShopController.open()
 	row.Parent = right
 	UiKit.label(right, string.format("$%.2f", money()), 22, C.green, UiKit.Title, { LayoutOrder = 1 })
 	local closeBtn = UiKit.button(right, "Close  [E]", Color3.fromHex("8a3a1c"), C.white, ShopController.close, { Size = UDim2.fromOffset(120, 38), LayoutOrder = 2 })
+	if fromPhone then
+		-- the TimberPhone also sends the log truck off, from anywhere
+		UiKit.button(right, "Send the truck", Color3.fromHex("2f7d4a"), C.white, function()
+			(ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PhoneShip") :: RemoteEvent):FireServer()
+			ShopController.close()
+		end, { Size = UDim2.fromOffset(150, 38), LayoutOrder = 0 })
+		right.Size = UDim2.fromOffset(500, 40)
+	end
 	-- sidebar
 	local side = frame(win, C.side, { Position = UDim2.fromOffset(0, 66), Size = UDim2.new(0, 230, 1, -100) })
 	UiKit.pad(side, 16, 16)
@@ -169,20 +179,49 @@ function ShopController.open()
 	sl.Parent = side
 	UiKit.label(side, "DEPARTMENTS", 12, C.muted, UiKit.Bold, { LayoutOrder = 1 })
 	local n = #Config.ShopOrder
-	local everything = UiKit.label(side, string.format("Everything  (%d)", n), 16, C.white, UiKit.Bold, { BackgroundTransparency = 0, BackgroundColor3 = C.orange, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 2 })
-	UiKit.corner(everything, 8)
-	UiKit.pad(everything, 10, 9)
-	local axes = UiKit.label(side, string.format("Axes  (%d)", n), 16, C.ink, UiKit.Bold, { BackgroundTransparency = 0, BackgroundColor3 = Color3.fromHex("f6f1e9"), AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 3 })
-	UiKit.corner(axes, 8)
-	UiKit.pad(axes, 10, 9)
+	-- Godot's departments, with how many each has; click one to show only those
+	local grid: Frame
+	local function dept(id: string): string
+		local t = (Config.Tools :: any)[id]
+		if not t then
+			return "other"
+		end
+		return if t.kind == "saw" then "saws" else "axes"
+	end
+	local depts = { { "all", "Everything" }, { "axes", "Axes" }, { "saws", "Saws" }, { "other", "Other" } }
+	local deptLabels: { [string]: TextButton } = {}
+	local function show(which: string)
+		for key, b in deptLabels do
+			b.BackgroundColor3 = if key == which then C.orange else Color3.fromHex("f6f1e9")
+			b.TextColor3 = if key == which then C.white else C.ink
+		end
+		for _, c in grid:GetChildren() do
+			if c:IsA("GuiObject") then
+				c.Visible = which == "all" or dept(c.Name) == which
+			end
+		end
+	end
+	for k, d in depts do
+		local count = 0
+		for _, id in Config.ShopOrder do
+			if d[1] == "all" or dept(id) == d[1] then
+				count += 1
+			end
+		end
+		local b = UiKit.button(side, string.format("%s  (%d)", d[2], count), Color3.fromHex("f6f1e9"), C.ink, function()
+			show(d[1])
+		end, { Size = UDim2.new(1, 0, 0, 38), LayoutOrder = 1 + k, TextXAlignment = Enum.TextXAlignment.Left })
+		UiKit.pad(b, 10, 0)
+		deptLabels[d[1]] = b
+	end
 	local have = 0
 	for _, id in Config.ShopOrder do
 		if owns(id) then
 			have += 1
 		end
 	end
-	UiKit.label(side, "YOUR CABIN", 12, C.muted, UiKit.Bold, { LayoutOrder = 4 })
-	UiKit.label(side, string.format("Owned: %d of %d items", have, n), 14, C.ink, UiKit.Body, { LayoutOrder = 5 })
+	UiKit.label(side, "YOUR CABIN", 12, C.muted, UiKit.Bold, { LayoutOrder = 10 })
+	UiKit.label(side, string.format("Owned: %d of %d items", have, n), 14, C.ink, UiKit.Body, { LayoutOrder = 11 })
 	-- the page of products
 	local page = Instance.new("ScrollingFrame")
 	page.BackgroundTransparency = 1
@@ -205,7 +244,7 @@ function ShopController.open()
 		UiKit.corner(banner, 12)
 		UiKit.pad(banner, 18, 16)
 	end
-	local grid = frame(page, C.page, { BackgroundTransparency = 1, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 3 })
+	grid = frame(page, C.page, { BackgroundTransparency = 1, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 3 })
 	local gl = Instance.new("UIGridLayout")
 	gl.CellPadding = UDim2.fromOffset(16, 16)
 	gl.SortOrder = Enum.SortOrder.LayoutOrder
@@ -218,6 +257,7 @@ function ShopController.open()
 		local b = card(grid, id, k)
 		first = first or b
 	end
+	show("all")
 	-- the footer
 	local foot = frame(win, Color3.fromHex("e8e0d2"), { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 34) })
 	UiKit.label(foot, "Orders ship immediately. The orange delivery van drops your boxes at the loading dock by the cabin.", 14, C.muted, UiKit.Body, { Position = UDim2.fromOffset(12, 8) })
@@ -233,6 +273,22 @@ function ShopController.open()
 end
 
 function ShopController.start()
+	-- Tab: the TimberPhone (Godot: "No phone" until you have one)
+	local InputController = require(script.Parent.InputController)
+	InputController.on("Phone", function(state)
+		if state ~= Enum.UserInputState.Begin then
+			return
+		end
+		if gui then
+			ShopController.close()
+		elseif State.uiOpen then
+			return
+		elseif owns("phone") then
+			ShopController.open(true)
+		else
+			State.toast("No phone", Color3.fromHex("ffd27a"))
+		end
+	end)
 	-- the shop closes itself if you faint or wander off (E closes it too: see InteractController)
 	RunService.Heartbeat:Connect(function()
 		if gui and State.fainted then
