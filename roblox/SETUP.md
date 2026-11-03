@@ -65,7 +65,10 @@ Lune stand-in:
   (`roblox/tests/engine/out/engine.json`). It uses a *saved* version of your place, so the published game isn't
   touched.
 
-It needs three more permissions on the same API key, and the two variables from the section above:
+It needs more permissions on the same API key. **Legacy Assets** alone is enough for the renders; the server run
+also needs an experience. If you don't have one yet, make an empty one: Creator Dashboard > **Creations** >
+**Create Experience**, name it *Timber*, and save. It stays private; the check only saves test versions to it and
+never publishes.
 1. Open https://create.roblox.com/dashboard/credentials, then the Timber key, then **Edit**.
 2. Under **Access Permissions**, add each of these and tick what's listed:
    - **Legacy Assets**: **Manage** (lets it download what Roblox made of the uploaded models);
