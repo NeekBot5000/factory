@@ -6,6 +6,9 @@
 --   grabber   (Grabber.gd) lifts what's in front of it (the arrow's tail) over to behind it, every 1.1 s
 --   piston    (Piston.gd) pushes its plate out 1 m, shoving what's in front
 --   sorter    (Sorter.gd) sends one kind of thing (E while holding it) off to the left; splitter: every other thing
+--   feller    (Machines.gd) fells the tree in front of it with the saw handed to it
+--   drill_rig (Machines.gd) bores down with the drill handed to it, throwing out what it digs
+--   charger   (Charger.gd) charges the battery cells dropped into it
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Builds = require(ReplicatedStorage.Shared.Builds)
@@ -57,12 +60,31 @@ function FactoryService.kindOf(p: BasePart): string
 	return if typeof(kind) == "string" then kind else "?"
 end
 
+-- what's in a storage crate (Godot's Crate.contents)
+function FactoryService.contents(m: Model): { BasePart }
+	return within(m, Vector3.new(0, 0.55, 0.04), Vector3.new(0.8, 0.9, 0.74))
+end
+
+-- the charger (Charger.gd): battery cells in its cradle charge up, a tenth of a full charge a second
+local function charger(m: Model, dt: number)
+	local n = 0
+	for _, b in within(m, Vector3.new(0, 0.75, 0), Vector3.new(0.7, 0.5, 0.7)) do
+		if b:GetAttribute("Product") == "battery_cell" then
+			n += 1
+			b:SetAttribute("Charge", math.min(1, (b:GetAttribute("Charge") :: number? or 0) + 0.1 * dt))
+		end
+	end
+	if m:GetAttribute("Cells") ~= n then
+		m:SetAttribute("Cells", n)
+	end
+end
+
 local function crate(m: Model, dt: number)
 	if not cd(m, dt) then
 		return
 	end
 	local low: BasePart? = nil
-	for _, b in within(m, Vector3.new(0, 0.55, 0.04), Vector3.new(0.8, 0.9, 0.74)) do
+	for _, b in FactoryService.contents(m) do
 		if not low or b.Position.Y < low.Position.Y then
 			low = b
 		end
@@ -381,6 +403,8 @@ function FactoryService.step(dt: number)
 			feller(m, dt)
 		elseif id == "drill_rig" then
 			drillRig(m, dt)
+		elseif id == "charger" then
+			charger(m, dt)
 		end
 	end
 	local _ = Builds

@@ -270,6 +270,8 @@ function InteractController.target(): (string, (() -> ())?)
 		local value = sheet:GetAttribute("Value")
 		local ore = sheet:GetAttribute("Ore")
 		local label = if typeof(ore) == "string" and Mining.KINDS[ore] then string.format("[E] grab    %s  $%.2f", Mining.KINDS[ore].name, value :: number)
+			elseif sheet:GetAttribute("Product") == "battery_cell" then "[E] grab    Battery Cell  ·  " .. (if (sheet:GetAttribute("Charge") :: number? or 0) <= 0
+				then "empty - charge it in a charger" else string.format("%d%% charged", math.floor((sheet:GetAttribute("Charge") :: number) * 100)))
 			elseif typeof(value) == "number" then string.format("[E] grab    $%.2f", value) else "[E] grab"
 		return label, function()
 			remotes.Grab:FireServer(sheet)
@@ -393,6 +395,13 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 		return string.format("Sorter Belt  ·  sends %s left    [E] with empty hands to clear", (string.gsub(f, "_", " "))), true
 	elseif id == "pressure_plate" then
 		return "Pressure Plate  ·  " .. (if m:GetAttribute("Sensing") then "pressed" else "lets power through while something stands on it"), false
+	elseif id == "level_sensor" then
+		local n = m:GetAttribute("Has") :: number? or -1
+		return string.format("Level Sensor  ·  %s  ·  lets power through at %d or more    [E] change", if n < 0 then "no crate in front" else n .. " in the crate",
+			({ 5, 10, 20, 30 })[(m:GetAttribute("Setting") :: number? or 1) + 1]), true
+	elseif id == "charger" then
+		local n = m:GetAttribute("Cells") :: number? or 0
+		return "Charger  ·  " .. (if n > 0 and m:GetAttribute("Powered") then string.format("charging %d cell%s", n, if n == 1 then "" else "s") else "drop battery cells in and power it"), false
 	elseif id == "item_sensor" then
 		return "Item Sensor  ·  " .. (if m:GetAttribute("Sensing") then "sees something" else "lets power through while something is in front of it"), false
 	elseif id == "sawmill" then

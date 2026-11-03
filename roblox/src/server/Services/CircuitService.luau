@@ -104,8 +104,32 @@ end
 
 -- the sensors (Godot's Sensor): a pressure plate with something heavy (or someone) on it, an item sensor with
 -- something loose in the grid square in front of it
+CircuitService.LEVELS = { 5, 10, 20, 30 }
 local function sense(m: Model)
 	local id = m:GetAttribute("Build")
+	if id == "level_sensor" then
+		-- the storage crate in front of it holds at least N things (Godot: a ray 0.1-1.1 m out at 0.4 m up)
+		local n = -1
+		local f = workspace:FindFirstChild("Builds")
+		for _, c in if f then f:GetChildren() else {} do
+			if c:IsA("Model") and c:GetAttribute("Build") == "crate" then
+				local lp = m:GetPivot():PointToObjectSpace(c:GetPivot().Position) / M
+				if lp.Z < -0.1 and lp.Z > -1.5 and math.abs(lp.X) < 0.45 and math.abs(lp.Y) < 0.6 then
+					n = #(require(script.Parent.FactoryService) :: any).contents(c)
+					break
+				end
+			end
+		end
+		if m:GetAttribute("Has") ~= n then
+			m:SetAttribute("Has", n)
+		end
+		local on = n >= CircuitService.LEVELS[(m:GetAttribute("Setting") :: number? or 1) + 1]
+		if m:GetAttribute("Sensing") ~= on then
+			m:SetAttribute("Sensing", on)
+			remotes.Fx:FireAllClients("click", m:GetPivot().Position, if on then 1.2 else 0.8, -8)
+		end
+		return
+	end
 	if id ~= "pressure_plate" and id ~= "item_sensor" then
 		return
 	end
@@ -647,6 +671,11 @@ function CircuitService.use(m: Model): boolean
 		return true
 	elseif id == "assembler" then
 		(require(script.Parent.ProductionService) :: any).cycle(m)
+		return true
+	elseif id == "level_sensor" then
+		local s = ((m:GetAttribute("Setting") :: number? or 1) + 1) % #CircuitService.LEVELS
+		m:SetAttribute("Setting", s)
+		remotes.Fx:FireAllClients("click", at, 0.9 + s * 0.1, -4)
 		return true
 	elseif id == "transmitter" or id == "receiver" then
 		local ch = ((m:GetAttribute("Channel") :: number? or 0) + 1) % 8

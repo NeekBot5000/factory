@@ -1172,6 +1172,45 @@ do
 		end
 	end
 	check((rig:GetAttribute("Depth") or 0) > 0.25 and #loose:GetChildren() > n0 and chunks > 0, "a powered drill rig bores down and throws out chunks (" .. string.format("%.2f", rig:GetAttribute("Depth") or 0) .. " m)")
+	-- the level sensor: lets power through once the (unpowered) crate in front of it holds 5 things
+	local box = BS.make("crate", roblox.CFrame.new(base + V3(36, 0, 20)), 1, 101, true, {})
+	local ls = BS.make("level_sensor", roblox.CFrame.new(base + V3(36, 0, 20 + 0.8 * M)), 1, 101, true, {})
+	ls:SetAttribute("Setting", 0)          -- (the dial at 5; it starts at 10, as in Godot)
+	local things = {}
+	local function drop(kind, at)
+		local p = roblox.Instance.new("Part")
+		p.Size = V3(0.5, 0.5, 0.5)
+		p.CFrame = roblox.CFrame.new(at)
+		p.Position = at
+		p:SetAttribute("Kind", "product")
+		p:SetAttribute("Product", kind)
+		p.Parent = loose
+		table.insert(things, p)
+		return p
+	end
+	for k = 1, 4 do
+		drop("chair", (box:GetPivot() * roblox.CFrame.new(0, 0.4 * M, 0)).Position + V3(k * 0.1, 0, 0))
+	end
+	task.wait(0.3)
+	local below = ls:GetAttribute("Sensing")
+	drop("chair", (box:GetPivot() * roblox.CFrame.new(0, 0.4 * M, 0)).Position)
+	task.wait(0.3)
+	check(not below and ls:GetAttribute("Sensing") and ls:GetAttribute("Has") == 5, "a level sensor lets power through once the crate in front holds 5 (" .. tostring(ls:GetAttribute("Has")) .. ")")
+	CS.use(ls)
+	task.wait(0.3)
+	check(not ls:GetAttribute("Sensing"), "[E] raises it to 10")
+	-- the charger: a battery cell in its cradle charges up while it's powered
+	local ch = mk("charger", V3(-12, 0, 0))
+	local cell = drop("battery_cell", (ch:GetPivot() * roblox.CFrame.new(0, 0.75 * M, 0)).Position)
+	cell.Anchored = false
+	task.wait(1.5)
+	check((cell:GetAttribute("Charge") or 0) > 0.05 and ch:GetAttribute("Cells") == 1, "a powered charger charges the battery cell in it (" .. string.format("%.2f", cell:GetAttribute("Charge") or 0) .. ")")
+	for _, t in things do
+		t:Destroy()
+	end
+	for _, m in { rig, fel, ch, box, ls } do      -- (the rig would keep throwing chunks out for the rest of the run)
+		m:Destroy()
+	end
 end
 
 -- ---------------------------------------------------------------- production
