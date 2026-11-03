@@ -326,6 +326,8 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 	elseif id == "battery" then
 		local c = m:GetAttribute("Charge") :: number? or 0
 		return string.format("Battery  ·  %d%%  ·  %s", math.floor(c / 180 * 100), if m:GetAttribute("Feeding") then "powering" elseif powered then "charging" else "idle"), false
+	elseif id == "rotator" then
+		return string.format("Rotator  ·  %s    [Hammer] %s", if powered then "powered" else "no power", if m:GetAttribute("Stuck") then "let go" else "stick what's on it"), false
 	elseif id == "truck_caller" then
 		return "Truck Caller  ·  sends the log truck whenever it gets power", false
 	elseif typeof(id) == "string" and string.sub(id, 1, 5) == "gate_" then

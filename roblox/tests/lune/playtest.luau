@@ -1208,7 +1208,26 @@ do
 	for _, t in things do
 		t:Destroy()
 	end
-	for _, m in { rig, fel, ch, box, ls } do      -- (the rig would keep throwing chunks out for the rest of the run)
+	-- the rotator: the hammer sticks what's on its table to it, and powered, it carries it round
+	local rot = mk("rotator", V3(-24, 0, 0))
+	local thing2 = drop("chair", (rot:GetPivot() * roblox.CFrame.new(1.4, 1.6, 0)).Position)
+	local prev = alice:GetAttribute("Tool")
+	Tools.grant(alice, "hammer")
+	task.wait(1.3)
+	A.stand(alice, rot:GetPivot().Position + V3(0, 5, 6))
+	A.remotes.Hammer.OnServerEvent:Fire(alice, thing2)
+	task.wait(0.1)
+	local p0 = thing2.CFrame.Position
+	check(thing2.Anchored and rot:GetAttribute("Stuck"), "the hammer sticks what's on a rotator's table to it")
+	task.wait(1.5)
+	local p1 = thing2.CFrame.Position
+	check((p1 - p0).Magnitude > 0.2 and math.abs((p1 - rot:GetPivot().Position).Magnitude - (p0 - rot:GetPivot().Position).Magnitude) < 0.05,
+		"powered, it turns, carrying it round (" .. string.format("%.2f", (rot:GetAttribute("Angle") or 0)) .. " rad)")
+	A.remotes.Hammer.OnServerEvent:Fire(alice, thing2)
+	task.wait(0.1)
+	check(not thing2.Anchored and not rot:GetAttribute("Stuck"), "hammer it again and it lets go")
+	Tools.equip(alice, prev)
+	for _, m in { rig, fel, ch, box, ls, rot } do      -- (the rig would keep throwing chunks out for the rest of the run)
 		m:Destroy()
 	end
 end

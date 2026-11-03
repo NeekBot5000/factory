@@ -33,6 +33,7 @@ local valid = false
 local offLand = false
 local menu: ScreenGui? = nil
 local spinning: { { cam: Camera, center: Vector3, dist: number } } = {}
+local rotatorAimed: () -> BasePart?
 
 local function size(): number
 	return GB.sizes[sizeI]
@@ -389,11 +390,55 @@ function BuildController.update()
 	State.buildHint = hint()
 end
 
+function rotatorAimed(): BasePart?
+	local cam = workspace.CurrentCamera
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = { player.Character :: Instance, cam }
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local hit = workspace:Raycast(cam.CFrame.Position, cam.CFrame.LookVector * 3 * M, params)
+	if not hit then
+		return nil
+	end
+	local part = hit.Instance
+	local m = part:FindFirstAncestorWhichIsA("Model")
+	while m and m:GetAttribute("Kind") ~= "build" do
+		m = m:FindFirstAncestorWhichIsA("Model")
+	end
+	if m and m:GetAttribute("Build") == "rotator" then
+		return part
+	end
+	local item = if part.Parent and part.Parent:IsA("BasePart") then part.Parent :: BasePart else part
+	if item:GetAttribute("Stuck") ~= nil then
+		return item
+	end
+	-- something loose resting on a rotator's table
+	local loose = workspace:FindFirstChild("Loose")
+	local builds = workspace:FindFirstChild("Builds")
+	if loose and builds and item.Parent == loose then
+		for _, r in builds:GetChildren() do
+			if r:IsA("Model") and r:GetAttribute("Build") == "rotator" then
+				local lp = r:GetPivot():PointToObjectSpace(item.Position) / (M * (r:GetAttribute("Size") :: number? or 1))
+				if Vector2.new(lp.X, lp.Z).Magnitude < 0.62 and lp.Y > 0.3 and lp.Y < 1.5 then
+					return item
+				end
+			end
+		end
+	end
+	return nil
+end
+
 function BuildController.click(): boolean
 	if (Config.Tools :: any)[State.tool] == nil or not (Config.Tools :: any)[State.tool].build or State.uiOpen then
 		return false
 	end
 	if mode == "idle" then
+		-- the hammer on a rotator, or on something sitting on (or stuck to) one: stick it on / let go (Godot's Player)
+		local rot = rotatorAimed()
+		if rot then
+			remotes.Hammer:FireServer(rot)
+			State.swing = 0
+			return true
+		end
 		openMenu()
 		return true
 	end

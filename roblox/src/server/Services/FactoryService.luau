@@ -8,6 +8,7 @@
 --   sorter    (Sorter.gd) sends one kind of thing (E while holding it) off to the left; splitter: every other thing
 --   feller    (Machines.gd) fells the tree in front of it with the saw handed to it
 --   drill_rig (Machines.gd) bores down with the drill handed to it, throwing out what it digs
+--   rotator   (Rotator.gd) spins what's stuck on it (the hammer sticks it on and lets go)
 --   charger   (Charger.gd) charges the battery cells dropped into it
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -366,6 +367,136 @@ local function drillRig(m: Model, dt: number)
 	end
 end
 
+-- the rotator (Rotator.gd): a powered turntable. Hammer it (or what's on it) to stick everything on the table to it;
+-- hammer it again to let go. While powered it spins (1.2 rad/s), carrying what's stuck round with it.
+FactoryService.SPIN = 1.2
+-- (kept by the rotator's Uid, and what's stuck as a list: the same part or model reached two ways isn't always the
+-- same table key in the test harness)
+type Table = { m: Model, parts: { { p: BasePart, off: CFrame } }, stuck: { { p: BasePart, off: CFrame } }, speed: number }
+local tables: { [string]: Table } = {}      -- (taken-down rotators are dropped in step)
+
+local function hub(m: Model, angle: number): CFrame
+	local size = m:GetAttribute("Size") :: number? or 1
+	return m:GetPivot() * CFrame.new(0, 0.33 * M * size, 0) * CFrame.Angles(0, angle, 0)
+end
+
+local function tableOf(m: Model): Table
+	local uid = m:GetAttribute("Uid") :: string? or "?"
+	local t = tables[uid]
+	if not t then
+		-- (the table's parts are where the model was built, at angle 0, until it first turns)
+		local h = hub(m, 0)
+		local nt: Table = { m = m, parts = {}, stuck = {}, speed = 0 }
+		for _, p in m:GetDescendants() do
+			if p:IsA("BasePart") and p:GetAttribute("Group") == "Table" then
+				table.insert(nt.parts, { p = p, off = h:ToObjectSpace(p.CFrame) })
+			end
+		end
+		tables[uid] = nt
+		t = nt
+	end
+	return t :: Table
+end
+
+-- loose things resting on the table
+local function onTable(m: Model): { BasePart }
+	return within(m, Vector3.new(0, 0.93, 0), Vector3.new(1.24, 1.2, 1.24))
+end
+
+-- the rotator something is sitting on or stuck to, if any
+function FactoryService.rotatorOf(p: BasePart): Model?
+	local f = workspace:FindFirstChild("Builds")
+	local stuckTo = p:GetAttribute("Stuck")
+	for _, m in if f then f:GetChildren() else {} do
+		if m:IsA("Model") and m:GetAttribute("Build") == "rotator" then
+			if stuckTo and stuckTo == m:GetAttribute("Uid") then
+				return m
+			end
+			for _, q in onTable(m) do
+				if q == p then
+					return m
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function letGo(p: BasePart)
+	if p.Parent then
+		p.Anchored = false
+		p:SetAttribute("Stuck", nil)
+	end
+end
+
+-- the hammer on a rotator: stick what's on it, or let go. Returns how many are stuck now.
+function FactoryService.hammer(m: Model): number
+	local t = tableOf(m)
+	local at = m:GetPivot().Position
+	if #t.stuck > 0 then
+		for _, s in t.stuck do
+			letGo(s.p)
+		end
+		t.stuck = {}
+		m:SetAttribute("Stuck", false)
+		remotes.Fx:FireAllClients("clink", at, 1.2, 0)
+		return 0
+	end
+	local h = hub(m, m:GetAttribute("Angle") :: number? or 0)
+	for _, p in onTable(m) do
+		p.Anchored = true
+		p.AssemblyLinearVelocity = Vector3.zero
+		p:SetAttribute("Stuck", m:GetAttribute("Uid"))
+		table.insert(t.stuck, { p = p, off = h:ToObjectSpace(p.CFrame) })
+	end
+	if #t.stuck > 0 then
+		m:SetAttribute("Stuck", true)
+		remotes.Fx:FireAllClients("clink", at, 0.8, 0)
+	else
+		remotes.Fx:FireAllClients("thud", at, 1.4, -6)
+	end
+	return #t.stuck
+end
+
+local function rotator(m: Model, dt: number, on: boolean)
+	local t = tableOf(m)
+	local re = m:GetAttribute("Restick") :: any
+	if re then
+		-- after loading: what was stuck is back on the table - stick it again, once it has had a moment to land
+		re = if typeof(re) == "number" then re - dt else 1.0
+		if re <= 0 then
+			m:SetAttribute("Restick", nil)
+			if #onTable(m) > 0 then
+				FactoryService.hammer(m)
+			end
+		else
+			m:SetAttribute("Restick", re)
+		end
+	end
+	t.speed = if on then math.min(FactoryService.SPIN, t.speed + dt * 1.5) else math.max(0, t.speed - dt * 1.5)
+	if t.speed <= 0 then
+		return
+	end
+	local angle = ((m:GetAttribute("Angle") :: number? or 0) + t.speed * dt) % (2 * math.pi)
+	m:SetAttribute("Angle", angle)
+	local h = hub(m, angle)
+	for _, s in t.parts do
+		s.p.CFrame = h * s.off
+	end
+	for i = #t.stuck, 1, -1 do
+		local s = t.stuck[i]
+		-- gone: sold, or picked up
+		if not s.p.Parent or s.p:GetAttribute("HeldBy") or not s.p:GetAttribute("Stuck") then
+			table.remove(t.stuck, i)
+			if #t.stuck == 0 then
+				m:SetAttribute("Stuck", false)
+			end
+			continue
+		end
+		s.p.CFrame = h * s.off
+	end
+end
+
 -- E on a sorter while holding something: sort that kind off to the left; with empty hands, clear it
 function FactoryService.setFilter(m: Model, held: BasePart?)
 	if held then
@@ -387,6 +518,8 @@ function FactoryService.step(dt: number)
 		local on = m:GetAttribute("Powered") == true
 		if id == "piston" then
 			piston(m, dt, on)
+		elseif id == "rotator" then
+			rotator(m, dt, on)
 		elseif not on then
 			continue
 		elseif id == "crate" then
@@ -407,10 +540,41 @@ function FactoryService.step(dt: number)
 			charger(m, dt)
 		end
 	end
+	-- a rotator that was taken down lets go of what was stuck to it
+	for uid, t in tables do
+		if not t.m.Parent then
+			for _, s in t.stuck do
+				letGo(s.p)
+			end
+			tables[uid] = nil
+		end
+	end
 	local _ = Builds
 end
 
 function FactoryService.start()
+	-- the hammer swung at a rotator, or at something sitting on (or stuck to) one
+	remotes.Hammer.OnServerEvent:Connect(function(player, target)
+		local ToolService = require(script.Parent.ToolService) :: any
+		if typeof(target) ~= "Instance" or not target:IsA("BasePart") or ToolService.current(player) ~= "hammer" then
+			return
+		end
+		local m = target:FindFirstAncestorWhichIsA("Model")
+		while m and m:GetAttribute("Kind") ~= "build" do
+			m = m:FindFirstAncestorWhichIsA("Model")
+		end
+		if not (m and m:GetAttribute("Build") == "rotator") then
+			local item: BasePart = if target.Parent and target.Parent:IsA("BasePart") then target.Parent :: BasePart else target
+			m = FactoryService.rotatorOf(item)
+		end
+		local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+		if m and head and (head.CFrame.Position - m:GetPivot().Position).Magnitude < 6 * M then
+			local n = FactoryService.hammer(m)
+			if n > 0 then
+				remotes.Notify:FireClient(player, string.format("Stuck %d to the rotator", n), "bfeaff")
+			end
+		end
+	end)
 	task.spawn(function()
 		local last = os.clock()
 		while true do
