@@ -136,6 +136,14 @@ function InteractController.target(): (string, (() -> ())?)
 	end
 	local h = held()
 	if h then
+		-- (holding something and looking at a sorter belt: E sorts that kind of thing out to the left)
+		local sh = look()
+		local sb = sh and buildOf(sh.Instance)
+		if sh and sb and sb:GetAttribute("Build") == "sorter" then
+			return "[E] sort this out to the left", function()
+				remotes.UseMachine:FireServer(sh.Instance)
+			end
+		end
 		return "[E] drop", function()
 			remotes.Grab:FireServer(nil)
 			Sfx.play("drop", 0.9, -6)
@@ -336,6 +344,27 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 		elseif mode == "counter" then
 			return string.format("Counter  ·  %d of %d pulses    [E] change", m:GetAttribute("Count") :: number? or 0, ({ 2, 3, 5, 10 })[setting]), true
 		end
+	elseif id == "transmitter" or id == "receiver" then
+		local names = { "red", "green", "blue", "yellow", "purple", "orange", "white", "pink" }
+		local ch = (m:GetAttribute("Channel") :: number? or 0) + 1
+		local state = if id == "transmitter" then (if powered then "sending" else "no power") else (if powered then "receiving" else "nothing on this channel")
+		return string.format("%s  ·  %s channel  ·  %s    [E] change channel", if id == "transmitter" then "Transmitter" else "Receiver", names[ch], state), true
+	elseif id == "crate" then
+		return "Storage Crate  ·  power it to empty it out of the front", false
+	elseif id == "sprinkler" then
+		return "Sprinkler  ·  " .. (if powered then "watering" else "waters saplings nearby while powered"), false
+	elseif id == "planter" then
+		return "Planter  ·  drop saplings in the hopper and power it: they're planted in a row in front", false
+	elseif id == "grabber" then
+		return "Grabber Arm  ·  moves things from in front (the arrow's tail) to behind it, while powered", false
+	elseif id == "splitter" then
+		return "Splitter Belt  ·  every other thing goes off to the left", false
+	elseif id == "sorter" then
+		local f = m:GetAttribute("Filter") :: string? or ""
+		if f == "" then
+			return "Sorter Belt  ·  hold something and press [E] to sort that out to the left", true
+		end
+		return string.format("Sorter Belt  ·  sends %s left    [E] with empty hands to clear", (string.gsub(f, "_", " "))), true
 	elseif id == "pressure_plate" then
 		return "Pressure Plate  ·  " .. (if m:GetAttribute("Sensing") then "pressed" else "lets power through while something stands on it"), false
 	elseif id == "item_sensor" then

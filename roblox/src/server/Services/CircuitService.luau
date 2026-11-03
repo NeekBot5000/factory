@@ -66,6 +66,15 @@ local function isSource(m: Model): boolean
 		return (m:GetAttribute("Fuel") :: number? or 0) > 0
 	elseif id == "battery" then
 		return m:GetAttribute("Feeding") == true and (m:GetAttribute("Charge") :: number? or 0) > 0
+	elseif id == "receiver" then
+		-- (Godot's Wireless: a receiver gives power while a powered transmitter is on its channel)
+		local ch = m:GetAttribute("Channel") or 0
+		local f = workspace:FindFirstChild("Builds")
+		for _, t in if f then f:GetChildren() else {} do
+			if t:GetAttribute("Build") == "transmitter" and (t:GetAttribute("Channel") or 0) == ch and t:GetAttribute("Powered") == true then
+				return true
+			end
+		end
 	end
 	return false
 end
@@ -76,7 +85,7 @@ end
 
 local function conducts(m: Model): boolean
 	local id = m:GetAttribute("Build")
-	if isGate(m) then
+	if isGate(m) or id == "transmitter" or id == "receiver" then
 		return false          -- (a logic block only lets power out of its front, and only when its logic says so)
 	end
 	if id == "lever" then
@@ -97,7 +106,7 @@ local function sense(m: Model)
 		return
 	end
 	local size = m:GetAttribute("Size") :: number? or 1
-	local off, box = if id == "pressure_plate" then Vector3.new(0, 0.2, 0) else Vector3.new(0, 0.4, -1), if id == "pressure_plate" then Vector3.new(0.8, 0.3, 0.8) else Vector3.new(0.9, 0.8, 0.9)
+	local off, box = if id == "pressure_plate" then Vector3.new(0, 0.2, 0) else Vector3.new(0, 0.5, -0.9), if id == "pressure_plate" then Vector3.new(0.8, 0.3, 0.8) else Vector3.new(0.9, 1.0, 0.8)
 	local cf = m:GetPivot() * CFrame.new(off * M * size)
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
@@ -234,7 +243,7 @@ end
 
 local function isBelt(m: Model): boolean
 	local id = m:GetAttribute("Build")
-	return id == "conveyor" or id == "ramp"
+	return id == "conveyor" or id == "ramp" or id == "sorter" or id == "splitter"
 end
 
 -- ------------------------------------------------------------------ logic blocks (Godot's Gate)
@@ -635,6 +644,11 @@ function CircuitService.use(m: Model): boolean
 	elseif id == "assembler" then
 		(require(script.Parent.ProductionService) :: any).cycle(m)
 		return true
+	elseif id == "transmitter" or id == "receiver" then
+		local ch = ((m:GetAttribute("Channel") :: number? or 0) + 1) % 8
+		m:SetAttribute("Channel", ch)
+		remotes.Fx:FireAllClients("click", at, 0.9 + ch * 0.1, -4)
+		return true
 	elseif isGate(m) then
 		local mode = gateMode(m)
 		if mode == "timer" or mode == "delay" or mode == "counter" then
@@ -673,6 +687,18 @@ function CircuitService.start()
 	remotes.UseMachine.OnServerEvent:Connect(function(player, target)
 		local m = machineOf(target)
 		if m and near(player, m, 6 * M) then
+			if m:GetAttribute("Build") == "sorter" then
+				-- (E while holding something: sort that kind out to the left)
+				local held: BasePart? = nil
+				local loose = workspace:FindFirstChild("Loose")
+				for _, p in if loose then loose:GetChildren() else {} do
+					if p:IsA("BasePart") and p:GetAttribute("HeldBy") == player.UserId then
+						held = p
+					end
+				end
+				(require(script.Parent.FactoryService) :: any).setFilter(m, held)
+				return
+			end
 			CircuitService.use(m)
 		end
 	end)

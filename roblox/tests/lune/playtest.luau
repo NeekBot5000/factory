@@ -1104,6 +1104,51 @@ do
 	check(not before and l3:GetAttribute("Powered"), "a relay passes power only while its side is powered")
 end
 
+-- ---------------------------------------------------------------- logistics, the tree farm, wireless
+do
+	local BS, CS = A.service("BuildService"), A.service("CircuitService")
+	local base = V3(60, 0, -45)
+	local crank = BS.make("crank", roblox.CFrame.new(base + V3(0, 0, 12)), 1, 101, true, {})
+	for _ = 1, 8 do
+		CS.use(crank)
+	end
+	local function mk(id, off)
+		local m = BS.make(id, roblox.CFrame.new(base + off), 1, 101, true, {})
+		A.service("BuildBehaviors").activate(m)
+		CS.toggle(crank, m)
+		return m
+	end
+	-- wireless: a powered transmitter powers every receiver on its channel
+	local tx = mk("transmitter", V3(6, 0, 12))
+	local rx = BS.make("receiver", roblox.CFrame.new(base + V3(40, 0, 12)), 1, 101, true, {})
+	local lamp = BS.make("lamp", roblox.CFrame.new(base + V3(46, 0, 12)), 1, 101, true, {})
+	CS.toggle(rx, lamp)
+	task.wait(0.3)
+	check(lamp:GetAttribute("Powered"), "a receiver on the transmitter's channel powers its lamp, no wire between")
+	CS.use(rx)
+	task.wait(0.3)
+	check(not lamp:GetAttribute("Powered"), "on another channel it doesn't")
+	-- the crate empties itself out of the front while powered
+	local crate = mk("crate", V3(0, 0, 0))
+	local thing = roblox.Instance.new("Part")
+	thing.Size = V3(0.6, 0.6, 0.6)
+	thing.CFrame = crate:GetPivot() * roblox.CFrame.new(0, 1.5, 0)
+	thing.Position = thing.CFrame.Position
+	thing.AssemblyLinearVelocity = V3(0, 0, 0)
+	thing:SetAttribute("Kind", "leaf")
+	thing.Parent = loose
+	task.wait(0.3)
+	check(thing.AssemblyLinearVelocity.Z < -5, "a powered crate pushes what's in it out of the front")
+	thing:Destroy()
+	-- the planter plants a sapling from its hopper in front of it
+	local planter = mk("planter", V3(12, 0, 0))
+	local sp = A.service("LogService").sapling((planter:GetPivot() * roblox.CFrame.new(0, 2.85, 0)).Position, "oak")
+	sp.Position = sp.CFrame.Position
+	task.wait(0.4)
+	check(sp:GetAttribute("Rooted") and (sp.CFrame.Position - planter:GetPivot().Position).Magnitude > 5, "the planter plants saplings in a row in front of it")
+	sp:Destroy()
+end
+
 -- ---------------------------------------------------------------- production
 do
 	local BS, PS = A.service("BuildService"), A.service("ProductionService")
