@@ -39,6 +39,8 @@ local KEYS: { [string]: string } = {
 	ButtonR2 = "Swing",
 	DPadRight = "NextTool", DPadLeft = "PrevTool",
 	Tab = "Phone", ButtonSelect = "Phone",
+	R = "Turn", ButtonY = "Turn",                 -- turns the build you're placing
+	X = "TakeDown",                               -- with the hammer: knock a plan or a build down
 }
 
 local function actionOf(input: InputObject): string?

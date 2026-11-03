@@ -265,6 +265,9 @@ local function impact()
 		throw(d)
 		return
 	end
+	if d.build then
+		return         -- (the hammer's swing is just the swing: Godot's _do_impact)
+	end
 	if d.snip then
 		-- the shears: a snip in the leaves of the crown you're looking at (Godot's _snip)
 		Sfx.play("click", 0.6, -2)
@@ -453,7 +456,7 @@ function ToolController.start()
 	local pressing = false
 	InputController.on("Swing", function(state)
 		pressing = state == Enum.UserInputState.Begin
-		if state == Enum.UserInputState.Begin and not def().charge then
+		if state == Enum.UserInputState.Begin and not def().charge and not def().build then
 			startSwing()
 		end
 	end)
@@ -716,12 +719,12 @@ function ToolController.start()
 		end
 	end)
 	InputController.on("NextTool", function(state)
-		if state == Enum.UserInputState.Begin and not State.uiOpen then
+		if state == Enum.UserInputState.Begin and not State.uiOpen and not State.placing then
 			cycle(1)
 		end
 	end)
 	InputController.on("PrevTool", function(state)
-		if state == Enum.UserInputState.Begin and not State.uiOpen then
+		if state == Enum.UserInputState.Begin and not State.uiOpen and not State.placing then
 			cycle(-1)
 		end
 	end)

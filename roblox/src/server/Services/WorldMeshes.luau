@@ -324,6 +324,14 @@ local function props()
 		if string.find(name, "^marker") then
 			continue
 		end
+		-- a build's part (b__<id>__<part>__<resource or fin>): into the build's model, named after its index
+		local bid, idx, res = string.match(name, "^b__(.-)__(%d+)__(.+)$")
+		if bid then
+			name = "b__" .. bid
+			p.Name = idx :: string
+			p:SetAttribute("Index", tonumber(idx))
+			p:SetAttribute("Res", if res == "fin" then "" else res)
+		end
 		local model = byName[name]
 		if not model then
 			model = Instance.new("Model")

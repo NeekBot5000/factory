@@ -28,6 +28,7 @@ local TEMPLATE = {
 	tutorial = 1,          -- which "Getting started" step you're on (-1 when you've finished it)
 	peeled = 0,            -- bark sheets peeled, ever
 	earned = 0,            -- money the truck has paid you, ever
+	land = { "-1,-1", "-1,0", "0,-1", "0,0" },   -- the 20 m plots you own (Godot's Land.START: the four round the cabin)
 	settings = { fov = 75, volume = 0.8, music = 0.5, bob = true, fps = false },
 }
 
@@ -153,6 +154,7 @@ function DataService.publish(player: Player)
 	end
 	player:SetAttribute("Fresh", (data.earned or 0) <= 0 and onlyHands and #(data.orders or {}) == 0 and (data.tutorial or 1) == 1)
 	player:SetAttribute("Settings", HttpService:JSONEncode(data.settings or {}))
+	player:SetAttribute("Land", table.concat(data.land or {}, ";"))
 end
 
 -- New Game: this player's save starts over (Godot's Game.reset), keeping only their settings

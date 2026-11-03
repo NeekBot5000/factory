@@ -113,6 +113,7 @@ local function spawnSheet(player: Player, tree: Model, strip: any, mult: number)
 	sheet:SetAttribute("Value", math.floor(Economy.barkValue(Config, species, strip.layer, #strip.panels) * mult * 100 + 0.5) / 100)
 	sheet:SetAttribute("Owner", player.UserId)
 	sheet:SetAttribute("Kind", "bark")
+	sheet:SetAttribute("Panels", #strip.panels)       -- (what it counts for in a build: Godot's Chip.panels)
 	sheet:SetAttribute("Layer", strip.layer)
 	sheet:SetAttribute("Species", species)
 	sheet.Parent = loose

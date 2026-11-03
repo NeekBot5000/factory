@@ -106,11 +106,19 @@ local function install()
 	roblox.implementMethod("Instance", "GetPropertyChangedSignal", function(self, name)
 		return ClientHarness.signal(self, "prop:" .. name)
 	end)
-	roblox.implementMethod("Instance", "WaitForChild", function(self, name)
-		for _ = 1, 50 do
+	roblox.implementMethod("Instance", "WaitForChild", function(self, name, timeout)
+		-- (like Roblox: with a timeout it gives nil when that runs out; without one, here, it fails after a second)
+		local t0 = os.clock()
+		while true do
 			local c = self:FindFirstChild(name)
 			if c then
 				return c
+			end
+			if timeout and os.clock() - t0 >= timeout then
+				return nil
+			end
+			if not timeout and os.clock() - t0 > 1 then
+				break
 			end
 			task.wait(0.02)
 		end

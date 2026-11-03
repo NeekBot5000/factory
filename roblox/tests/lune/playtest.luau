@@ -605,6 +605,131 @@ do
 	data.earned = saved
 end
 
+-- ---------------------------------------------------------------- building with the hammer, and land
+do
+	local build = A.remotes.Build.OnServerEvent
+	Tools.grant(alice, "hammer")
+	task.wait(1.3)
+	local spot = V3(-24, 0, 24)          -- (on the four plots round the cabin that everyone starts with)
+	A.stand(alice, spot + V3(0, 5, 9))
+	local plans = function()
+		local f = ws:FindFirstChild("Plans")
+		return if f then f:GetChildren() else {}
+	end
+	local n0 = #plans()
+	build:Fire(alice, "crank", roblox.CFrame.new(spot), 1)
+	A.stand(alice, V3(-24, 5, 52))
+	build:Fire(alice, "bench", roblox.CFrame.new(V3(-24, 0, 66)), 1)       -- (just over the edge of your land)
+	task.wait(0.1)
+	A.stand(alice, spot + V3(0, 5, 9))
+	check(#plans() == n0 and count("Notify", alice, "isn't your land") >= 1, "machines need their blueprint, and you can only build on your own land")
+	build:Fire(alice, "bench", roblox.CFrame.new(spot), 1)
+	task.wait(0.1)
+	local plan = nil
+	for _, p in plans() do
+		if p:GetAttribute("Build") == "bench" then
+			plan = p
+		end
+	end
+	check(plan ~= nil and plan:GetAttribute("Left") == "1 log  ·  6 bark", "the hammer sets down a plan: a hologram that says what it still needs ('" .. tostring(plan and plan:GetAttribute("Left")) .. "')")
+	if plan then
+		local function sheet(panels)
+			local p = roblox.Instance.new("Part")
+			p.Size = V3(1, 1, 0.3)
+			p.CFrame = plan:GetPivot() * roblox.CFrame.new(0, 2, 0)
+			p.Position = p.CFrame.Position
+			p.Color = roblox.Color3.fromHex("6b4a32")
+			p:SetAttribute("Kind", "bark")
+			p:SetAttribute("Panels", panels)
+			p:SetAttribute("Value", 0.4)
+			p:SetAttribute("Owner", 101)
+			p.Parent = loose
+			return p
+		end
+		local s1 = sheet(3)
+		task.wait(0.4)
+		local solid = 0
+		for _, p in plan:GetChildren() do
+			if p:IsA("BasePart") and p:GetAttribute("Res") == "bark" and p.Transparency == 0 then
+				solid += 1
+			end
+		end
+		check(s1.Parent ~= loose and plan:GetAttribute("Left") == "1 log  ·  3 bark" and solid >= 1, "drop bark in: it goes into the build and parts turn solid in proportion (" .. solid .. ")")
+		sheet(4)
+		local log = nil
+		for _, l in ws.Logs:GetChildren() do
+			if l:GetAttribute("Kind") == "log" and not l:GetAttribute("HeldBy") then
+				log = l
+			end
+		end
+		if log then
+			local target = (plan:GetPivot() * roblox.CFrame.new(0, 2, 0)).Position
+			log:PivotTo(log:GetPivot() + (target - log.Trunk.CFrame.Position))
+			for _, d in log:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Position = d.CFrame.Position
+				end
+			end
+		end
+		task.wait(0.5)
+		local built = nil
+		for _, b in (ws:FindFirstChild("Builds") and ws.Builds:GetChildren() or {}) do
+			if b:GetAttribute("Build") == "bench" then
+				built = b
+			end
+		end
+		check(plan.Parent == nil and built ~= nil and count("Notify", alice, "Log Bench") >= 1, "with everything in, it's built: the Log Bench (Godot's toast)")
+		if built then
+			check((built:GetAttribute("SaleValue") or 0) > 0, string.format("a bench is worth 2.5x what went into it ($%.2f)", built:GetAttribute("SaleValue") or 0))
+			local before, value = data.money, built:GetAttribute("SaleValue")
+			A.remotes.TakeDown.OnServerEvent:Fire(alice, built:FindFirstChildWhichIsA("BasePart"))
+			task.wait(0.1)
+			local gone = not pcall(function()
+				return built.Parent.Name
+			end)
+			check(gone and math.abs(data.money - before - value) < 0.01, "X with the hammer takes it down and pays what it would have sold for")
+		end
+	end
+	-- a cancelled plan gives everything back
+	build:Fire(alice, "basket", roblox.CFrame.new(spot + V3(9, 0, 0)), 1)
+	task.wait(0.1)
+	local basket = nil
+	for _, p in plans() do
+		if p:GetAttribute("Build") == "basket" then
+			basket = p
+		end
+	end
+	if basket then
+		local p = roblox.Instance.new("Part")
+		p.Size = V3(1, 1, 0.3)
+		p.CFrame = basket:GetPivot() * roblox.CFrame.new(0, 1.5, 0)
+		p.Position = p.CFrame.Position
+		p:SetAttribute("Kind", "bark")
+		p:SetAttribute("Panels", 5)
+		p:SetAttribute("Owner", 101)
+		p.Parent = loose
+		task.wait(0.4)
+		local inside = p.Parent ~= loose
+		A.remotes.PlanCancel.OnServerEvent:Fire(alice, basket:FindFirstChildWhichIsA("BasePart"))
+		task.wait(0.1)
+		local gone = not pcall(function()
+			return basket.Parent.Name
+		end)
+		check(inside and gone and p.Parent == loose, "E on a plan cancels it, and what went in tumbles back out")
+	end
+	-- land: buy the plot next to yours at its for-sale sign
+	data.money += 500
+	local m0 = data.money
+	A.stand(alice, V3(100, 5, 30))
+	A.remotes.BuyLand.OnServerEvent:Fire(alice, "1,0", V3(108, 0, 30))
+	task.wait(0.1)
+	check(table.find(data.land, "1,0") ~= nil and math.abs(m0 - data.money - 400) < 0.01, "a for-sale sign sells you the next plot ($400, then 1.7x more each)")
+	A.stand(alice, V3(5 * 60 + 30, 5, 5 * 60 + 25))
+	A.remotes.BuyLand.OnServerEvent:Fire(alice, "5,5", V3(5 * 60 + 30, 0, 5 * 60 + 30))
+	task.wait(0.1)
+	check(table.find(data.land, "5,5") == nil, "but only plots next to land you own")
+end
+
 -- ---------------------------------------------------------------- the leaf vacuums
 do
 	Tools.grant(alice, "vacuum")

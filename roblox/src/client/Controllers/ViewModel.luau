@@ -30,6 +30,7 @@ local ARCS = {
 	sweep = { pivot = Vector3.new(-0.3, -0.65, -0.28), axis = Vector3.new(-0.87, 0.5, 0.0), r0 = Vector3.new(0.5, 0.87, 0.0), len = 0.32, a = { -75, 36, 90 } },
 	sweep_back = { pivot = Vector3.new(0.3, -0.65, -0.28), axis = Vector3.new(-0.87, -0.5, 0.0), r0 = Vector3.new(-0.5, 0.87, 0.0), len = 0.32, a = { -75, 36, 90 } },
 	slam = { pivot = Vector3.new(-0.3, -0.7, -0.25), axis = Vector3.new(-0.87, 0.5, 0.0), r0 = Vector3.new(0.5, 0.87, 0.0), len = 0.32, a = { -85, 36, 90 } },
+	hammer = { pivot = Vector3.new(0.1, -0.45, 0.0), axis = Vector3.new(-1.0, 0.0, 0.0), r0 = Vector3.new(0.0, 1.0, 0.25), len = 0.3, a = { -30, 64, 78 } },
 	twin = { pivot = Vector3.new(-0.15, -0.45, -0.35), axis = Vector3.new(-0.87, 0.5, 0.0), r0 = Vector3.new(0.5, 0.87, 0.0), len = 0.3, a = { -60, 36, 85 } },
 }
 -- { offset, rotation in degrees } for rest, wind-up and strike (Godot's _poses): bare hands, and the spud's thrust

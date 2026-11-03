@@ -60,7 +60,7 @@ func _ready() -> void:
 	groups.clear()
 	var holder := Node3D.new()
 	add_child(holder)
-	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "phone"]:
+	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "phone"]:
 		var root := Node3D.new()
 		holder.add_child(root)
 		Tools.build_model(id, root)
@@ -82,6 +82,42 @@ func _ready() -> void:
 			if not (mi as Node).is_queued_for_deletion():
 				_add_mesh("props", "sign_%d" % tier, mi, sign.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
 		sign.free()
+	# every build the hammer makes (Builds.make at 1x), one mesh a part, named b__<id>__<part>__<resource or fin>,
+	# so a blueprint can turn each part solid as it's filled; what each part needs goes in GodotBuilds.luau
+	var builds_info := {}
+	for id in Builds.ORDER:
+		var root := Node3D.new()
+		holder.add_child(root)
+		var parts: Array = Builds.make(id, root, Builds.HOOP_DEFAULT, 1.0)
+		var inv := root.global_transform.affine_inverse()
+		var info: Array = []
+		var top := 0.3
+		for k in parts.size():
+			var mi: MeshInstance3D = parts[k].mi
+			var res: String = parts[k].res
+			_add_mesh("props", "b__%s__%d__%s" % [id, k, res if res != "" else "fin"], mi, inv * mi.global_transform)
+			var real: Material = parts[k].real
+			var col := (real as StandardMaterial3D).albedo_color if real is StandardMaterial3D else Color(0.6, 0.6, 0.6)
+			var a: AABB = (inv * mi.global_transform) * mi.get_aabb()
+			info.append({"res": res, "color": col.to_html(false), "arrow": mi.has_meta("arrow"), "at": a.get_center() * S, "size": a.size * S})
+			top = maxf(top, a.end.y)
+		builds_info[id] = {"parts": info, "top": top}
+		root.free()
+	_write_builds(builds_info)
+	# the land's for-sale sign and a corner stake (Land.rebuild), around their own origins
+	var fs := ForSale.new()
+	holder.add_child(fs)
+	fs.setup(null, "")
+	for mi in fs.find_children("*", "MeshInstance3D", true, false):
+		_add_mesh("props", "forsale", mi, fs.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
+	fs.free()
+	var stake := Node3D.new()
+	holder.add_child(stake)
+	LowPoly.mesh_instance(stake, LowPoly.box(Vector3(0.1, 0.8, 0.1)), LowPoly.mat(Color("a0703c"), 0.9), Vector3(0, 0.4, 0))
+	LowPoly.mesh_instance(stake, LowPoly.box(Vector3(0.12, 0.12, 0.12)), LowPoly.mat(Color("d64034"), 0.6), Vector3(0, 0.82, 0))
+	for mi in stake.find_children("*", "MeshInstance3D", true, false):
+		_add_mesh("props", "stake", mi, (mi as MeshInstance3D).transform)
+	stake.free()
 	# one smoke puff (Nature.Smoke's blob), for the client's chimney smoke
 	var smoke := Nature.Smoke.new()
 	holder.add_child(smoke)
@@ -99,8 +135,9 @@ func _ready() -> void:
 
 # what each top-level node of the world is, and what to call its meshes
 func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
-	if n is Player or n is CanvasLayer or n is Truck or n is WorldEnvironment or n is DirectionalLight3D or n is CompanySign:
-		# (the company sign grows as you earn: it's in props.glb, tier by tier, and the game puts up the right one)
+	if n is Player or n is CanvasLayer or n is Truck or n is WorldEnvironment or n is DirectionalLight3D or n is CompanySign or n is Land:
+		# (the company sign grows as you earn: it's in props.glb, tier by tier, and the game puts up the right one;
+		# the land's for-sale signs and corner stakes depend on what each player owns: props too, drawn by the client)
 		return
 	if n is ToolItem:
 		# the old hatchet stuck in the chopping block (each player's client hides it once they own a hatchet)
@@ -429,6 +466,42 @@ func _write(glb: String, path: String) -> int:
 	print("  %s: %d meshes, %d triangles" % [glb, n, tris])
 	root.free()
 	return n
+
+
+## roblox/src/shared/GodotBuilds.luau: Godot's builds (Builds.gd) for the hammer, and their parts in props.glb.
+func _write_builds(info: Dictionary) -> void:
+	var L := PackedStringArray()
+	L.append("--!strict")
+	L.append("-- Made by tools/ExportRobloxWorld.gd from Builds.gd. Don't edit by hand: run tools/export_roblox_world.sh.")
+	L.append("-- Each build's parts are meshes in props.glb named b__<id>__<part>__<resource or fin>; top, at (a part's box")
+	L.append("-- centre) and size are in studs, around the build's origin (at and size give stand-ins until the meshes load).")
+	L.append("return {")
+	L.append("\torder = { \"%s\" }," % "\", \"".join(Builds.ORDER))
+	L.append("\tsizes = { %s }," % ", ".join(Builds.SIZES.map(func(x): return str(x))))
+	L.append("\tresName = {")
+	for r in Builds.RES_NAME:
+		L.append("\t\t%s = \"%s\"," % [r, Builds.RES_NAME[r]])
+	L.append("\t},")
+	L.append("\tcategories = {")
+	for c in Builds.CATEGORIES:
+		L.append("\t\t{ name = \"%s\", items = { \"%s\" } }," % [c.name, "\", \"".join(c.items)])
+	L.append("\t},")
+	L.append("\tbuilds = {")
+	for id in Builds.ORDER:
+		var b: Dictionary = Builds.BUILDS[id]
+		var needs := PackedStringArray()
+		for r in b.needs:
+			needs.append("%s = %d" % [r, int(b.needs[r])])
+		L.append("\t\t%s = { name = \"%s\", needs = { %s }, needsOrder = { \"%s\" }, bp = %s, sell = %s, fixed = %s, machine = %s, top = %.3f, parts = {" % [
+			id, b.name, ", ".join(needs), "\", \"".join(b.needs.keys()), ("\"%s\"" % b.bp) if b.has("bp") else "nil", str(b.get("sell", 0.85)),
+			str(Builds.fixed(id)), str(Machines.is_machine(id)), float(info[id].top) * S])
+		for p in info[id].parts:
+			L.append("\t\t\t{ res = \"%s\", color = \"%s\", at = %s, size = %s%s }," % [p.res, p.color, _v3(p.at), _v3(p.size), ", arrow = true" if p.arrow else ""])
+		L.append("\t\t} },")
+	L.append("\t},")
+	L.append("}")
+	var f := FileAccess.open(ProjectSettings.globalize_path("res://roblox/src/shared/GodotBuilds.luau"), FileAccess.WRITE)
+	f.store_string("\n".join(L) + "\n")
 
 
 func _v3(v: Vector3) -> String:

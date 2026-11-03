@@ -11,6 +11,8 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
 local InputController = require(script.Parent.InputController)
 local ShopController = require(script.Parent.ShopController)
+local BuildController = require(script.Parent.BuildController)
+local Land = require(game:GetService("ReplicatedStorage").Shared.Land)
 local State = require(script.Parent.Parent.State)
 local Sfx = require(script.Parent.Parent.Sfx)
 
@@ -112,9 +114,23 @@ local function toolItem(part: Instance): Model?
 end
 
 -- What E would do here: (hint text, action). Godot's look_target_text and interact, in one place.
+-- the plan or build a part belongs to
+local function buildOf(part: Instance): Model?
+	local m = part:FindFirstAncestorWhichIsA("Model")
+	while m and m:GetAttribute("Kind") ~= "plan" and m:GetAttribute("Kind") ~= "build" and m:GetAttribute("Kind") ~= "forsale" do
+		m = m:FindFirstAncestorWhichIsA("Model")
+	end
+	return m
+end
+InteractController.buildOf = buildOf
+
 function InteractController.target(): (string, (() -> ())?)
 	if State.uiOpen or State.fainted then
 		return "", nil
+	end
+	if State.placing then
+		-- placing a build: E puts the hologram away
+		return State.buildHint or "", BuildController.cancel
 	end
 	local h = held()
 	if h then
@@ -128,6 +144,24 @@ function InteractController.target(): (string, (() -> ())?)
 		return "", nil
 	end
 	local part = hit.Instance
+	local b = buildOf(part)
+	if b and b:GetAttribute("Kind") == "forsale" then
+		local land = string.split(player:GetAttribute("Land") :: string? or "", ";")
+		return string.format("[E] buy this plot of land    $%d", Land.nextPrice(land)), function()
+			remotes.BuyLand:FireServer(b:GetAttribute("Plot"), b:GetPivot().Position)
+		end
+	elseif b and b:GetAttribute("Kind") == "plan" then
+		if State.tool == "hammer" then
+			return "[X] knock down the plan (materials drop out)    [E] cancel", function()
+				remotes.PlanCancel:FireServer(part)
+			end
+		end
+		return "[E] cancel", function()
+			remotes.PlanCancel:FireServer(part)
+		end
+	elseif b and b:GetAttribute("Kind") == "build" and State.tool == "hammer" then
+		return string.format("[X] take down  +$%.2f", b:GetAttribute("SaleValue") :: number? or 0), nil
+	end
 	local item = toolItem(part)
 	if item then
 		return "[E] take", function()
@@ -266,11 +300,24 @@ function InteractController.start()
 		end
 		if State.uiOpen then
 			ShopController.close()
+			BuildController.closeMenu()
 			return
 		end
 		local _, action = InteractController.target()
 		if action then
 			action()
+		end
+	end)
+	-- X with the hammer: knock down the plan or the build you're looking at (Godot's hammer_take_down)
+	InputController.on("TakeDown", function(state)
+		if state ~= Enum.UserInputState.Begin or State.tool ~= "hammer" or State.placing or State.uiOpen then
+			return
+		end
+		local hit = look()
+		local b = hit and buildOf(hit.Instance)
+		if hit and b and (b:GetAttribute("Kind") == "plan" or b:GetAttribute("Kind") == "build") then
+			remotes.TakeDown:FireServer(hit.Instance)
+			State.swing = 0
 		end
 	end)
 	local engines: { [string]: Sound? } = {}

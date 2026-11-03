@@ -8,7 +8,7 @@ if not ok then
 	warn("[Timber] Sfx: " .. tostring(err))
 end
 local controllers = script:WaitForChild("Controllers")
-for _, name in { "InputController", "MoveController", "TreeVisuals", "ShopController", "ToolController", "InteractController", "ViewModel", "SkyController", "SmokeController", "Hud", "TitleController" } do
+for _, name in { "InputController", "MoveController", "TreeVisuals", "LandController", "BuildController", "ShopController", "ToolController", "InteractController", "ViewModel", "SkyController", "SmokeController", "Hud", "TitleController" } do
 	local started, why = pcall(function()
 		local c = require(controllers:WaitForChild(name)) :: any
 		c.start()

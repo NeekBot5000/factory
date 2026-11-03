@@ -67,6 +67,9 @@ Config.Tools = {
 	shears = { name = "Pruning Shears", price = 90, radius = 0, stripRadius = 0, cooldown = 0.32, impact = 0.45, hurt = 0, anim = "snip", reach = 4.2, snip = true, tag = "Light",
 		desc = "Long-reach shears. Snip big clumps of leaves off bushes and tree crowns. Leaves don't sell for much, but there are tons of them.",
 		look = { handle = 1.6, head = { 0.1, 0.25, 0.8 }, headColor = { 190, 196, 206 }, handleColor = { 200, 60, 50 } } },
+	hammer = { name = "Builder's Hammer", price = 120, radius = 0, stripRadius = 0, cooldown = 0.45, impact = 0.5, hurt = 0, anim = "hammer", reach = 2.2, build = true, tag = "Compact",
+		desc = "Build things out of what you gather: pick a plan, set it down, then drop the materials into it.",
+		look = { handle = 1.0, head = { 0.25, 0.25, 0.6 }, headColor = { 120, 124, 132 }, handleColor = { 150, 110, 70 } } },
 	-- the leaf vacuums: hold the trigger, loose things fly to the nozzle and swirl there until you let go
 	vacuum = { name = "Leaf Vacuum", price = 1200, radius = 0, stripRadius = 0, cooldown = 0.1, impact = 0, hurt = 0, anim = "vacuum", reach = 7, hold = true, kind = "vacuum", tag = "Bulky",
 		desc = "Hold the trigger to suck up loose bark and boxes. They float in front of the nozzle until you let go.",
@@ -112,8 +115,8 @@ Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7, cro
 Config.Leaf = { value = 0.05 }
 Config.Sapling = { rest = 1.5, growTime = 300 }
 -- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "planer", "washer", "vacuum", "twinvac", "cyclone" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "phone" }
+Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "planer", "washer", "vacuum", "twinvac", "cyclone", "hammer" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "phone" }
 
 -- things you can buy that aren't tools (Godot's SHOP entries in "other")
 Config.Items = {
