@@ -3,9 +3,7 @@
 -- accent, buttons that squash when pressed. Sizes are scale-based (with min/max limits) so phones and monitors both
 -- work, and touch targets are never smaller than 48 px.
 local TweenService = game:GetService("TweenService")
-local SoundService = game:GetService("SoundService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Config = require(ReplicatedStorage.Shared.Config)
+local Sfx = require(script.Parent.Parent.Sfx)
 
 local UiKit = {}
 
@@ -85,23 +83,6 @@ function UiKit.panel(parent: Instance, props: { [string]: any }?): Frame
 	return f
 end
 
-function UiKit.sound(id: string, volume: number?, speed: number?)
-	local s = Instance.new("Sound")
-	s.SoundId = id
-	s.Volume = volume or 0.5
-	s.PlaybackSpeed = speed or 1
-	s.Parent = SoundService
-	s:Play()
-	s.Ended:Once(function()
-		s:Destroy()
-	end)
-	task.delay(5, function()
-		if s.Parent then
-			s:Destroy()
-		end
-	end)
-end
-
 -- a chunky button: colour, outline, shine, squashes when pressed, pops when hovered (not on touch)
 function UiKit.button(parent: Instance, text: string, color: Color3, onClick: () -> (), props: { [string]: any }?): TextButton
 	local b = Instance.new("TextButton")
@@ -138,7 +119,7 @@ function UiKit.button(parent: Instance, text: string, color: Color3, onClick: ()
 	end)
 	b.Activated:Connect(function()
 		UiKit.tween(scale, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
-		UiKit.sound(Config.Sounds.click, 0.4)
+		Sfx.play("click")
 		onClick()
 	end)
 	for k, v in props or {} do

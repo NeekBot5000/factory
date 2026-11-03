@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local InputController = require(script.Parent.InputController)
+local Sfx = require(script.Parent.Parent.Sfx)
 
 local CarryController = {}
 local player = Players.LocalPlayer
@@ -42,8 +43,13 @@ function CarryController.start()
 		end
 		if held() then
 			grab:FireServer(nil)       -- drop
+			Sfx.play("drop", 0.8)
 		else
-			grab:FireServer(aimed())
+			local target = aimed()
+			if target and target.Parent == workspace:FindFirstChild("Loose") then
+				Sfx.play("pickup")
+			end
+			grab:FireServer(target)
 		end
 	end)
 	RunService.RenderStepped:Connect(function()

@@ -11,6 +11,7 @@ local TweenService = game:GetService("TweenService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local InputController = require(script.Parent.InputController)
 local UiKit = require(script.Parent.Parent.Ui.UiKit)
+local Sfx = require(script.Parent.Parent.Sfx)
 
 local ToolController = {}
 local player = Players.LocalPlayer
@@ -114,7 +115,7 @@ local function swing()
 			anim:Destroy()
 		end)
 	end
-	UiKit.sound(Config.Sounds.swing, 0.25, 0.9 + math.random() * 0.2)
+	Sfx.play("whoosh", 1.2, -8)
 	local cam = workspace.CurrentCamera
 	local ray = cam:ViewportPointToRay(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
 	local params = RaycastParams.new()
@@ -130,7 +131,7 @@ local function swing()
 		return
 	end
 	-- feel first, then ask the server
-	UiKit.sound(Config.Sounds.chop, 0.55, 0.8 + math.random() * 0.25)
+	Sfx.play(if id == "hands" then "chop" else "axe")
 	chips(hit.Position, hit.Normal, hit.Instance.Color)      -- (aim rays pass the drawn bark and land on the trunk)
 	shake(tree)
 	kick()
@@ -147,8 +148,17 @@ function ToolController.start()
 	player.CharacterAdded:Connect(function(char)
 		char.ChildAdded:Connect(function(c)
 			if c:IsA("Tool") then
-				UiKit.sound(Config.Sounds.equip, 0.35)
+				Sfx.play("equip")
 			end
+		end)
+		-- bare hands on rough bark: an ouch
+		local hum = char:WaitForChild("Humanoid") :: Humanoid
+		local hp = hum.Health
+		hum.HealthChanged:Connect(function(now)
+			if now < hp - 0.5 then
+				Sfx.play("ouch", 1, -4)
+			end
+			hp = now
 		end)
 	end)
 end

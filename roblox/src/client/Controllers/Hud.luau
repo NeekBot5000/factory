@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 local CollectionService = game:GetService("CollectionService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local UiKit = require(script.Parent.Parent.Ui.UiKit)
+local Sfx = require(script.Parent.Parent.Sfx)
 
 local Hud = {}
 local player = Players.LocalPlayer
@@ -180,7 +181,8 @@ function Hud.start()
 
 	-- a sale: "+$12.40" rising out of the truck, the coin sound
 	remotes:WaitForChild("Sold").OnClientEvent:Connect(function(amount: number, at: Vector3)
-		UiKit.sound(Config.Sounds.coin, 0.6, 1.1)
+		Sfx.play("buy")
+		Sfx.playAt("horn", at + Vector3.new(0, 4, 0), 1, -2)
 		local anchor = Instance.new("Part")
 		anchor.Anchored = true
 		anchor.CanCollide = false
@@ -208,6 +210,7 @@ function Hud.start()
 	local marker, dist = buildMarker()
 	marker.Parent = gui
 	local goalKind = ""
+	local lastStep = 0
 	remotes:WaitForChild("Quest").OnClientEvent:Connect(function(q: any)
 		if not q then
 			pill.Visible = false
@@ -220,6 +223,10 @@ function Hud.start()
 		what.Text = if q.goal > 1 then string.format("%s  %d/%d", q.text, math.floor(q.n), q.goal) else q.text
 		UiKit.tween(fill, 0.4, { Size = UDim2.fromScale(math.clamp(q.n / q.goal, 0, 1), 1) })
 		UiKit.pop(pill)
+		if lastStep ~= 0 and q.i ~= lastStep then
+			Sfx.play("reveal")         -- a goal done
+		end
+		lastStep = q.i
 		goalKind = q.target
 	end)
 	-- keep the marker on the goal (the nearest tree moves as you walk)

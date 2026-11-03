@@ -41,13 +41,9 @@ Config.Quests = {
 }
 
 -- sounds that ship with every Roblox install (swap for uploaded ones later; a missing one just stays silent)
-Config.Sounds = {
-	chop = "rbxasset://sounds/swordslash.wav",
-	swing = "rbxasset://sounds/swordlunge.wav",
-	equip = "rbxasset://sounds/unsheath.wav",
-	coin = "rbxasset://sounds/electronicpingshort.wav",
-	click = "rbxasset://sounds/button.wav",
-}
+-- The uploaded sound sheet (roblox/sounds/timber-sounds.ogg): every sound from the Godot game in one audio file.
+-- Empty until it's uploaded; then a few built-in Roblox sounds stand in.
+Config.SoundSheetId = ""
 
 Config.Species = {
 	oak = { name = "Oak", outer = 1.0, inner = 1.0 },
