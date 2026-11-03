@@ -140,6 +140,21 @@ function Hud.start()
 	local ringStroke = UiKit.stroke(ring, 1.6, C.white, 0.65)
 	ring.Parent = gui
 	local ringPx = 10
+	-- sawing: Godot draws a gold arc round the crosshair as the cut goes through (here, 32 dots round a circle)
+	local sawDots: { Frame } = {}
+	for k = 1, 32 do
+		local a = -math.pi / 2 + (k - 0.5) / 32 * 2 * math.pi
+		local d = Instance.new("Frame")
+		d.AnchorPoint = Vector2.new(0.5, 0.5)
+		d.Position = UDim2.new(0.5, math.cos(a) * 16, 0.5, math.sin(a) * 16)
+		d.Size = UDim2.fromOffset(4, 4)
+		d.BackgroundColor3 = C.gold
+		d.BorderSizePixel = 0
+		d.Visible = false
+		UiKit.corner(d, 2)
+		d.Parent = gui
+		table.insert(sawDots, d)
+	end
 
 	-- money, top right
 	local moneyBox = UiKit.panel(gui, 0.65, 12, 14, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 18) })
@@ -401,6 +416,9 @@ function Hud.start()
 		tut.Visible = tutShown and not open
 		if open then
 			hint.Text = ""
+			for _, d in sawDots do
+				d.Visible = false
+			end
 		else
 			-- the ring: the tool's bark circle as it would look where you're aiming (Godot's aim_ring_px)
 			local def = (Config.Tools :: any)[State.tool] or Config.Tools.hands
@@ -411,6 +429,11 @@ function Hud.start()
 			local want = math.clamp(r / (math.max(dist / M, 0.3) * math.tan(math.rad(cam.FieldOfView / 2))) * vh * 0.5, 5, 400)
 			ringPx += (want - ringPx) * 0.35
 			ring.Size = UDim2.fromOffset(ringPx * 2, ringPx * 2)
+			local sp = State.sawProgress
+			ring.Visible = sp <= 0
+			for k, d in sawDots do
+				d.Visible = sp > 0 and k <= math.ceil(sp * #sawDots)
+			end
 			ringStroke.Color = if onTree then Color3.new(1, 0.85, 0.4) else C.white
 			ringStroke.Transparency = if onTree then 0.2 else 0.65
 			hint.Text = (InteractController.target())

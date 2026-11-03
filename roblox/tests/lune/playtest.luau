@@ -279,6 +279,7 @@ check(item.Parent == nil and alice:GetAttribute("Tool") == "double_bit" and alic
 
 -- ---------------------------------------------------------------- Godot's other axes
 local Tools = A.service("ToolService")
+local Cfg = require("../../src/shared/Config")
 local function freshTree(k)
 	local t = trees[#trees - k]
 	return t, t.WorldPivot.Position, t:GetAttribute("Radius")
@@ -334,7 +335,6 @@ do
 	made = hitWith("spud", t, b + V3(rr, 6, 0))
 	local spudSheet = made[1]
 	local Econ = require("../../src/shared/Economy")
-	local Cfg = require("../../src/shared/Config")
 	local plain = spudSheet and Econ.barkValue(Cfg, t:GetAttribute("Species"), 0, #spudSheet:GetChildren() // 2 + 1)
 	check(spudSheet and math.abs(spudSheet:GetAttribute("Value") - plain * 1.5) < 0.02, string.format("the spud's sheets sell for 50%% more ($%.2f)", spudSheet and spudSheet:GetAttribute("Value") or 0))
 	-- the spiral axe: each hit carries the stripe on up and round
@@ -363,6 +363,84 @@ do
 		sizes[k] = panels
 	end
 	check(sizes[4] > sizes[1], string.format("the combo axe's hits grow as the rhythm goes on (%d -> %d panels)", sizes[1], sizes[4]))
+	Tools.equip(alice, "double_bit")
+end
+
+-- ---------------------------------------------------------------- felling and logs (Godot's saws)
+do
+	local saw = A.remotes.Sawn.OnServerEvent
+	local start = A.remotes.SawStart.OnServerEvent
+	local t, b, rr = freshTree(8)
+	local bands0 = t:GetAttribute("Bands")
+	A.stand(alice, b + V3(rr + 3, 5, 0))
+	Tools.grant(alice, "saw")
+	task.wait(0.1)
+	start:Fire(alice, t.Trunk)
+	task.wait(0.3)
+	saw:Fire(alice, t.Trunk, b + V3(rr, 2, 0))
+	task.wait(0.1)
+	check(not t:GetAttribute("Felled"), "a cut that's too quick doesn't fell anything (the server times the saw)")
+	local need = A.service("LogService").sawTime(t, Cfg.Tools.saw)
+	start:Fire(alice, t.Trunk)
+	task.wait(need * 0.85)
+	saw:Fire(alice, t.Trunk, b + V3(rr, 2, 0))
+	task.wait(0.1)
+	local logs = ws:FindFirstChild("Logs")
+	local log = logs and logs:GetChildren()[1]
+	check(t:GetAttribute("Felled") and log ~= nil, string.format("hold the bow saw on it for %.1f s: the tree is felled", need))
+	local cutJ = t:GetAttribute("Bands")
+	check(cutJ == math.floor(2 / 0.54) and log and log:GetAttribute("Bands") == bands0 - cutJ, "leaving a stump; the rest of the trunk is the log")
+	check(count("Fx", nil, "timber") >= 1, "with Godot's 'timber' crash")
+	if log then
+		local L = log:GetAttribute("Bands") * 0.18
+		local v = A.service("LogService").value(log)
+		check(math.abs(v - 60 * L * (log:GetAttribute("Radius") / 3 / 0.4) ^ 2 * 0.15) < 0.05, string.format("a log in all its bark is worth 15%% of clean timber ($%.2f)", v))
+		check(log:HasTag("Tree") and log:GetAttribute("Bark") ~= nil, "and it keeps its bark, so axes can still peel it")
+		-- the buck saw: the whole log into rounds
+		Tools.grant(alice, "bucksaw")
+		task.wait(0.1)
+		local at = log:GetPivot().Position
+		A.stand(alice, at + V3(0, 4, 3))
+		start:Fire(alice, log.Trunk)
+		task.wait(A.service("LogService").sawTime(log, Cfg.Tools.bucksaw) * 0.85)
+		saw:Fire(alice, log.Trunk, at)
+		task.wait(0.1)
+		local rounds = logs:GetChildren()
+		local short = true
+		for _, r in rounds do
+			short = short and r:GetAttribute("Bands") <= 9
+		end
+		check(#rounds >= 3 and short, "the buck saw cuts the whole log into carryable rounds (" .. #rounds .. ")")
+		-- carry a round into the truck and ship it: the shipper's paid
+		local round = rounds[1]
+		local trunk = round.Trunk
+		A.stand(alice, trunk.CFrame.Position + V3(0, 3, 3))
+		grab:Fire(alice, trunk)
+		task.wait(0.05)
+		check(Carry.holding[alice] == trunk, "E picks up a round (3 m or shorter)")
+		grab:Fire(alice, nil)
+		task.wait(0.05)
+		local worthIt = A.service("LogService").value(round)
+		trunk.CFrame = ws.Truck.Bed.CFrame
+		local m0 = data.money
+		A.stand(alice, ws.Truck.Bed.CFrame.Position + V3(6, 3, 0))
+		A.remotes.Use.OnServerEvent:Fire(alice, ws.Truck.Cab)
+		local waited = 0
+		task.wait(0.2)
+		while ws.Truck:GetAttribute("State") ~= "parked" and waited < 60 do
+			task.wait(0.25)
+			waited += 0.25
+		end
+		check(math.abs(data.money - (m0 + worthIt)) < 0.02, string.format("the truck takes logs too: +$%.2f at the mill", worthIt))
+	end
+	-- the buck saw can't fell a standing tree; the giants need a chainsaw
+	local t2, b2, r2 = freshTree(9)
+	A.stand(alice, b2 + V3(r2 + 3, 5, 0))
+	start:Fire(alice, t2.Trunk)
+	task.wait(4)
+	saw:Fire(alice, t2.Trunk, b2 + V3(r2, 2, 0))
+	task.wait(0.1)
+	check(not t2:GetAttribute("Felled"), "the buck saw can't fell a standing tree")
 	Tools.equip(alice, "double_bit")
 end
 

@@ -238,6 +238,9 @@ local function startSwing()
 	if State.swing >= 0 or State.equipT < 1 or State.uiOpen or State.fainted or not hum or hum.Health <= 0 then
 		return
 	end
+	if def().hold then
+		return        -- saws run while the button is held (see the Heartbeat below)
+	end
 	-- (holding something: the click does nothing, like Godot's)
 	local loose = workspace:FindFirstChild("Loose")
 	if loose then
@@ -276,9 +279,78 @@ function ToolController.start()
 			startSwing()
 		end
 	end)
+	local sawTarget: Model? = nil
+	local sawFx = 0
+	local told: { [string]: number } = {}
+	local function tell(key: string, text: string)
+		local now = os.clock()
+		if now - (told[key] or -100) > 6 then
+			told[key] = now
+			State.toast(text, Color3.fromHex("ffd27a"))
+		end
+	end
+	local chain: Sound? = nil
 	RunService.Heartbeat:Connect(function(dt)
 		if pressing and def().auto and State.swing < 0 then
 			startSwing()
+		end
+		-- saws: hold the button against a trunk until the ring fills (Godot's _saw_step)
+		local d = def()
+		State.sawing = false
+		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		local on = pressing and d.hold and not State.uiOpen and not State.fainted and hum ~= nil and hum.Health > 0
+		local hit = if on then ToolController.aim(d.reach * M) else nil
+		local m = hit and treeOf(hit.Instance)
+		local canFell = d.fell ~= false
+		local blocked = m and not m:GetAttribute("Log") and ((m:GetAttribute("Bands") :: number) < 4 or not canFell)
+		if m and not m:GetAttribute("Log") and m:GetAttribute("Legendary") then
+			tell("legend", "Only the two-man crosscut gets through the Legendary Tree")
+			blocked = true
+		elseif m and not m:GetAttribute("Log") and m:GetAttribute("Giant") and State.tool ~= "chainsaw" then
+			tell("giant", "Too thick for this saw - it needs a two-man crosscut, or a chainsaw")
+			blocked = true
+		end
+		if not hit or not m or blocked then
+			State.sawProgress = math.max(0, State.sawProgress - dt * 2)
+			if State.sawProgress <= 0 then
+				sawTarget = nil
+			end
+		else
+			State.sawing = true
+			if m ~= sawTarget then
+				sawTarget = m
+				State.sawProgress = 0
+				remotes.SawStart:FireServer(hit.Instance)
+			end
+			local need = if m:GetAttribute("Log") then Config.Saw.logTime
+				else Config.Saw.treeTime * ((m:GetAttribute("Radius") :: number or 1.14) / M / 0.38)
+			State.sawProgress += dt / need * (d.speed or 1)
+			sawFx -= dt
+			if sawFx <= 0 then
+				local isChain = State.tool == "chainsaw"
+				sawFx = if isChain then 0.05 else 0.09
+				local sp = (Config.Species :: any)[m:GetAttribute("Species") or "oak"] or Config.Species.oak
+				burst(hit.Position, hit.Normal - Vector3.new(0, 0.3, 0), Color3.fromHex(sp.wood):Lerp(Color3.new(1, 1, 1), 0.1), if isChain then 10 else 6, if isChain then 7.8 else 4.2)
+				if not isChain then
+					Sfx.play("saw", 0.9 + math.random() * 0.2, -6)
+				end
+			end
+			if State.sawProgress >= 1 then
+				State.sawProgress = 0
+				sawTarget = nil
+				remotes.Sawn:FireServer(hit.Instance, hit.Position)
+				burst(hit.Position, Vector3.yAxis, Color3.fromHex(((Config.Species :: any)[m:GetAttribute("Species") or "oak"] or Config.Species.oak).wood), 24, 6)
+			end
+		end
+		-- the chainsaw idles while it's in your hand and revs while it cuts
+		if State.tool == "chainsaw" and not chain then
+			chain = Sfx.loop("chainsaw", -14)
+		elseif State.tool ~= "chainsaw" and chain then
+			chain:Destroy()
+			chain = nil
+		end
+		if chain then
+			chain.PlaybackSpeed = if State.sawing then 1.35 else 1
 		end
 		State.comboT += dt
 		if State.comboT > 1.25 and State.combo > 0 then

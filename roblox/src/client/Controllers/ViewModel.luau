@@ -39,6 +39,12 @@ local POSES = {
 		{ Vector3.new(0.06, 0.24, 0.1), Vector3.new(55, -5, 30) },
 		{ Vector3.new(-0.2, -0.02, -0.26), Vector3.new(-20, 25, -15) },
 	},
+	-- saws: push-pull strokes against the trunk
+	saw = {
+		{ Vector3.new(-0.06, -0.02, 0), Vector3.new(-4, 6, 0) },
+		{ Vector3.new(-0.08, -0.04, 0.05), Vector3.new(-6, 3, 0) },
+		{ Vector3.new(-0.1, -0.06, -0.12), Vector3.new(-8, 0, 0) },
+	},
 	-- draw the spud back, then push it in under the bark
 	thrust = {
 		{ Vector3.new(-0.02, 0.0, 0.08), Vector3.new(4, 14, 0) },
@@ -225,6 +231,19 @@ local function target(def: any): (CFrame, number, number)
 		local hitP, hitR = base + P[3][1], P[3][2]
 		local p, r = restP, restR
 		local t = State.swing
+		if anim == "saw" then
+			-- Godot: back and forth while it cuts (the chainsaw just pushes in, buzzing)
+			if State.sawing then
+				if State.tool == "chainsaw" then
+					p = hitP + Vector3.new(math.random() * 2 - 1, math.random() * 2 - 1, 0) * 0.006
+					r = hitR
+				else
+					local k = math.sin(os.clock() * 13) * 0.5 + 0.5
+					p, r = upP:Lerp(hitP, k), upR:Lerp(hitR, k)
+				end
+			end
+			t = -1
+		end
 		if t >= 0 then
 			local windEnd = impact * 0.7
 			if t < windEnd then
@@ -322,7 +341,7 @@ function ViewModel.start()
 		local world = camera.CFrame * armCf * jolt
 		model:PivotTo(world)
 		if toolModel then
-			local inArm = if def.anim == "thrust" then CFrame.new(0, -0.02 * M, 0)
+			local inArm = if def.anim == "thrust" or def.anim == "saw" then CFrame.new(0, -0.02 * M, 0)
 				elseif def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0)
 				else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)
 			toolModel:PivotTo(world * TOOL_ROOT * inArm)

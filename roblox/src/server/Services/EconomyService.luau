@@ -37,14 +37,39 @@ local function inBed(t: Model): { BasePart }
 	local bed = t:FindFirstChild("Bed") :: BasePart
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
-	params.FilterDescendantsInstances = { workspace:FindFirstChild("Loose") :: Instance }
+	local roots: { Instance } = {}
+	for _, name in { "Loose", "Logs" } do
+		local f = workspace:FindFirstChild(name)
+		if f then
+			table.insert(roots, f)
+		end
+	end
+	params.FilterDescendantsInstances = roots
 	local out = {}
+	local seen = {}
 	for _, part in workspace:GetPartBoundsInBox(bed.CFrame * CFrame.new(0, 2.5, 0), bed.Size + Vector3.new(0, 5, 0), params) do
+		if seen[part] then
+			continue
+		end
+		seen[part] = true
 		if typeof(part:GetAttribute("Value")) == "number" and typeof(part:GetAttribute("Owner")) == "number" then
+			table.insert(out, part)
+		elseif part.Name == "Trunk" and part.Parent and part.Parent:GetAttribute("Kind") == "log" and not seen[part.Parent] then
+			-- a log (its worth depends on how much bark is still on it)
+			seen[part.Parent] = true
 			table.insert(out, part)
 		end
 	end
 	return out
+end
+
+-- what one thing in the bed is worth
+local function worth(p: BasePart): number
+	if p.Name == "Trunk" and p.Parent and p.Parent:GetAttribute("Kind") == "log" then
+		local LogService = require(script.Parent.LogService) :: any
+		return LogService.value(p.Parent)
+	end
+	return p:GetAttribute("Value") :: number
 end
 
 function EconomyService.bedValue(player: Player?): number
@@ -54,8 +79,9 @@ function EconomyService.bedValue(player: Player?): number
 	end
 	local v = 0
 	for _, p in inBed(t) do
-		if not player or p:GetAttribute("Owner") == player.UserId then
-			v += p:GetAttribute("Value") :: number
+		local owner = p:GetAttribute("Owner")
+		if not player or owner == player.UserId or owner == nil then
+			v += worth(p)
 		end
 	end
 	return v
@@ -119,13 +145,27 @@ function EconomyService.ship(player: Player): boolean
 	end
 	local owed: { [number]: number } = {}
 	for _, p in cargo do
-		local owner = p:GetAttribute("Owner") :: number
-		owed[owner] = (owed[owner] or 0) + (p:GetAttribute("Value") :: number)
+		-- (bark is paid to whoever peeled it; a log to whoever ships it)
+		local owner = p:GetAttribute("Owner") :: number? or player.UserId
+		owed[owner] = (owed[owner] or 0) + worth(p)
 		EconomyService.release(p)
-		p.Anchored = true
-		p.CanCollide = false
-		p:SetAttribute("Value", nil)        -- it's sold: nobody can sell it twice
-		p.Parent = t
+		if p.Name == "Trunk" and p.Parent and p.Parent:GetAttribute("Kind") == "log" then
+			local log = p.Parent :: Model
+			for _, d in log:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = true
+					d.CanCollide = false
+				end
+			end
+			log:SetAttribute("Kind", "sold")
+			log:RemoveTag("Tree")
+			log.Parent = t
+		else
+			p.Anchored = true
+			p.CanCollide = false
+			p:SetAttribute("Value", nil)        -- it's sold: nobody can sell it twice
+			p.Parent = t
+		end
 	end
 	local park = t:GetPivot()
 	t:SetAttribute("State", "leaving")
@@ -135,7 +175,11 @@ function EconomyService.ship(player: Player): boolean
 		t:SetAttribute("State", "away")
 		task.wait(Config.Truck.awaySeconds)
 		for _, p in cargo do
-			p:Destroy()
+			if p.Parent and p.Parent:GetAttribute("Kind") == "sold" then
+				p.Parent:Destroy()       -- the whole log
+			else
+				p:Destroy()
+			end
 		end
 		for userId, amount in owed do
 			local who = Players:GetPlayerByUserId(userId)

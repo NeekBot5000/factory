@@ -128,15 +128,19 @@ local function install()
 		if self:IsA("BasePart") then
 			return self.CFrame
 		end
+		-- (like Roblox: a model with a PrimaryPart pivots with it, offset by its PivotOffset)
+		local pp = self.PrimaryPart
+		if pp then
+			local ok, off = pcall(function()
+				return pp.PivotOffset
+			end)
+			return pp.CFrame * (if ok and off then off else roblox.CFrame.new())
+		end
 		local ok, wp = pcall(function()
 			return self.WorldPivot
 		end)
 		if ok and wp then
 			return wp
-		end
-		local pp = self.PrimaryPart
-		if pp then
-			return pp.CFrame
 		end
 		return roblox.CFrame.new()
 	end
@@ -464,6 +468,7 @@ function ClientHarness.start(server: any, player: any)
 			Color3 = roblox.Color3, Enum = roblox.Enum, UDim = roblox.UDim, UDim2 = roblox.UDim2, Font = roblox.Font,
 			NumberRange = roblox.NumberRange, NumberSequence = roblox.NumberSequence, NumberSequenceKeypoint = roblox.NumberSequenceKeypoint,
 			ColorSequence = roblox.ColorSequence, ColorSequenceKeypoint = roblox.ColorSequenceKeypoint, Rect = roblox.Rect,
+			PhysicalProperties = roblox.PhysicalProperties,
 			TweenInfo = { new = function(...) return { ... } end },
 			RaycastParams = { new = function() return { FilterDescendantsInstances = {}, FilterType = nil } end },
 			OverlapParams = { new = function() return { FilterDescendantsInstances = {}, FilterType = nil } end },

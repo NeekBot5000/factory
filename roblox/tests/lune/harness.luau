@@ -57,7 +57,7 @@ function Harness.boot(placePath: string, jobId: string)
 
 	-- remotes: OnServerEvent handlers we can call as a client would, and a log of what the server sent to clients
 	local remotes = {}
-	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings" } do
+	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn" } do
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })
@@ -183,11 +183,9 @@ function Harness.boot(placePath: string, jobId: string)
 			return modules[key]
 		end
 		local src = inst.Source
-		src = string.gsub(src, ":GetPivot%(%)", ".WorldPivot")
 		src = string.gsub(src, "workspace:GetPartBoundsInBox%(", "__bounds(")
 		src = string.gsub(src, "player:Kick%(", "__kick(player, ")
 		src = string.gsub(src, "(%w+):TakeDamage%(", "__damage(%1, ")
-		src = string.gsub(src, "([%w_%.]+):PivotTo%(", "__pivotTo(%1, ")
 		src = string.gsub(src, "player%.CharacterAdded:Connect%(", "__noop(")
 		src = string.gsub(src, "handle%.AssemblyLinearVelocity = ", "local _ = ")
 		-- Lune keeps Position and CFrame apart (setting one doesn't move the other), so read parts' CFrame
@@ -210,6 +208,7 @@ function Harness.boot(placePath: string, jobId: string)
 		require = loadModule,
 		Instance = roblox.Instance, Vector3 = roblox.Vector3, CFrame = roblox.CFrame, Color3 = roblox.Color3,
 		Enum = roblox.Enum, UDim2 = roblox.UDim2, Vector2 = roblox.Vector2, NumberRange = roblox.NumberRange,
+		PhysicalProperties = roblox.PhysicalProperties, Region3 = roblox.Region3,
 		OverlapParams = { new = function() return { FilterDescendantsInstances = {}, FilterType = nil } end },
 		RaycastParams = { new = function() return {} end },
 		Random = {

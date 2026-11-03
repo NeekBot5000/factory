@@ -232,6 +232,38 @@ function BarkGrid.stripPanels(g: Grid, list: { { number } }): { Strip }
 	return out
 end
 
+-- Bands j0 .. j1-1 of a grid as a grid of their own (a log sawn off a tree keeps its bark, Godot's setup_section).
+function BarkGrid.slice(g: Grid, j0: number, j1: number): Grid
+	local out = BarkGrid.new(g.sectors, j1 - j0)
+	for layer = 0, 1 do
+		for j = j0, j1 - 1 do
+			for i = 0, g.sectors - 1 do
+				if not BarkGrid.has(g, layer, i, j) then
+					clear(out, layer, i, j - j0)
+				end
+			end
+		end
+	end
+	return out
+end
+
+-- How much of the bark is still on (0..1): both layers, every panel (Godot's Log.value)
+function BarkGrid.fraction(g: Grid): number
+	local left = 0
+	local n = buffer.len(g.data)
+	for k = 0, n - 1 do
+		left += buffer.readu8(g.data, k)
+	end
+	return left / math.max(n, 1)
+end
+
+-- What the mill pays for a log (Godot's Log.value): clean timber is worth a lot, but bark left on drags it down -
+-- a log still in all its bark fetches only 15% of what the same log stripped bare would. Metres.
+function BarkGrid.logValue(g: Grid, lengthM: number, radiusM: number): number
+	local clean = 60 * lengthM * (radiusM / 0.4) ^ 2
+	return clean * (1 - 0.85 * BarkGrid.fraction(g))
+end
+
 -- Cork: grows back up to `n` outer panels over still-living inner bark. Returns how many grew.
 function BarkGrid.regrow(g: Grid, n: number): number
 	local grew = 0

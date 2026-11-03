@@ -22,10 +22,19 @@ local queue: { Model } = {}
 -- the colour of one panel (Godot's _panel_color, shared with the server's bark sheets)
 TreeVisuals.panelColor = BarkLook.panelColor
 
+local riding: BasePart? = nil       -- a log's trunk: its panels are welded on and ride with it
+
 local function panel(folder: Instance, base: CFrame, sectors: number, i: number, j: number, rOut: number, thick: number, color: Color3)
 	local cf, size = BarkLook.panel(base, sectors, i, j, rOut, thick)
 	local p = Instance.new("Part")
-	p.Anchored = true
+	p.Anchored = riding == nil
+	if riding then
+		p.Massless = true
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = riding
+		w.Part1 = p
+		w.Parent = p
+	end
 	p.CanCollide = false
 	p.CanQuery = false
 	p.CanTouch = false
@@ -59,6 +68,8 @@ function TreeVisuals.build(tree: Model)
 	local base = tree:GetPivot()
 	local folder = Instance.new("Folder")
 	folder.Name = "BarkPanels"
+	local j0 = tree:GetAttribute("J0") :: number? or 0
+	riding = if tree:GetAttribute("Log") then tree:FindFirstChild("Trunk") :: BasePart? else nil
 	-- the wood: one tall panel per side (only seen where both layers are gone)
 	local wood = Color3.fromHex(sp.wood)
 	for i = 0, sectors - 1 do
@@ -77,14 +88,22 @@ function TreeVisuals.build(tree: Model)
 		local dir = Vector3.new(math.cos(a), 0, math.sin(a))
 		local center = base.Position + base:VectorToWorldSpace(dir * (rCore * 0.985 * math.cos(half) - rCore * 0.2) + Vector3.new(0, h / 2, 0))
 		p.CFrame = CFrame.lookAt(center, center + base:VectorToWorldSpace(dir))
+		if riding then
+			p.Anchored = false
+			p.Massless = true
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = riding
+			w.Part1 = p
+			w.Parent = p
+		end
 		p.Parent = folder
 	end
 	for j = 0, bands - 1 do
 		for i = 0, sectors - 1 do
 			if BarkGrid.has(g, BarkGrid.OUTER, i, j) then
-				panel(folder, base, sectors, i, j, R, T.outerT * M, BarkLook.panelColor(species, BarkGrid.OUTER, i, j, seed))
+				panel(folder, base, sectors, i, j, R, T.outerT * M, BarkLook.panelColor(species, BarkGrid.OUTER, i, j + j0, seed))
 			elseif BarkGrid.has(g, BarkGrid.INNER, i, j) then
-				panel(folder, base, sectors, i, j, rMid, T.innerT * M, BarkLook.panelColor(species, BarkGrid.INNER, i, j, seed))
+				panel(folder, base, sectors, i, j, rMid, T.innerT * M, BarkLook.panelColor(species, BarkGrid.INNER, i, j + j0, seed))
 			end
 		end
 	end

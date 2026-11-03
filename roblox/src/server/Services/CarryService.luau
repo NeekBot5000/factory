@@ -53,7 +53,14 @@ local function grab(player: Player, target: unknown)
 	if loose and p.Parent and p.Parent:IsA("BasePart") and p.Parent.Parent == loose then
 		p = p.Parent :: BasePart
 	end
-	if not loose or not p:IsDescendantOf(loose) or p.Anchored or p:GetAttribute("HeldBy") or p.Parent ~= loose then
+	-- a log you can lift (3 m or shorter, without its crown: Godot's Log.CARRY_MAX)
+	local log = p.Parent
+	local liftable = log and log:GetAttribute("Kind") == "log" and p.Name == "Trunk" and not log:GetAttribute("HasCrown")
+		and (log:GetAttribute("Bands") :: number) * Config.Tree.bandH <= Config.Saw.carryMax
+	local logs = workspace:FindFirstChild("Logs")
+	local inLoose = loose ~= nil and p:IsDescendantOf(loose) and p.Parent == loose
+	local inLogs = logs ~= nil and p:IsDescendantOf(logs) and liftable
+	if not (inLoose or inLogs) or p.Anchored or p:GetAttribute("HeldBy") then
 		return
 	end
 	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?

@@ -106,4 +106,17 @@ check(shopOk, "every tool in the shop has a model, a description, a price and a 
 check(Config.Tools.double_bit.impacts and #Config.Tools.double_bit.impacts == 2, "the double-bit hits twice a swing")
 check(#Config.Tutorial >= 4 and Config.Tutorial[1].check == "hatchet", "Getting started begins with the hatchet in the chopping block")
 
+-- logs: a slice keeps its bark; a bare log is worth 60 a metre at Godot's average radius, a barked one 15% of that
+do
+	local g = BarkGrid.new(16, 30)
+	BarkGrid.stripCircle(g, 3, 25, 1)
+	local log = BarkGrid.slice(g, 20, 30)
+	check(log.bands == 10 and not BarkGrid.has(log, 0, 3, 5) and BarkGrid.has(log, 0, 3, 0), "a sawn log keeps the bark it had, band for band")
+	local full = BarkGrid.new(16, 10)
+	check(math.abs(BarkGrid.logValue(full, 2, 0.4) - 18) < 1e-6, "a 2 m log in all its bark is worth $18 (15% of $120)")
+	local bare = BarkGrid.new(16, 10)
+	buffer.fill(bare.data, 0, 0)
+	check(math.abs(BarkGrid.logValue(bare, 2, 0.4) - 120) < 1e-6, "stripped bare, $120")
+end
+
 print(string.format("\nROBLOX LOGIC RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))

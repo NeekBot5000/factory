@@ -267,8 +267,10 @@ function WorldService.start()
 	forest.Parent = workspace
 	local haveMeshes = WorldService.meshesExpected()
 	local rng = Random.new(42)
-	for _, t in W.trees do
+	for k, t in W.trees do
 		makeTree(forest, t.kind, v3(t.at), t.radius, t.bands, rng, t.yaw, not haveMeshes)
+		local made = forest:GetChildren()
+		made[#made]:SetAttribute("Index", k - 1)        -- (the exporter counts from 0)
 		if t.giant then
 			local made = forest:GetChildren()
 			local tree = made[#made]

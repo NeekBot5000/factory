@@ -51,10 +51,23 @@ Config.Tools = {
 	robo = { name = "Robo-Axe X9", price = 6500, radius = 1, stripRadius = 0.0, cooldown = 0.16, impact = 0.5, hurt = 0, anim = "chop", reach = 2.4, through = true, grid = 3, auto = true, tag = "Automatic",
 		desc = "Servo-driven and relentless. Hold the trigger: it chops on its own several times a second, punching a 3x3 patch through BOTH layers of bark every hit.",
 		look = { handle = 3.0, head = { 0.4, 0.9, 1.1 }, headColor = { 230, 200, 60 }, handleColor = { 50, 52, 58 } } },
+	-- saws: hold the button against a trunk (Godot's _saw_step)
+	saw = { name = "Bow Saw", price = 450, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.2, hold = true, kind = "saw", speed = 1, tag = "Long reach",
+		desc = "A steel bow saw. Hold it against a trunk to fell the whole tree, then saw the log into pieces. Logs sell by the metre.",
+		look = { handle = 1.6, head = { 0.1, 0.4, 2.2 }, headColor = { 200, 60, 50 }, handleColor = { 80, 80, 86 } } },
+	bucksaw = { name = "Buck Saw", price = 280, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.4, hold = true, kind = "saw", speed = 0.8, fell = false, buck = true, tag = "Long",
+		desc = "A long framed saw for lying logs only - it can't fell a tree. One cut splits the whole log into neat carryable rounds.",
+		look = { handle = 1.6, head = { 0.1, 0.6, 2.6 }, headColor = { 150, 110, 60 }, handleColor = { 120, 90, 60 } } },
+	chainsaw = { name = "Chainsaw", price = 1800, radius = 0, stripRadius = 0, cooldown = 0.3, impact = 0, hurt = 0, anim = "saw", reach = 2.0, hold = true, kind = "saw", speed = 3.2, tag = "Loud",
+		desc = "A two-stroke chainsaw. Fells trees and cuts logs about three times faster than a bow saw. Ear defenders not included.",
+		look = { handle = 1.2, head = { 0.3, 0.3, 2.0 }, headColor = { 230, 120, 40 }, handleColor = { 40, 42, 46 } } },
 }
+-- Godot's saw times (Player.gd): seconds of sawing to fell an average tree (radius 0.38 m; bigger takes longer),
+-- and to cut through a log; logs up to 3 m can be carried; the buck saw cuts rounds of 7 bands
+Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7 }
 -- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo" }
+Config.ToolOrder = { "hands", "hatchet", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "saw", "bucksaw", "chainsaw" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "saw", "bucksaw", "chainsaw" }
 Config.ComboMax = 4             -- the combo axe grows 0.05 m a hit in a row, up to 4 (and resets after 1.25 s)
 
 -- the player (Godot's Player.gd, in metres; x3 for studs)

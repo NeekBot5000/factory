@@ -45,6 +45,13 @@ local function gridOf(tree: Model): BarkGrid.Grid
 end
 
 -- which panel a world point is on: the angle round the trunk and the height up it
+-- other services (felling, logs) read and replace a tree's bark here
+TreeService.gridOf = gridOf
+function TreeService.setGrid(tree: Model, g: BarkGrid.Grid)
+	grids[tree] = g
+	tree:SetAttribute("Bark", BarkGrid.encode(g))
+end
+
 local function panelAt(tree: Model, g: BarkGrid.Grid, point: Vector3): (number, number)
 	local base = tree:GetPivot()
 	local loc = base:PointToObjectSpace(point)
@@ -75,7 +82,7 @@ local function spawnSheet(player: Player, tree: Model, strip: any, mult: number)
 		local face = Instance.new("Part")
 		face.Size = Vector3.new(size.X, size.Y, size.Z * 0.6)
 		face.CFrame = cf * CFrame.new(0, 0, -size.Z * 0.2)
-		face.Color = BarkLook.panelColor(species, strip.layer, ij[1], ij[2], seed)
+		face.Color = BarkLook.panelColor(species, strip.layer, ij[1], ij[2] + (tree:GetAttribute("J0") :: number? or 0), seed)
 		face.Material = Enum.Material.SmoothPlastic
 		face.TopSurface = Enum.SurfaceType.Smooth
 		face.BottomSurface = Enum.SurfaceType.Smooth

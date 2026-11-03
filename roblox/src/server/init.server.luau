@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local remotes = Instance.new("Folder")
 remotes.Name = "Remotes"
-for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings" } do
+for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn" } do
 	local e = Instance.new("RemoteEvent")
 	e.Name = name
 	e.Parent = remotes
@@ -12,7 +12,7 @@ end
 remotes.Parent = ReplicatedStorage
 
 local services = script:WaitForChild("Services")
-local order = { "DataService", "ToolService", "TutorialService", "EconomyService", "InteractService", "TreeService", "CarryService", "MachineService", "OilService", "WorldService", "DeliveryService", "WorldMeshes" }
+local order = { "DataService", "ToolService", "TutorialService", "EconomyService", "InteractService", "TreeService", "LogService", "CarryService", "MachineService", "OilService", "WorldService", "DeliveryService", "WorldMeshes" }
 for _, name in order do
 	local svc = require(services:WaitForChild(name)) :: any
 	svc.start()

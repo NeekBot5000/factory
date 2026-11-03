@@ -123,6 +123,29 @@ local function world()
 	end
 end
 
+-- every tree's crown, on its own ("crown_17"): it falls with the log when the tree is felled
+local function crowns()
+	local m = WorldMeshes.load("GodotCrowns")
+	if not m then
+		return
+	end
+	m.Name = "GodotCrowns"
+	-- (a tree felled before its crown arrived: that crown goes)
+	local felled = {}
+	local forest = workspace:FindFirstChild("Forest")
+	for _, t in if forest then forest:GetChildren() else {} do
+		if t:GetAttribute("Felled") then
+			felled["crown_" .. tostring(t:GetAttribute("Index"))] = true
+		end
+	end
+	for _, p in m:GetChildren() do
+		if felled[p:GetAttribute("GodotName")] then
+			p:Destroy()
+		end
+	end
+	m.Parent = workspace
+end
+
 -- the trucks: the log truck's mesh rides on the truck (it moves with it)
 local function trucks()
 	local m = WorldMeshes.load("GodotTrucks")
@@ -250,7 +273,7 @@ end
 
 function WorldMeshes.start()
 	task.spawn(function()
-		for _, f in { sky, world, trucks, tools } do
+		for _, f in { sky, world, crowns, trucks, tools } do
 			local ok, err = pcall(f)
 			if not ok then
 				warn("[Timber] Godot meshes: " .. tostring(err))

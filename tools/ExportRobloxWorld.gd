@@ -2,6 +2,8 @@ extends Node
 ## Exports the Godot game's world for the Roblox version, so both look the same:
 ##   roblox/models/godot/world.glb   every static mesh (terrain, grass, cabin, rocks, bushes, hills, clouds, the
 ##                                   chopping block, each tree's crown and roots), in studs (1 m = 3 studs)
+##   roblox/models/godot/crowns.glb  every tree's crown on its own, named after the tree ("crown_17"): it falls with
+##                                   the log when the tree is felled
 ##   roblox/models/godot/trucks.glb  the log truck and the delivery van, each around its own origin
 ##   roblox/models/godot/tools.glb   the tools, each with the hand's grip at its origin
 ##   roblox/src/shared/GodotWorld.luau  where everything is: trees (kind, size, seed), the spawn, the truck's spot and
@@ -39,6 +41,8 @@ func _ready() -> void:
 		_walk(child, main, tree_index)
 	_marker("world")
 	var nw := _write("world", out + "/world.glb")
+	_marker("crowns")
+	var nc := _write("crowns", out + "/crowns.glb")
 
 	# ---------------------------------------------------------------- trucks, around their own origins
 	groups.clear()
@@ -55,7 +59,7 @@ func _ready() -> void:
 	groups.clear()
 	var holder := Node3D.new()
 	add_child(holder)
-	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo"]:
+	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "saw", "bucksaw", "chainsaw"]:
 		var root := Node3D.new()
 		holder.add_child(root)
 		Tools.build_model(id, root)
@@ -67,7 +71,7 @@ func _ready() -> void:
 
 	# ---------------------------------------------------------------- where everything is
 	_write_luau(main)
-	print("EXPORT world %d, trucks %d, tools %d mesh groups" % [nw, nt, nl])
+	print("EXPORT world %d, crowns %d, trucks %d, tools %d mesh groups" % [nw, nc, nt, nl])
 	get_tree().quit()
 
 
@@ -82,10 +86,12 @@ func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
 		return
 	if n is ForestTree:
 		var t := n as ForestTree
+		var idx: int = tree_index.get(t, -1)
 		for c in t.get_children():
 			if c.name == "Crown":
+				# each tree's crown on its own (it falls with the log when the tree is felled)
 				for mi in (c as Node3D).find_children("*", "MeshInstance3D", true, false):
-					_add_mesh("world", "crown_" + _chunk_of(t.global_position), mi, (mi as MeshInstance3D).global_transform)
+					_add_mesh("crowns", "crown_%d" % idx, mi, (mi as MeshInstance3D).global_transform)
 		# the root flare (the trunk and its bark are drawn by the Roblox client, panel by panel)
 		for c in t.get_children():
 			if c is MeshInstance3D and c != t.get("_core_mi") and not (t.get("_layer_mi") as Array).has(c):
@@ -194,10 +200,10 @@ func _material_color(mi: MeshInstance3D, surface: int) -> Array:
 	return [col, vcol]
 
 
-func _q(c: Color) -> String:
-	var r := roundf(clampf(c.r, 0, 1) * QUANT) / QUANT
-	var g := roundf(clampf(c.g, 0, 1) * QUANT) / QUANT
-	var b := roundf(clampf(c.b, 0, 1) * QUANT) / QUANT
+func _q(c: Color, steps: float = QUANT) -> String:
+	var r := roundf(clampf(c.r, 0, 1) * steps) / steps
+	var g := roundf(clampf(c.g, 0, 1) * steps) / steps
+	var b := roundf(clampf(c.b, 0, 1) * steps) / steps
 	return Color(r, g, b).to_html(false)
 
 
@@ -222,7 +228,8 @@ func _add_tris(glb: String, name: String, mesh: Mesh, surface: int, xf: Transfor
 		if vcol and cols != null and (cols as PackedColorArray).size() > ids[0]:
 			var vc: Color = (cols as PackedColorArray)[ids[0]]
 			c = Color(col.r * vc.r, col.g * vc.g, col.b * vc.b) * tint
-		var g := _group(glb, name, _q(c))
+		# (crowns: coarser colour steps, one or two greens a tree, so ~240 crowns stay a few hundred meshes)
+		var g := _group(glb, name, _q(c, 5.0 if name.begins_with("crown_") else QUANT))
 		for id in ids:
 			(g.verts as Array).append(xf * v[id] * S)
 			var nn := Vector3.UP

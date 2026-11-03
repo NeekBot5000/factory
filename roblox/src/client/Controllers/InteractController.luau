@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
+local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
 local InputController = require(script.Parent.InputController)
 local ShopController = require(script.Parent.ShopController)
 local State = require(script.Parent.Parent.State)
@@ -29,7 +30,26 @@ local function held(): BasePart?
 			end
 		end
 	end
+	-- (or a log)
+	local logs = workspace:FindFirstChild("Logs")
+	for _, m in if logs then logs:GetChildren() else {} do
+		local t = m:FindFirstChild("Trunk")
+		if t and t:GetAttribute("HeldBy") == player.UserId then
+			return t :: BasePart
+		end
+	end
 	return nil
+end
+
+-- what a log would fetch at the mill (Godot's Log.value), from the bark still on it
+function InteractController.logValue(log: Instance): number
+	local bands = log:GetAttribute("Bands") :: number or 1
+	local s = log:GetAttribute("Bark")
+	local g = if typeof(s) == "string" then BarkGrid.decode(log:GetAttribute("Sectors") :: number or 16, bands, s) else nil
+	if not g then
+		return 0
+	end
+	return BarkGrid.logValue(g, bands * Config.Tree.bandH, (log:GetAttribute("Radius") :: number or 1.2) / M)
 end
 InteractController.held = held
 
@@ -165,6 +185,20 @@ function InteractController.target(): (string, (() -> ())?)
 			remotes.Grab:FireServer(sheet)
 			Sfx.play("pickup")
 		end
+	end
+	-- a log: grab it if it's short enough, and what it's worth (Godot's Log.hint_text)
+	local log = part:FindFirstAncestorWhichIsA("Model")
+	if log and log:GetAttribute("Kind") == "log" then
+		local worth = string.format("worth $%.2f", InteractController.logValue(log))
+		local liftable = not log:GetAttribute("HasCrown") and (log:GetAttribute("Bands") :: number) * Config.Tree.bandH <= Config.Saw.carryMax
+		local trunk = log:FindFirstChild("Trunk")
+		if liftable and trunk and not trunk:GetAttribute("HeldBy") then
+			return "[E] grab    " .. worth, function()
+				remotes.Grab:FireServer(trunk)
+				Sfx.play("pickup")
+			end
+		end
+		return "Too heavy to lift - cut it up    " .. worth, nil
 	end
 	-- a tree says what's special about it (Godot's ForestTree.hint_text)
 	local tree = part:FindFirstAncestorWhichIsA("Model")
