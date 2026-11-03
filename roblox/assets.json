@@ -26,5 +26,47 @@
     "type": "Model",
     "name": "Timber tools",
     "description": "The Godot game's meshes for Timber's Roblox version."
+  },
+  {
+    "key": "SkyUp",
+    "file": "images/sky_up.png",
+    "type": "Decal",
+    "name": "Timber sky up",
+    "description": "The Godot game's sky, one face of the skybox."
+  },
+  {
+    "key": "SkyDn",
+    "file": "images/sky_dn.png",
+    "type": "Decal",
+    "name": "Timber sky dn",
+    "description": "The Godot game's sky, one face of the skybox."
+  },
+  {
+    "key": "SkyFt",
+    "file": "images/sky_ft.png",
+    "type": "Decal",
+    "name": "Timber sky ft",
+    "description": "The Godot game's sky, one face of the skybox."
+  },
+  {
+    "key": "SkyBk",
+    "file": "images/sky_bk.png",
+    "type": "Decal",
+    "name": "Timber sky bk",
+    "description": "The Godot game's sky, one face of the skybox."
+  },
+  {
+    "key": "SkyLf",
+    "file": "images/sky_lf.png",
+    "type": "Decal",
+    "name": "Timber sky lf",
+    "description": "The Godot game's sky, one face of the skybox."
+  },
+  {
+    "key": "SkyRt",
+    "file": "images/sky_rt.png",
+    "type": "Decal",
+    "name": "Timber sky rt",
+    "description": "The Godot game's sky, one face of the skybox."
   }
 ]

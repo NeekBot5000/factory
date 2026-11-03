@@ -294,6 +294,7 @@ func _write(glb: String, path: String) -> int:
 			var mi := MeshInstance3D.new()
 			mi.mesh = am
 			mi.name = (key as String).substr(glb.length() + 1) + ("" if part == 0 else "_p%d" % part)
+			am.resource_name = mi.name          # (the import may name its MeshParts after the mesh, not the node)
 			root.add_child(mi)
 			n += 1
 			tris += count / 3

@@ -206,9 +206,39 @@ local function tools()
 	end
 end
 
+-- Godot's sky (a blue-to-pale gradient, rendered into six images by tools/make_sky.py): an uploaded image is a Decal
+-- asset, so each face is loaded to read the image it points at
+local function sky()
+	local ok, Assets = pcall(require, ReplicatedStorage.Shared.Assets)
+	if not ok or not (Assets :: any).SkyUp then
+		return
+	end
+	local Lighting = game:GetService("Lighting")
+	local s = Lighting:FindFirstChildOfClass("Sky") or Instance.new("Sky")
+	local faces = { Up = "SkyboxUp", Dn = "SkyboxDn", Ft = "SkyboxFt", Bk = "SkyboxBk", Lf = "SkyboxLf", Rt = "SkyboxRt" }
+	for k, prop in faces do
+		local id = (Assets :: any)["Sky" .. k]
+		if id then
+			local got, container = pcall(function()
+				return InsertService:LoadAsset(tonumber(id) :: number)
+			end)
+			local decal = got and container and (container :: Instance):FindFirstChildWhichIsA("Decal", true)
+			if decal then
+				(s :: any)[prop] = (decal :: Decal).Texture
+			end
+			if got and container then
+				(container :: Instance):Destroy()
+			end
+		end
+	end
+	s.CelestialBodiesShown = true
+	s.StarCount = 0
+	s.Parent = Lighting
+end
+
 function WorldMeshes.start()
 	task.spawn(function()
-		for _, f in { world, trucks, tools } do
+		for _, f in { sky, world, trucks, tools } do
 			local ok, err = pcall(f)
 			if not ok then
 				warn("[Timber] Godot meshes: " .. tostring(err))

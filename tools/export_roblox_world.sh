@@ -4,3 +4,4 @@
 set -e
 cd "$(dirname "$0")/.."
 godot --headless --path . res://tools/ExportRobloxWorld.tscn
+python3 tools/name_glb_meshes.py roblox/models/godot/world.glb roblox/models/godot/trucks.glb roblox/models/godot/tools.glb
