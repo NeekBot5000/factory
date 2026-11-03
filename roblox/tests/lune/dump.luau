@@ -104,6 +104,13 @@ for _, p in parts do
 	table.insert(lines, string.format('{"name":%s,"path":%s,"shape":%s,"size":%s,"cf":%s,"color":%s,"transparency":%.3f,"material":%s}',
 		str(p.name), str(p.path), str(p.shape), nums(p.size), nums(p.cf), nums(p.color), if p.standin then 1 else p.transparency, str(p.material)))
 end
+local lights = {}
+for _, d in all do
+	if d.ClassName == "PointLight" and d.Parent and d.Parent:IsA("BasePart") then
+		table.insert(lights, string.format('{"at":%s,"color":%s,"brightness":%.3f,"range":%.3f}', nums({ d.Parent.Position.X, d.Parent.Position.Y, d.Parent.Position.Z }),
+			nums({ d.Color.R, d.Color.G, d.Color.B }), d.Brightness, d.Range))
+	end
+end
 local pivots = {}
 for _, name in { "Truck", "Van" } do
 	local m = S.workspace:FindFirstChild(name)
@@ -111,7 +118,7 @@ for _, name in { "Truck", "Van" } do
 		table.insert(pivots, string.format('"%s":%s', name, nums({ m:GetPivot():GetComponents() })))
 	end
 end
-local json = '{"pivots":{' .. table.concat(pivots, ",") .. '},"camera":' .. nums(camcf) .. ',"fov":' .. fov .. ',"parts":[\n' .. table.concat(lines, ",\n") .. "\n]}"
+local json = '{"lights":[' .. table.concat(lights, ",") .. '],"pivots":{' .. table.concat(pivots, ",") .. '},"camera":' .. nums(camcf) .. ',"fov":' .. fov .. ',"parts":[\n' .. table.concat(lines, ",\n") .. "\n]}"
 print("DUMP encoded", #json)
 fs.writeFile(out, json)
 print(string.format("DUMP %d parts -> %s", #parts, out))

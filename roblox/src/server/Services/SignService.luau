@@ -2,11 +2,10 @@
 -- The company sign by the road, the Godot game's way (CompanySign.gd): it starts as a scrap of board on a stake and
 -- gets bigger and grander as the business earns more (tiers at 0, 500, 2,500, 10,000, 50,000 and 200,000 earned),
 -- with no words, just the axe-and-tree emblem. On a server with several players it shows the best earner's.
--- The tiers are Godot's own meshes (ServerStorage.Props.sign_0 .. sign_5, from props.glb); until they've loaded,
+-- The tiers are Godot's own meshes (ReplicatedStorage.Props.sign_0 .. sign_5, from props.glb); until they've loaded,
 -- simple boards stand in.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local W = require(ReplicatedStorage.Shared.GodotWorld) :: any
 local DataService = require(script.Parent.DataService)
@@ -65,7 +64,7 @@ function SignService.show(t: number)
 	end
 	local m = model :: Model
 	m:ClearAllChildren()
-	local props = ServerStorage:FindFirstChild("Props")
+	local props = ReplicatedStorage:FindFirstChild("Props")
 	local src = props and props:FindFirstChild("sign_" .. t)
 	if src then
 		local copy = (src :: Model):Clone()
@@ -94,7 +93,7 @@ function SignService.step()
 	end
 	local want = SignService.tierFor(best)
 	local grew = tier >= 0 and want > tier
-	if want ~= tier or (not real and ServerStorage:FindFirstChild("Props")) then
+	if want ~= tier or (not real and ReplicatedStorage:FindFirstChild("Props")) then
 		SignService.show(want)
 	end
 	if grew then

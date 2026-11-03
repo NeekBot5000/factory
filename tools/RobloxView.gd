@@ -70,12 +70,21 @@ func _godot() -> void:
 			best = d
 			near_tree = t
 	var tp: Vector3 = near_tree.global_position
+	var giant_at := Vector3.ZERO
+	for t in main.trees:
+		if (t as ForestTree).giant:
+			giant_at = (t as Node3D).global_position
+			break
 	views = [
 		["porch", eye],
 		["clearing", Transform3D(Basis(), eye.origin + Vector3(0, 6, -4)).looking_at(eye.origin + Vector3(0, 0, 20), Vector3.UP)],
 		["tree", Transform3D(Basis(), tp + Vector3(1.6, 1.7, 1.6)).looking_at(tp + Vector3(0, 1.4, 0), Vector3.UP)],
 		["cabin", Transform3D(Basis(), Vector3(7, 3.5, 14)).looking_at(Vector3(0, 1.5, 0), Vector3.UP)],
 		["sign", Transform3D(Basis(), eye.origin + Vector3(-2.5, 0.5, 5)).looking_at(eye.origin + Vector3(-4.5, -0.5, 9), Vector3.UP)],
+		["inside", Transform3D(Basis(), Vector3(1.6, 1.9, 1.6)).looking_at(Vector3(-0.4, 1.0, -2.0), Vector3.UP)],
+		["block", Transform3D(Basis(), Vector3(0.8, 0, 5.1) + Vector3(1.4, 1.5, 1.4)).looking_at(Vector3(0.8, 0.5, 5.1), Vector3.UP)],
+		["dock", Transform3D(Basis(), Vector3(0.5, 2.4, 8.0)).looking_at(Vector3(-3.2, 0.4, 10.9), Vector3.UP)],
+		["giant", Transform3D(Basis(), giant_at + Vector3(5, 2.5, 5)).looking_at(giant_at + Vector3(0, 3.5, 0), Vector3.UP)],
 		["truck", Transform3D(Basis(), main.ship_truck.global_position + Vector3(5, 3, 6)).looking_at(main.ship_truck.global_position + Vector3(0, 1, 0), Vector3.UP)],
 	]
 	p.set_process(false)
@@ -169,7 +178,7 @@ func _glb(path: String) -> int:
 					col = Color("#" + hexs)
 					break
 				at = nm.find("_c", at + 1)
-			mi.material_override = _mat(col)
+			mi.material_override = _mat(col, nm.begins_with("glow"))
 			if nm.begins_with("ground_"):
 				# (Roblox: TextureID from the uploaded image, see WorldMeshes)
 				var ck := nm.substr(7).get_slice("_c", 0)
@@ -223,6 +232,15 @@ func _roblox() -> void:
 		nm += _glb("res://roblox/models/godot/%s.glb" % g)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(dump))
 	_trucks(data.get("pivots", {}))
+	for l in data.get("lights", []):
+		# (a Roblox PointLight: brightness and range in studs)
+		var ol := OmniLight3D.new()
+		ol.light_color = Color(l.color[0], l.color[1], l.color[2])
+		ol.light_energy = float(l.brightness)
+		ol.omni_range = float(l.range) * STUD
+		ol.shadow_enabled = false
+		ol.position = Vector3(l.at[0], l.at[1], l.at[2]) * STUD
+		add_child(ol)
 	var box := BoxMesh.new()
 	box.size = Vector3.ONE
 	var cyl := CylinderMesh.new()

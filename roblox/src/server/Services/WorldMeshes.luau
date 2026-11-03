@@ -103,6 +103,9 @@ function WorldMeshes.load(key: string): Model?
 		if color then
 			p.Color = color
 		end
+		if kind == "glow" then
+			p.Material = Enum.Material.Neon       -- (Godot's emissive materials: the lamp, the computer's screen)
+		end
 		if kind == "ground" then
 			-- the forest floor: Godot paints it with a shader (lighter and darker patches, drier areas, grain, pebbles
 			-- on the dirt); its colours are baked into an image a chunk (ExportRobloxWorld), put on with TextureID
@@ -306,7 +309,7 @@ local function sky()
 end
 
 -- props: things the game puts up and changes (the company sign's tiers, ...), each a Model around its own origin
--- in ServerStorage.Props, named after its group ("sign_3")
+-- in ReplicatedStorage.Props (clients use some: the chimney's smoke puff), named after its group ("sign_3")
 local function props()
 	local m = WorldMeshes.load("GodotProps")
 	if not m then
@@ -331,7 +334,7 @@ local function props()
 		end
 		p.Parent = model
 	end
-	folder.Parent = game:GetService("ServerStorage")
+	folder.Parent = ReplicatedStorage
 	m:Destroy()
 end
 

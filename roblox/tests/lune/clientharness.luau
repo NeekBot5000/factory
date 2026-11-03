@@ -158,15 +158,22 @@ local function install()
 		end
 		self.WorldPivot = target
 	end)
+	-- Model scale: ScaleTo sets an absolute scale (like Roblox's), sizes and offsets about the pivot
+	roblox.implementMethod("Model", "GetScale", function(self)
+		return self:GetAttribute("__scale") or 1
+	end)
 	roblox.implementMethod("Model", "ScaleTo", function(self, k)
+		local old = self:GetAttribute("__scale") or 1
+		local f = k / old
 		local pivot = pivotOf(self)
 		for _, d in self:GetDescendants() do
 			if d:IsA("BasePart") then
 				local rel = pivot:ToObjectSpace(d.CFrame)
-				d.Size = d.Size * k
-				d.CFrame = pivot * (rel - rel.Position + rel.Position * k)
+				d.Size *= f
+				d.CFrame = pivot * (rel - rel.Position + rel.Position * f)
 			end
 		end
+		self:SetAttribute("__scale", k)
 	end)
 	roblox.implementMethod("Model", "GetBoundingBox", function(self)
 		local lo, hi = nil, nil

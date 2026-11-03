@@ -291,6 +291,17 @@ function WorldService.start()
 		end
 	end
 	solids.Parent = workspace
+	-- Godot's lights that are part of the world (the lamp on the cabin's table)
+	for _, l in W.lights or {} do
+		local holder = part({ Name = "Light", Size = Vector3.one * 0.2, CFrame = CFrame.new(v3(l.at)), Transparency = 1, CanCollide = false, CanQuery = false })
+		local pl = Instance.new("PointLight")
+		pl.Color = Color3.fromHex(l.color)
+		pl.Brightness = l.energy
+		pl.Range = math.min(l.range, 60)
+		pl.Shadows = false          -- (Godot's lamp casts none)
+		pl.Parent = holder
+		holder.Parent = workspace
+	end
 	makeTruck()
 	makeComputer()
 	choppingBlock()

@@ -82,6 +82,12 @@ func _ready() -> void:
 			if not (mi as Node).is_queued_for_deletion():
 				_add_mesh("props", "sign_%d" % tier, mi, sign.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
 		sign.free()
+	# one smoke puff (Nature.Smoke's blob), for the client's chimney smoke
+	var smoke := Nature.Smoke.new()
+	holder.add_child(smoke)
+	var puff: MeshInstance3D = smoke.get_child(0)
+	_add_mesh("props", "puff", puff, Transform3D.IDENTITY)
+	smoke.free()
 	_marker("props")
 	var np := _write("props", out + "/props.glb")
 
@@ -148,6 +154,9 @@ func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
 		meshes.append(n)
 	meshes.append_array(n.find_children("*", "MeshInstance3D", true, false))
 	for mi in meshes:
+		# (the chimney's smoke moves: the Roblox client animates it, so it's not part of the still world)
+		if (mi as Node).get_parent() is Nature.Smoke:
+			continue
 		if (mi as MeshInstance3D).is_visible_in_tree():
 			_add_mesh("world", kind, mi, (mi as MeshInstance3D).global_transform)
 	# solid boxes (walls, the porch, the chopping block, rocks)
@@ -260,7 +269,20 @@ func _add_mesh(glb: String, name: String, mi: MeshInstance3D, xf: Transform3D) -
 		return
 	for s in mi.mesh.get_surface_count():
 		var mc := _material_color(mi, s)
-		_add_tris(glb, name, mi.mesh, s, xf, mc[0], mc[1])
+		# (things that glow - the lamp, lamps on signs - in their own group: the Roblox version makes them Neon)
+		var gname := name
+		if glb == "world" and _emissive(mi, s):
+			gname = "glow"
+		_add_tris(glb, gname, mi.mesh, s, xf, mc[0], mc[1])
+
+
+func _emissive(mi: MeshInstance3D, surface: int) -> bool:
+	var mat: Material = mi.material_override
+	if mat == null:
+		mat = mi.get_surface_override_material(surface)
+	if mat == null and mi.mesh != null:
+		mat = mi.mesh.surface_get_material(surface)
+	return mat is StandardMaterial3D and (mat as StandardMaterial3D).emission_enabled
 
 
 func _chunk_of(p: Vector3) -> String:
@@ -428,6 +450,16 @@ func _write_luau(main: Node3D) -> void:
 	# the player's start: on the porch, looking out
 	var p: Player = main.player
 	L.append("\tspawn = { at = %s, yaw = %.3f }," % [_v3(p.spawn_xform.origin * S), p.spawn_xform.basis.get_euler().y])
+	# lights that are part of the world (the lamp in the cabin) and the chimney's smoke
+	L.append("\tlights = {")
+	for l in main.find_children("*", "OmniLight3D", true, false):
+		var ol := l as OmniLight3D
+		if ol.is_visible_in_tree() and not ol.get_parent() is Player:
+			L.append("\t\t{ at = %s, color = \"%s\", energy = %.2f, range = %.2f }," % [_v3(ol.global_position * S), ol.light_color.to_html(false), ol.light_energy, ol.omni_range * S])
+	L.append("\t},")
+	for sm in main.find_children("*", "Node3D", true, false):
+		if sm is Nature.Smoke:
+			L.append("\tsmoke = { at = %s }," % _v3((sm as Node3D).global_position * S))
 	for c in main.get_children():
 		if c is CompanySign:
 			L.append("\tsign = { at = %s, yaw = %.3f }," % [_v3((c as Node3D).global_position * S), (c as Node3D).global_rotation.y])
