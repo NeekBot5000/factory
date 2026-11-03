@@ -57,7 +57,7 @@ function Harness.boot(placePath: string, jobId: string)
 
 	-- remotes: OnServerEvent handlers we can call as a client would, and a log of what the server sent to clients
 	local remotes = {}
-	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip", "Snip", "Vacuum", "Build", "PlanCancel", "TakeDown", "BuyLand", "Click", "Lie" } do
+	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip", "Snip", "Vacuum", "Build", "PlanCancel", "TakeDown", "BuyLand", "Click", "Lie", "Mine" } do
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })
@@ -258,6 +258,10 @@ function Harness.boot(placePath: string, jobId: string)
 
 	function server.service(name: string)
 		return loadModule(servicesFolder[name])
+	end
+	-- a module from ReplicatedStorage.Shared, loaded the way the game's scripts load it
+	function server.shared(name: string)
+		return loadModule(game:GetService("ReplicatedStorage").Shared[name])
 	end
 
 	-- (Lune keeps Position apart from CFrame; Roblox always has them agree: keep moving things' Positions up to date,

@@ -820,6 +820,108 @@ do
 	check(table.find(data.land, "5,5") == nil, "but only plots next to land you own")
 end
 
+-- ---------------------------------------------------------------- mining
+do
+	local mine = A.remotes.Mine.OnServerEvent
+	local MS = A.service("MiningService")
+	local WS = A.service("WorldService")
+	Tools.grant(alice, "pickaxe")
+	task.wait(1.3)
+	-- (Lune has no terrain: a bit of ground to dig in)
+	local spot = V3(-30, 0, -30)
+	local g = roblox.Instance.new("Part")
+	g.Anchored = true
+	g.Size = V3(12, 1, 12)
+	g.CFrame = roblox.CFrame.new(spot.X, WS.heightAt(spot.X, spot.Z) - 0.5, spot.Z)
+	g.Position = g.CFrame.Position
+	g:SetAttribute("Ground", true)
+	g.Parent = ws
+	A.stand(alice, spot + V3(0, 5, 4))
+	local function ores()
+		local n = 0
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "ore" then
+				n += 1
+			end
+		end
+		return n
+	end
+	local o0 = ores()
+	for _ = 1, 3 do
+		mine:Fire(alice, g, spot, V3(0, 1, 0))
+		task.wait(0.55)
+	end
+	local shaft = ws:FindFirstChild("Shafts") and ws.Shafts:FindFirstChild("Shaft")
+	check(shaft ~= nil and math.abs((shaft:GetAttribute("Depth") or 0) - 0.6) < 0.01 and ores() == o0 + 3, "a pickaxe digs a shaft straight down, 0.2 m a hit, throwing out a chunk each time")
+	local chunk = nil
+	for _, c in loose:GetChildren() do
+		if c:GetAttribute("Kind") == "ore" then
+			chunk = c
+		end
+	end
+	check(chunk and chunk:GetAttribute("Ore") == "stone" and chunk:GetAttribute("Value") > 0.2, "near the top it's stone (worth about $0.40)")
+	-- deep down, where Godot's ground is rich in iron, a steel pick gets iron out
+	local Mining = A.shared("Mining")
+	local best, bx, bz = -1, 0, 0
+	for x = -150, 150, 9 do
+		for z = -150, 150, 9 do
+			local r = Mining.richness("iron", x, z)
+			if r > best then
+				best, bx, bz = r, x, z
+			end
+		end
+	end
+	local seen = {}
+	for _ = 1, 60 do
+		seen[Mining.roll(bx, bz, 12, 2)] = true
+	end
+	check(best > 0.5 and seen.iron and Mining.roll(bx, bz, 0.5, 2) == "stone", string.format("iron lies deep, in Godot's rich patches (best %.2f)", best))
+	local onlyStone = true
+	for _ = 1, 60 do
+		onlyStone = onlyStone and Mining.roll(bx, bz, 12, 1) ~= "iron"
+	end
+	check(onlyStone, "and an ordinary pickaxe can't get iron out")
+	-- a rock: chunks come off until it crumbles away; a sledgehammer bursts a small one in one blow
+	local r0 = MS.rock(0)
+	local idx = 0
+	for i = 0, 60 do
+		local r = MS.rock(i)
+		if r and r.s > 0.85 then
+			idx = i
+			r0 = r
+			break
+		end
+	end
+	if r0 then
+		A.stand(alice, r0.at + V3(4, 4, 0))
+		local box = ws.Solids:FindFirstChild("Rock_" .. idx)
+		local hits = 0
+		while MS.rock(idx) and hits < 20 do
+			mine:Fire(alice, box, r0.at + V3(2, 0, 0), V3(1, 0, 0))
+			hits += 1
+			task.wait(0.55)
+		end
+		check(MS.rock(idx) == nil and ws.Solids:FindFirstChild("Rock_" .. idx) == nil and hits == r0.max, string.format("a pickaxe knocks chunks off a rock until it crumbles away (%d hits)", hits))
+	end
+	Tools.grant(alice, "sledge")
+	task.wait(1.3)
+	local small, si = nil, 0
+	for i = 0, 60 do
+		local r = MS.rock(i)
+		if r and r.s <= 0.8 then
+			small, si = r, i
+			break
+		end
+	end
+	if small then
+		A.stand(alice, small.at + V3(4, 4, 0))
+		local before = ores()
+		mine:Fire(alice, ws.Solids:FindFirstChild("Rock_" .. si), small.at + V3(2, 0, 0), V3(1, 0, 0))
+		task.wait(0.1)
+		check(MS.rock(si) == nil and ores() - before >= 2, "a sledgehammer bursts a small rock in one blow, every chunk flying out")
+	end
+end
+
 -- ---------------------------------------------------------------- the leaf vacuums
 do
 	Tools.grant(alice, "vacuum")

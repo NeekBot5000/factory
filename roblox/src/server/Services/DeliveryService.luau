@@ -279,7 +279,7 @@ function DeliveryService.take(player: Player, pickup: Model): boolean
 	if item == "phone" then
 		remotes.Notify:FireClient(player, "TimberPhone  [Tab]", "7aff9a")
 	else
-		remotes.Notify:FireClient(player, string.format("%s  [%d]", def and def.name or item, (table.find(Config.ToolOrder, item) or 0)), "7aff9a")
+		remotes.Notify:FireClient(player, string.format("%s  [%d]", def and def.name or item, (table.find(Config.GodotToolOrder, item) or 0)), "7aff9a")
 	end
 	TutorialService.check(player)
 	return true

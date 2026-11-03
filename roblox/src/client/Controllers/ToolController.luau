@@ -268,6 +268,16 @@ local function impact()
 	if d.build then
 		return         -- (the hammer's swing is just the swing: Godot's _do_impact)
 	end
+	if d.mine then
+		-- mining tools: a rock loses a chunk, the ground is dug straight down (the server decides what comes out)
+		local mh = ToolController.aim(d.reach * M)
+		if mh and not treeOf(mh.Instance) then
+			remotes.Mine:FireServer(mh.Instance, mh.Position, mh.Normal)
+			burst(mh.Position, mh.Normal, if mh.Instance:GetAttribute("Rock") then Color3.fromHex("8a8780") else Color3.fromHex("6b5a44"), 12, 14)
+			State.kick = 0.02
+			return
+		end
+	end
 	if d.snip then
 		-- the shears: a snip in the leaves of the crown you're looking at (Godot's _snip)
 		Sfx.play("click", 0.6, -2)
@@ -573,12 +583,12 @@ function ToolController.start()
 			end
 		end
 		-- the bark drills: a bite every `cooldown` seconds while the trigger is held on a trunk (Godot's _drilling)
-		State.drilling = alive and d.kind == "drill" and State.equipT >= 1
+		State.drilling = alive and (d.kind == "drill" or d.kind == "rockdrill") and State.equipT >= 1
 		if State.drilling then
 			drillCd -= dt
 			if drillCd <= 0 then
 				drillCd = d.cooldown
-				if ToolController.aimingAtTree() then
+				if d.kind == "rockdrill" or ToolController.aimingAtTree() then
 					impact()
 				end
 			end
@@ -660,7 +670,7 @@ function ToolController.start()
 			washSound:Destroy()
 			washSound = nil
 		end
-		local on = alive and d.hold and d.kind ~= "polesaw" and d.kind ~= "drill" and d.kind ~= "vacuum" and not motor
+		local on = alive and d.hold and d.kind ~= "polesaw" and d.kind ~= "drill" and d.kind ~= "rockdrill" and d.kind ~= "vacuum" and not motor
 		local hit = if on then ToolController.aim(d.reach * M) else nil
 		local m = hit and treeOf(hit.Instance)
 		local canFell = d.fell ~= false

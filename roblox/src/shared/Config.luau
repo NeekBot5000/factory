@@ -70,6 +70,22 @@ Config.Tools = {
 	hammer = { name = "Builder's Hammer", price = 120, radius = 0, stripRadius = 0, cooldown = 0.45, impact = 0.5, hurt = 0, anim = "hammer", reach = 2.2, build = true, tag = "Compact",
 		desc = "Build things out of what you gather: pick a plan, set it down, then drop the materials into it.",
 		look = { handle = 1.0, head = { 0.25, 0.25, 0.6 }, headColor = { 120, 124, 132 }, handleColor = { 150, 110, 70 } } },
+	-- mining: dig straight down (or knock chunks off rocks); iron needs tier 2
+	pickaxe = { name = "Pickaxe", price = 80, radius = 0, stripRadius = 0.05, cooldown = 0.6, impact = 0.5, hurt = 0, anim = "chop", reach = 2.5, mine = 1, tier = 1, tag = "Sturdy",
+		desc = "Dig straight down into the ground: stone near the top, copper further down. Deeper still there's iron, but it's too hard for this pick.",
+		look = { handle = 2.4, head = { 0.2, 0.2, 1.4 }, headColor = { 120, 124, 132 }, handleColor = { 150, 110, 70 } } },
+	steel_pick = { name = "Steel Pickaxe", price = 900, radius = 0, stripRadius = 0.05, cooldown = 0.5, impact = 0.5, hurt = 0, anim = "chop", reach = 2.6, mine = 2, tier = 2, tag = "Hardened",
+		desc = "Digs twice as fast and gets iron out of the deep layers (from about 5 m down).",
+		look = { handle = 2.4, head = { 0.2, 0.2, 1.4 }, headColor = { 170, 176, 190 }, handleColor = { 60, 60, 66 } } },
+	rock_drill = { name = "Rock Drill", price = 650, radius = 0, stripRadius = 0.05, cooldown = 0.3, impact = 0, hurt = 0, anim = "drill", reach = 2.4, hold = true, kind = "rockdrill", mine = 1, tier = 1, tag = "Powered",
+		desc = "Hold the trigger on the ground and it digs down about twice as fast as a pickaxe. Stone and copper only. Fits in a drill rig.",
+		look = { handle = 1.2, head = { 0.3, 0.3, 1.0 }, headColor = { 230, 170, 40 }, handleColor = { 40, 40, 44 } } },
+	core_drill = { name = "Steel Core Drill", price = 2600, radius = 0, stripRadius = 0.05, cooldown = 0.25, impact = 0, hurt = 0, anim = "drill", reach = 2.5, hold = true, kind = "rockdrill", mine = 2, tier = 2, tag = "Hardened",
+		desc = "A hardened, faster drill that digs twice as hard and gets iron out of the deep layers. In a drill rig it goes much deeper.",
+		look = { handle = 1.2, head = { 0.3, 0.3, 1.1 }, headColor = { 170, 176, 190 }, handleColor = { 40, 40, 44 } } },
+	sledge = { name = "Sledgehammer", price = 220, radius = 0, stripRadius = 0.08, cooldown = 1.25, impact = 0.6, hurt = 0, anim = "slam", reach = 2.5, mine = 3, tier = 1, smash = 0.8, move = 0.8, tag = "Smashing",
+		desc = "Slow and heavy. Small rocks burst into all their chunks in one blow; big ones lose a few at a time. Iron is still too hard for it.",
+		look = { handle = 3.0, head = { 0.35, 0.35, 0.8 }, headColor = { 90, 96, 106 }, handleColor = { 150, 110, 70 } } },
 	-- the leaf vacuums: hold the trigger, loose things fly to the nozzle and swirl there until you let go
 	vacuum = { name = "Leaf Vacuum", price = 1200, radius = 0, stripRadius = 0, cooldown = 0.1, impact = 0, hurt = 0, anim = "vacuum", reach = 7, hold = true, kind = "vacuum", tag = "Bulky",
 		desc = "Hold the trigger to suck up loose bark and boxes. They float in front of the nozzle until you let go.",
@@ -114,15 +130,112 @@ Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7, cro
 -- (Godot's Sapling: put it down on open ground and leave it, it roots after 1.5 s and is a full tree in 5 minutes)
 Config.Leaf = { value = 0.05 }
 Config.Sapling = { rest = 1.5, growTime = 300 }
--- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "planer", "washer", "vacuum", "twinvac", "cyclone", "hammer" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "phone" }
+-- the tool bar's order and the shop's: Godot's TOOL_ORDER and SHOP_ORDER, for what the Roblox version has
+local GODOT_TOOL_ORDER = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "planer", "washer", "rake", "vacuum", "twinvac", "cyclone", "blower", "pickaxe", "sledge", "steel_pick", "rock_drill", "core_drill", "detector", "dynamite", "wires", "hammer", "can", "scale" }
+local GODOT_SHOP_ORDER = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "blower", "twinvac", "cyclone", "pickaxe", "sledge", "steel_pick", "rock_drill", "detector", "core_drill", "dynamite", "wires", "hammer", "rake", "can", "scale", "bp_crank", "bp_lever", "bp_button", "bp_conveyor", "bp_ramp", "bp_piston", "bp_rotator", "bp_wheelbarrow", "bp_windmill", "bp_generator", "bp_battery", "bp_logic", "bp_sensors", "bp_lamp", "bp_sawmill", "bp_chipper", "bp_planter", "bp_sprinkler", "bp_feller", "bp_smelter", "bp_kiln", "bp_assembler", "bp_grabber", "bp_sorter", "bp_crate", "bp_wireless", "bp_drill_rig", "bp_charger", "bp_carts", "bp_rail_tools", "bp_rail_extras", "bp_drones", "bp_oil", "bp_truck_caller", "truck_big", "truck_hauler", "phone" }
+Config.ToolOrder = {}
+for _, id in GODOT_TOOL_ORDER do
+	if id == "hands" or (Config.Tools :: any)[id] then
+		table.insert(Config.ToolOrder, id)
+	end
+end
+Config.ShopOrder = {}        -- (filled in below, once Config.Items is known)
+Config._godotShopOrder = GODOT_SHOP_ORDER
+Config.GodotToolOrder = GODOT_TOOL_ORDER    -- (the toast's number when a tool arrives is its place in this, like Godot's)
+
+-- Godot's TimberMart departments (Tools.CATEGORIES) and which one each item is in (SHOP's "cat")
+Config.ShopDepts = { { "all", "Everything" }, { "axes", "Axes" }, { "saws", "Saws" }, { "specialty", "Specialty Tools" }, { "mining", "Mining" }, { "blueprints", "Machine Blueprints" }, { "other", "Other" } }
+Config.ShopCat = {
+	hatchet = "axes",
+	double_bit = "axes",
+	labrys = "axes",
+	twins = "axes",
+	combo = "axes",
+	scraper = "axes",
+	gouge = "axes",
+	ringer = "axes",
+	greataxe = "axes",
+	drill = "specialty",
+	saw = "saws",
+	shears = "specialty",
+	robo = "axes",
+	chainsaw = "saws",
+	bucksaw = "saws",
+	twin_auger = "specialty",
+	holesaw = "specialty",
+	twinvac = "specialty",
+	cyclone = "specialty",
+	pickaxe = "mining",
+	steel_pick = "mining",
+	rock_drill = "mining",
+	core_drill = "mining",
+	wires = "specialty",
+	bp_crank = "blueprints",
+	bp_lever = "blueprints",
+	bp_button = "blueprints",
+	bp_conveyor = "blueprints",
+	bp_ramp = "blueprints",
+	bp_piston = "blueprints",
+	bp_rotator = "blueprints",
+	bp_truck_caller = "blueprints",
+	hammer = "other",
+	vacuum = "specialty",
+	throwing = "axes",
+	spiral = "axes",
+	spud = "axes",
+	thunder = "axes",
+	pole_saw = "saws",
+	crosscut = "saws",
+	planer = "specialty",
+	washer = "specialty",
+	rake = "other",
+	blower = "specialty",
+	sledge = "mining",
+	detector = "mining",
+	dynamite = "mining",
+	can = "other",
+	scale = "other",
+	truck_big = "other",
+	truck_hauler = "other",
+	bp_windmill = "blueprints",
+	bp_generator = "blueprints",
+	bp_battery = "blueprints",
+	bp_logic = "blueprints",
+	bp_sensors = "blueprints",
+	bp_lamp = "blueprints",
+	bp_sawmill = "blueprints",
+	bp_chipper = "blueprints",
+	bp_planter = "blueprints",
+	bp_sprinkler = "blueprints",
+	bp_smelter = "blueprints",
+	bp_kiln = "blueprints",
+	bp_assembler = "blueprints",
+	bp_grabber = "blueprints",
+	bp_sorter = "blueprints",
+	bp_crate = "blueprints",
+	bp_wireless = "blueprints",
+	bp_drill_rig = "blueprints",
+	bp_charger = "blueprints",
+	bp_carts = "blueprints",
+	bp_rail_tools = "blueprints",
+	bp_rail_extras = "blueprints",
+	bp_oil = "blueprints",
+	bp_drones = "blueprints",
+	bp_feller = "blueprints",
+	bp_wheelbarrow = "blueprints",
+	phone = "other",
+}
 
 -- things you can buy that aren't tools (Godot's SHOP entries in "other")
 Config.Items = {
 	phone = { name = "TimberPhone", price = 350, tag = "Pocket-size",
 		desc = "Shop TimberMart and send the log truck off from anywhere in the forest. Press Tab to use it." },
 }
+for _, id in Config._godotShopOrder do
+	if (Config.Tools :: any)[id] or (Config.Items :: any)[id] then
+		table.insert(Config.ShopOrder, id)
+	end
+end
 Config.ComboMax = 4             -- the combo axe grows 0.05 m a hit in a row, up to 4 (and resets after 1.25 s)
 
 -- the player (Godot's Player.gd, in metres; x3 for studs)

@@ -284,7 +284,13 @@ function WorldService.start()
 	for _, s in W.solid do
 		local p = solid(solids, s)
 		-- what your feet hear (Godot: rocks are stone, the cabin, porch and dock are wood)
-		p.Material = if s.kind == "rock" then Enum.Material.Slate else Enum.Material.WoodPlanks
+		local rockIdx = string.match(s.kind, "^rock_(%d+)$")
+		p.Material = if string.find(s.kind, "^rock") then Enum.Material.Slate else Enum.Material.WoodPlanks
+		if rockIdx then
+			-- (a rock's box: mining the rock away takes its box with it, see MiningService)
+			p.Name = "Rock_" .. rockIdx
+			p:SetAttribute("Rock", tonumber(rockIdx))
+		end
 		if not haveMeshes then
 			p.Transparency = 0
 			p.Color = Color3.fromHex("9a8a70")

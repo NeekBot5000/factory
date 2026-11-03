@@ -13,6 +13,7 @@ local InputController = require(script.Parent.InputController)
 local ShopController = require(script.Parent.ShopController)
 local BuildController = require(script.Parent.BuildController)
 local Land = require(game:GetService("ReplicatedStorage").Shared.Land)
+local Mining = require(game:GetService("ReplicatedStorage").Shared.Mining)
 local State = require(script.Parent.Parent.State)
 local Sfx = require(script.Parent.Parent.Sfx)
 
@@ -144,6 +145,18 @@ function InteractController.target(): (string, (() -> ())?)
 		return "", nil
 	end
 	local part = hit.Instance
+	-- rocks and mine shafts say what they are (Godot's Rock / Shaft hint_text)
+	if part:GetAttribute("Rock") ~= nil then
+		return "Stone  ·  any pickaxe", nil
+	end
+	local sh = part:FindFirstAncestorWhichIsA("Model")
+	if sh and sh:GetAttribute("Kind") == "shaft" then
+		local depth = sh:GetAttribute("Depth") :: number? or 0
+		if depth >= Mining.MAX_DEPTH then
+			return string.format("Mine shaft  ·  %d m deep  ·  as deep as it goes", depth), nil
+		end
+		return string.format("Mine shaft  ·  %.1f m deep  ·  %s", depth, Mining.layerName(depth)), nil
+	end
 	local b = buildOf(part)
 	if b and b:GetAttribute("Kind") == "forsale" then
 		local land = string.split(player:GetAttribute("Land") :: string? or "", ";")
@@ -227,7 +240,10 @@ function InteractController.target(): (string, (() -> ())?)
 	end
 	if loose and sheet.Parent == loose and sheet:IsA("BasePart") and not sheet.Anchored and not sheet:GetAttribute("HeldBy") then
 		local value = sheet:GetAttribute("Value")
-		return if typeof(value) == "number" then string.format("[E] grab    $%.2f", value) else "[E] grab", function()
+		local ore = sheet:GetAttribute("Ore")
+		local label = if typeof(ore) == "string" and Mining.KINDS[ore] then string.format("[E] grab    %s  $%.2f", Mining.KINDS[ore].name, value :: number)
+			elseif typeof(value) == "number" then string.format("[E] grab    $%.2f", value) else "[E] grab"
+		return label, function()
 			remotes.Grab:FireServer(sheet)
 			Sfx.play("pickup")
 		end

@@ -20,6 +20,7 @@ const QUANT := 16.0               # colour steps per channel (fewer colours, few
 var groups := {}                  # "glb/name" -> {"verts": PackedVector3Array, "norms": PackedVector3Array}
 var collide: Array = []           # solid boxes: {p, b, size}
 var computer: Array = []          # the computer's boxes (E on it opens TimberMart)
+var rocks: Array = []             # each rock: {at (studs), s (Godot's size), ore, hidden, hp}
 
 
 func _ready() -> void:
@@ -60,7 +61,7 @@ func _ready() -> void:
 	groups.clear()
 	var holder := Node3D.new()
 	add_child(holder)
-	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "phone"]:
+	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "pickaxe", "steel_pick", "sledge", "rock_drill", "core_drill", "detector", "dynamite", "phone"]:
 		var root := Node3D.new()
 		holder.add_child(root)
 		Tools.build_model(id, root)
@@ -109,6 +110,20 @@ func _ready() -> void:
 		builds_info[id] = {"parts": info, "top": top, "groups": groups_at}
 		root.free()
 	_write_builds(builds_info)
+	# an ore chunk of each kind (Ore.setup at its usual size, 0.14 m) and a mine shaft's rim and pit
+	for kind in ["stone", "copper", "iron"]:
+		var o := Ore.new()
+		holder.add_child(o)
+		o.setup(kind, 0.14)
+		for mi in o.find_children("*", "MeshInstance3D", true, false):
+			_add_mesh("props", "ore_" + kind, mi, o.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
+		o.free()
+	var sh := Shaft.new()
+	holder.add_child(sh)
+	sh.setup(Vector3.ZERO)
+	for mi in sh.find_children("*", "MeshInstance3D", true, false):
+		_add_mesh("props", "shaft", mi, sh.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
+	sh.free()
 	# the land's for-sale sign and a corner stake (Land.rebuild), around their own origins
 	var fs := ForSale.new()
 	holder.add_child(fs)
@@ -174,7 +189,10 @@ func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
 	if n is Cabin or n is Computer or n is CompanySign or n is Trophies:
 		kind = "cabin"
 	elif n is Rock:
-		kind = "rock"
+		# each rock on its own (you mine it: it shrinks and crumbles away), and what's in it
+		kind = "rock_%d" % rocks.size()
+		var rk := n as Rock
+		rocks.append({"at": rk.global_position * S, "s": rk.size, "ore": rk.ore, "hidden": rk.hidden, "hp": rk.max_hp})
 	elif n is Bush:
 		kind = "bush"
 	elif n.name == "Clouds":
@@ -244,6 +262,7 @@ func _add_collider(cs: CollisionShape3D, kind: String = "decor") -> void:
 	var sc := xf.basis.get_scale()
 	var b := xf.basis.orthonormalized()
 	collide.append({"p": xf.origin * S, "b": b, "size": size * sc * S, "kind": kind})
+	# (a rock's box says which rock it is: mining it away takes its box with it)
 
 
 # the colour of a triangle's material (albedo, or a shader's "albedo"), times its vertex colour if it uses one
@@ -532,6 +551,23 @@ func _write_luau(main: Node3D) -> void:
 	# the player's start: on the porch, looking out
 	var p: Player = main.player
 	L.append("\tspawn = { at = %s, yaw = %.3f }," % [_v3(p.spawn_xform.origin * S), p.spawn_xform.basis.get_euler().y])
+	# the rocks you can mine
+	L.append("\trocks = {")
+	for r in rocks:
+		L.append("\t\t{ at = %s, s = %.3f, ore = \"%s\", hidden = \"%s\", hp = %d }," % [_v3(r.at), r.s, r.ore, r.hidden, r.hp])
+	L.append("\t},")
+	# how rich the ground is in copper, iron and oil (Mining.richness), every 3 m like the heights
+	var ostep := 3.0
+	var ohalf := 105.0
+	var on := int(ohalf * 2.0 / ostep) + 1
+	L.append("\tore = { origin = %.1f, step = %.1f, n = %d," % [-ohalf * S, ostep * S, on])
+	for kind in ["copper", "iron", "oil"]:
+		var row := PackedStringArray()
+		for gz in on:
+			for gx in on:
+				row.append("%.2f" % Mining.richness(kind, -ohalf + gx * ostep, -ohalf + gz * ostep))
+		L.append("\t\t%s = { %s }," % [kind, ", ".join(row)])
+	L.append("\t},")
 	# lights that are part of the world (the lamp in the cabin) and the chimney's smoke
 	L.append("\tlights = {")
 	for l in main.find_children("*", "OmniLight3D", true, false):

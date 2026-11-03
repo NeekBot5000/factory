@@ -182,13 +182,19 @@ function ShopController.open(fromPhone: boolean?)
 	-- Godot's departments, with how many each has; click one to show only those
 	local grid: Frame
 	local function dept(id: string): string
-		local t = (Config.Tools :: any)[id]
-		if not t then
-			return "other"
-		end
-		return if t.kind == "saw" then "saws" else "axes"
+		return (Config.ShopCat :: any)[id] or "other"
 	end
-	local depts = { { "all", "Everything" }, { "axes", "Axes" }, { "saws", "Saws" }, { "other", "Other" } }
+	-- (Godot's departments that have something in them)
+	local depts = {}
+	for _, d in Config.ShopDepts do
+		local any = d[1] == "all"
+		for _, id in Config.ShopOrder do
+			any = any or dept(id) == d[1]
+		end
+		if any then
+			table.insert(depts, d)
+		end
+	end
 	local deptLabels: { [string]: TextButton } = {}
 	local function show(which: string)
 		for key, b in deptLabels do
