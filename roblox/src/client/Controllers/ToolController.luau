@@ -459,6 +459,8 @@ function ToolController.start()
 	end)
 	local sawTarget: Model? = nil
 	local drillCd = 0
+	local vacSend, vacDust = 0, 0
+	local vacSound: Sound? = nil
 	local sawFx = 0
 	local told: { [string]: number } = {}
 	local function tell(key: string, text: string)
@@ -567,7 +569,36 @@ function ToolController.start()
 				end
 			end
 		end
-		local on = alive and d.hold and d.kind ~= "polesaw" and d.kind ~= "drill"
+		-- the vacuums: while the trigger is held, tell the server where the nozzle points (it moves the things)
+		local vac = alive and d.kind == "vacuum" and State.equipT >= 1
+		if vac then
+			vacSend -= dt
+			if vacSend <= 0 then
+				vacSend = 0.1
+				local cf = workspace.CurrentCamera.CFrame
+				remotes.Vacuum:FireServer(true, cf.Position, cf.LookVector, cf.RightVector)
+			end
+			vacDust -= dt
+			if vacDust <= 0 then
+				vacDust = 0.08
+				local cf = workspace.CurrentCamera.CFrame
+				local nozzle = cf.Position + cf.LookVector * 1.25 * M - Vector3.new(0, 0.18 * M, 0)
+				local src = nozzle + cf.LookVector * (1 + math.random() * 2) * M + Vector3.new(math.random() * 1.2 - 0.6, math.random() * 0.8 - 0.4, math.random() * 1.2 - 0.6) * M
+				burst(src, (nozzle - src).Unit, Color3.new(0.8, 0.78, 0.7), 3, (nozzle - src).Magnitude * 1.2)
+			end
+			if not vacSound then
+				vacSound = Sfx.loop("vacuum", -10)
+			end
+		elseif State.vacuuming then
+			remotes.Vacuum:FireServer(false)
+			vacSend = 0
+		end
+		if not vac and vacSound then
+			vacSound:Destroy()
+			vacSound = nil
+		end
+		State.vacuuming = vac
+		local on = alive and d.hold and d.kind ~= "polesaw" and d.kind ~= "drill" and d.kind ~= "vacuum"
 		local hit = if on then ToolController.aim(d.reach * M) else nil
 		local m = hit and treeOf(hit.Instance)
 		local canFell = d.fell ~= false

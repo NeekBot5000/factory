@@ -539,6 +539,54 @@ do
 	check(c.Parent == nil and t:GetAttribute("CrownCut") and saps >= 1, "snipped bare, the last clump holds a sapling or two (" .. saps .. ")")
 end
 
+-- ---------------------------------------------------------------- the leaf vacuums
+do
+	Tools.grant(alice, "vacuum")
+	task.wait(1.3)
+	local head = alice.Character.Head
+	local origin = head.CFrame.Position
+	local dir, right = V3(1, 0, 0), V3(0, 0, -1)
+	local nozzle = origin + dir * 3.75 - V3(0, 0.54, 0)
+	local function bit(at)
+		local p = roblox.Instance.new("Part")
+		p.Size = V3(0.6, 0.6, 0.6)
+		p.CFrame = roblox.CFrame.new(at)
+		p.Position = at
+		p.AssemblyLinearVelocity = V3(0, 0, 0)
+		p:SetAttribute("Kind", "leaf")
+		p:SetAttribute("Value", 0.05)
+		p:SetAttribute("Owner", 101)
+		p.Parent = loose
+		return p
+	end
+	local near = bit(nozzle + V3(0.5, 0, 0))
+	local far = bit(origin + dir * 15)
+	local behind = bit(origin - dir * 6)
+	local vac = A.remotes.Vacuum.OnServerEvent
+	vac:Fire(alice, true, origin, dir, right)
+	task.wait(0.3)
+	local fv = far.AssemblyLinearVelocity
+	check(near:GetAttribute("VacBy") == 101, "the leaf vacuum catches what reaches its nozzle")
+	check(fv:Dot(nozzle - far.Position) > 0, "and pulls in what's in front of it, up to 7 m away")
+	check(behind.AssemblyLinearVelocity.Magnitude < 0.01 and not behind:GetAttribute("VacBy"), "but nothing behind you")
+	vac:Fire(alice, false)
+	task.wait(0.1)
+	check(near:GetAttribute("VacBy") == nil, "let go and it drops what it caught")
+	-- the cyclone fires its clump straight ahead
+	Tools.grant(alice, "cyclone")
+	task.wait(1.3)
+	near.CFrame = roblox.CFrame.new(nozzle)
+	near.Position = nozzle
+	vac:Fire(alice, true, origin, dir, right)
+	task.wait(0.2)
+	vac:Fire(alice, false)
+	task.wait(0.1)
+	check(near.AssemblyLinearVelocity.X > 30, string.format("the Cyclone Vac fires what it caught straight ahead (%.0f studs/s)", near.AssemblyLinearVelocity.X))
+	for _, p in { near, far, behind } do
+		p:Destroy()
+	end
+end
+
 -- ---------------------------------------------------------------- the crosscut, the throwing hatchet, the phone
 do
 	local saw = A.remotes.Sawn.OnServerEvent

@@ -291,5 +291,32 @@ do
 	check(bites >= 3, "holding the timber auger on a trunk keeps boring (" .. bites .. " bites in 0.75 s)")
 end
 
+-- the leaf vacuum: while the trigger is held it tells the server where it points; letting go says so
+do
+	S.service("ToolService").grant(alice, "vacuum")
+	task.wait(0.2)
+	C.frames(40)
+	local sent1 = #C.sent
+	C.hold(K.ButtonR2, true)
+	for _ = 1, 30 do
+		C.frame(1 / 60)
+		task.wait()
+	end
+	C.hold(K.ButtonR2, false)
+	C.frames(2)
+	local on, off = 0, 0
+	for k = sent1 + 1, #C.sent do
+		local e = C.sent[k]
+		if e.remote == "Vacuum" then
+			if e.args[1] == true then
+				on += 1
+			else
+				off += 1
+			end
+		end
+	end
+	check(on >= 2 and off == 1, string.format("holding the leaf vacuum runs it, letting go stops it (%d, %d)", on, off))
+end
+
 print(string.format("\nCLIENT RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
 process.exit(if fails == 0 then 0 else 1)

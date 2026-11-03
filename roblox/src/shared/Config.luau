@@ -67,6 +67,16 @@ Config.Tools = {
 	shears = { name = "Pruning Shears", price = 90, radius = 0, stripRadius = 0, cooldown = 0.32, impact = 0.45, hurt = 0, anim = "snip", reach = 4.2, snip = true, tag = "Light",
 		desc = "Long-reach shears. Snip big clumps of leaves off bushes and tree crowns. Leaves don't sell for much, but there are tons of them.",
 		look = { handle = 1.6, head = { 0.1, 0.25, 0.8 }, headColor = { 190, 196, 206 }, handleColor = { 200, 60, 50 } } },
+	-- the leaf vacuums: hold the trigger, loose things fly to the nozzle and swirl there until you let go
+	vacuum = { name = "Leaf Vacuum", price = 1200, radius = 0, stripRadius = 0, cooldown = 0.1, impact = 0, hurt = 0, anim = "vacuum", reach = 7, hold = true, kind = "vacuum", tag = "Bulky",
+		desc = "Hold the trigger to suck up loose bark and boxes. They float in front of the nozzle until you let go.",
+		look = { handle = 1.4, head = { 0.4, 0.4, 1.4 }, headColor = { 220, 120, 40 }, handleColor = { 40, 40, 44 } } },
+	twinvac = { name = "Twin-Nozzle Vac", price = 2600, radius = 0, stripRadius = 0, cooldown = 0.1, impact = 0, hurt = 0, anim = "vacuum", reach = 9, hold = true, kind = "vacuum", nozzles = { -0.32, 0.32 }, cone = 0.62, cap = 70, range = 9, tag = "Wide",
+		desc = "Two intakes on a forked tube. A much wider pull, and it holds twice as much in two swirling clumps.",
+		look = { handle = 1.4, head = { 0.8, 0.4, 1.4 }, headColor = { 60, 160, 90 }, handleColor = { 40, 40, 44 } } },
+	cyclone = { name = "Cyclone Vac", price = 3400, radius = 0, stripRadius = 0, cooldown = 0.1, impact = 0, hurt = 0, anim = "vacuum", reach = 12, hold = true, kind = "vacuum", range = 12, cone = 0.93, cap = 25, launch = true, tag = "Powerful",
+		desc = "A long-range cyclone with a narrow, strong pull. Let go of the trigger and it fires everything it caught straight ahead.",
+		look = { handle = 1.4, head = { 0.45, 0.45, 1.8 }, headColor = { 120, 90, 200 }, handleColor = { 40, 40, 44 } } },
 	-- the bark drills: hold the trigger and sweep across the trunk, a bite every `cooldown` seconds
 	drill = { name = "Timber Auger", price = 2400, radius = 1, stripRadius = 0.24, cooldown = 0.2, impact = 0, hurt = 0, anim = "drill", reach = 2.2, hold = true, kind = "drill", tag = "Heavy",
 		desc = "A cordless rotary debarker. Hold the trigger and sweep it across the trunk to strip bark continuously.",
@@ -95,8 +105,8 @@ Config.Saw = { treeTime = 2.6, logTime = 1.1, carryMax = 3.0, buckBands = 7, cro
 Config.Leaf = { value = 0.05 }
 Config.Sapling = { rest = 1.5, growTime = 300 }
 -- the tool bar's order and the shop's (Godot's TOOL_ORDER and SHOP_ORDER, for the axes the Roblox version has)
-Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw" }
-Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "shears", "phone" }
+Config.ToolOrder = { "hands", "hatchet", "throwing", "double_bit", "twins", "combo", "spiral", "scraper", "gouge", "spud", "ringer", "labrys", "greataxe", "robo", "thunder", "saw", "bucksaw", "pole_saw", "crosscut", "chainsaw", "shears", "drill", "twin_auger", "holesaw", "vacuum", "twinvac", "cyclone" }
+Config.ShopOrder = { "hatchet", "double_bit", "twins", "combo", "throwing", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "crosscut", "drill", "twin_auger", "holesaw", "shears", "vacuum", "twinvac", "cyclone", "phone" }
 
 -- things you can buy that aren't tools (Godot's SHOP entries in "other")
 Config.Items = {
