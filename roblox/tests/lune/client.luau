@@ -318,5 +318,43 @@ do
 	check(on >= 2 and off == 1, string.format("holding the leaf vacuum runs it, letting go stops it (%d, %d)", on, off))
 end
 
+-- the hammer: a click opens the build menu; a card starts the hologram; a click on your land sets the plan down
+do
+	S.service("ToolService").grant(alice, "hammer")
+	-- (Lune has no terrain to aim at: a flat bit of ground where we'll build)
+	local WS = S.service("WorldService")
+	local ground = roblox.Instance.new("Part")
+	ground.Anchored = true
+	ground.Size = V3(30, 1, 30)
+	ground.CFrame = roblox.CFrame.new(-24, WS.heightAt(-24, 24) - 0.5, 24)
+	ground.Position = ground.CFrame.Position
+	ground.Parent = ws
+	S.stand(alice, V3(-24, 5, 33))
+	C.look(V3(-24, 0, 24))
+	task.wait(0.2)
+	C.frames(40)
+	C.click()
+	C.frames(2)
+	local menu = C.gui("BuildMenu")
+	check(menu ~= nil and C.find(menu, function(d) return d:IsA("TextLabel") and d.Text == "Log Bench" end) ~= nil, "a click with the hammer opens Godot's build menu")
+	local cardBtn = menu and C.find(menu, function(d)
+		return d:IsA("TextButton") and C.find(d, function(x) return x:IsA("TextLabel") and x.Text == "Log Bench" end) ~= nil
+	end)
+	if cardBtn then
+		ClientHarness.signal(cardBtn, "Activated"):Fire()
+	end
+	C.frames(3)
+	local holo = C.camera:FindFirstChild("Hologram")
+	check(C.gui("BuildMenu") == nil and holo ~= nil, "picking the Log Bench puts its hologram where you look")
+	local sent1 = #C.sent
+	C.click()
+	C.frames(2)
+	local placed = false
+	for k = sent1 + 1, #C.sent do
+		placed = placed or (C.sent[k].remote == "Build" and C.sent[k].args[1] == "bench")
+	end
+	check(placed and C.camera:FindFirstChild("Hologram") == nil, "a click sets the plan down")
+end
+
 print(string.format("\nCLIENT RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
 process.exit(if fails == 0 then 0 else 1)
