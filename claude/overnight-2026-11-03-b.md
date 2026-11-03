@@ -71,7 +71,7 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
 
 ## Morning report
 GOAL: make the Roblox version look exactly like the Godot game, then port everything still missing.
-HOURS: 14:22-21:15 UTC (about 7 hours of work, then this report).
+HOURS: 14:22-21:20 UTC (about 7 hours of work, then this report).
 
 Done:
 - **Visual parity check:** tools/roblox_view.sh renders both games from the same cameras. Ground, grass, trees,
@@ -79,9 +79,9 @@ Done:
 - **Ported and tested in Lune:** saving the world, small tools, bushes, trophies, all of mining, building and land,
   and every Godot machine (power, logic, sensors, production, logistics, feller, drill rig, charger, rotator).
   Also rails and minecarts, drones, dynamite, oil, the bigger trucks and the truck caller.
-- **CI:** green up to run 160 (rails). Run 161 failed only in the Godot ItemTest
-  ("wheelbarrow on the ground, not floating"); that test passed in runs 157-160, and no Godot script changed
-  tonight, so it looks like a physics flake. Runs 162-164 were cancelled by newer pushes; check 165/166.
+- **CI:** run 167 (everything up to the drones picking up logs) is green. Run 161 failed once, in the Godot
+  ItemTest ("wheelbarrow on the ground, not floating"); no Godot script changed tonight and the same code passed
+  in 167, so it was a physics flake. Run 168 (side rotators) was running when this was written.
 
 Open questions for you:
 1. Remove MachineService/OilService/PowerGrid/OilField? Recommendation: yes, they're dead code now.
