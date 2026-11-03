@@ -112,6 +112,14 @@ func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
 		kind = "block"
 	elif n is MeshInstance3D and (n as Node3D).global_position.length() > 100.0:
 		kind = "hills"
+	if kind == "cloud":
+		# each cloud on its own, so the game can drift them across the sky like Godot does
+		var ci := 0
+		for c in n.get_children():
+			for mi in (c as Node).find_children("*", "MeshInstance3D", true, false):
+				_add_mesh("world", "cloud_%d" % ci, mi, (mi as MeshInstance3D).global_transform)
+			ci += 1
+		return
 	var meshes: Array = []
 	if n is MeshInstance3D:
 		meshes.append(n)
@@ -135,13 +143,13 @@ func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
 			if (b as CollisionObject3D).collision_layer & 1 == 0:
 				continue
 			for cs in (b as Node).find_children("*", "CollisionShape3D", true, false):
-				_add_collider(cs as CollisionShape3D)
+				_add_collider(cs as CollisionShape3D, kind)
 		if n is CollisionObject3D and not n is StaticBody3D and (n as CollisionObject3D).collision_layer & 1 != 0:
 			for cs in n.find_children("*", "CollisionShape3D", true, false):
-				_add_collider(cs as CollisionShape3D)
+				_add_collider(cs as CollisionShape3D, kind)
 
 
-func _add_collider(cs: CollisionShape3D) -> void:
+func _add_collider(cs: CollisionShape3D, kind: String = "decor") -> void:
 	if cs.disabled or cs.shape == null:
 		return
 	var xf := cs.global_transform
@@ -161,7 +169,7 @@ func _add_collider(cs: CollisionShape3D) -> void:
 		return
 	var sc := xf.basis.get_scale()
 	var b := xf.basis.orthonormalized()
-	collide.append({"p": xf.origin * S, "b": b, "size": size * sc * S})
+	collide.append({"p": xf.origin * S, "b": b, "size": size * sc * S, "kind": kind})
 
 
 # the colour of a triangle's material (albedo, or a shader's "albedo"), times its vertex colour if it uses one
@@ -352,7 +360,7 @@ func _write_luau(main: Node3D) -> void:
 	L.append("\tsolid = {")
 	for c in collide:
 		var b: Basis = c.b
-		L.append("\t\t{ p = %s, x = %s, y = %s, z = %s, size = %s }," % [_v3(c.p), _v3(b.x), _v3(b.y), _v3(b.z), _v3(c.size)])
+		L.append("\t\t{ p = %s, x = %s, y = %s, z = %s, size = %s, kind = \"%s\" }," % [_v3(c.p), _v3(b.x), _v3(b.y), _v3(b.z), _v3(c.size), c.kind])
 	L.append("\t},")
 	# the ground: heights every 3 m (9 studs), for the Roblox ground you walk on
 	var step := 3.0

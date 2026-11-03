@@ -281,6 +281,8 @@ function WorldService.start()
 	solids.Name = "Solids"
 	for _, s in W.solid do
 		local p = solid(solids, s)
+		-- what your feet hear (Godot: rocks are stone, the cabin, porch and dock are wood)
+		p.Material = if s.kind == "rock" then Enum.Material.Slate else Enum.Material.WoodPlanks
 		if not haveMeshes then
 			p.Transparency = 0
 			p.Color = Color3.fromHex("9a8a70")
