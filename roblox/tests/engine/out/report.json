@@ -31,9 +31,9 @@
    "detail": "27 failed, e.g. GodotCrowns: 403 {\"errors\":[{\"code\":0,\"message\":\"Scope not authorized.\"}]}\n - the key needs the legacy-asset:manage permission (Legacy Assets > Manage)"
   },
   {
-   "step": "run the game in a Roblox server",
+   "step": "save the built place as a new version (not published)",
    "ok": false,
-   "detail": "set ROBLOX_UNIVERSE_ID and ROBLOX_PLACE_ID (repository variables) and ROBLOX_API_KEY"
+   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Scope not authorized.\"}]}\n - the key needs universe-places Write for this experience"
   }
  ]
 }
