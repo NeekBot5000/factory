@@ -5,8 +5,7 @@ key presses don't work (only clicking and moving), trees turn into lines when to
 STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
 
 ## Queue
-[ ] 9. The rest of Godot's axes (14 in its shop): twins, throwing, gouge, ringer, spud, spiral, robo, thunder...
-[ ] 11. Godot's title screen
+[ ] 9. Still to port: throwing hatchet, thunder axe, two-man crosscut, pole saw, the phone
 [ ] 10. Docs, playtest, CI; morning report
 
 ## Done
@@ -32,6 +31,10 @@ STARTED: 04:06 UTC   ENDS: 12:06 UTC (8 hours)
 [x] CI fixes: analyze only pure-logic modules; InputTest waits for the dropped tool to settle. Commit 03d33c6
 [x] Drifting clouds, wood/stone footsteps, sturdier client start. Commit d5aeb17
 [x] Godot's strip_circle ported exactly (circle in metres). Commit b94b7fa
+[x] Six more axes: twins, gouge, ringer, spud, spiral, robo (+ combo growth). Commit f5850a3
+[x] Godot's title screen, settings, credits. Commit e391fa8
+[x] Felling and logs: bow saw, buck saw, chainsaw; stumps, logs with bark, cutting, bucking, carrying, selling;
+    per-tree crowns (crowns.glb). Commit bfa6f25
 
 ## Parked
 - Checking the imports from CI: downloading an uploaded asset needs the API key to have the asset-delivery
