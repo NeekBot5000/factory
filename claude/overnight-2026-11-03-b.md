@@ -15,7 +15,7 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
 [x] 6. Mining: rocks/ore, pickaxe, sledge, steel pick, rock drill, core drill, detector, dynamite
 [x] 7. Building: hammer, build menu, hologram placement, blueprints filled by dropping resources (Godot's Builder,
        Blueprint, Builds) with the simple builds first (basket, bench, wheelbarrow...)
-[ ] 8. Machines on top of building: crank, lever, button, conveyor, ramp, piston, rotator, windmill, generator,
+[x] 8. Machines on top of building: crank, lever, button, conveyor, ramp, piston, rotator, windmill, generator,
        battery, logic, sensors, lamp, sawmill, chipper, planter, sprinkler, feller, smelter, kiln, assembler,
        grabber, sorter, crate, wireless, drill rig, charger
 [ ] 9. Rails and carts, drones, oil, truck upgrades, truck caller
@@ -48,5 +48,9 @@ STARTED: 14:22 UTC   ENDS: 22:22 UTC (8 hours)
     logic gates + pressure plate + item sensor (04b4bdf); crate, sprinkler, planter, grabber, piston, sorter,
     splitter, wireless (d0a9948); oil pump, refinery, Big Truck, Log Hauler (d726557).
     Checkpoint 17:51 UTC: 179 server + 38 client checks.
+[x] Tree feller and drill rig (hand them a saw / drill with E) (540ff43); level sensor and charger, battery cell
+    charge hints (46ad2ac); rotator: hammer sticks/lets go, spins powered, saved (latest). The playtest now clears
+    up the drill rig, which kept adding chunks and broke the anti-cheat counts in CI run 156.
+    Checkpoint 18:53 UTC: 187 server + 38 client checks.
 
 ## Parked
