@@ -407,7 +407,7 @@ function BuildService.serialize(userId: number): { any }
 						setting = m:GetAttribute("Setting"), latch = m:GetAttribute("LatchOn"), count = m:GetAttribute("Count"), recipe = m:GetAttribute("Recipe"),
 						channel = m:GetAttribute("Channel"), filter = m:GetAttribute("Filter"), fill = m:GetAttribute("Fill"),
 						holds = m:GetAttribute("Holds"), depth = m:GetAttribute("Depth"),
-						angle = m:GetAttribute("Angle"), stuck = m:GetAttribute("Stuck"), cell = m:GetAttribute("Cell") }
+						angle = m:GetAttribute("Angle"), stuck = m:GetAttribute("Stuck"), cell = m:GetAttribute("Cell"), dials = m:GetAttribute("Dials") }
 					e.uid = m:GetAttribute("Uid")
 				else
 					e.have = m:GetAttribute("Have")
@@ -501,6 +501,7 @@ function BuildService.restore(player: Player, list: { any })
 					m:SetAttribute("Angle", e.state.angle)
 					m:SetAttribute("Restick", e.state.stuck)
 					m:SetAttribute("Cell", e.state.cell)
+					m:SetAttribute("Dials", e.state.dials)
 				end
 				require(script.Parent.BuildBehaviors).activate(m)
 				made[k] = m

@@ -1307,6 +1307,65 @@ do
 	end
 end
 
+-- ---------------------------------------------------------------- drones
+do
+	local BS, CS, DS = A.service("BuildService"), A.service("CircuitService"), A.service("DroneService")
+	local PS = A.service("ProductionService")
+	local M = Cfg.StudsPerMetre
+	local base = V3(-90, 0, 90)
+	local h0 = A.service("WorldService").heightAt(base.X, base.Z)
+	local drone = BS.make("drone_small", roblox.CFrame.new(V3(base.X, h0, base.Z)), 1, 101, true, {})
+	task.wait(0.3)
+	check(drone:GetAttribute("Dials") == "0,1,2,3,4", "a drone's five dials start on red, green, blue, yellow and purple")
+	-- E on a dial changes its channel; on the body, with a cell in, takes the cell out
+	local front
+	for _, p in drone:GetChildren() do
+		if DS.dialOf(drone, p) == 1 then
+			front = p
+		end
+	end
+	DS.use(drone, front)
+	check(front ~= nil and DS.dials(drone)[1] == 1, "[E] on its front dial turns it to the next channel")
+	for _ = 1, 7 do
+		DS.use(drone, front)
+	end
+	check(DS.dials(drone)[1] == -1, "and after pink, off")
+	for _ = 1, 6 do
+		DS.use(drone, front)       -- (orange: the wireless test's transmitter is still on red)
+	end
+	-- a charged cell in its cradle: it rises to 3 m; a powered transmitter on red flies it forward
+	local cell = PS.product("battery_cell", 1.2, roblox.Color3.new(1, 1, 1), drone:GetPivot() * roblox.CFrame.new(0, 0.42 * M, 0.18 * M), V3(0, 0, 0), 101)
+	cell.Position = cell.CFrame.Position
+	cell:SetAttribute("Charge", 1)
+	for _ = 1, 40 do
+		task.wait(0.25)
+		if drone:GetPivot().Position.Y - h0 > 2.9 * M then
+			break
+		end
+	end
+	check(cell.Parent == nil and drone:GetPivot().Position.Y - h0 > 2.5 * M, string.format("with a charged cell it rises to cruise over the ground (%.1f m)", (drone:GetPivot().Position.Y - h0) / M))
+	local z0 = drone:GetPivot().Position.Z
+	local crank = BS.make("crank", roblox.CFrame.new(base + V3(12, 0, 0)), 1, 101, true, {})
+	for _ = 1, 8 do
+		CS.use(crank)
+	end
+	local tx = BS.make("transmitter", roblox.CFrame.new(base + V3(15, 0, 0)), 1, 101, true, {})
+	tx:SetAttribute("Channel", 5)
+	CS.toggle(crank, tx)
+	task.wait(1.5)
+	check(drone:GetPivot().Position.Z < z0 - 1 * M, "a powered transmitter on its front dial's channel (orange) flies it forward")
+	tx:Destroy()
+	task.wait(0.3)
+	local z1 = drone:GetPivot().Position.Z
+	task.wait(0.5)
+	check(math.abs(drone:GetPivot().Position.Z - z1) < 0.05, "and it hovers when the channel goes off")
+	DS.use(drone, nil)
+	check(drone:GetAttribute("Cell") == nil, "[E] takes its cell out")
+	for _, m in { drone, crank } do
+		m:Destroy()
+	end
+end
+
 -- ---------------------------------------------------------------- production
 do
 	local BS, PS = A.service("BuildService"), A.service("ProductionService")

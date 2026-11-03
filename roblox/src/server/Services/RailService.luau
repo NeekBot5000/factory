@@ -290,7 +290,7 @@ local function adopt(m: Model)
 	local len = cartLength(m)
 	local uid = m:GetAttribute("Uid")
 	for _, b in builds() do
-		if b == m or isCart(b) or b:GetAttribute("Deck") ~= nil or b:GetAttribute("Build") == "drone_small" then
+		if b == m or isCart(b) or b:GetAttribute("Deck") ~= nil or (string.sub(b:GetAttribute("Build") :: string? or "", 1, 6) == "drone_" and b:GetAttribute("Build") ~= "drone_pad") then
 			continue
 		end
 		local lp = m:GetPivot():PointToObjectSpace(b:GetPivot().Position) / M
@@ -643,6 +643,16 @@ function RailService.step(dt: number)
 			end
 			m:SetAttribute("Cd", t)
 		elseif id == "drone_pad" and m:GetAttribute("Powered") == true then
+			-- the battery of a drone above it charges (and cells left on it)
+			for _, d in builds() do
+				local c = d:GetAttribute("Cell") :: number?
+				if c and string.sub(d:GetAttribute("Build") :: string? or "", 1, 6) == "drone_" and d ~= m then
+					local lp = m:GetPivot():PointToObjectSpace(d:GetPivot().Position) / M
+					if math.abs(lp.X) < 0.6 and math.abs(lp.Z) < 0.6 and lp.Y > -0.2 and lp.Y < 4.0 then
+						d:SetAttribute("Cell", math.min(1, c + RailService.PAD_RATE * dt))
+					end
+				end
+			end
 			local FS = require(script.Parent.FactoryService) :: any
 			for _, b in FS.within(m, Vector3.new(0, 0.35, 0), Vector3.new(0.9, 0.5, 0.9)) do
 				if b:GetAttribute("Product") == "battery_cell" then

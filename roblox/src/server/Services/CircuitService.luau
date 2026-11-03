@@ -96,7 +96,7 @@ end
 
 local function conducts(m: Model): boolean
 	local id = m:GetAttribute("Build")
-	if isGate(m) or id == "transmitter" or id == "receiver" or isCart(m) then
+	if isGate(m) or id == "transmitter" or id == "receiver" or isCart(m) or string.sub(id :: string? or "", 1, 6) == "drone_" and id ~= "drone_pad" then
 		return false          -- (a logic block only lets power out of its front, and only when its logic says so)
 	end
 	if id == "lever" then
@@ -708,6 +708,8 @@ function CircuitService.use(m: Model): boolean
 		return true
 	elseif isCart(m) then
 		return (require(script.Parent.RailService) :: any).takeCell(m)
+	elseif string.sub(id :: string? or "", 1, 6) == "drone_" and id ~= "drone_pad" then
+		return (require(script.Parent.DroneService) :: any).use(m, nil)
 	elseif id == "level_sensor" then
 		local s = ((m:GetAttribute("Setting") :: number? or 1) + 1) % #CircuitService.LEVELS
 		m:SetAttribute("Setting", s)
@@ -758,6 +760,10 @@ function CircuitService.start()
 		if m and near(player, m, 6 * M) then
 			if m:GetAttribute("Build") == "feller" or m:GetAttribute("Build") == "drill_rig" then
 				(require(script.Parent.FactoryService) :: any).handOver(player, m)
+				return
+			end
+			if string.sub(m:GetAttribute("Build") :: string? or "", 1, 6) == "drone_" and m:GetAttribute("Build") ~= "drone_pad" then
+				(require(script.Parent.DroneService) :: any).use(m, target)
 				return
 			end
 			if m:GetAttribute("Build") == "sorter" then

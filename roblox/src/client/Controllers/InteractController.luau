@@ -15,6 +15,7 @@ local BuildController = require(script.Parent.BuildController)
 local Land = require(game:GetService("ReplicatedStorage").Shared.Land)
 local Mining = require(game:GetService("ReplicatedStorage").Shared.Mining)
 local Weight = require(game:GetService("ReplicatedStorage").Shared.Weight)
+local Drones = require(game:GetService("ReplicatedStorage").Shared.Drones)
 local State = require(script.Parent.Parent.State)
 local Sfx = require(script.Parent.Parent.Sfx)
 
@@ -333,6 +334,24 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 	elseif id == "battery" then
 		local c = m:GetAttribute("Charge") :: number? or 0
 		return string.format("Battery  ·  %d%%  ·  %s", math.floor(c / 180 * 100), if m:GetAttribute("Feeding") then "powering" elseif powered then "charging" else "idle"), false
+	elseif Drones.isDrone(m) then
+		-- (Godot's Drone.hint_text: the dial you're looking at, or the cell)
+		local d = Drones.SIZES[id]
+		local c = m:GetAttribute("Cell") :: number?
+		local parts = { d.name, if c then string.format("battery %d%%", math.floor(c * 100)) else "no battery cell", string.format("lifts up to %.1f kg", d.lift) }
+		if m:GetAttribute("Heavy") then
+			table.insert(parts, "too heavy to lift!")
+		end
+		local text = table.concat(parts, "  ·  ")
+		local hit = look()
+		local i = hit and Drones.dialOf(m, hit.Instance)
+		if i then
+			local name = Drones.DIALS[i]
+			return text .. string.format("\n%s dial: %s    [E] change", string.upper(string.sub(name, 1, 1)) .. string.sub(name, 2), Drones.channelName(Drones.dials(m)[i])), true
+		elseif c then
+			return text .. "    [E] take the cell out", true
+		end
+		return text .. "    drop a charged battery cell in the cradle on its back", false
 	elseif string.sub(id, 1, 9) == "minecart_" then
 		local c = m:GetAttribute("Cell") :: number?
 		return string.format("Minecart (%s long)  ·  %s%s", string.sub(id, 10), if c then string.format("battery %d%%", math.floor(c * 100)) else "no battery cell",
