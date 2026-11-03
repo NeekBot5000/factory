@@ -297,6 +297,18 @@ function WorldService.start()
 		end
 	end
 	solids.Parent = workspace
+	-- the bushes: something for the shears to find (Godot's bushes are on their own layer that only tools look at)
+	local bushes = Instance.new("Folder")
+	bushes.Name = "Bushes"
+	for i, b in W.bushes or {} do
+		local p = part({ Name = "Bush_" .. (i - 1), Shape = Enum.PartType.Ball, Size = Vector3.one * b.r * 2,
+			CFrame = CFrame.new(v3(b.at) + Vector3.new(0, b.r * 0.5, 0)), Transparency = 1, CanCollide = false, CastShadow = false })
+		p:SetAttribute("Bush", i - 1)
+		p:SetAttribute("Color", b.color)
+		p:SetAttribute("Snips", 6)
+		p.Parent = bushes
+	end
+	bushes.Parent = workspace
 	-- Godot's lights that are part of the world (the lamp on the cabin's table)
 	for _, l in W.lights or {} do
 		local holder = part({ Name = "Light", Size = Vector3.one * 0.2, CFrame = CFrame.new(v3(l.at)), Transparency = 1, CanCollide = false, CanQuery = false })

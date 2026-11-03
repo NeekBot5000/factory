@@ -21,6 +21,7 @@ var groups := {}                  # "glb/name" -> {"verts": PackedVector3Array, 
 var collide: Array = []           # solid boxes: {p, b, size}
 var computer: Array = []          # the computer's boxes (E on it opens TimberMart)
 var rocks: Array = []             # each rock: {at (studs), s (Godot's size), ore, hidden, hp}
+var bushes: Array = []            # each bush: {at, r (studs), color}
 
 
 func _ready() -> void:
@@ -110,6 +111,25 @@ func _ready() -> void:
 		builds_info[id] = {"parts": info, "top": top, "groups": groups_at}
 		root.free()
 	_write_builds(builds_info)
+	# the trophy wall's plaques: empty, and with each trophy's keepsake on it (Trophies._build)
+	var tw := Trophies.new()
+	holder.add_child(tw)
+	for c in tw.get_children():
+		c.free()
+	var empty := Node3D.new()
+	tw.add_child(empty)
+	LowPoly.mesh_instance(empty, LowPoly.box(Vector3(0.03, 0.4, 0.4)), LowPoly.mat(Color("6b4a32"), 0.9), Vector3.ZERO)
+	LowPoly.mesh_instance(empty, LowPoly.box(Vector3(0.02, 0.1, 0.1)), LowPoly.mat(Color("3b2a22"), 0.9), Vector3(0.02, 0, 0))
+	for mi in empty.find_children("*", "MeshInstance3D", true, false):
+		_add_mesh("props", "plaque", mi, (mi as MeshInstance3D).transform)
+	for e in Trophies.LIST:
+		var pl := Node3D.new()
+		tw.add_child(pl)
+		LowPoly.mesh_instance(pl, LowPoly.box(Vector3(0.03, 0.4, 0.4)), LowPoly.mat(Color("6b4a32"), 0.9), Vector3.ZERO)
+		tw.call("_item", pl, e[0])
+		for mi in pl.find_children("*", "MeshInstance3D", true, false):
+			_add_mesh("props", "trophy_" + String(e[0]), mi, pl.global_transform.affine_inverse() * (mi as MeshInstance3D).global_transform)
+	tw.free()
 	# an ore chunk of each kind (Ore.setup at its usual size, 0.14 m) and a mine shaft's rim and pit
 	for kind in ["stone", "copper", "iron"]:
 		var o := Ore.new()
@@ -155,7 +175,7 @@ func _ready() -> void:
 
 # what each top-level node of the world is, and what to call its meshes
 func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
-	if n is Player or n is CanvasLayer or n is Truck or n is WorldEnvironment or n is DirectionalLight3D or n is CompanySign or n is Land:
+	if n is Player or n is CanvasLayer or n is Truck or n is WorldEnvironment or n is DirectionalLight3D or n is CompanySign or n is Land or n is Trophies:
 		# (the company sign grows as you earn: it's in props.glb, tier by tier, and the game puts up the right one;
 		# the land's for-sale signs and corner stakes depend on what each player owns: props too, drawn by the client)
 		return
@@ -186,7 +206,7 @@ func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
 		_add_multimesh(n as MultiMeshInstance3D)
 		return
 	var kind := "decor"
-	if n is Cabin or n is Computer or n is CompanySign or n is Trophies:
+	if n is Cabin or n is Computer:
 		kind = "cabin"
 	elif n is Rock:
 		# each rock on its own (you mine it: it shrinks and crumbles away), and what's in it
@@ -194,7 +214,9 @@ func _walk(n: Node, main: Node3D, tree_index: Dictionary) -> void:
 		var rk := n as Rock
 		rocks.append({"at": rk.global_position * S, "s": rk.size, "ore": rk.ore, "hidden": rk.hidden, "hp": rk.max_hp})
 	elif n is Bush:
-		kind = "bush"
+		# each bush on its own (shears trim it away), and its look
+		kind = "bush_%d" % bushes.size()
+		bushes.append({"at": (n as Node3D).global_position * S, "r": float(n.get("_radius")) * S, "color": (n.get("_color") as Color).to_html(false)})
 	elif n.name == "Clouds":
 		kind = "cloud"
 	elif n is StaticBody3D and n.get_child_count() > 0 and (n as Node3D).global_position.distance_to(main.get("BLOCK_AT") + Vector3(0, (n as Node3D).global_position.y, 0)) < 0.5:
@@ -551,6 +573,15 @@ func _write_luau(main: Node3D) -> void:
 	# the player's start: on the porch, looking out
 	var p: Player = main.player
 	L.append("\tspawn = { at = %s, yaw = %.3f }," % [_v3(p.spawn_xform.origin * S), p.spawn_xform.basis.get_euler().y])
+	# the bushes (shears snip leaves off them)
+	L.append("\tbushes = {")
+	for b in bushes:
+		L.append("\t\t{ at = %s, r = %.3f, color = \"%s\" }," % [_v3(b.at), b.r, b.color])
+	L.append("\t},")
+	# the trophy wall in the cabin (each player's own: the client puts up their plaques)
+	for c in main.get_children():
+		if c is Trophies:
+			L.append("\ttrophies = { at = %s }," % _v3((c as Node3D).global_position * S))
 	# the rocks you can mine
 	L.append("\trocks = {")
 	for r in rocks:

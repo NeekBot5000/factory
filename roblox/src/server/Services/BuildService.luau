@@ -204,6 +204,10 @@ local function complete(plan: Model)
 	local p = Players:GetPlayerByUserId(owner)
 	if p then
 		remotes.Notify:FireClient(p, def.name, "7aff9a")
+		local TrophyService = require(script.Parent.TrophyService) :: any
+		if def.machine then
+			TrophyService.award(p, "first_machine")
+		end
 	end
 end
 

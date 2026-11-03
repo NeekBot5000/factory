@@ -303,6 +303,14 @@ local function impact()
 			Sfx.play("snip", 1)
 			burst(at, -workspace.CurrentCamera.CFrame.LookVector, Color3.fromHex("5aab44"), 8, 3)
 			remotes.Snip:FireServer(tree, at)
+			return
+		end
+		-- a bush in reach
+		local bh = ToolController.aim(d.reach * M)
+		if bh and bh.Instance:GetAttribute("Bush") ~= nil then
+			Sfx.play("snip", 1)
+			burst(bh.Position, bh.Normal, Color3.fromHex(bh.Instance:GetAttribute("Color") or "3f7f33"), 8, 3)
+			remotes.Snip:FireServer(bh.Instance, bh.Position)
 		end
 		return
 	end

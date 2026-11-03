@@ -876,6 +876,31 @@ do
 	sp:Destroy()
 end
 
+-- ---------------------------------------------------------------- bushes and trophies
+do
+	Tools.grant(alice, "shears")
+	task.wait(1.3)
+	local bush = ws.Bushes:FindFirstChild("Bush_0")
+	check(bush ~= nil and #ws.Bushes:GetChildren() > 5, "every bush is its own (" .. #ws.Bushes:GetChildren() .. ")")
+	if bush then
+		A.stand(alice, bush.CFrame.Position + V3(5, 3, 0))
+		local snip = A.remotes.Snip.OnServerEvent
+		local before = #loose:GetChildren()
+		snip:Fire(alice, bush, bush.CFrame.Position + V3(2, 0, 0))
+		task.wait(0.1)
+		check(#loose:GetChildren() - before >= 2, "shears on a bush tear 2 or 3 clumps of leaves off it")
+		for _ = 1, 5 do
+			task.wait(0.3)
+			snip:Fire(alice, bush, bush.CFrame.Position + V3(2, 0, 0))
+		end
+		task.wait(0.1)
+		check(not pcall(function() return bush.Parent.Name end), "and after 6 snips it's trimmed away")
+	end
+	-- trophies: felling a tree earns "your first tree felled"
+	check(string.find(alice:GetAttribute("Trophies") or "", "first_tree", 1, true) ~= nil and count("Notify", alice, "Trophy: your first tree felled") == 1,
+		"felling your first tree puts a trophy on your wall (Godot's toast)")
+end
+
 -- ---------------------------------------------------------------- mining
 do
 	local mine = A.remotes.Mine.OnServerEvent

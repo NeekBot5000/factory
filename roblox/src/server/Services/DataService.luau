@@ -166,6 +166,14 @@ function DataService.publish(player: Player)
 	player:SetAttribute("Fresh", (data.earned or 0) <= 0 and onlyHands and #(data.orders or {}) == 0 and (data.tutorial or 1) == 1)
 	player:SetAttribute("Settings", HttpService:JSONEncode(data.settings or {}))
 	player:SetAttribute("Land", table.concat(data.land or {}, ";"))
+	local tro = {}
+	for id, yes in data.trophies or {} do
+		if yes then
+			table.insert(tro, id)
+		end
+	end
+	table.sort(tro)
+	player:SetAttribute("Trophies", table.concat(tro, ","))
 end
 
 -- New Game: this player's save starts over (Godot's Game.reset), keeping only their settings

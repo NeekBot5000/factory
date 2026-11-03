@@ -133,6 +133,16 @@ end
 
 -- the standing tree is felled at band cutJ: the stump stays (shorter, with the bark it had), the rest falls
 function LogService.fell(tree: Model, cutJ: number, away: Vector3, player: Player?): Model?
+	-- (Godot's trophies: your first tree, an ancient giant, the Legendary Tree)
+	if player then
+		local TrophyService = require(script.Parent.TrophyService) :: any
+		if tree:GetAttribute("Legendary") then
+			TrophyService.award(player, "legend")
+		elseif tree:GetAttribute("Giant") then
+			TrophyService.award(player, "giant")
+		end
+		TrophyService.award(player, "first_tree")
+	end
 	local bands = tree:GetAttribute("Bands") :: number
 	cutJ = math.clamp(cutJ, 1, bands - 2)
 	local g = TreeService.gridOf(tree)
@@ -424,7 +434,58 @@ function LogService.snip(player: Player?, tree: Model, at: Vector3): boolean
 	return true
 end
 
+-- Shears on a bush (Godot's Bush.snip): 2 or 3 clumps of leaves in its colour, it shrinks a little each time
+-- (0.88), and after 6 snips it's trimmed away
+function LogService.snipBush(player: Player?, bush: BasePart, at: Vector3)
+	local color = Color3.fromHex(bush:GetAttribute("Color") :: string? or "3f7f33")
+	local head = player and player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+	local out = if head then (head.CFrame.Position - at).Unit else Vector3.yAxis
+	for _ = 1, math.random(2, 3) do
+		local lf = leaf(at + Vector3.new(math.random() * 0.2 - 0.1, 0.05, math.random() * 0.2 - 0.1) * M, color, player and player.UserId)
+		lf.AssemblyLinearVelocity = (out * (0.6 + math.random() * 0.8) + Vector3.new(0, 0.8, 0)) * M
+	end
+	remotes.Fx:FireAllClients("rustle", at, 1.1 + math.random() * 0.2, -4)
+	local left = (bush:GetAttribute("Snips") :: number? or 6) - 1
+	bush:SetAttribute("Snips", left)
+	local trim = (bush:GetAttribute("Trim") :: number? or 1) * 0.88
+	bush:SetAttribute("Trim", trim)
+	local idx = bush:GetAttribute("Bush")
+	local world = workspace:FindFirstChild("GodotWorld")
+	local centre = bush.CFrame.Position
+	for _, p in if world then world:GetChildren() else {} do
+		if p:IsA("BasePart") and string.match(p.Name, "^bush_(%d+)_") == tostring(idx) then
+			local home = p:GetAttribute("HomeCF") :: CFrame?
+			local size = p:GetAttribute("HomeSize") :: Vector3?
+			if not home or not size then
+				p:SetAttribute("HomeCF", p.CFrame)
+				p:SetAttribute("HomeSize", p.Size)
+				home, size = p.CFrame, p.Size
+			end
+			if left <= 0 then
+				p:Destroy()
+			else
+				local rel = (home :: CFrame).Position - centre
+				p.Size = (size :: Vector3) * trim
+				p.CFrame = CFrame.new(centre + rel * trim) * ((home :: CFrame) - (home :: CFrame).Position)
+			end
+		end
+	end
+	if left <= 0 then
+		bush:Destroy()
+	end
+end
+
 local function onSnip(player: Player, target: unknown, at: unknown)
+	if typeof(target) == "Instance" and typeof(at) == "Vector3" and (target :: Instance):GetAttribute("Bush") ~= nil then
+		local tool = (Config.Tools :: any)[ToolService.current(player)]
+		local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+		local now = os.clock()
+		if tool and tool.snip and head and (head.CFrame.Position - (at :: Vector3)).Magnitude <= tool.reach * M + 5 and now - (lastSnip[player] or 0) >= tool.cooldown * 0.8 then
+			lastSnip[player] = now
+			LogService.snipBush(player, target :: BasePart, at :: Vector3)
+		end
+		return
+	end
 	if typeof(target) ~= "Instance" or typeof(at) ~= "Vector3" or not (target :: Instance):IsA("Model") or not (target :: Instance):HasTag("Tree") then
 		return
 	end
