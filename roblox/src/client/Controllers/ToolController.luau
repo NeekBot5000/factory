@@ -303,6 +303,65 @@ local function impact()
 	end
 end
 
+-- A bolt from the sky onto `at`, a flash and a thunderclap (Godot's _lightning). Everyone sees it.
+local function lightning(at: Vector3)
+	local bolt = Instance.new("Model")
+	bolt.Name = "Lightning"
+	local p = at + Vector3.new((math.random() * 4 - 2) * M, 26 * M, (math.random() * 4 - 2) * M)
+	local steps = 9
+	for i = 0, steps - 1 do
+		local k = (i + 1) / steps
+		local q = p:Lerp(at, 1 / (steps - i))
+		if i < steps - 1 then
+			q += Vector3.new((math.random() * 1.8 - 0.9) * M, 0, (math.random() * 1.8 - 0.9) * M)
+		end
+		local seg = Instance.new("Part")
+		seg.Anchored = true
+		seg.CanCollide = false
+		seg.CanQuery = false
+		seg.CastShadow = false
+		seg.Material = Enum.Material.Neon
+		seg.Color = Color3.fromHex("e8f6ff")
+		local w = 0.12 * (1.2 - k * 0.6) * M
+		seg.Size = Vector3.new(w, w, (q - p).Magnitude)
+		seg.CFrame = CFrame.lookAt((p + q) / 2, q)
+		seg.Parent = bolt
+		p = q
+	end
+	bolt.Parent = workspace
+	local holder = Instance.new("Part")
+	holder.Anchored = true
+	holder.CanCollide = false
+	holder.CanQuery = false
+	holder.Transparency = 1
+	holder.Size = Vector3.one * 0.2
+	holder.Position = at + Vector3.new(0, 2 * M, 0)
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromHex("cfeaff")
+	light.Brightness = 10
+	light.Range = 60          -- (Roblox lights reach 60 studs at most; Godot's is 30 m)
+	light.Parent = holder
+	holder.Parent = workspace
+	TweenService:Create(light, TweenInfo.new(0.5), { Brightness = 0 }):Play()
+	task.spawn(function()
+		task.wait(0.12)
+		bolt.Parent = nil
+		task.wait(0.06)
+		bolt.Parent = workspace
+		task.wait(0.08)
+		bolt:Destroy()
+		task.wait(0.3)
+		holder:Destroy()
+	end)
+	burst(at, Vector3.yAxis, Color3.fromHex("bfe9ff"), 40, 6 * M)
+	local cam = workspace.CurrentCamera
+	if cam and (cam.CFrame.Position - at).Magnitude < 60 * M then
+		State.white = math.max(State.white, 0.75)
+	end
+	Sfx.play("thunder", 1, 2)
+end
+ToolController.lightning = lightning
+
 local function startSwing()
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if State.swing >= 0 or State.equipT < 1 or State.uiOpen or State.fainted or not hum or hum.Health <= 0 or State.thrown then
@@ -345,7 +404,7 @@ function ToolController.start()
 	local pressing = false
 	InputController.on("Swing", function(state)
 		pressing = state == Enum.UserInputState.Begin
-		if state == Enum.UserInputState.Begin then
+		if state == Enum.UserInputState.Begin and not def().charge then
 			startSwing()
 		end
 	end)
@@ -360,9 +419,54 @@ function ToolController.start()
 		end
 	end
 	local chain: Sound? = nil
+	local charging = false
 	RunService.Heartbeat:Connect(function(dt)
 		if pressing and def().auto and State.swing < 0 then
 			startSwing()
+		end
+		-- the Thunder Axe: hold to charge, let go on a trunk and lightning strips the whole tree. Let go early and
+		-- it's an ordinary hit; after a strike it needs a few seconds to charge again (Godot's _thunder_step)
+		local td = def()
+		State.thunderCd = math.max(0, State.thunderCd - dt)
+		if not td.charge then
+			charging = false
+			State.charge = 0
+		else
+			if pressing and not charging and State.swing < 0 and State.equipT >= 1 and not State.uiOpen then
+				charging = true
+			end
+			if charging and pressing then
+				if State.thunderCd > 0 then
+					tell("thunder", "The Thunder Axe is still recharging")
+				else
+					local was = State.charge
+					State.charge = math.min(1, State.charge + dt / td.charge)
+					if was < 1 and State.charge >= 1 then
+						Sfx.play("crackle", 0.8, 0)
+					elseif math.random() < dt * (3 + State.charge * 12) then
+						Sfx.play("crackle", 0.9 + math.random() * 0.5, -14 + 10 * State.charge)
+					end
+				end
+			elseif charging then
+				charging = false
+				if State.charge >= 1 then
+					State.thunderCd = td.rest
+					startSwing()
+					local hit = ToolController.aim((td.reach + 1) * M)
+					local tree = hit and treeOf(hit.Instance)
+					if hit and tree then
+						shake(tree, 3)
+						remotes.StripRequest:FireServer(tree, hit.Position, State.tool, true)
+					else
+						local cam = workspace.CurrentCamera
+						lightning(if hit then hit.Position else cam.CFrame.Position + cam.CFrame.LookVector * 4 * M)
+					end
+					State.kick = 0.1
+				else
+					startSwing()
+				end
+				State.charge = 0
+			end
 		end
 		-- saws: hold the button against a trunk until the ring fills (Godot's _saw_step)
 		local d = def()
@@ -426,6 +530,11 @@ function ToolController.start()
 		if State.comboT > 1.25 and State.combo > 0 then
 			State.combo = 0
 			Sfx.play("click", 0.5, -8)
+		end
+	end)
+	remotes.Fx.OnClientEvent:Connect(function(name: string, at: Vector3?)
+		if name == "lightning" and at then
+			lightning(at)
 		end
 	end)
 	InputController.on("NextTool", function(state)

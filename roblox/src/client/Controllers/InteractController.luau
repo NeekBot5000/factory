@@ -328,7 +328,9 @@ function InteractController.start()
 	end)
 	-- the server's sounds for things only it knows about (the horn as the truck leaves, a tutorial step done)
 	remotes.Fx.OnClientEvent:Connect(function(name: string, at: Vector3?, pitch: number?, db: number?)
-		if at then
+		if name == "lightning" then
+			return          -- (the ToolController draws the bolt and plays the thunder)
+		elseif at then
 			Sfx.playAt(name, at, pitch, db)
 		else
 			Sfx.play(name, pitch, db)

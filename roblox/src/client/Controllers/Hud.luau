@@ -118,6 +118,15 @@ function Hud.start()
 		edge(gui, Vector2.new(0, 1), UDim2.fromScale(0, 1), UDim2.fromScale(1, 0.35), 270),
 	}
 	local flashA = 0
+	-- the lightning's white flash over everything (Godot's hud.lightning)
+	local white = Instance.new("Frame")
+	white.Name = "Lightning"
+	white.Size = UDim2.fromScale(1, 1)
+	white.BackgroundColor3 = Color3.new(1, 1, 1)
+	white.BackgroundTransparency = 1
+	white.BorderSizePixel = 0
+	white.ZIndex = 50
+	white.Parent = gui
 
 	-- the crosshair: a dot and the ring
 	local dot = Instance.new("Frame")
@@ -404,6 +413,8 @@ function Hud.start()
 		for _, f in flash do
 			f.BackgroundTransparency = 1 - strength
 		end
+		State.white = math.max(0, State.white - dt * 3)
+		white.BackgroundTransparency = 1 - State.white
 		-- health shows only while you're hurt
 		local hurt = health < maxHealth - 0.5
 		hpGroup.GroupTransparency = math.clamp(hpGroup.GroupTransparency + (if hurt then -dt * 4 else dt), 0, 1)

@@ -232,6 +232,32 @@ function BarkGrid.stripPanels(g: Grid, list: { { number } }): { Strip }
 	return out
 end
 
+-- Godot's strip_all (the Thunder Axe): every panel left, both layers, in sheets of block x block panels.
+function BarkGrid.stripAll(g: Grid, block: number): { Strip }
+	local out = {}
+	for _, layer in { BarkGrid.OUTER, BarkGrid.INNER } do
+		for j0 = 0, g.bands - 1, block do
+			for i0 = 0, g.sectors - 1, block do
+				local panels = {}
+				for j = j0, math.min(j0 + block, g.bands) - 1 do
+					for i = i0, i0 + block - 1 do
+						if BarkGrid.has(g, layer, i, j) then
+							table.insert(panels, { i % g.sectors, j })
+						end
+					end
+				end
+				if #panels > 0 then
+					for _, p in panels do
+						clear(g, layer, p[1], p[2])
+					end
+					table.insert(out, { layer = layer, panels = panels })
+				end
+			end
+		end
+	end
+	return out
+end
+
 -- Bands j0 .. j1-1 of a grid as a grid of their own (a log sawn off a tree keeps its bark, Godot's setup_section).
 function BarkGrid.slice(g: Grid, j0: number, j1: number): Grid
 	local out = BarkGrid.new(g.sectors, j1 - j0)

@@ -145,7 +145,9 @@ local function minGap(tool: any): number
 	return gap
 end
 
-local function onStrip(player: Player, tree: unknown, point: unknown, toolId: unknown)
+local thunderAt: { [Player]: number } = {}
+
+local function onStrip(player: Player, tree: unknown, point: unknown, toolId: unknown, strike: unknown)
 	-- never trust the client: check every argument
 	if typeof(tree) ~= "Instance" or not (tree :: Instance):IsA("Model") or not CollectionService:HasTag(tree :: Instance, "Tree") then
 		return
@@ -203,7 +205,17 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 		local i, j, loc = hitAt(at)
 		add(BarkGrid.stripCircleAt(g, i, j, loc, r, R, R - Config.Tree.outerT, Config.Tree.bandH, only))
 	end
-	if tool.ring then
+	if strike == true and tool.charge then
+		-- the Thunder Axe, fully charged: lightning takes every sheet off the whole tree (then it rests 6 s)
+		if now2 - (thunderAt[player] or -math.huge) < tool.rest * 0.9 then
+			return
+		end
+		thunderAt[player] = now2
+		for _, res in BarkGrid.stripAll(g, 4) do
+			add(res)
+		end
+		remotes.Fx:FireAllClients("lightning", point)
+	elseif tool.ring then
 		local i, j = hitAt(point :: Vector3)
 		add(BarkGrid.stripRing(g, i, j))
 	elseif tool.through then
@@ -276,6 +288,7 @@ function TreeService.start()
 		comboOf[p] = nil
 		spiralOf[p] = nil
 		toldGouge[p] = nil
+		thunderAt[p] = nil
 		-- their bark goes with them
 		for _, s in loose:GetChildren() do
 			if s:GetAttribute("Kind") == "bark" and s:GetAttribute("Owner") == p.UserId then

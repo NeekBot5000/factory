@@ -209,6 +209,15 @@ local function setTool(id: string)
 		end
 		m.Parent = model
 		toolModel = m
+		if (Config.Tools :: any)[id] and (Config.Tools :: any)[id].charge then
+			-- the Thunder Axe's head glows, brighter as it charges (Godot's Glow)
+			local glow = Instance.new("PointLight")
+			glow.Name = "Glow"
+			glow.Color = Color3.fromHex("bfe9ff")
+			glow.Range = 6
+			glow.Brightness = 0.6
+			glow.Parent = m.PrimaryPart or m:FindFirstChildWhichIsA("BasePart", true)
+		end
 		if id == "twins" then
 			leftTool = m:Clone()
 			leftTool.Parent = leftArm
@@ -384,6 +393,10 @@ function ViewModel.start()
 				elseif def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0)
 				else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)
 			toolModel:PivotTo(world * TOOL_ROOT * inArm)
+			local glow = toolModel:FindFirstChild("Glow", true) :: PointLight?
+			if glow then
+				glow.Brightness = if State.thunderCd > 0 then 0.15 else 0.6 + State.charge * 5 + math.sin(os.clock() * 30) * 0.8 * State.charge
+			end
 		end
 	end)
 end

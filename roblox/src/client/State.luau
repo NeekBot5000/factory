@@ -17,6 +17,9 @@ local State = {
 	catch = 0,              -- 1 -> 0 just after catching it
 	sawing = false,
 	comboT = 0,
+	charge = 0,             -- the Thunder Axe: 0 -> 1 while you hold the button
+	thunderCd = 0,          -- seconds until it can strike again
+	white = 0,              -- the lightning's white flash over the screen
 }
 
 local toastEvent = Instance.new("BindableEvent")

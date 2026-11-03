@@ -234,5 +234,39 @@ if panels then
 	check(inner > 0, "where the outer bark came off, the inner layer shows in its own colour (" .. inner .. " panels)")
 end
 
+-- the Thunder Axe: hold the button to charge it, let go on the trunk and the strike goes to the server
+do
+	S.service("ToolService").grant(alice, "thunder")
+	S.stand(alice, base + V3(r + 3, 4.5, 0))
+	C.look(base + V3(0, 4.5, 0))
+	task.wait(0.2)
+	C.frames(40)
+	local sent1 = #C.sent
+	C.hold(K.ButtonR2, true)
+	for _ = 1, 90 do       -- 1.5 s: past Godot's 1.2 s charge
+		C.frame(1 / 60)
+		task.wait()
+	end
+	C.hold(K.ButtonR2, false)
+	C.frames(2)
+	local strike = false
+	for k = sent1 + 1, #C.sent do
+		local e = C.sent[k]
+		strike = strike or (e.remote == "StripRequest" and e.args[3] == "thunder" and e.args[4] == true)
+	end
+	if not strike then
+		for k = sent1 + 1, #C.sent do
+			print("  sent", C.sent[k].remote, C.sent[k].args[3], C.sent[k].args[4])
+		end
+	end
+	check(strike, "holding the Thunder Axe charges it; letting go on a trunk strikes")
+	task.wait(0.3)
+	C.frames(2)
+	local flash = C.find(C.gui("Hud"), function(d)
+		return d.Name == "Lightning"
+	end)
+	check(flash ~= nil and flash.BackgroundTransparency < 1, "and the lightning flashes white over the screen")
+end
+
 print(string.format("\nCLIENT RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
 process.exit(if fails == 0 then 0 else 1)

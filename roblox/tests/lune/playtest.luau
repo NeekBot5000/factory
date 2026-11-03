@@ -495,6 +495,26 @@ do
 	strip:Fire(alice, t, b + V3(rr, 6, 0), "throwing")
 	task.wait(0.1)
 	check(#loose:GetChildren() > n0, "the throwing hatchet takes bark from 10 m away")
+	-- the Thunder Axe, charged: lightning takes every sheet off the whole tree, then it needs 6 s to recharge
+	do
+		local tt, tb, tr = freshTree(13)
+		Tools.grant(alice, "thunder")
+		task.wait(1.3)
+		A.stand(alice, tb + V3(tr + 4, 5, 0))
+		local fx0 = count("Fx", nil, "lightning")
+		strip:Fire(alice, tt, tb + V3(tr, 6, 0), "thunder", true)
+		task.wait(0.1)
+		local G = require("../../src/shared/BarkGrid")
+		local g = bark(tt)
+		check(g ~= nil and G.count(g, 0) == 0 and G.count(g, 1) == 0 and count("Fx", nil, "lightning") == fx0 + 1,
+			"the charged Thunder Axe strips the whole tree in one strike, with lightning")
+		local t3, b3, r3 = freshTree(14)
+		A.stand(alice, b3 + V3(r3 + 4, 5, 0))
+		task.wait(0.7)
+		strip:Fire(alice, t3, b3 + V3(r3, 6, 0), "thunder", true)
+		task.wait(0.1)
+		check(count("Fx", nil, "lightning") == fx0 + 1, "and it can't strike again until it has recharged")
+	end
 	-- the phone: bought like anything else, it never goes in your hand, and it sends the truck off from anywhere
 	data.money += 400
 	A.remotes.Buy.OnServerEvent:Fire(alice, "phone")
