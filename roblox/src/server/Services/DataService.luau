@@ -22,6 +22,8 @@ local TEMPLATE = {
 	builds = {},           -- compact arrays: { id, x, y, z, yaw, extra } relative to the plot origin
 	trees = {},            -- tree id -> BarkGrid string, for trees on the player's plot
 	trophies = {},
+	quest = { i = 1, n = 0 },  -- the starter goals: which step, and how far along it
+	earned = 0,
 	settings = { sens = 1, music = 0.5, volume = 0.8 },
 }
 

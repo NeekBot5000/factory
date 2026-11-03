@@ -5,6 +5,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local DataService = require(script.Parent.DataService)
+local ToolService = require(script.Parent.ToolService)
+local QuestService = require(script.Parent.QuestService)
 
 local EconomyService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -15,9 +17,13 @@ function EconomyService.addMoney(player: Player, amount: number)
 		return
 	end
 	data.money = math.floor((data.money + amount) * 100 + 0.5) / 100
+	data.earned = (data.earned or 0) + math.max(0, amount)
 	local ls = player:FindFirstChild("leaderstats")
 	if ls then
 		(ls:FindFirstChild("Money") :: NumberValue).Value = data.money
+	end
+	if amount > 0 then
+		QuestService.progress(player, "earn", amount)
 	end
 end
 
@@ -60,7 +66,10 @@ local function ship(player: Player)
 	end
 	if total > 0 then
 		EconomyService.addMoney(player, total)
-		remotes.Notify:FireClient(player, string.format("Sold for $%.2f", total))
+		remotes.Sold:FireClient(player, total, bed.Position)
+		QuestService.progress(player, "ship", 1)
+	else
+		remotes.Notify:FireClient(player, "The truck bed is empty - put some bark in the back first")
 	end
 end
 
@@ -75,13 +84,18 @@ local function buy(player: Player, item: unknown)
 	end
 	EconomyService.addMoney(player, -def.price)
 	data.owned[item] = true
-	remotes.Notify:FireClient(player, "Bought the " .. def.name)
+	ToolService.give(player, item :: string)
+	remotes.Notify:FireClient(player, "Bought the " .. def.name .. "! It's in your hotbar")
+	QuestService.progress(player, "buy", 1)
 end
 
 function EconomyService.start()
 	Players.PlayerAdded:Connect(setupLeaderstats)
 	for _, p in Players:GetPlayers() do
 		setupLeaderstats(p)
+	end
+	QuestService.onReward = function(player, amount)
+		EconomyService.addMoney(player, amount)
 	end
 	remotes.Ship.OnServerEvent:Connect(ship)
 	remotes.Buy.OnServerEvent:Connect(buy)

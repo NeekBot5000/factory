@@ -85,4 +85,17 @@ check(Economy.barkValue(Config, "cedar", 0, 10) == 9.6, "10 panels of cedar oute
 local out = Economy.refine(Config, 8)
 check(math.abs(out.fuel_can - 6.4) < 1e-9 and math.abs(out.plastic - 4.8) < 1e-9, "the refinery splits a barrel into fuel and plastic")
 
+-- config sanity: every shop tool has a look, a price that climbs, and the quests are in order
+local lastPrice = 0
+local shopOk = true
+for _, id in Config.ShopOrder do
+	local t = (Config.Tools :: any)[id]
+	if not t or not t.look or not t.desc or t.price < lastPrice then
+		shopOk = false
+	end
+	lastPrice = t and t.price or lastPrice
+end
+check(shopOk, "every tool in the shop has a model, a description and a price at least the one before")
+check(#Config.Quests >= 4 and Config.Quests[1].id == "peel", "the starter quests begin with peeling")
+
 print(string.format("\nROBLOX LOGIC RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))

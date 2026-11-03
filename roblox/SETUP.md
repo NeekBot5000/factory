@@ -72,14 +72,14 @@ If Rokit gives you trouble, you can skip it: the **Rojo** extension in VS Code c
 ## 7. First play test
 1. Press **Play** (F5).
 2. The server builds a test world:
-   - 35 trees of all seven species in a ring around the spawn
-   - a green log truck just ahead of you
-3. Try the core loop:
+   - 40 trees of all seven species, with six right by the spawn
+   - a green log truck on your left and the TimberMart tool stall on your right
+3. Follow the goal at the top of the screen (a bouncing arrow marks where to go):
    - **Peel:** walk to a tree and **left click** it with the white dot on the bark. Bark sheets fall off. With bare
-     hands it hurts, except on the grey shagbark hickories.
+     hands it stings, except on the grey shagbark hickories.
    - **Carry:** look at a sheet and press **E** to pick it up, and **E** again to drop it in the truck bed.
-   - **Sell:** hold **E** on the truck's "Ship to the mill" prompt. You get money; check the player list at the top
-     right.
+   - **Sell:** hold **E** on the truck's "Ship to the mill" prompt. The money counter at the top counts up.
+   - **Buy:** hold **E** at the TimberMart stall and buy the hatchet. It appears in your hotbar (key **1**).
 4. **Two players:** go to the **Test** tab > **Clients and Servers** > **2 Players** > **Start**. Peel a tree in one
    window and watch the bark come off in the other.
 

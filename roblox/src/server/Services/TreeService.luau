@@ -11,11 +11,14 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
 local Economy = require(ReplicatedStorage.Shared.Economy)
 local DataService = require(script.Parent.DataService)
+local QuestService = require(script.Parent.QuestService)
 
 local TreeService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local grids: { [Model]: BarkGrid.Grid } = {}
 local lastSwing: { [Player]: number } = {}
+local warned: { [Player]: boolean } = {}   -- told once that bare hands hurt
+local HURT_FLOOR = 30          -- bare-handed peeling never takes you below this much health
 local sheetsOf: { [Player]: { BasePart } } = {}
 
 local MAX_REACH = 14          -- studs from the player's head to the hit point
@@ -128,10 +131,18 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 		spawnSheet(player, t, s.layer, #s.panels, point :: Vector3)
 		remotes.TreeChanged:FireAllClients(t, s.layer, s.panels)
 	end
+	if #strips > 0 then
+		QuestService.progress(player, "peel", #strips)
+	end
 	if tool.hurt > 0 and not species.handsSafe then
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum:TakeDamage(tool.hurt)
+		-- it stings, but never knocks a new player out (health regrows, and the floor keeps the first minute fun)
+		if hum and hum.Health > HURT_FLOOR then
+			hum:TakeDamage(math.min(tool.hurt, hum.Health - HURT_FLOOR))
+			if not warned[player] then
+				warned[player] = true
+				remotes.Notify:FireClient(player, "Ouch! Rough bark hurts bare hands. Grey hickory is smooth, or buy a hatchet.")
+			end
 		end
 	end
 end
@@ -140,6 +151,7 @@ function TreeService.start()
 	remotes.StripRequest.OnServerEvent:Connect(onStrip)
 	Players.PlayerRemoving:Connect(function(p)
 		lastSwing[p] = nil
+		warned[p] = nil
 		for _, s in sheetsOf[p] or {} do
 			if s.Parent then
 				s:Destroy()

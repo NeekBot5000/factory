@@ -5,14 +5,26 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local QuestService = require(script.Parent.QuestService)
+
 local CarryService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local holding: { [Player]: BasePart } = {}
+CarryService.holding = holding
 local REACH = 14
 
 local function drop(player: Player)
 	local p = holding[player]
 	holding[player] = nil
+	-- dropped into the truck bed? (counts for the "carry" quest)
+	local truck = workspace:FindFirstChild("Truck_" .. player.UserId) or workspace:FindFirstChild("Truck")
+	local bed = truck and truck:FindFirstChild("Bed") :: BasePart?
+	if p and bed then
+		local lp = bed.CFrame:PointToObjectSpace(p.Position)
+		if math.abs(lp.X) < bed.Size.X / 2 + 1 and math.abs(lp.Z) < bed.Size.Z / 2 + 1 and lp.Y > -1 and lp.Y < 8 then
+			QuestService.progress(player, "carry", 1)
+		end
+	end
 	if p and p.Parent then
 		for _, c in p:GetChildren() do
 			if c.Name == "Carry" then
@@ -52,15 +64,14 @@ local function grab(player: Player, target: unknown)
 	align.Position = head.Position
 	align.Parent = p
 	p:SetAttribute("HeldBy", player.UserId)
-	p:SetNetworkOwner(player)
+	pcall(function()
+		p:SetNetworkOwner(player)
+	end)
 	holding[player] = p
 end
 
 function CarryService.start()
-	local grabRemote = Instance.new("RemoteEvent")
-	grabRemote.Name = "Grab"
-	grabRemote.Parent = remotes
-	grabRemote.OnServerEvent:Connect(grab)
+	remotes.Grab.OnServerEvent:Connect(grab)
 	Players.PlayerRemoving:Connect(drop)
 end
 

@@ -148,9 +148,9 @@ jobs:
           unzip -q -o luau/rojo.zip -d luau && unzip -q -o luau/lune.zip -d luau
           mkdir -p build/roblox
           (cd roblox && ../luau/rojo build -o ../build/roblox/Timber.rbxl .)
-          ./luau/lune run roblox/tests/lune/testworld.luau build/roblox/Timber.rbxl | tee lune.log
-          timeout 60 ./luau/lune run roblox/tests/lune/strip.luau build/roblox/Timber.rbxl | tee -a lune.log
-          grep -q "LUNE TESTWORLD PASS" lune.log && grep -q "LUNE STRIP PASS" lune.log
+          # a scripted first session through the real server scripts, then cheating, saving and rejoining
+          timeout 120 ./luau/lune run roblox/tests/lune/playtest.luau build/roblox/Timber.rbxl | tee lune.log
+          grep -q "PLAYTEST RESULT: PASS" lune.log
 
       - name: Upload the Roblox place
         uses: actions/upload-artifact@v4
