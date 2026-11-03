@@ -14,6 +14,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
+local Mining = require(ReplicatedStorage.Shared.Mining)
 local InputController = require(script.Parent.InputController)
 local State = require(script.Parent.Parent.State)
 local Sfx = require(script.Parent.Parent.Sfx)
@@ -268,6 +269,22 @@ local function impact()
 	if d.build then
 		return         -- (the hammer's swing is just the swing: Godot's _do_impact)
 	end
+	if d.rake then
+		remotes.Rake:FireServer()
+		return
+	end
+	if d.water then
+		-- the can: a splash of water, and the sapling in front of you grows twice as fast for a minute
+		local cam = workspace.CurrentCamera
+		local spout = cam.CFrame.Position + cam.CFrame.LookVector * 0.75 * M - Vector3.new(0, 0.15 * M, 0)
+		burst(spout, cam.CFrame.LookVector - Vector3.new(0, 0.6, 0), Color3.new(0.6, 0.8, 1.0), 26, 6)
+		local wh = ToolController.aim(d.reach * M)
+		remotes.Water:FireServer(wh and wh.Instance)
+		return
+	end
+	if d.weigh or d.detect then
+		return       -- (the scale and the detector read; they don't hit)
+	end
 	if d.mine then
 		-- mining tools: a rock loses a chunk, the ground is dug straight down (the server decides what comes out)
 		local mh = ToolController.aim(d.reach * M)
@@ -484,6 +501,7 @@ function ToolController.start()
 	local vacSend, vacDust = 0, 0
 	local vacSound: Sound? = nil
 	local runCd, washFx = 0, 0
+	local beepT = 0
 	local washSound: Sound? = nil
 	local sawFx = 0
 	local told: { [string]: number } = {}
@@ -594,7 +612,7 @@ function ToolController.start()
 			end
 		end
 		-- the vacuums: while the trigger is held, tell the server where the nozzle points (it moves the things)
-		local vac = alive and d.kind == "vacuum" and State.equipT >= 1
+		local vac = alive and (d.kind == "vacuum" or d.kind == "blower") and State.equipT >= 1
 		if vac then
 			vacSend -= dt
 			if vacSend <= 0 then
@@ -612,6 +630,9 @@ function ToolController.start()
 			end
 			if not vacSound then
 				vacSound = Sfx.loop("vacuum", -10)
+				if vacSound and d.kind == "blower" then
+					vacSound.PlaybackSpeed = 1.35        -- (Godot's blower: the vacuum's hum, higher)
+				end
 			end
 		elseif State.vacuuming then
 			remotes.Vacuum:FireServer(false)
@@ -622,6 +643,29 @@ function ToolController.start()
 			vacSound = nil
 		end
 		State.vacuuming = vac
+		-- the ore detector: beeps faster the richer the ground under your feet is in copper and iron (iron counts a
+		-- bit more); oil hums low instead (Godot's _detector_step)
+		if d.detect and alive ~= nil then
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root then
+				local x, z = root.Position.X, root.Position.Z
+				local r = math.max(Mining.richness("copper", x, z), Mining.richness("iron", x, z) * 1.1)
+				local oil = Mining.richness("oil", x, z)
+				local low = oil > 0.2 and oil + 0.3 > r
+				if low then
+					r = oil + 0.3
+				end
+				if r >= 0.3 then
+					beepT -= dt
+					if beepT <= 0 then
+						local k = math.clamp((r - 0.3) / 0.7, 0, 1)
+						beepT = 1.3 + (0.09 - 1.3) * k
+						Sfx.play("beep", if low then 0.4 + 0.2 * k else 0.8 + 0.7 * k, -12 + 8 * k)
+						State.beep = 1
+					end
+				end
+			end
+		end
 		-- the motor tools (Godot's _motor_step): the pressure washer's jet wanders a little round the aim and flakes
 		-- bark off where it lands; the planer takes a strip the length of a lying log every 0.45 s
 		local motor = alive and (d.kind == "washer" or d.kind == "planer") and State.equipT >= 1

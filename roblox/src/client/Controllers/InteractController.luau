@@ -14,6 +14,7 @@ local ShopController = require(script.Parent.ShopController)
 local BuildController = require(script.Parent.BuildController)
 local Land = require(game:GetService("ReplicatedStorage").Shared.Land)
 local Mining = require(game:GetService("ReplicatedStorage").Shared.Mining)
+local Weight = require(game:GetService("ReplicatedStorage").Shared.Weight)
 local State = require(script.Parent.Parent.State)
 local Sfx = require(script.Parent.Parent.Sfx)
 
@@ -145,6 +146,20 @@ function InteractController.target(): (string, (() -> ())?)
 		return "", nil
 	end
 	local part = hit.Instance
+	-- the log scale: how heavy what you point it at is, and what the mill would pay (Godot's scale_reading)
+	if (Config.Tools :: any)[State.tool] and (Config.Tools :: any)[State.tool].weigh then
+		local thing = if part.Parent and part.Parent:IsA("BasePart") then part.Parent :: BasePart else part
+		local logM = part:FindFirstAncestorWhichIsA("Model")
+		if logM and logM:GetAttribute("Kind") == "log" then
+			local trunk = logM:FindFirstChild("Trunk") :: BasePart?
+			local len = (logM:GetAttribute("Bands") :: number? or 0) * Config.Tree.bandH
+			return string.format("Log  %.1f m  ·  %d kg  ·  worth $%.2f", len, math.floor(if trunk then Weight.of(trunk) else 0), InteractController.logValue(logM)), nil
+		end
+		local value = thing:GetAttribute("Value")
+		if typeof(value) == "number" and thing:IsA("BasePart") and not thing.Anchored then
+			return string.format("%.1f kg  ·  worth $%.2f", Weight.of(thing), value), nil
+		end
+	end
 	-- rocks and mine shafts say what they are (Godot's Rock / Shaft hint_text)
 	if part:GetAttribute("Rock") ~= nil then
 		return "Stone  ·  any pickaxe", nil

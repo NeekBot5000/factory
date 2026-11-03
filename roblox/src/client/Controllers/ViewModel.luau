@@ -69,6 +69,27 @@ local POSES = {
 		{ Vector3.new(-0.06, 0.01, -0.05), Vector3.new(-10, 5, 0) },
 		{ Vector3.new(-0.07, 0.0, -0.1), Vector3.new(-14, 2, 0) },
 	},
+	-- the rake: reach out, then drag it back toward you
+	rake = {
+		{ Vector3.new(-0.06, 0.03, 0), Vector3.new(-2, 6, 0) },
+		{ Vector3.new(-0.07, 0.08, -0.17), Vector3.new(10, 3, 0) },
+		{ Vector3.new(-0.06, -0.05, 0.1), Vector3.new(-14, 7, 0) },
+	},
+	pour = {
+		{ Vector3.new(-0.04, -0.02, 0), Vector3.new(0, 6, 0) },
+		{ Vector3.new(-0.05, 0.04, -0.06), Vector3.new(6, 4, 0) },
+		{ Vector3.new(-0.07, 0.03, -0.1), Vector3.new(-38, 4, 0) },
+	},
+	scale = {
+		{ Vector3.new(-0.1, 0.07, -0.02), Vector3.new(12, 16, 0) },
+		{ Vector3.new(-0.1, 0.05, -0.02), Vector3.new(8, 16, 0) },
+		{ Vector3.new(-0.1, 0.1, -0.06), Vector3.new(16, 14, 0) },
+	},
+	detector = {
+		{ Vector3.new(-0.04, 0.05, 0), Vector3.new(8, 6, 0) },
+		{ Vector3.new(-0.04, 0.06, -0.02), Vector3.new(10, 6, 0) },
+		{ Vector3.new(-0.04, 0.03, -0.06), Vector3.new(4, 6, 0) },
+	},
 	-- the drills: pushed in against the trunk, buzzing
 	drill = {
 		{ Vector3.new(-0.02, 0.02, 0), Vector3.new(2, 4, 0) },
@@ -434,6 +455,10 @@ function ViewModel.start()
 			local inArm = if def.anim == "thrust" or def.anim == "saw" or def.anim == "drill" or def.anim == "vacuum" or def.anim == "washer" or def.anim == "planer" then CFrame.new(0, -0.02 * M, 0)
 				elseif def.anim == "karate" then CFrame.Angles(math.rad(-35), 0, 0)
 				elseif def.anim == "polesaw" then CFrame.Angles(math.rad(30), 0, 0)
+				elseif def.anim == "rake" then CFrame.Angles(math.rad(-9), 0, 0)
+				elseif def.anim == "detector" then CFrame.Angles(math.rad(10), 0, 0)
+				elseif def.anim == "scale" then CFrame.new(0, 0.02 * M, 0) * CFrame.Angles(0, math.rad(12), 0)
+				elseif def.anim == "pour" then CFrame.identity
 				else TOOL_IN_ARM * CFrame.Angles(0, math.rad(spin), 0)
 			toolModel:PivotTo(world * TOOL_ROOT * inArm)
 			local glow = toolModel:FindFirstChild("Glow", true) :: PointLight?

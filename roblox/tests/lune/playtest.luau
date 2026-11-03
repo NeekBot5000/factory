@@ -820,6 +820,62 @@ do
 	check(table.find(data.land, "5,5") == nil, "but only plots next to land you own")
 end
 
+-- ---------------------------------------------------------------- the rake, the blower, the watering can
+do
+	local function thing(at, kind)
+		local p = roblox.Instance.new("Part")
+		p.Size = V3(0.6, 0.6, 0.6)
+		p.CFrame = roblox.CFrame.new(at)
+		p.Position = at
+		p.AssemblyLinearVelocity = V3(0, 0, 0)
+		p:SetAttribute("Kind", kind)
+		p.Parent = loose
+		return p
+	end
+	Tools.grant(alice, "rake")
+	task.wait(1.3)
+	local root = alice.Character.HumanoidRootPart
+	local here = V3(-40, 5, 40)
+	A.stand(alice, here)
+	root.CFrame = roblox.CFrame.new(root.CFrame.Position)        -- (facing -Z; Lune's own lookAt is reversed)
+	local feet = root.CFrame.Position - V3(0, 2.5, 0)
+	local leaf = thing(feet + V3(0, 1, -5.7), "leaf")
+	A.remotes.Rake.OnServerEvent:Fire(alice)
+	task.wait(0.1)
+	check(leaf.AssemblyLinearVelocity.Z > 3, string.format("the rake drags what's in front of you a step closer (%.1f)", leaf.AssemblyLinearVelocity.Z))
+	leaf:Destroy()
+	-- the blower: blown away from you, light things far
+	Tools.grant(alice, "blower")
+	task.wait(1.3)
+	local eye = root.CFrame.Position + V3(0, 1.5, 0)
+	local light = thing(eye + V3(0, 0, -9), "leaf")
+	local heavy = thing(eye + V3(1, 0, -9), "ore")
+	heavy.Size = V3(1.5, 1.5, 1.5)          -- (a big stone: 2 kg)
+	A.remotes.Vacuum.OnServerEvent:Fire(alice, true, eye, V3(0, 0, -1), V3(1, 0, 0))
+	task.wait(0.3)
+	A.remotes.Vacuum.OnServerEvent:Fire(alice, false)
+	check(light.AssemblyLinearVelocity.Z < -1 and math.abs(light.AssemblyLinearVelocity.Z) > math.abs(heavy.AssemblyLinearVelocity.Z) * 1.5,
+		string.format("the leaf blower blows things away, leaves much further than stone (%.1f vs %.1f)", light.AssemblyLinearVelocity.Z, heavy.AssemblyLinearVelocity.Z))
+	light:Destroy()
+	heavy:Destroy()
+	-- the watering can: a rooted sapling grows twice as fast for a minute
+	Tools.grant(alice, "can")
+	task.wait(1.3)
+	local sp = thing(feet + V3(0, 0.3, -3), "sapling")
+	A.remotes.Water.OnServerEvent:Fire(alice, sp)
+	task.wait(0.1)
+	check(sp:GetAttribute("Boost") == nil and count("Notify", alice, "take root first") >= 1, "a sapling has to take root before watering helps")
+	task.wait(1.1)
+	sp:SetAttribute("Rooted", true)
+	sp.Anchored = true
+	sp:SetAttribute("Grow", 0)
+	A.remotes.Water.OnServerEvent:Fire(alice, sp)
+	task.wait(1.0)
+	local g = sp:GetAttribute("Grow") or 0
+	check(sp:GetAttribute("Boost") and sp:GetAttribute("Boost") > 55 and g > 1.2, string.format("watered, it grows twice as fast (%.1f s of growth in 1 s)", g))
+	sp:Destroy()
+end
+
 -- ---------------------------------------------------------------- mining
 do
 	local mine = A.remotes.Mine.OnServerEvent

@@ -60,7 +60,12 @@ function SaplingService.step(dt: number)
 			end
 			continue
 		end
-		local grow = (p:GetAttribute("Grow") :: number? or 0) + dt
+		-- (watered: twice as fast while the boost lasts)
+		local boost = p:GetAttribute("Boost") :: number? or 0
+		local grow = (p:GetAttribute("Grow") :: number? or 0) + dt * (if boost > 0 then 2 else 1)
+		if boost > 0 then
+			p:SetAttribute("Boost", math.max(0, boost - dt))
+		end
 		p:SetAttribute("Grow", grow)
 		local k = math.clamp(grow / S.growTime, 0, 1)
 		-- the sprout gets bigger as it grows (redrawn a step at a time, not every frame)

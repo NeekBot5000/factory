@@ -61,7 +61,7 @@ func _ready() -> void:
 	groups.clear()
 	var holder := Node3D.new()
 	add_child(holder)
-	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "pickaxe", "steel_pick", "sledge", "rock_drill", "core_drill", "detector", "dynamite", "phone"]:
+	for id in ["hatchet", "double_bit", "twins", "combo", "scraper", "gouge", "ringer", "labrys", "greataxe", "spud", "spiral", "robo", "thunder", "saw", "bucksaw", "pole_saw", "chainsaw", "throwing", "crosscut", "drill", "twin_auger", "holesaw", "planer", "washer", "shears", "vacuum", "twinvac", "cyclone", "hammer", "rake", "blower", "can", "scale", "pickaxe", "steel_pick", "sledge", "rock_drill", "core_drill", "detector", "dynamite", "phone"]:
 		var root := Node3D.new()
 		holder.add_child(root)
 		Tools.build_model(id, root)

@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local ToolService = require(script.Parent.ToolService)
+local Weight = require(ReplicatedStorage.Shared.Weight)
 
 local VacuumService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -35,8 +36,8 @@ local function onVacuum(player: Player, on: unknown, origin: unknown, dir: unkno
 	local tool = (Config.Tools :: any)[ToolService.current(player)]
 	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
 	local was = aims[uid]
-	if on ~= true or not tool or tool.kind ~= "vacuum" or not head or typeof(origin) ~= "Vector3" or typeof(dir) ~= "Vector3"
-		or typeof(right) ~= "Vector3" or ((origin :: Vector3) - head.Position).Magnitude > 8 or (dir :: Vector3).Magnitude < 0.5 then
+	if on ~= true or not tool or (tool.kind ~= "vacuum" and tool.kind ~= "blower") or not head or typeof(origin) ~= "Vector3" or typeof(dir) ~= "Vector3"
+		or typeof(right) ~= "Vector3" or ((origin :: Vector3) - head.CFrame.Position).Magnitude > 8 or (dir :: Vector3).Magnitude < 0.5 then
 		if was and was.on then
 			was.on = false
 			release(uid, tool ~= nil and tool.launch == true, was.dir)
@@ -61,6 +62,29 @@ function VacuumService.step(dt: number)
 		end
 		local player = Players:GetPlayerByUserId(uid)
 		local tool = player and (Config.Tools :: any)[ToolService.current(player)]
+		if player and tool and tool.kind == "blower" and now - a.t <= 0.6 then
+			-- the leaf blower (Godot's _blow): everything loose in a cone in front of you is blown away from you;
+			-- light things (bark, leaves) fly, heavy ones (stone, logs) only shuffle along
+			local reach = tool.reach * M
+			for _, c in loose:GetChildren() do
+				if not c:IsA("BasePart") or c.Anchored or c:GetAttribute("HeldBy") or c:GetAttribute("Kind") == "basket" then
+					continue
+				end
+				local b = c :: BasePart
+				local to = b.Position - a.origin
+				if to.Magnitude > reach or to.Magnitude < 0.01 or a.dir:Dot(to.Unit) < 0.75 then
+					continue
+				end
+				local k = 1 - to.Magnitude / reach
+				local push = (a.dir + Vector3.new(0, 0.35, 0)).Unit * (6 + 16 * k) * dt
+				local mass = math.max(Weight.of(b), 0.05)
+				pcall(function()
+					b:SetNetworkOwner(nil)
+				end)
+				b.AssemblyLinearVelocity += push * math.clamp(1.2 / mass, 0.15, 2.0) * M
+			end
+			continue
+		end
 		if not player or not tool or tool.kind ~= "vacuum" or now - a.t > 0.6 then
 			-- (they let go, put it away, or stopped saying where they aim)
 			a.on = false

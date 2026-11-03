@@ -57,7 +57,7 @@ function Harness.boot(placePath: string, jobId: string)
 
 	-- remotes: OnServerEvent handlers we can call as a client would, and a log of what the server sent to clients
 	local remotes = {}
-	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip", "Snip", "Vacuum", "Build", "PlanCancel", "TakeDown", "BuyLand", "Click", "Lie", "Mine" } do
+	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use", "Open", "NewGame", "Settings", "SawStart", "Sawn", "PhoneShip", "Snip", "Vacuum", "Build", "PlanCancel", "TakeDown", "BuyLand", "Click", "Lie", "Mine", "Rake", "Water" } do
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })
@@ -174,6 +174,20 @@ function Harness.boot(placePath: string, jobId: string)
 		return out
 	end
 
+	-- (GetPartBoundsInRadius the same way: a part counts if its centre is within the radius)
+	local function radius(at, r, params)
+		local out = {}
+		local roots = params and params.FilterDescendantsInstances or { workspace }
+		for _, root in roots do
+			for _, p in root:GetDescendants() do
+				if p:IsA("BasePart") and (p.CFrame.Position - at).Magnitude <= r then
+					table.insert(out, p)
+				end
+			end
+		end
+		return out
+	end
+
 	local modules = {}
 	local env
 	local function loadModule(inst)
@@ -184,6 +198,7 @@ function Harness.boot(placePath: string, jobId: string)
 		end
 		local src = inst.Source
 		src = string.gsub(src, "workspace:GetPartBoundsInBox%(", "__bounds(")
+		src = string.gsub(src, "workspace:GetPartBoundsInRadius%(", "__radius(")
 		src = string.gsub(src, "player:Kick%(", "__kick(player, ")
 		src = string.gsub(src, "(%w+):TakeDamage%(", "__damage(%1, ")
 		src = string.gsub(src, "player%.CharacterAdded:Connect%(", "__noop(")
@@ -228,6 +243,7 @@ function Harness.boot(placePath: string, jobId: string)
 		debug = { profilebegin = function() end, profileend = function() end },
 		__REMOTES = remotes,
 		__bounds = bounds,
+		__radius = radius,
 		-- Model:PivotTo: move every part by the same offset as the pivot
 		__pivotTo = function(inst, target)
 			if inst:IsA("BasePart") then
@@ -348,6 +364,11 @@ function Harness.boot(placePath: string, jobId: string)
 	-- move a player's head (their reach is measured from it)
 	function server.stand(p, at)
 		p.Character.Head.CFrame = roblox.CFrame.new(at)
+		-- (the body with it, the head 2 studs above the root, facing where it faced)
+		local root = p.Character:FindFirstChild("HumanoidRootPart")
+		if root then
+			root.CFrame = roblox.CFrame.new(at - roblox.Vector3.new(0, 2, 0)) * (root.CFrame - root.CFrame.Position)
+		end
 	end
 
 	-- what the server last sent this player on a remote
