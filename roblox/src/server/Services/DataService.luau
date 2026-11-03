@@ -22,8 +22,10 @@ local TEMPLATE = {
 	builds = {},           -- compact arrays: { id, x, y, z, yaw, extra } relative to the plot origin
 	trees = {},            -- tree id -> BarkGrid string, for trees on the player's plot
 	trophies = {},
-	quest = { i = 1, n = 0 },  -- the starter goals: which step, and how far along it
-	earned = 0,
+	dropped = {},          -- tools you own but put down (Q): out of the tool bar until you pick them up again
+	tutorial = 1,          -- which "Getting started" step you're on (-1 when you've finished it)
+	peeled = 0,            -- bark sheets peeled, ever
+	earned = 0,            -- money the truck has paid you, ever
 	settings = { sens = 1, music = 0.5, volume = 0.8 },
 }
 
@@ -54,6 +56,7 @@ local function load(player: Player)
 	if not storeOk then
 		warn("Timber: saving is off - publish the place and turn on Studio Access to API Services")
 		profiles[player] = deepCopy(TEMPLATE)
+		DataService.publish(player)
 		return
 	end
 	local key = "p_" .. player.UserId
@@ -72,6 +75,7 @@ local function load(player: Player)
 		-- usually "Enable Studio Access to API Services" is off: play on without saving
 		warn("Timber: saving is off in this Studio session (Game Settings > Security > Enable Studio Access to API Services)")
 		profiles[player] = deepCopy(TEMPLATE)
+		DataService.publish(player)
 		return
 	end
 	if not ok or data == nil or (data :: any)._lock.job ~= game.JobId then
@@ -85,6 +89,7 @@ local function load(player: Player)
 		end
 	end
 	profiles[player] = data
+	DataService.publish(player)
 end
 
 local function save(player: Player, release: boolean)
@@ -105,6 +110,31 @@ end
 
 function DataService.get(player: Player): any
 	return profiles[player]
+end
+
+-- What the player's own screen needs (money, the tool bar), as attributes on their Player: only they and the
+-- server read them, and they replicate by themselves when they change.
+function DataService.publish(player: Player)
+	local data = profiles[player]
+	if not data then
+		return
+	end
+	player:SetAttribute("Money", data.money)
+	local owned, dropped = {}, {}
+	for id, yes in data.owned do
+		if yes then
+			table.insert(owned, id)
+		end
+	end
+	for id, yes in data.dropped or {} do
+		if yes then
+			table.insert(dropped, id)
+		end
+	end
+	table.sort(owned)
+	table.sort(dropped)
+	player:SetAttribute("Owned", table.concat(owned, ","))
+	player:SetAttribute("Dropped", table.concat(dropped, ","))
 end
 
 function DataService.start()

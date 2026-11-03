@@ -37,7 +37,7 @@ for line in string.gmatch(res.stdout, "[^\n]+") do
 end
 local project = serde.decode("json", fs.readFile(here .. "/default.project.json"))
 local synced, props = Core.plan(project, files, "roblox/")
-check(#synced == 3, "syncs the three code folders (" .. #synced .. ")")
+check(#synced == 5, "syncs the three code folders and the two single scripts (" .. #synced .. ")")
 check(#props >= 7, "and applies the Workspace and Lighting settings (" .. #props .. ")")
 
 -- compare with what Rojo built

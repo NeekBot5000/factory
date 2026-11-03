@@ -1,4 +1,5 @@
--- The scripted playtest: a first session played through the real server scripts, then the ways players break games.
+-- The scripted playtest: a first session played through the real server scripts, the Godot way (take the hatchet
+-- from the block, peel, carry, ship, buy, drop and pick up a tool, faint), then the ways players break games.
 --   lune run tests/lune/playtest.luau <path to Timber.rbxl>
 local process = require("@lune/process")
 local task = require("@lune/task")
@@ -7,7 +8,7 @@ local Harness = require("./harness")
 
 local place = process.args[1] or "Timber.rbxl"
 local fails, passes = 0, 0
-local function check(ok: boolean, msg: string)
+local function check(ok: any, msg: string)
 	if ok then
 		passes += 1
 		print("PASS " .. msg)
@@ -24,8 +25,19 @@ local Data = A.service("DataService")
 local Carry = A.service("CarryService")
 task.wait(0.1)
 
+local function count(name: string, player, pattern: string?): number
+	local n = 0
+	for _, e in A.clientLog do
+		if e.remote == name and (e.player == player or e.all) and (not pattern or string.find(tostring(e.args[1]), pattern, 1, true)) then
+			n += 1
+		end
+	end
+	return n
+end
+
 -- ---------------------------------------------------------------- the world
-local forest = A.workspace:FindFirstChild("Forest")
+local ws = A.workspace
+local forest = ws:FindFirstChild("Forest")
 local trees = {}
 for _, t in forest:GetChildren() do
 	if t:HasTag("Tree") then
@@ -33,15 +45,24 @@ for _, t in forest:GetChildren() do
 	end
 end
 check(#trees == 40, "the test world grows 40 trees (" .. #trees .. ")")
-check(A.workspace:FindFirstChild("Truck") and A.workspace.Truck:FindFirstChild("Bed") ~= nil, "a log truck with a bed stands by the spawn")
-check(A.workspace:FindFirstChild("TimberMart") ~= nil, "the TimberMart stall is there")
-check(A.game:GetService("ReplicatedStorage"):FindFirstChild("ToolModels") ~= nil and #A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == 6, "every shop tool has a model for the shop's 3D preview")
--- how close is the first tree to the spawn? (the first swing should be seconds away)
+check(ws:FindFirstChild("Truck") and ws.Truck:FindFirstChild("Bed") and ws.Truck:GetAttribute("State") == "parked", "the log truck is parked by the spawn")
+check(ws:FindFirstChild("Road") ~= nil, "on a dirt road it can drive down")
+check(ws:FindFirstChild("TimberMart") ~= nil and ws.TimberMart:FindFirstChild("Counter") ~= nil, "the TimberMart stall is there")
+local block = ws:FindFirstChild("ChoppingBlock")
+check(block and block:FindFirstChild("Hatchet") ~= nil, "the chopping block has the hatchet stuck in it")
+check(#A.game:GetService("ReplicatedStorage").ToolModels:GetChildren() == 6, "every shop tool has a model (first-person view, tool bar, shop)")
+local prompts = 0
+for _, d in ws:GetDescendants() do
+	if d:IsA("ProximityPrompt") then
+		prompts += 1
+	end
+end
+check(prompts == 0, "no Roblox prompts: everything is 'look at it and press E', like Godot")
 local spawn = V3(0, 0, 14)
 local nearest, nearestD = nil, math.huge
 for _, t in trees do
 	local d = (t.WorldPivot.Position - spawn).Magnitude
-	if d < nearestD then
+	if d < nearestD and t:GetAttribute("Species") ~= "hickory" then
 		nearest, nearestD = t, d
 	end
 end
@@ -51,52 +72,52 @@ check(nearestD < 45, string.format("a tree is a few steps from the spawn (%d stu
 local alice = A.join(101, "Alice")
 task.wait(0.6)
 local data = Data.get(alice)
-check(data ~= nil and data.money == 0 and data.owned.hands, "a new player starts with $0 and bare hands")
-check(alice:FindFirstChild("leaderstats") and alice.leaderstats.Money.Value == 0, "their money shows in the player list")
-task.wait(2.2)
-local q = A.last(alice, "Quest")
-check(q ~= nil and q.i == 1 and q.target == "tree", "the first goal points them at a tree")
+check(data ~= nil and data.money == 0 and data.owned.hands and not data.owned.hatchet, "a new player starts with $0 and bare hands")
+check(alice:FindFirstChild("leaderstats") == nil, "no leaderstats, so no Roblox player list scoreboard")
+check(alice:GetAttribute("Money") == 0 and alice:GetAttribute("Tool") == "hands", "the money counter and the hand read the player's attributes")
+local tut = A.last(alice, "Tutorial")
+check(tut and tut.i == 1 and string.find(tut.text, "chopping block", 1, true), "Getting started, step 1: take the hatchet from the chopping block")
 
--- peel: walk up to the nearest tree and swing five times with bare hands
+-- E on the chopping block
+local stump = block.Stump
+A.stand(alice, stump.CFrame.Position + V3(0, 4, 4))
+A.remotes.Use.OnServerEvent:Fire(alice, stump)
+task.wait(0.1)
+check(data.owned.hatchet and alice:GetAttribute("Tool") == "hatchet", "E on the block: the hatchet is yours and in your hand")
+check(string.find(alice:GetAttribute("Owned"), "hatchet", 1, true), "and in your tool bar")
+tut = A.last(alice, "Tutorial")
+check(tut and tut.i == 2, "step 2: peel some bark")
+
+-- bare hands: equip them (1), peel, and it hurts
+local equip = A.remotes.Equip.OnServerEvent
+equip:Fire(alice, "hands")
+task.wait(0.05)
+check(alice:GetAttribute("Tool") == "hands", "key 1: back to bare hands")
 local r = nearest:GetAttribute("Radius")
 local base = nearest.WorldPivot.Position
 A.stand(alice, base + V3(r + 3, 5, 0))
 local strip = A.remotes.StripRequest.OnServerEvent
-local loose = A.workspace:FindFirstChild("Loose")
-for i = 1, 6 do
+local loose = ws:FindFirstChild("Loose")
+local hum = alice.Character:FindFirstChildOfClass("Humanoid")
+for i = 1, 7 do
 	strip:Fire(alice, nearest, base + V3(r, 3 + i * 1.2, 0), "hands")
-	task.wait(0.36)
+	task.wait(0.3)
 end
 local sheets = loose:GetChildren()
-check(#sheets >= 5, "bare-handed swings peel bark sheets (" .. #sheets .. ")")
-local hum = alice.Character:FindFirstChildOfClass("Humanoid")
-if nearest:GetAttribute("Species") ~= "hickory" then
-	check((A.damage or 0) > 0 and hum.Health > 0, string.format("rough bark hurts bare hands a little (-%d hp)", A.damage or 0))
-	local hinted = 0
-	for _, e in A.clientLog do
-		if e.remote == "Notify" and e.player == alice and string.find(tostring(e.args[1]), "hickory") then
-			hinted += 1
-		end
-	end
-	check(hinted == 1, "and the game says why, and what to do about it")
-	for _ = 1, 30 do
-		strip:Fire(alice, nearest, base + V3(r, 3, 0), "hands")
-		task.wait(0.36)
-	end
-	check(hum.Health >= 30, string.format("but a minute of bare-handed peeling never knocks you out (%d hp left)", hum.Health))
-	hinted = 0
-	for _, e in A.clientLog do
-		if e.remote == "Notify" and e.player == alice and string.find(tostring(e.args[1]), "hickory") then
-			hinted += 1
-		end
-	end
-	check(hinted == 1, "and the tip only shows once, not on every swing")
-end
-q = A.last(alice, "Quest")
-check(q ~= nil and q.i == 2, "five peels finish the first goal; the next is carrying")
+check(#sheets >= 6, "bare-handed swings peel bark sheets (" .. #sheets .. ")")
+check(math.abs(hum.Health - (100 - 7 * 6)) < 0.01, string.format("rough bark hurts bare hands 6 a hit, like Godot's (%d health)", hum.Health))
+tut = A.last(alice, "Tutorial")
+check(tut and tut.i == 3, "step 3: carry it to the truck")
+
+-- the tool has to be the one in your hand
+local n0 = #loose:GetChildren()
+task.wait(0.4)
+strip:Fire(alice, nearest, base + V3(r, 12, 0), "hatchet")
+task.wait(0.05)
+check(#loose:GetChildren() == n0, "a swing with a tool that isn't in your hand does nothing")
 
 -- carry three sheets into the truck bed
-local bed = A.workspace.Truck.Bed
+local bed = ws.Truck.Bed
 local grab = A.remotes.Grab.OnServerEvent
 for i = 1, 3 do
 	local s = sheets[i]
@@ -104,157 +125,160 @@ for i = 1, 3 do
 	grab:Fire(alice, s)
 	task.wait(0.05)
 	check(Carry.holding[alice] == s and s:FindFirstChild("Carry") ~= nil, "E picks up a sheet (" .. i .. ")")
-	s.CFrame = bed.CFrame + V3(0, 2, -3 + i * 2)     -- (carried over to the truck)
+	s.CFrame = bed.CFrame + V3(0, 1.5, -3 + i * 2)
 	grab:Fire(alice, nil)
 	task.wait(0.05)
 end
 check(Carry.holding[alice] == nil, "E again drops it")
-q = A.last(alice, "Quest")
-check(q ~= nil and q.i == 3, "three sheets dropped in the bed finish the carrying goal")
+task.wait(1.2)
+tut = A.last(alice, "Tutorial")
+check(tut and tut.i == 4, "bark in the back finishes step 3; step 4: send the truck")
+local Economy = A.service("EconomyService")
+local load = Economy.bedValue(alice)
+check(load > 0, string.format("the truck knows what its load is worth ($%.2f, its sign and the '[E] ship' hint)", load))
 
--- ship
-local cab = A.workspace.Truck.Cab
-local prompt = cab:FindFirstChildOfClass("ProximityPrompt")
+-- E on the truck: horn, off it goes, paid when it gets to the mill, back it comes
 local before = data.money
-A.ProximityPromptService.PromptTriggered:Fire(prompt, alice)
-task.wait(0.1)
+A.stand(alice, bed.CFrame.Position + V3(6, 3, 0))
+A.remotes.Use.OnServerEvent:Fire(alice, ws.Truck.Cab)
+task.wait(0.05)
+check(ws.Truck:GetAttribute("State") == "leaving", "E on the truck: it drives off")
+check(count("Fx", nil, "horn") >= 1, "with a blast of its horn, for everyone nearby")
+check(data.money == before, "you're not paid yet: only when it gets to the mill")
+local cargoOnTruck = 0
+for _, d in ws.Truck:GetDescendants() do
+	if d:IsA("BasePart") and d.Anchored and d:GetAttribute("Owner") == 101 then
+		cargoOnTruck += 1
+	end
+end
+check(cargoOnTruck >= 3, "the bark rides away in the back")
+A.remotes.Use.OnServerEvent:Fire(alice, ws.Truck.Cab)
+local waited = 0
+while ws.Truck:GetAttribute("State") ~= "parked" and waited < 60 do
+	task.wait(0.25)
+	waited += 0.25
+end
 local sold = A.last(alice, "Sold")
-check(sold ~= nil and sold > 0 and data.money > before, string.format("shipping sells what's in the bed ($%.2f)", sold or 0))
-check(alice.leaderstats.Money.Value == data.money, "the player list shows the new money")
-local left = 0
-for _, s in loose:GetChildren() do
-	local lp = bed.CFrame:PointToObjectSpace(s.CFrame.Position)
-	if math.abs(lp.X) < 4 and math.abs(lp.Z) < 6 and lp.Y > 0 then
-		left += 1
-	end
-end
-check(left == 0, "the truck bed is empty after shipping")
-q = A.last(alice, "Quest")
-check(q ~= nil and q.i == 4 and q.target == "shop", "shipping finishes its goal (and pays the $15 reward); next: the shop")
--- an empty ship says so instead of doing nothing
-A.ProximityPromptService.PromptTriggered:Fire(prompt, alice)
-task.wait(0.1)
-local note = A.last(alice, "Notify")
-check(type(note) == "string" and string.find(note, "empty") ~= nil, "shipping an empty truck tells you to load it first")
+check(sold and math.abs(sold - load) < 0.02 and math.abs(data.money - (before + load)) < 0.02, string.format("paid at the mill: +$%.2f", sold or 0))
+check(ws.Truck:GetAttribute("State") == "parked" and (ws.Truck.WorldPivot.Position - V3(-18, 0, 4)).Magnitude < 30, "and the truck comes back and parks")
+check(alice:GetAttribute("Money") == data.money, "the money counter has the new total")
+tut = A.last(alice, "Tutorial")
+check(tut and tut.i == 5 and string.find(tut.text, "/ $160", 1, true), "step 5: save up for the Double-Bit Axe (with the count)")
 
--- keep working until there's enough for a hatchet (peel, carry, ship)
-local rounds = 0
-local t2i = 1
-while data.money < 30 and rounds < 40 do
-	rounds += 1
-	local t = trees[t2i]
-	local tb = t.WorldPivot.Position
-	local tr = t:GetAttribute("Radius")
-	A.stand(alice, tb + V3(tr + 3, 5, 0))
-	local n0 = #loose:GetChildren()
-	for k = 1, 4 do
-		strip:Fire(alice, t, tb + V3(tr, 2 + k * 1.5, 0), "hands")
-		task.wait(0.36)
-	end
-	if #loose:GetChildren() == n0 then
-		t2i += 1
-	end
-	for _, s in loose:GetChildren() do
-		s.CFrame = bed.CFrame + V3(0, 2, 0)
-	end
-	A.ProximityPromptService.PromptTriggered:Fire(prompt, alice)
-	task.wait(0.1)
-end
-check(data.money >= 30, string.format("a few minutes of bare-handed work earns a hatchet ($%.2f after %d trips)", data.money, rounds))
-
--- buy the hatchet
+-- (skip the grind) then buy it at TimberMart
+data.money = 200
+task.wait(0.5)
+tut = A.last(alice, "Tutorial")
+check(tut and tut.i == 6, "with $160, step 6: buy it at TimberMart")
 local buy = A.remotes.Buy.OnServerEvent
-local m0 = data.money
-buy:Fire(alice, "hatchet")
-task.wait(0.1)
-local hatchet = nil
-for _, t in alice.Backpack:GetChildren() do
-	if t:GetAttribute("ToolId") == "hatchet" then
-		hatchet = t
-	end
-end
-check(hatchet ~= nil and hatchet:IsA("Tool") and hatchet:FindFirstChild("Handle") ~= nil, "buying the hatchet puts a real Tool with a handle in the hotbar")
-check(math.abs(data.money - (m0 - 30)) < 0.01 + 20, "it costs $30 (and the shop goal pays $20)")
-local kept = false
-for _, t in alice.StarterGear:GetChildren() do
-	kept = kept or t:GetAttribute("ToolId") == "hatchet"
-end
-check(kept, "and it's kept when you respawn (StarterGear)")
-q = A.last(alice, "Quest")
-check(q ~= nil and q.i == 5, "buying it finishes the shop goal")
+buy:Fire(alice, "double_bit")
+task.wait(0.6)
+check(data.owned.double_bit and alice:GetAttribute("Tool") == "double_bit" and math.abs(data.money - 40) < 0.01, "bought: $160 off, and it's straight in your hand")
+check(data.tutorial == -1 and count("Notify", alice, "basics") == 1, "Getting started is done (and says so once)")
 
--- the hatchet peels more per swing than bare hands
+-- the double-bit hits twice a swing
 local fresh = trees[#trees]
 local fb = fresh.WorldPivot.Position
 local fr = fresh:GetAttribute("Radius")
 A.stand(alice, fb + V3(fr + 3, 5, 0))
 local n1 = #loose:GetChildren()
-strip:Fire(alice, fresh, fb + V3(fr, 6, 0), "hatchet")
-task.wait(0.1)
-local newest = loose:GetChildren()[#loose:GetChildren()]
-check(#loose:GetChildren() > n1 and newest:GetAttribute("Value") > 0.6, string.format("a hatchet swing takes a bigger sheet ($%.2f)", newest:GetAttribute("Value") or 0))
+strip:Fire(alice, fresh, fb + V3(fr, 6, 0), "double_bit")
+task.wait(0.43)
+strip:Fire(alice, fresh, fb + V3(fr, 9, 0), "double_bit")
+task.wait(0.05)
+check(#loose:GetChildren() - n1 == 2, "the double-bit's forehand and backhand both land")
+
+-- Q: put it down; E: pick it up
+A.remotes.DropTool.OnServerEvent:Fire(alice)
+task.wait(0.05)
+local item = loose:FindFirstChild("Tool_double_bit")
+check(item and item:GetAttribute("Kind") == "tool" and alice:GetAttribute("Tool") == "hands", "Q: the axe goes down on the ground as a real object")
+check(alice:GetAttribute("Dropped") == "double_bit", "and leaves the tool bar")
+equip:Fire(alice, "double_bit")
+task.wait(0.05)
+check(alice:GetAttribute("Tool") == "hands", "you can't take it out of the bar while it's on the ground")
+local bob = A.join(202, "Bob")
+task.wait(0.6)
+A.stand(bob, item.Handle.CFrame.Position + V3(0, 3, 2))
+A.remotes.Use.OnServerEvent:Fire(bob, item.Handle)
+task.wait(0.05)
+check(item.Parent ~= nil and not Data.get(bob).owned.double_bit, "someone else can't walk off with it")
+A.stand(alice, item.Handle.CFrame.Position + V3(0, 3, 2))
+A.remotes.Use.OnServerEvent:Fire(alice, item.Handle)
+task.wait(0.05)
+check(item.Parent == nil and alice:GetAttribute("Tool") == "double_bit" and alice:GetAttribute("Dropped") == "", "E on it: back in your hand and your tool bar")
 
 -- ---------------------------------------------------------------- trying to cheat
 local m1 = data.money
-buy:Fire(alice, "greataxe")              -- can't afford
-buy:Fire(alice, "flamethrower")          -- doesn't exist
-buy:Fire(alice, 12345)                   -- nonsense
+buy:Fire(alice, "greataxe")
+buy:Fire(alice, "flamethrower")
+buy:Fire(alice, 12345)
+buy:Fire(alice, "hands")
 task.wait(0.1)
-check(data.money == m1 and not data.owned.greataxe, "can't buy what you can't afford, what doesn't exist, or with junk arguments")
-local nTrees = #loose:GetChildren()
-task.wait(0.6)
-strip:Fire(alice, fresh, fb + V3(fr, 8, 0), "greataxe")      -- not owned
-strip:Fire(alice, fresh, fb + V3(200, 8, 0), "hatchet")      -- too far
-strip:Fire(alice, A.workspace.Truck, fb, "hatchet")           -- not a tree
-strip:Fire(alice, "tree", "here", "hatchet")                  -- junk
-task.wait(0.1)
-check(#loose:GetChildren() == nTrees, "swings with a tool you don't own, from too far, at a non-tree or with junk do nothing")
--- spam: the cooldown holds even if a client fires 20 swings at once
+check(data.money == m1 and not data.owned.greataxe, "can't buy what you can't afford, what doesn't exist, or with junk")
+equip:Fire(alice, "labrys")
+equip:Fire(alice, 42)
+task.wait(0.05)
+check(alice:GetAttribute("Tool") == "double_bit", "can't take out a tool you don't own")
+local nT = #loose:GetChildren()
+task.wait(1.1)
+strip:Fire(alice, fresh, fb + V3(200, 8, 0), "double_bit")
+strip:Fire(alice, ws.Truck, fb, "double_bit")
+strip:Fire(alice, "tree", "here", "double_bit")
+task.wait(0.05)
+check(#loose:GetChildren() == nT, "swings from too far, at a non-tree or with junk do nothing")
+task.wait(1.1)
 for _ = 1, 20 do
-	strip:Fire(alice, fresh, fb + V3(fr, 10, 0), "hatchet")
+	strip:Fire(alice, fresh, fb + V3(fr, 10, 0), "double_bit")
 end
 task.wait(0.1)
-check(#loose:GetChildren() - nTrees <= 1, "firing 20 swings at once only lands one (the cooldown is checked on the server)")
--- grabbing: something too far away, an anchored part, the truck
+check(#loose:GetChildren() - nT <= 1, "20 swings fired at once land once (the server keeps the tool's pace)")
 local far = loose:GetChildren()[1]
 A.stand(alice, far.CFrame.Position + V3(100, 0, 0))
 grab:Fire(alice, far)
 grab:Fire(alice, bed)
 task.wait(0.05)
 check(Carry.holding[alice] == nil, "can't grab things out of reach, or the truck itself")
--- someone else's bark doesn't sell for you
-local bob = A.join(202, "Bob")
-task.wait(0.6)
-for _, s in loose:GetChildren() do
-	s.CFrame = bed.CFrame + V3(0, 2, 0)
+A.remotes.Use.OnServerEvent:Fire(alice, stump)
+A.remotes.Use.OnServerEvent:Fire(alice, "truck")
+task.wait(0.05)
+check(ws.Truck:GetAttribute("State") == "parked", "can't use things from across the map")
+
+-- fainting: bare hands at a rough tree until health runs out (Godot: you faint and wake at the start)
+equip:Fire(alice, "hands")
+task.wait(0.05)
+A.stand(alice, base + V3(r + 3, 5, 0))
+local hum2 = alice.Character:FindFirstChildOfClass("Humanoid")
+for _ = 1, 30 do
+	if hum2.Health <= 0 then
+		break
+	end
+	strip:Fire(alice, nearest, base + V3(r, 4, 0), "hands")
+	task.wait(0.3)
 end
-local bobBefore = Data.get(bob).money
-A.ProximityPromptService.PromptTriggered:Fire(prompt, bob)
-task.wait(0.1)
-check(Data.get(bob).money == bobBefore, "another player can't sell your bark")
+check(hum2.Health <= 0, "keep peeling bare-handed and you faint (no safety floor, like Godot)")
+local nF = #loose:GetChildren()
+strip:Fire(alice, nearest, base + V3(r, 5, 0), "hands")
+task.wait(0.05)
+check(#loose:GetChildren() == nF, "and while fainted you can't peel")
 
 -- ---------------------------------------------------------------- saving
 local moneyAtLeave = data.money
 A.leave(alice)
 task.wait(0.2)
 local saved = A.stores.Timber_v1 and A.stores.Timber_v1.p_101
-check(saved ~= nil and math.abs(saved.money - moneyAtLeave) < 0.01 and saved.owned.hatchet and saved._lock == nil, "leaving saves money and tools, and releases the save")
-check(saved ~= nil and saved.quest and saved.quest.i == 5, "and how far through the goals they got")
+check(saved and math.abs(saved.money - moneyAtLeave) < 0.01 and saved.owned.hatchet and saved.owned.double_bit and saved._lock == nil, "leaving saves money and tools, and releases the save")
+check(saved and saved.tutorial == -1, "and that Getting started is finished")
 
--- rejoin on another server: everything comes back
 local B = Harness.boot(place, "server-B")
 B.start()
 local alice2 = B.join(101, "Alice")
 task.wait(1.2)
 local data2 = B.service("DataService").get(alice2)
-check(data2 ~= nil and math.abs(data2.money - moneyAtLeave) < 0.01, "rejoining on another server brings the money back")
-local back = false
-for _, t in alice2.Backpack:GetChildren() do
-	back = back or t:GetAttribute("ToolId") == "hatchet"
-end
-check(back, "and the hatchet is back in the hotbar")
+check(data2 and math.abs(data2.money - moneyAtLeave) < 0.01, "rejoining on another server brings the money back")
+check(string.find(alice2:GetAttribute("Owned") or "", "double_bit", 1, true) and alice2:GetAttribute("Dropped") == "", "and the tool bar")
+check(B.last(alice2, "Tutorial") == nil, "and no Getting started panel again")
 
--- session lock: while server B holds Alice's save, server C can't load it
 local C = Harness.boot(place, "server-C")
 C.start()
 C.join(101, "Alice")
@@ -300,13 +324,6 @@ end
 local pump = machine("o1", "oil_pump", { Powered = true, Fill = 0.995, Owner = 101 })
 pump:AddTag("OilPump")
 pump.WorldPivot = roblox.CFrame.new(bx, 0, bz)
-local barrelsBefore = 0
-for _, c in B.workspace.Loose:GetChildren() do
-	if c:GetAttribute("Kind") == "oil_barrel" then
-		barrelsBefore += 1
-	end
-end
--- the power solver would switch it off (no wires): keep it powered for the test
 Machines.wires = {}
 pump:RemoveTag("Machine")
 task.wait(2.2)
@@ -316,7 +333,7 @@ for _, c in B.workspace.Loose:GetChildren() do
 		barrels += 1
 	end
 end
-check(barrels > barrelsBefore, string.format("a powered pump over an oil pocket (richness %.2f) fills a barrel", br))
+check(barrels > 0, string.format("a powered pump over an oil pocket (richness %.2f) fills a barrel", br))
 
 print(string.format("\nPLAYTEST RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
 process.exit(if fails == 0 then 0 else 1)

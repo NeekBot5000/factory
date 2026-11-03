@@ -11,17 +11,16 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
 local Economy = require(ReplicatedStorage.Shared.Economy)
 local DataService = require(script.Parent.DataService)
-local QuestService = require(script.Parent.QuestService)
+local ToolService = require(script.Parent.ToolService)
+local TutorialService = require(script.Parent.TutorialService)
 
 local TreeService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local grids: { [Model]: BarkGrid.Grid } = {}
 local lastSwing: { [Player]: number } = {}
-local warned: { [Player]: boolean } = {}   -- told once that bare hands hurt
-local HURT_FLOOR = 30          -- bare-handed peeling never takes you below this much health
 local sheetsOf: { [Player]: { BasePart } } = {}
 
-local MAX_REACH = 14          -- studs from the player's head to the hit point
+local SLACK = 5               -- studs of reach allowed beyond the tool's own (lag, and the head isn't the camera)
 local MAX_SHEETS = 120        -- loose bark sheets per player; the oldest are tidied away past this
 local CORK_EVERY = 5
 
@@ -80,6 +79,16 @@ local function spawnSheet(player: Player, tree: Model, layer: number, n: number,
 	end
 end
 
+-- the shortest time between two hits, as a share of the swing (the double-bit hits twice per swing)
+local function minGap(tool: any): number
+	local hits = tool.impacts or { tool.impact }
+	local gap = 1 - hits[#hits] + hits[1]
+	for k = 2, #hits do
+		gap = math.min(gap, hits[k] - hits[k - 1])
+	end
+	return gap
+end
+
 local function onStrip(player: Player, tree: unknown, point: unknown, toolId: unknown)
 	-- never trust the client: check every argument
 	if typeof(tree) ~= "Instance" or not (tree :: Instance):IsA("Model") or not CollectionService:HasTag(tree :: Instance, "Tree") then
@@ -89,17 +98,19 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 		return
 	end
 	local data = DataService.get(player)
-	local tool = Config.Tools[toolId :: string]
-	if not data or not tool or not data.owned[toolId] then
+	local tool = (Config.Tools :: any)[toolId :: string]
+	-- it has to be the tool in their hand
+	if not data or not tool or ToolService.current(player) ~= toolId then
 		return
 	end
 	local now = os.clock()
-	if now - (lastSwing[player] or 0) < tool.cooldown * 0.8 then
+	if now - (lastSwing[player] or 0) < tool.cooldown * minGap(tool) * 0.8 then
 		return
 	end
 	lastSwing[player] = now
 	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
-	if not head or (head.Position - (point :: Vector3)).Magnitude > MAX_REACH then
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if not head or not hum or hum.Health <= 0 or (head.Position - (point :: Vector3)).Magnitude > tool.reach * Config.StudsPerMetre + SLACK then
 		return
 	end
 	local t = tree :: Model
@@ -132,18 +143,12 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 		remotes.TreeChanged:FireAllClients(t, s.layer, s.panels)
 	end
 	if #strips > 0 then
-		QuestService.progress(player, "peel", #strips)
+		data.peeled = (data.peeled or 0) + #strips
+		TutorialService.check(player)
 	end
+	-- bare hands on rough bark hurt, every hit (Godot: everything but the shagbark hickory). At 0 you faint.
 	if tool.hurt > 0 and not species.handsSafe then
-		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		-- it stings, but never knocks a new player out (health regrows, and the floor keeps the first minute fun)
-		if hum and hum.Health > HURT_FLOOR then
-			hum:TakeDamage(math.min(tool.hurt, hum.Health - HURT_FLOOR))
-			if not warned[player] then
-				warned[player] = true
-				remotes.Notify:FireClient(player, "Ouch! Rough bark hurts bare hands. Grey hickory is smooth, or buy a hatchet.")
-			end
-		end
+		hum:TakeDamage(tool.hurt)
 	end
 end
 
@@ -151,7 +156,6 @@ function TreeService.start()
 	remotes.StripRequest.OnServerEvent:Connect(onStrip)
 	Players.PlayerRemoving:Connect(function(p)
 		lastSwing[p] = nil
-		warned[p] = nil
 		for _, s in sheetsOf[p] or {} do
 			if s.Parent then
 				s:Destroy()

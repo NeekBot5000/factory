@@ -86,7 +86,7 @@ local function rock(parent: Instance, at: Vector3, s: number, rng: Random)
 	end
 end
 
--- the log truck: a cab, a wooden bed with sides, wheels; drop bark in the back, then use the prompt on the cab
+-- the log truck: a cab, a wooden bed with sides, wheels; drop bark in the back, then look at it and press E
 local function makeTruck(at: Vector3)
 	local truck = Instance.new("Model")
 	truck.Name = "Truck"
@@ -107,17 +107,12 @@ local function makeTruck(at: Vector3)
 				Color = Color3.fromRGB(35, 36, 40), Material = Enum.Material.Rubber }).Parent = truck
 		end
 	end
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Ship to the mill"
-	prompt.ObjectText = "Log truck"
-	prompt.HoldDuration = 0.4
-	prompt.MaxActivationDistance = 14
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = cab
+	truck.WorldPivot = CFrame.new(at)        -- it drives by its pivot (forward is -Z, the way the cab faces)
+	truck:SetAttribute("State", "parked")
 	truck.Parent = workspace
 end
 
--- TimberMart: a market stall with an awning; its prompt opens the tool shop
+-- TimberMart: a market stall with an awning; E at its counter opens the tool shop
 local function makeShop(at: Vector3)
 	local stall = Instance.new("Model")
 	stall.Name = "TimberMart"
@@ -146,14 +141,43 @@ local function makeShop(at: Vector3)
 	label.TextColor3 = Color3.fromRGB(255, 207, 106)
 	label.Parent = gui
 	gui.Parent = sign
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Browse tools"
-	prompt.ObjectText = "TimberMart"
-	prompt.MaxActivationDistance = 12
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = counter
 	stall:SetAttribute("Marker", "shop")
 	stall.Parent = workspace
+end
+
+-- Godot's chopping block, just in front of where you start, with the old hatchet stuck in it (E takes it)
+local function choppingBlock(at: Vector3)
+	local m = Instance.new("Model")
+	m.Name = "ChoppingBlock"
+	local stump = part({ Name = "Stump", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.4, 2.8, 2.8),
+		CFrame = CFrame.new(at + Vector3.new(0, 1.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(122, 86, 56), Material = Enum.Material.Wood })
+	stump.Parent = m
+	part({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.08, 2.5, 2.5), CFrame = CFrame.new(at + Vector3.new(0, 2.42, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(214, 176, 128), Material = Enum.Material.Wood }).Parent = m
+	-- the hatchet: blade buried in the top, handle rising at about 40 degrees (only shown while you don't own one)
+	local ok, ToolService = pcall(require, script.Parent.ToolService)
+	local h = ok and (ToolService :: any).build("hatchet")
+	if h then
+		h.Name = "Hatchet"
+		local look = (Config.Tools :: any).hatchet.look
+		h:PivotTo(CFrame.new(at + Vector3.new(0, 2.4, 0)) * CFrame.Angles(0, math.rad(30), 0) * CFrame.Angles(math.rad(-50), 0, 0)
+			* CFrame.new(0, -look.handle * 0.5 + 0.9, 0.35) * CFrame.new(0, look.handle * 0.3, 0))
+		for _, p in h:GetDescendants() do
+			if p:IsA("BasePart") then
+				p.CanQuery = true
+				p.CastShadow = true
+			end
+		end
+		h.Parent = m
+	end
+	m.Parent = workspace
+end
+
+-- the dirt road the truck drives down to the mill
+local ROAD_X = -18
+local function road()
+	part({ Name = "Road", Size = Vector3.new(14, 0.2, 520), Position = Vector3.new(ROAD_X, 0.1, 0), Color = Color3.fromRGB(156, 128, 92),
+		Material = Enum.Material.Ground, CanQuery = false }).Parent = workspace
 end
 
 function TestWorld.start()
@@ -176,7 +200,11 @@ function TestWorld.start()
 		if n <= 6 then
 			a = math.rad(-120 + n * 14)
 		end
-		makeTree(forest, species[(n % #species) + 1], Vector3.new(math.cos(a) * d, 0, math.sin(a) * d - 6), rng:NextNumber(1.1, 1.6), rng:NextNumber(18, 26), rng)
+		local at = Vector3.new(math.cos(a) * d, 0, math.sin(a) * d - 6)
+		if math.abs(at.X - ROAD_X) < 12 then
+			at += Vector3.new(if at.X < ROAD_X then -14 else 14, 0, 0)      -- keep the road clear for the truck
+		end
+		makeTree(forest, species[(n % #species) + 1], at, rng:NextNumber(1.1, 1.6), rng:NextNumber(18, 26), rng)
 	end
 	local rocks = Instance.new("Folder")
 	rocks.Name = "Rocks"
@@ -184,10 +212,15 @@ function TestWorld.start()
 	for _ = 1, 14 do
 		local a = rng:NextNumber(0, 6.28)
 		local d = rng:NextNumber(30, 130)
-		rock(rocks, Vector3.new(math.cos(a) * d, 0, math.sin(a) * d), rng:NextNumber(2, 4.5), rng)
+		local at = Vector3.new(math.cos(a) * d, 0, math.sin(a) * d)
+		if math.abs(at.X - ROAD_X) > 12 then
+			rock(rocks, at, rng:NextNumber(2, 4.5), rng)
+		end
 	end
-	makeTruck(Vector3.new(-18, 0, 4))
+	road()
+	makeTruck(Vector3.new(ROAD_X, 0, 4))
 	makeShop(Vector3.new(18, 0, 6))
+	choppingBlock(Vector3.new(2.5, 0, 6))
 end
 
 return TestWorld

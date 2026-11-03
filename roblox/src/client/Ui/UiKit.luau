@@ -1,27 +1,42 @@
 --!strict
--- One look for every screen: Fredoka One, thick dark outlines, rounded corners, warm wood and cream with a green
--- accent, buttons that squash when pressed. Sizes are scale-based (with min/max limits) so phones and monitors both
--- work, and touch targets are never smaller than 48 px.
+-- The Godot game's look for every screen: dark see-through panels with rounded corners (Hud.gd's _flat), Nunito
+-- for text and Fredoka for the money and titles, gold for "selected", green for money. The shop has its own light
+-- TimberMart colours (ShopUI.gd), here too.
 local TweenService = game:GetService("TweenService")
 local Sfx = require(script.Parent.Parent.Sfx)
 
 local UiKit = {}
 
 UiKit.Colors = {
-	cream = Color3.fromRGB(250, 241, 222),
-	paper = Color3.fromRGB(255, 249, 236),
-	wood = Color3.fromRGB(122, 84, 52),
-	dark = Color3.fromRGB(43, 33, 24),
-	green = Color3.fromRGB(76, 186, 96),
-	gold = Color3.fromRGB(255, 200, 70),
-	red = Color3.fromRGB(226, 84, 64),
-	grey = Color3.fromRGB(150, 146, 140),
-	sky = Color3.fromRGB(110, 180, 230),
+	panel = Color3.new(0.05, 0.06, 0.1),     -- Hud panels (at 0.65 alpha: BackgroundTransparency 0.35)
+	gold = Color3.fromHex("ffcf6a"),
+	green = Color3.fromHex("7aff9a"),
+	red = Color3.fromHex("e04848"),
+	warn = Color3.fromHex("ffd27a"),
+	bad = Color3.fromHex("ff8a6a"),
+	white = Color3.new(1, 1, 1),
+	-- TimberMart
+	header = Color3.fromHex("2b211b"),
+	page = Color3.fromHex("f2ede4"),
+	side = Color3.fromHex("ebe3d6"),
+	card = Color3.fromHex("ffffff"),
+	preview = Color3.fromHex("ede5da"),
+	orange = Color3.fromHex("e87a2c"),
+	peach = Color3.fromHex("fde0cb"),
+	price = Color3.fromHex("2e7d4f"),
+	owned = Color3.fromHex("d0c6b6"),
+	ink = Color3.fromHex("2b211b"),
+	muted = Color3.fromHex("6b5f53"),
+	barBack = Color3.fromHex("e0d8cc"),
 }
-UiKit.Font = Enum.Font.FredokaOne
 
-function UiKit.tween(inst: Instance, seconds: number, props: { [string]: any }, style: Enum.EasingStyle?): Tween
-	local t = TweenService:Create(inst, TweenInfo.new(seconds, style or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
+-- Godot uses Nunito (body, bold) and Fredoka (titles, money)
+UiKit.Body = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold)
+UiKit.Bold = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.ExtraBold)
+UiKit.Title = Font.new("rbxasset://fonts/families/FredokaOne.json", Enum.FontWeight.Regular)
+
+function UiKit.tween(inst: Instance, seconds: number, props: { [string]: any }, style: Enum.EasingStyle?, dir: Enum.EasingDirection?): Tween
+	local t = TweenService:Create(inst, TweenInfo.new(seconds, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), props)
 	t:Play()
 	return t
 end
@@ -32,37 +47,35 @@ function UiKit.corner(parent: Instance, radius: number?)
 	c.Parent = parent
 end
 
-function UiKit.stroke(parent: Instance, thickness: number?, color: Color3?)
+function UiKit.stroke(parent: Instance, thickness: number, color: Color3, transparency: number?)
 	local s = Instance.new("UIStroke")
-	s.Thickness = thickness or 3
-	s.Color = color or UiKit.Colors.dark
-	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border     -- the outline of the box (text gets its own TextStroke)
+	s.Thickness = thickness
+	s.Color = color
+	s.Transparency = transparency or 0
+	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	s.Parent = parent
 	return s
 end
 
--- a soft top-light on any coloured surface (the "plastic toy" look most popular games use)
-function UiKit.shine(parent: Instance)
-	local g = Instance.new("UIGradient")
-	g.Rotation = 90
-	g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(215, 215, 215))
-	g.Parent = parent
+function UiKit.pad(parent: Instance, x: number, y: number)
+	local p = Instance.new("UIPadding")
+	p.PaddingLeft = UDim.new(0, x)
+	p.PaddingRight = UDim.new(0, x)
+	p.PaddingTop = UDim.new(0, y)
+	p.PaddingBottom = UDim.new(0, y)
+	p.Parent = parent
 end
 
--- outlined text: a TextLabel with a dark text stroke, scaled to fit
-function UiKit.text(parent: Instance, text: string, props: { [string]: any }?): TextLabel
+-- A label: Godot's _label (size in px, colour, font). Sizes itself to its text unless given a Size.
+function UiKit.label(parent: Instance?, text: string, size: number, color: Color3, font: Font?, props: { [string]: any }?): TextLabel
 	local l = Instance.new("TextLabel")
 	l.BackgroundTransparency = 1
-	l.Font = UiKit.Font
+	l.FontFace = font or UiKit.Body
 	l.Text = text
-	l.TextScaled = true
-	l.TextColor3 = Color3.new(1, 1, 1)
-	l.TextStrokeColor3 = UiKit.Colors.dark
-	l.TextStrokeTransparency = 0
-	local limit = Instance.new("UITextSizeConstraint")
-	limit.MinTextSize = 14
-	limit.MaxTextSize = 40
-	limit.Parent = l
+	l.TextSize = size
+	l.TextColor3 = color
+	l.AutomaticSize = Enum.AutomaticSize.XY
+	l.Size = UDim2.new()
 	for k, v in props or {} do
 		(l :: any)[k] = v
 	end
@@ -70,12 +83,16 @@ function UiKit.text(parent: Instance, text: string, props: { [string]: any }?): 
 	return l
 end
 
-function UiKit.panel(parent: Instance, props: { [string]: any }?): Frame
+-- A dark rounded panel (Godot's _flat(Color(0.05, 0.06, 0.1, alpha), radius, pad)).
+function UiKit.panel(parent: Instance?, alpha: number, radius: number, padX: number, props: { [string]: any }?): Frame
 	local f = Instance.new("Frame")
-	f.BackgroundColor3 = UiKit.Colors.cream
+	f.BackgroundColor3 = UiKit.Colors.panel
+	f.BackgroundTransparency = 1 - alpha
 	f.BorderSizePixel = 0
-	UiKit.corner(f, 16)
-	UiKit.stroke(f, 4)
+	f.AutomaticSize = Enum.AutomaticSize.XY
+	f.Size = UDim2.new()
+	UiKit.corner(f, radius)
+	UiKit.pad(f, padX, math.floor(padX * 0.6))
 	for k, v in props or {} do
 		(f :: any)[k] = v
 	end
@@ -83,42 +100,18 @@ function UiKit.panel(parent: Instance, props: { [string]: any }?): Frame
 	return f
 end
 
--- a chunky button: colour, outline, shine, squashes when pressed, pops when hovered (not on touch)
-function UiKit.button(parent: Instance, text: string, color: Color3, onClick: () -> (), props: { [string]: any }?): TextButton
+-- A flat button (the shop's orange "View" / "Buy" buttons). Clicks with Godot's click sound.
+function UiKit.button(parent: Instance, text: string, color: Color3, textColor: Color3, onClick: () -> (), props: { [string]: any }?): TextButton
 	local b = Instance.new("TextButton")
-	b.AutoButtonColor = false
+	b.AutoButtonColor = true
 	b.BackgroundColor3 = color
-	b.Font = UiKit.Font
+	b.BorderSizePixel = 0
+	b.FontFace = UiKit.Bold
 	b.Text = text
-	b.TextScaled = true
-	b.TextColor3 = Color3.new(1, 1, 1)
-	b.TextStrokeColor3 = UiKit.Colors.dark
-	b.TextStrokeTransparency = 0
-	UiKit.corner(b, 12)
-	UiKit.stroke(b, 3)
-	UiKit.shine(b)
-	local pad = Instance.new("UIPadding")
-	pad.PaddingTop = UDim.new(0, 6)
-	pad.PaddingBottom = UDim.new(0, 6)
-	pad.PaddingLeft = UDim.new(0, 10)
-	pad.PaddingRight = UDim.new(0, 10)
-	pad.Parent = b
-	local limit = Instance.new("UITextSizeConstraint")
-	limit.MaxTextSize = 30
-	limit.Parent = b
-	local scale = Instance.new("UIScale")
-	scale.Parent = b
-	b.MouseEnter:Connect(function()
-		UiKit.tween(scale, 0.12, { Scale = 1.05 })
-	end)
-	b.MouseLeave:Connect(function()
-		UiKit.tween(scale, 0.12, { Scale = 1 })
-	end)
-	b.MouseButton1Down:Connect(function()
-		UiKit.tween(scale, 0.06, { Scale = 0.9 })
-	end)
+	b.TextSize = 17
+	b.TextColor3 = textColor
+	UiKit.corner(b, 8)
 	b.Activated:Connect(function()
-		UiKit.tween(scale, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
 		Sfx.play("click")
 		onClick()
 	end)
@@ -127,14 +120,6 @@ function UiKit.button(parent: Instance, text: string, color: Color3, onClick: ()
 	end
 	b.Parent = parent
 	return b
-end
-
--- a quick bounce, for things that just changed (the money counter, a new quest)
-function UiKit.pop(inst: GuiObject)
-	local scale = inst:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-	scale.Parent = inst
-	scale.Scale = 1.18
-	UiKit.tween(scale, 0.35, { Scale = 1 }, Enum.EasingStyle.Back)
 end
 
 return UiKit

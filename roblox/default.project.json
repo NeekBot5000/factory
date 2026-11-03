@@ -13,15 +13,32 @@
       }
     },
     "StarterPlayer": {
+      "$properties": {
+        "CameraMode": "LockFirstPerson",
+        "CharacterWalkSpeed": 12.6,
+        "CharacterUseJumpPower": true,
+        "CharacterJumpPower": 12.47,
+        "CameraMaxZoomDistance": 0.5,
+        "CameraMinZoomDistance": 0.5
+      },
       "StarterPlayerScripts": {
         "Client": {
           "$path": "src/client"
+        },
+        "RbxCharacterSounds": {
+          "$path": "src/overrides/RbxCharacterSounds.client.luau"
+        }
+      },
+      "StarterCharacterScripts": {
+        "Health": {
+          "$path": "src/character/Health.server.luau"
         }
       }
     },
     "Workspace": {
       "$properties": {
-        "StreamingEnabled": true
+        "StreamingEnabled": true,
+        "Gravity": 29.4
       },
       "Baseplate": {
         "$className": "Part",
@@ -73,70 +90,61 @@
     "Lighting": {
       "$properties": {
         "Technology": "Future",
-        "ClockTime": 14.2,
-        "Brightness": 2.4,
-        "EnvironmentDiffuseScale": 1,
-        "EnvironmentSpecularScale": 0.6,
+        "ClockTime": 14.4,
+        "Brightness": 2.2,
+        "EnvironmentDiffuseScale": 0.6,
+        "EnvironmentSpecularScale": 0.2,
         "OutdoorAmbient": [
-          0.55,
-          0.55,
+          0.52,
+          0.56,
           0.6
         ],
         "Ambient": [
-          0.25,
-          0.25,
-          0.28
+          0.3,
+          0.32,
+          0.34
         ],
         "GlobalShadows": true,
         "ShadowSoftness": 0.35,
-        "GeographicLatitude": 38
+        "GeographicLatitude": 40
       },
       "Atmosphere": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.32,
-          "Offset": 0.22,
+          "Density": 0.26,
+          "Offset": 0.1,
           "Color": [
-            0.78,
-            0.84,
-            0.9
+            0.81,
+            0.9,
+            0.96
           ],
           "Decay": [
-            0.55,
-            0.62,
-            0.68
+            0.66,
+            0.77,
+            0.72
           ],
-          "Glare": 0.25,
-          "Haze": 1.6
-        }
-      },
-      "Bloom": {
-        "$className": "BloomEffect",
-        "$properties": {
-          "Intensity": 0.35,
-          "Size": 28,
-          "Threshold": 1.6
+          "Glare": 0,
+          "Haze": 1.1
         }
       },
       "ColorCorrection": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
-          "Saturation": 0.14,
-          "Contrast": 0.07,
-          "Brightness": 0.02,
+          "Saturation": 0.05,
+          "Contrast": 0.03,
+          "Brightness": 0.0,
           "TintColor": [
             1,
-            0.98,
-            0.94
+            0.99,
+            0.97
           ]
         }
-      },
-      "SunRays": {
-        "$className": "SunRaysEffect",
-        "$properties": {
-          "Intensity": 0.06,
-          "Spread": 0.7
-        }
+      }
+    },
+    "Players": {
+      "$properties": {
+        "RespawnTime": 2.2,
+        "CharacterAutoLoads": true
       }
     }
   }

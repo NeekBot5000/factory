@@ -137,15 +137,18 @@ If Rokit gives you trouble, you can skip it: the **Rojo** extension in VS Code c
 
 ## 7. First play test
 1. Press **Play** (F5).
-2. The server builds a test world:
+2. You're in first person, like the Godot game. The server builds a test world:
    - 40 trees of all seven species, with six right by the spawn
-   - a green log truck on your left and the TimberMart tool stall on your right
-3. Follow the goal at the top of the screen (a bouncing arrow marks where to go):
-   - **Peel:** walk to a tree and **left click** it with the white dot on the bark. Bark sheets fall off. With bare
-     hands it stings, except on the grey shagbark hickories.
-   - **Carry:** look at a sheet and press **E** to pick it up, and **E** again to drop it in the truck bed.
-   - **Sell:** hold **E** on the truck's "Ship to the mill" prompt. The money counter at the top counts up.
-   - **Buy:** hold **E** at the TimberMart stall and buy the hatchet. It appears in your hotbar (key **1**).
+   - a chopping block in front of you with the old hatchet in it
+   - the green log truck on its dirt road to your left, and the TimberMart tool stall on your right
+3. Follow **Getting started** at the top left. The controls are the Godot game's:
+   - **E** on the chopping block takes the hatchet. **1**-**9** or the mouse wheel switch tools; **Q** puts the one in
+     your hand down, and **E** on it picks it up again.
+   - **Left click** a tree to peel its bark. Bare hands hurt on everything but the grey shagbark hickory, and if
+     you keep going you faint and wake up at the start.
+   - **E** on a bark sheet picks it up, and **E** again drops it. Put some in the back of the truck.
+   - **E** on the truck sends it to the mill. It honks and drives off, and you're paid when it gets there.
+   - **E** on the TimberMart counter opens the shop. **Shift** sprints.
 4. **Two players:** go to the **Test** tab > **Clients and Servers** > **2 Players** > **Start**. Peel a tree in one
    window and watch the bark come off in the other.
 

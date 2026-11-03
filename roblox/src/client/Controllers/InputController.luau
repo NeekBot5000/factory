@@ -1,11 +1,12 @@
 --!strict
 -- One set of actions for every device. ContextActionService binds each action to a key, a gamepad button and
 -- (on phones and tablets) an on-screen button, so the rest of the game only ever hears "Swing", never "MouseButton1".
---   Swing  - left click / R2 / big touch button
---   Grab   - E / X (gamepad) / touch button        (pick up, drop, use)
---   Build  - B / Y / touch button                  (hammer menu)
---   Rotate - R / L1                                (turn the build being placed)
---   NextTool / PrevTool - mouse wheel, 1-9 / D-pad right/left / swipe the toolbar on touch
+-- (the keys are the Godot game's)
+--   Swing    - left click / R2 / touch button
+--   Grab     - E (or F) / X on a gamepad / touch button     (use, pick up, drop)
+--   DropTool - Q / D-pad down / touch button                (put the tool in your hand down)
+--   Sprint   - Shift / L3
+--   NextTool / PrevTool - mouse wheel / D-pad right and left (1-9 are read by the ToolController)
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 
@@ -27,9 +28,9 @@ end
 
 local BINDINGS = {
 	{ "Swing", { Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonR2 }, "Swing", UDim2.new(1, -110, 1, -170) },
-	{ "Grab", { Enum.KeyCode.E, Enum.KeyCode.ButtonX }, "Grab", UDim2.new(1, -190, 1, -110) },
-	{ "Build", { Enum.KeyCode.B, Enum.KeyCode.ButtonY }, "Build", UDim2.new(1, -190, 1, -190) },
-	{ "Rotate", { Enum.KeyCode.R, Enum.KeyCode.ButtonL1 }, "Turn", UDim2.new(1, -270, 1, -110) },
+	{ "Grab", { Enum.KeyCode.E, Enum.KeyCode.F, Enum.KeyCode.ButtonX }, "Use", UDim2.new(1, -190, 1, -110) },
+	{ "DropTool", { Enum.KeyCode.Q, Enum.KeyCode.DPadDown }, "Drop", UDim2.new(1, -190, 1, -190) },
+	{ "Sprint", { Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonL3 }, nil, nil },
 	{ "NextTool", { Enum.KeyCode.DPadRight }, nil, nil },
 	{ "PrevTool", { Enum.KeyCode.DPadLeft }, nil, nil },
 }

@@ -39,8 +39,10 @@ local function signal()
 			end, ...)
 		end
 	end
+	-- (frame-by-frame loops run in big steps here, so a 20-second truck trip takes a few seconds of test time)
 	function s:Wait()
-		return task.wait(0.1)
+		task.wait(0.02)
+		return 0.5
 	end
 	return s
 end
@@ -54,7 +56,7 @@ function Harness.boot(placePath: string, jobId: string)
 
 	-- remotes: OnServerEvent handlers we can call as a client would, and a log of what the server sent to clients
 	local remotes = {}
-	for _, name in { "StripRequest", "TreeChanged", "Buy", "Ship", "Fx", "Notify", "Quest", "Sold", "Grab" } do
+	for _, name in { "StripRequest", "TreeChanged", "Buy", "Fx", "Notify", "Tutorial", "Sold", "Grab", "Equip", "DropTool", "Use" } do
 		local ev = { name = name, OnServerEvent = signal() }
 		function ev:FireClient(player, ...)
 			table.insert(server.clientLog, { remote = name, player = player, args = { ... } })
@@ -70,6 +72,14 @@ function Harness.boot(placePath: string, jobId: string)
 	local Players = { PlayerAdded = signal(), PlayerRemoving = signal() }
 	function Players:GetPlayers()
 		return table.clone(players)
+	end
+	function Players:GetPlayerByUserId(id)
+		for _, p in players do
+			if p.UserId == id then
+				return p
+			end
+		end
+		return nil
 	end
 	server.Players = Players
 
@@ -170,6 +180,9 @@ function Harness.boot(placePath: string, jobId: string)
 		src = string.gsub(src, "workspace:GetPartBoundsInBox%(", "__bounds(")
 		src = string.gsub(src, "player:Kick%(", "__kick(player, ")
 		src = string.gsub(src, "(%w+):TakeDamage%(", "__damage(%1, ")
+		src = string.gsub(src, "([%w_%.]+):PivotTo%(", "__pivotTo(%1, ")
+		src = string.gsub(src, "player%.CharacterAdded:Connect%(", "__noop(")
+		src = string.gsub(src, "handle%.AssemblyLinearVelocity = ", "local _ = ")
 		-- Lune keeps Position and CFrame apart (setting one doesn't move the other), so read parts' CFrame
 		for _, name in { "p", "head", "bed" } do
 			src = string.gsub(src, "%f[%w]" .. name .. "%.Position", name .. ".CFrame.Position")
@@ -199,6 +212,21 @@ function Harness.boot(placePath: string, jobId: string)
 		debug = { profilebegin = function() end, profileend = function() end },
 		__REMOTES = remotes,
 		__bounds = bounds,
+		-- Model:PivotTo: move every part by the same offset as the pivot
+		__pivotTo = function(inst, target)
+			if inst:IsA("BasePart") then
+				inst.CFrame = target
+				return
+			end
+			local delta = target * inst.WorldPivot:Inverse()
+			for _, d in inst:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.CFrame = delta * d.CFrame
+				end
+			end
+			inst.WorldPivot = target
+		end,
+		__noop = function() end,
 		__damage = function(hum, amount)
 			hum.Health = math.max(0, hum.Health - amount)
 			server.damage = (server.damage or 0) + amount

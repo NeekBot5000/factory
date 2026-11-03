@@ -1,0 +1,4 @@
+--!strict
+-- Empty on purpose. A LocalScript with this name in StarterPlayerScripts replaces Roblox's built-in character sounds
+-- (its footsteps, jump, landing, splash and death sounds). The game plays the Godot version's own sounds instead
+-- (Client/Sfx and the footsteps in Client/Controllers/MoveController).

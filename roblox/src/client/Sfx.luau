@@ -2,8 +2,8 @@
 -- The Godot game's own sounds, played on Roblox. They all live in one uploaded audio file (the "sound sheet",
 -- made by tools/export_sounds.sh): each sound is a stretch of it, played with PlaybackRegion.
 -- Also the forest: the breeze, birds now and then, and short pieces of plucked guitar with long quiet gaps.
--- GitHub uploads the sheet and writes its id into Shared.Assets (tools/roblox_assets.py). Until then, a few built-in
--- Roblox sounds stand in.
+-- GitHub uploads the sheet and writes its id into Shared.Assets (tools/roblox_assets.py). No Roblox sounds are used
+-- anywhere (even the character's own footsteps are replaced: see overrides/RbxCharacterSounds).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
@@ -18,16 +18,6 @@ local SHEET = if Assets.SoundSheet then "rbxassetid://" .. Assets.SoundSheet els
 local BASE_VOLUME = 0.7          -- Godot's 0 dB
 local STUDS = 3                  -- studs per Godot metre
 
--- built-in stand-ins until the sheet is uploaded
-local FALLBACK: { [string]: string } = {
-	chop = "rbxasset://sounds/swordslash.wav",
-	axe = "rbxasset://sounds/swordslash.wav",
-	whoosh = "rbxasset://sounds/swordlunge.wav",
-	equip = "rbxasset://sounds/unsheath.wav",
-	buy = "rbxasset://sounds/electronicpingshort.wav",
-	click = "rbxasset://sounds/button.wav",
-}
-
 local function volumeOf(db: number): number
 	return BASE_VOLUME * 10 ^ (db / 20)
 end
@@ -41,8 +31,6 @@ local function make(name: string, pitch: number, db: number): (Sound?, number)
 		s.PlaybackRegionsEnabled = true
 		s.PlaybackRegion = NumberRange.new(region[1], region[1] + region[2])
 		length = region[2]
-	elseif FALLBACK[name] then
-		s.SoundId = FALLBACK[name]
 	else
 		s:Destroy()
 		return nil, 0

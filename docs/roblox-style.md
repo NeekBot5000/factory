@@ -35,41 +35,46 @@ points that several sources agreed on, or that Roblox's own docs state, made it 
 6. **A clear next goal on screen at all times.** That means a quest pill ("Peel 5 bark sheets 2/5") and a marker
    over where to go.
 
-## What Timber's Roblox version now does
-| Expectation | In Timber |
+## What Timber's Roblox version does now: the Godot game, not a generic Roblox game
+The research above shaped an earlier pass, which used a chunky Roblox-style UI, a hotbar, quest pills and prompts.
+After that, the brief changed to *make it exactly like the Godot version*, so the Roblox port now copies the Godot
+game's own design, piece by piece:
+
+| Godot (file) | Roblox now |
 |---|---|
-| Doing within 90 s | You spawn facing the trees with a quest pill: peel → carry → ship → buy a hatchet. A bouncing marker shows where to go next |
-| Great first action | Each hit: bark-chip particles, a chop sound, a slash animation, a small camera kick, the tree shakes, and a sheet pops off |
-| Chunky UI | `UiKit`: one look everywhere. Fredoka One font, thick dark outlines, rounded corners, warm wood and cream colours with a green accent, buttons that squash when pressed |
-| Money feel | A big money counter at the top that counts up, a coin pop, and floating "+$12.40" numbers when you sell |
-| Native tools | Bought tools are real Roblox **Tools** in your hotbar, each with its own model, kept when you respawn |
-| Shop | A **TimberMart** stall. Its shop window has a turning 3D preview of each tool, its stats and its price, and a big Buy button. Hold the stall's prompt to open it, on any device |
-| Lighting | Future lighting with atmosphere haze, gentle bloom, sun rays and warm colour grading |
-| World | Low-poly trees with layered crowns in each species' colours, rocks, a spawn clearing, a log truck and the shop stall |
-| Mobile | Touch buttons for Swing, Grab and Build at the bottom right, scale-based UI, and a shop panel that fits a phone |
+| First person, 75° view, no mouse pointer (Player.gd) | `LockFirstPerson`, field of view 75, the pointer hidden. The HUD's crosshair is the only aim mark |
+| The arm in view: red sleeve, plaid cuffs, flat karate hand or a fist on the tool, swing shapes per tool (Player.gd) | `ViewModel`: built from the same measurements; it chops, karate-chops, sweeps (double-bit, forehand then backhand) or slams (labrys, greataxe), sways as you walk and rises on equip |
+| Swing timing: the blade lands partway through (impact), the double-bit twice; sounds by outcome (Player.gd) | `ToolController`: the same cooldowns, impact points and reach. Bark → chop/axe (higher for the inner layer), bare wood → chop_wood, ground → thud with dirt, a bare-handed miss → whoosh |
+| HUD: money top right (counts up, pops), health bottom left only when hurt, tool bar with icons and keys, hint line, toasts, crosshair ring sized to the bark circle (Hud.gd) | `Hud`: the same layout, colours, fonts (Nunito, Fredoka) and behaviour. Roblox's player list, backpack and health bar are off |
+| Getting started panel, top left (Tutorial.gd) | `TutorialService` plus the HUD panel: take the hatchet, peel, load the truck, send it, save up, buy |
+| E uses / grabs, Q drops a tool on the ground, 1-9 and the wheel pick tools (Player.gd) | Same keys. No Roblox Tools or backpack, and no ProximityPrompts |
+| The truck: "[E] ship $X", horn, drives to the mill, pays on arrival, comes back (Truck.gd) | `EconomyService`: the same, with the engine running on the road and the load's value on its sign |
+| Health: bare hands hurt 6 a hit, it regrows after 3 s at 5 a second, "ouch" under 40, at 0 you faint and wake at the start (Player.gd) | A `Health` script replaces Roblox's, and fainting fades the screen to black and back |
+| Sounds: all made by Sfx.gd, footsteps by surface every 0.7 m (0.9 sprinting) | The same sounds from the uploaded sheet. Roblox's own character sounds (footsteps, jump, landing) are replaced with nothing |
+| Walk 4.2 m/s, sprint 6.8 (Shift), jump 4.6 m/s | 12.6 and 20.4 studs a second (3 studs to the metre), jump height matched |
+| TimberMart on the computer (ShopUI.gd) | The same layout and colours, opened with E at the stall's counter |
 
 ## The scripted playtest
 `roblox/tests/lune/playtest.luau` plays a first session through the real server scripts, with no Studio needed, and
-CI runs it on every push. It covers 44 checks:
-- **A new player's first minutes:** peel, carry, ship, then buy the hatchet. It got there in about two minutes of
-  work.
-- **Cheating:** buying what you can't afford, swinging from too far away or with a tool you don't own, spamming 20
-  swings at once, and selling someone else's bark.
+CI runs it on every push. It covers 61 checks:
+- **A new player's first minutes:** take the hatchet, peel, carry, ship, save up, then buy the Double-Bit Axe.
+- **Cheating:** buying what you can't afford, swinging from too far away or with a tool that isn't in your hand,
+  spamming 20 swings at once, taking someone else's dropped tool, and using things from across the map.
 - **Saves:** they survive leaving and rejoining on another server, and a second server can't load a save that's still
   in use.
 - **Machines and oil:** power, levers and an oil pump filling a barrel.
 
-What it caught and what changed:
-- **Bare hands could knock a new player out in under a minute.** Six swings took 36 of 100 health. Now bare-handed
-  peeling never takes you below 30 health, and a one-time tip says why it hurts and what helps.
-- **Every goal step works end to end,** including the rewards, which pay for the hatchet sooner.
+It also covers the Godot rules: taking the hatchet from the chopping block, the truck's trip to the mill, dropping
+and picking up a tool, the double-bit's two hits a swing, and fainting.
 
-## Not done yet (on purpose)
-- **Uploaded audio:** the game uses sounds that ship with Roblox (like the classic sword's) until real chop, clink and
-  coin sounds are uploaded. Those sound files haven't been checked in Studio; if one is missing it just stays silent.
-- **The client side** (UI, shop window, effects) compiles, but only Studio can show it. The playtest drives the
-  server, the way a client would.
-- **Day/night, co-op events, daily rewards:** later. Each needs the core loop to be fun first.
+## Not in the Roblox version yet
+- **The rest of the Godot game:** the cabin and its computer, the delivery van and boxes, the hammer and building,
+  machines, rails, drones, the phone, most of the 40-odd tools, saws and felling, weather, the title menu and
+  settings. The Roblox version has the first part of the game, the axes and the truck, built the Godot way.
+- **The world's look:** trees, rocks, the truck and the stall are built from Roblox parts in the Godot colours, not
+  the Godot models themselves. There's no cabin and no grass tufts yet.
+- **The client side** (HUD, arm, shop window, effects) compiles, but only Studio can show it. The playtest drives
+  the server, the way a client would.
 
 ## Sources
 - [Exitlag: Roblox genres in 2026](https://www.exitlag.com/blog/roblox-game-genres-and-popularity/)

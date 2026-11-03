@@ -96,8 +96,14 @@ function Core.plan(project, files: { string }, root: string)
 				local here = table.clone(path)
 				table.insert(here, key)
 				if child["$path"] then
-					local dir = root .. child["$path"]
-					table.insert(synced, { parent = path, node = Core.folderNode(key, dir, files) })
+					local target = root .. child["$path"]
+					local kind = scriptKind(target)
+					if kind then
+						-- a single file: one script, named by its key in the project
+						table.insert(synced, { parent = path, node = { name = key, className = kind, path = target, children = {} } })
+					else
+						table.insert(synced, { parent = path, node = Core.folderNode(key, target, files) })
+					end
 				else
 					if child["$properties"] or child["$className"] then
 						table.insert(props, { path = here, className = child["$className"], properties = child["$properties"] or {} })

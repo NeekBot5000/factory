@@ -5,26 +5,19 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local QuestService = require(script.Parent.QuestService)
+local Config = require(ReplicatedStorage.Shared.Config)
+local EconomyService = require(script.Parent.EconomyService)
+local TutorialService = require(script.Parent.TutorialService)
 
 local CarryService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local holding: { [Player]: BasePart } = {}
 CarryService.holding = holding
-local REACH = 14
+local REACH = Config.Player.grabReach * Config.StudsPerMetre + 6   -- Godot's grab reach, plus slack for lag
 
 local function drop(player: Player)
 	local p = holding[player]
 	holding[player] = nil
-	-- dropped into the truck bed? (counts for the "carry" quest)
-	local truck = workspace:FindFirstChild("Truck_" .. player.UserId) or workspace:FindFirstChild("Truck")
-	local bed = truck and truck:FindFirstChild("Bed") :: BasePart?
-	if p and bed then
-		local lp = bed.CFrame:PointToObjectSpace(p.Position)
-		if math.abs(lp.X) < bed.Size.X / 2 + 1 and math.abs(lp.Z) < bed.Size.Z / 2 + 1 and lp.Y > -1 and lp.Y < 8 then
-			QuestService.progress(player, "carry", 1)
-		end
-	end
 	if p and p.Parent then
 		for _, c in p:GetChildren() do
 			if c.Name == "Carry" then
@@ -32,6 +25,17 @@ local function drop(player: Player)
 			end
 		end
 		p:SetAttribute("HeldBy", nil)
+	end
+	-- (it may have landed in the truck: the tutorial checks in a moment, once it has settled)
+	task.delay(1, TutorialService.check, player)
+end
+
+-- lets go of a part whoever is holding it (the truck drives off with it)
+function CarryService.release(part: BasePart)
+	for player, p in holding do
+		if p == part then
+			drop(player)
+		end
 	end
 end
 
@@ -45,7 +49,7 @@ local function grab(player: Player, target: unknown)
 	end
 	local p = target :: BasePart
 	local loose = workspace:FindFirstChild("Loose")
-	if not loose or not p:IsDescendantOf(loose) or p.Anchored or p:GetAttribute("HeldBy") then
+	if not loose or not p:IsDescendantOf(loose) or p.Anchored or p:GetAttribute("HeldBy") or p.Parent ~= loose then
 		return
 	end
 	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
@@ -71,6 +75,7 @@ local function grab(player: Player, target: unknown)
 end
 
 function CarryService.start()
+	EconomyService.release = CarryService.release
 	remotes.Grab.OnServerEvent:Connect(grab)
 	Players.PlayerRemoving:Connect(drop)
 end
