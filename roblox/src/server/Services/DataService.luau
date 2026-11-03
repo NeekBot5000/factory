@@ -166,6 +166,7 @@ function DataService.publish(player: Player)
 	player:SetAttribute("Fresh", (data.earned or 0) <= 0 and onlyHands and #(data.orders or {}) == 0 and (data.tutorial or 1) == 1)
 	player:SetAttribute("Settings", HttpService:JSONEncode(data.settings or {}))
 	player:SetAttribute("Land", table.concat(data.land or {}, ";"))
+	player:SetAttribute("Charges", (data.charges or {}).dynamite or 0)
 	local tro = {}
 	for id, yes in data.trophies or {} do
 		if yes then

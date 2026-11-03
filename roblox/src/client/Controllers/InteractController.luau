@@ -169,6 +169,13 @@ function InteractController.target(): (string, (() -> ())?)
 			return string.format("%.1f kg  ·  worth $%.2f", Weight.of(thing), value), nil
 		end
 	end
+	-- dynamite: stick a charge on what you're looking at (Godot's Player hint)
+	if (Config.Tools :: any)[State.tool] and (Config.Tools :: any)[State.tool].plant and (hit.Position - workspace.CurrentCamera.CFrame.Position).Magnitude < (Config.Tools :: any)[State.tool].reach * M then
+		local cm = part:FindFirstAncestorWhichIsA("Model")
+		if not (cm and cm:GetAttribute("Build") == "charge") then
+			return string.format("[Click] stick a charge on it  (%d left)", player:GetAttribute("Charges") :: number? or 0), nil
+		end
+	end
 	-- rocks and mine shafts say what they are (Godot's Rock / Shaft hint_text)
 	if part:GetAttribute("Rock") ~= nil then
 		return "Stone  ·  any pickaxe", nil
@@ -334,6 +341,8 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 	elseif id == "battery" then
 		local c = m:GetAttribute("Charge") :: number? or 0
 		return string.format("Battery  ·  %d%%  ·  %s", math.floor(c / 180 * 100), if m:GetAttribute("Feeding") then "powering" elseif powered then "charging" else "idle"), false
+	elseif id == "charge" then
+		return "Dynamite  ·  wire it to a switch with power to set it off", false
 	elseif Drones.isDrone(m) then
 		-- (Godot's Drone.hint_text: the dial you're looking at, or the cell)
 		local d = Drones.SIZES[id]
@@ -506,7 +515,7 @@ end
 local wireFrom: Model? = nil
 function InteractController.wireHint(m: Model): string
 	local GB = require(game:GetService("ReplicatedStorage").Shared.Builds) :: any
-	local name = (GB.def(m:GetAttribute("Build")) or {}).name or "machine"
+	local name = if m:GetAttribute("Build") == "charge" then "Dynamite" else (GB.def(m:GetAttribute("Build")) or {}).name or "machine"
 	if wireFrom and wireFrom.Parent then
 		if wireFrom ~= m then
 			return "[Click] connect / disconnect " .. name

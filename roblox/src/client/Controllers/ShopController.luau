@@ -111,7 +111,7 @@ local function card(grid: Instance, id: string, order: number): GuiObject?
 		statBar(c, "Strip size", def.stripRadius / 0.6, 5)
 		statBar(c, "Speed", (1.25 - def.cooldown) / 1.0, 6)
 	end
-	local have = owns(id)
+	local have = owns(id) and not def.consumable     -- (boxes of dynamite: buy as many as you like)
 	local ordered = ordered(id)
 	local afford = money() >= def.price
 	if ordered then

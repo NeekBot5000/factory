@@ -390,7 +390,7 @@ function BuildService.serialize(userId: number): { any }
 	for _, name in { "Builds", "Plans" } do
 		local f = workspace:FindFirstChild(name)
 		for _, m in if f then f:GetChildren() else {} do
-			if m:IsA("Model") and m:GetAttribute("Owner") == userId then
+			if m:IsA("Model") and m:GetAttribute("Owner") == userId and m:GetAttribute("Build") ~= "charge" then
 				local e: any = { id = m:GetAttribute("Build"), cf = cfArr(m:GetPivot()), size = m:GetAttribute("Size"), kind = m:GetAttribute("Kind") }
 				if e.kind == "build" then
 					local colors = {}

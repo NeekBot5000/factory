@@ -277,6 +277,14 @@ local function impact()
 		IC.wireClick(if m and m:GetAttribute("Kind") == "build" then m else nil)
 		return
 	end
+	if d.plant then
+		-- dynamite: stick a charge where you're looking (wire it to a switch with power to set it off)
+		local ph = ToolController.aim(d.reach * M)
+		if ph then
+			remotes.Plant:FireServer(ph.Instance, ph.Position, ph.Normal)
+		end
+		return
+	end
 	if d.rake then
 		remotes.Rake:FireServer()
 		return

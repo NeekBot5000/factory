@@ -219,7 +219,7 @@ local function buy(player: Player, item: unknown)
 	end
 	local def = (Config.Tools :: any)[item] or (Config.Items :: any)[item]
 	local data = DataService.get(player)
-	if not def or def.price <= 0 or not data or data.owned[item] then
+	if not def or def.price <= 0 or not data or (data.owned[item] and not def.consumable) then
 		return
 	end
 	data.orders = data.orders or {}

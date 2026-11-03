@@ -1366,6 +1366,59 @@ do
 	end
 end
 
+-- ---------------------------------------------------------------- dynamite
+do
+	local BS, CS, MS = A.service("BuildService"), A.service("CircuitService"), A.service("MiningService")
+	local M = Cfg.StudsPerMetre
+	local idx, rk = nil, nil
+	for i = 0, 80 do
+		local r = MS.rock(i)
+		if r then
+			idx, rk = i, r
+		end
+	end
+	if rk then
+		local prev = alice:GetAttribute("Tool")
+		Tools.grant(alice, "dynamite")
+		task.wait(1.3)
+		local d = A.service("DataService").get(alice)
+		d.charges = { dynamite = 5 }
+		A.stand(alice, rk.at + V3(0, 3, 6))
+		local pos = rk.at + V3(0, rk.s * 0.5 * M, 0)
+		A.remotes.Plant.OnServerEvent:Fire(alice, nil, pos, V3(0, 1, 0))
+		task.wait(0.1)
+		local charge
+		for _, m in ws.Builds:GetChildren() do
+			if m:GetAttribute("Build") == "charge" then
+				charge = m
+			end
+		end
+		check(charge ~= nil and d.charges.dynamite == 4 and alice:GetAttribute("Charges") == 4, "dynamite: a click sticks a charge where you look (4 left)")
+		local before = 0
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "ore" then
+				before += 1
+			end
+		end
+		-- wired to a wound crank: power reaches it, a hiss of fuse, then it goes off and the rock bursts
+		local crank = BS.make("crank", roblox.CFrame.new(rk.at + V3(9, 0, 0)), 1, 101, true, {})
+		for _ = 1, 4 do
+			CS.use(crank)
+		end
+		CS.toggle(crank, charge)
+		task.wait(1.2)
+		local after = 0
+		for _, c in loose:GetChildren() do
+			if c:GetAttribute("Kind") == "ore" then
+				after += 1
+			end
+		end
+		check(MS.rock(idx) == nil and after - before >= 2 and charge.Parent == nil, "wired to a switch with power it goes off, and the rock bursts into every chunk")
+		Tools.equip(alice, prev)
+		crank:Destroy()
+	end
+end
+
 -- ---------------------------------------------------------------- production
 do
 	local BS, PS = A.service("BuildService"), A.service("ProductionService")

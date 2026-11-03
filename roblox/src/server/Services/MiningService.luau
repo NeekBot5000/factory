@@ -279,7 +279,155 @@ local function onMine(player: Player, target: unknown, pos: unknown, normal: unk
 	end
 end
 
+-- ------------------------------------------------------------------ dynamite (Godot's Charge)
+-- A stick of dynamite stuck on something. Wire it (wire spool) to a switch that has power: the moment power reaches
+-- it, a short hiss of fuse, then it goes off. Rocks close by burst into all their chunks, loose things get thrown
+-- about, other charges nearby go off too, and anyone close gets hurt.
+MiningService.BLAST_R = 1.9
+local plantedN = 0
+
+function MiningService.plant(player: Player, at: Vector3, normal: Vector3): Model
+	plantedN += 1
+	local m = Instance.new("Model")
+	m.Name = "Dynamite"
+	m:SetAttribute("Kind", "build")
+	m:SetAttribute("Build", "charge")
+	m:SetAttribute("Owner", player.UserId)
+	m:SetAttribute("Uid", string.format("%d_c%d", player.UserId, plantedN))
+	m:SetAttribute("Size", 1)
+	local up = normal.Unit
+	local side = up:Cross(if math.abs(up.Y) < 0.95 then Vector3.yAxis else Vector3.xAxis).Unit
+	local cf = CFrame.fromMatrix(at + up * 0.03 * M, side, up)
+	m.WorldPivot = cf
+	local function piece(size: Vector3, off: Vector3, color: string, cyl: boolean)
+		local p = Instance.new("Part")
+		p.Shape = if cyl then Enum.PartType.Cylinder else Enum.PartType.Block
+		p.Size = size * M
+		p.CFrame = cf * CFrame.new(off * M) * (if cyl then CFrame.Angles(0, math.pi / 2, 0) else CFrame.new())
+		p.Color = Color3.fromHex(color)
+		p.Material = Enum.Material.SmoothPlastic
+		p.Anchored = true
+		p.CanCollide = false
+		p.Parent = m
+	end
+	for k = 0, 2 do
+		piece(Vector3.new(0.22, 0.06, 0.06), Vector3.new((k - 1) * 0.06, 0.03, 0), "c0392b", true)
+	end
+	piece(Vector3.new(0.19, 0.065, 0.03), Vector3.new(0, 0.032, 0.05), "2b2d33", false)
+	piece(Vector3.new(0.19, 0.065, 0.03), Vector3.new(0, 0.032, -0.05), "2b2d33", false)
+	piece(Vector3.new(0.008, 0.12, 0.008), Vector3.new(0, 0.1, -0.1), "d9c08a", false)
+	local f = workspace:FindFirstChild("Builds")
+	if not f then
+		f = Instance.new("Folder")
+		f.Name = "Builds"
+		f.Parent = workspace
+	end
+	m.Parent = f
+	remotes.Fx:FireAllClients("clink", at, 0.7, -6)
+	return m
+end
+
+function MiningService.explode(m: Model)
+	if not m.Parent or m:GetAttribute("Gone") then
+		return
+	end
+	m:SetAttribute("Gone", true)
+	local at = m:GetPivot().Position
+	local owner = game:GetService("Players"):GetPlayerByUserId(m:GetAttribute("Owner") :: number? or 0)
+	m:Destroy()
+	-- rocks close by burst into every chunk (tier 2: iron comes out too)
+	for i, r in rocks do
+		if (r.at - at).Magnitude < (MiningService.BLAST_R + r.s * 0.5) * M then
+			MiningService.hitRock(owner, i, at, Vector3.yAxis, { mine = 1, tier = 2, smash = math.huge })
+		end
+	end
+	-- other charges nearby go off too
+	local f = workspace:FindFirstChild("Builds")
+	for _, c in if f then f:GetChildren() else {} do
+		if c:GetAttribute("Build") == "charge" and (c:GetPivot().Position - at).Magnitude < MiningService.BLAST_R * M then
+			task.delay(0.12, function()
+				pcall(MiningService.explode, c)       -- (it may have gone off already)
+			end)
+		end
+	end
+	-- loose things get thrown about
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	local roots = {}
+	for _, n in { "Loose", "Logs" } do
+		local lf = workspace:FindFirstChild(n)
+		if lf then
+			table.insert(roots, lf)
+		end
+	end
+	params.FilterDescendantsInstances = roots
+	for _, p in workspace:GetPartBoundsInRadius(at, MiningService.BLAST_R * M, params) do
+		if not p.Anchored then
+			local d = (p.CFrame.Position - at) / M
+			local push = (d.Unit + Vector3.new(0, 0.6, 0)).Unit * math.clamp(9 - d.Magnitude * 3, 2, 9)
+			p.AssemblyLinearVelocity = push * M
+		end
+	end
+	-- and anyone close gets hurt
+	for _, pl in game:GetService("Players"):GetPlayers() do
+		local root = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local hum = pl.Character and pl.Character:FindFirstChildOfClass("Humanoid")
+		if root and hum then
+			local dist = (root.CFrame.Position - at).Magnitude / M
+			if dist < 3.5 then
+				hum:TakeDamage(45 + (10 - 45) * dist / 3.5)
+			end
+		end
+	end
+	remotes.Fx:FireAllClients("boom", at, 1.0, 8)
+end
+
+-- power reached a charge: a short hiss of fuse, then boom
+function MiningService.light(m: Model)
+	if m:GetAttribute("Fuse") then
+		return
+	end
+	m:SetAttribute("Fuse", true)
+	remotes.Fx:FireAllClients("hiss", m:GetPivot().Position, 1.6, 0)
+	task.delay(0.35, function()
+		pcall(MiningService.explode, m)
+	end)
+end
+
+local function onPlant(player: Player, target: unknown, pos: unknown, normal: unknown)
+	if typeof(pos) ~= "Vector3" or typeof(normal) ~= "Vector3" or (normal :: Vector3).Magnitude < 0.5 then
+		return
+	end
+	local tool = (Config.Tools :: any)[ToolService.current(player)]
+	local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+	if not tool or not tool.plant or not head or (head.CFrame.Position - (pos :: Vector3)).Magnitude > tool.reach * M + 5 then
+		return
+	end
+	if typeof(target) == "Instance" then
+		local tm = (target :: Instance):FindFirstAncestorWhichIsA("Model")
+		if tm and tm:GetAttribute("Build") == "charge" then
+			return
+		end
+	end
+	local DataService = require(script.Parent.DataService) :: any
+	local data = DataService.get(player)
+	if not data then
+		return
+	end
+	data.charges = data.charges or {}
+	local left = data.charges.dynamite or 0
+	if left <= 0 then
+		remotes.Notify:FireClient(player, "Out of dynamite - TimberMart sells it by the box", "ffd27a")
+		return
+	end
+	data.charges.dynamite = left - 1
+	player:SetAttribute("Charges", left - 1)
+	MiningService.plant(player, pos :: Vector3, normal :: Vector3)
+	remotes.Notify:FireClient(player, string.format("%d left", left - 1), "ffd27a")
+end
+
 function MiningService.start()
+	remotes.Plant.OnServerEvent:Connect(onPlant)
 	for i, r in W.rocks or {} do
 		local at = Vector3.new(r.at[1], r.at[2], r.at[3])
 		rocks[i - 1] = { at = at, s = r.s, ore = r.ore, hidden = r.hidden, hp = r.hp, max = r.hp }

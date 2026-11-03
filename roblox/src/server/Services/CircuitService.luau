@@ -30,7 +30,7 @@ CircuitService.MIN_WIND = 0.35
 local TERMINAL = {
 	crank = { 0, 0.98, 0 }, lever = { -0.18, 0.2, 0 }, button = { 0, 0.6, -0.08 }, lamp = { 0, 0.35, 0.12 }, bell = { 0, 0.35, 0.12 },
 	windmill = { 0.3, 0.35, 0.3 }, gate_diode = { 0, 0.22, 0 }, gate_and = { 0, 0.22, 0 }, gate_not = { 0, 0.22, 0 },
-	gate_timer = { 0, 0.22, 0 }, gate_delay = { 0, 0.22, 0 }, gate_latch = { 0, 0.22, 0 }, gate_counter = { 0, 0.22, 0 }, generator = { 0.36, 0.45, 0.3 }, battery = { 0, 0.82, 0 }, truck_caller = { 0, 0.3, 0.2 },
+	gate_timer = { 0, 0.22, 0 }, gate_delay = { 0, 0.22, 0 }, gate_latch = { 0, 0.22, 0 }, gate_counter = { 0, 0.22, 0 }, charge = { 0, 0.15, -0.14 }, generator = { 0.36, 0.45, 0.3 }, battery = { 0, 0.82, 0 }, truck_caller = { 0, 0.3, 0.2 },
 }
 
 function CircuitService.wind(): number
@@ -43,7 +43,7 @@ local function machines(): { Model }
 	local f = workspace:FindFirstChild("Builds")
 	for _, m in if f then f:GetChildren() else {} do
 		local def = m:IsA("Model") and Builds.def(m:GetAttribute("Build") :: string)
-		if def and def.machine then
+		if (def and def.machine) or m:GetAttribute("Build") == "charge" then
 			table.insert(out, m :: Model)
 		end
 	end
@@ -444,7 +444,9 @@ end
 
 local function powerOn(m: Model)
 	local id = m:GetAttribute("Build")
-	if id == "bell" then
+	if id == "charge" then
+		(require(script.Parent.MiningService) :: any).light(m)
+	elseif id == "bell" then
 		remotes.Fx:FireAllClients("clink", m:GetPivot().Position, 0.7, 4)
 		remotes.Fx:FireAllClients("clink", m:GetPivot().Position, 0.52, 2)
 	elseif id == "truck_caller" then
@@ -746,7 +748,7 @@ local function machineOf(target: unknown): Model?
 		m = m:FindFirstAncestorWhichIsA("Model")
 	end
 	local def = m and Builds.def(m:GetAttribute("Build") :: string)
-	return if def and def.machine then m else nil
+	return if (def and def.machine) or (m and m:GetAttribute("Build") == "charge") then m else nil
 end
 
 local function near(player: Player, m: Model, reach: number): boolean

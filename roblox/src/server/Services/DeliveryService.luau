@@ -276,6 +276,12 @@ function DeliveryService.take(player: Player, pickup: Model): boolean
 	end
 	ToolService.grant(player, item)
 	local def = (Config.Tools :: any)[item]
+	if def and def.consumable and data then
+		-- a box of dynamite: five more sticks (Godot's Game.charges)
+		data.charges = data.charges or {}
+		data.charges[item] = (data.charges[item] or 0) + def.consumable
+		player:SetAttribute("Charges", data.charges[item])
+	end
 	local itemDef = (Config.Items :: any)[item]
 	if item == "phone" then
 		remotes.Notify:FireClient(player, "TimberPhone  [Tab]", "7aff9a")
