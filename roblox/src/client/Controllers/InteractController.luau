@@ -318,6 +318,28 @@ function InteractController.machineHint(m: Model): (string?, boolean)
 		return string.format("Battery  ·  %d%%  ·  %s", math.floor(c / 180 * 100), if m:GetAttribute("Feeding") then "powering" elseif powered then "charging" else "idle"), false
 	elseif id == "truck_caller" then
 		return "Truck Caller  ·  sends the log truck whenever it gets power", false
+	elseif typeof(id) == "string" and string.sub(id, 1, 5) == "gate_" then
+		local mode = string.sub(id, 6)
+		local setting = (m:GetAttribute("Setting") :: number? or 0) + 1
+		if mode == "diode" then
+			return "One-Way  ·  power in the back, out the front", false
+		elseif mode == "and" then
+			return "Relay  ·  passes back -> front while a side is powered", false
+		elseif mode == "not" then
+			return "Inverting Relay  ·  passes back -> front while no side is powered", false
+		elseif mode == "timer" then
+			return string.format("Timer  ·  pulses every %ds    [E] change", ({ 1, 2, 4, 8 })[setting]), true
+		elseif mode == "delay" then
+			return string.format("Delay  ·  %.1fs    [E] change", ({ 0.5, 1, 2, 4 })[setting]), true
+		elseif mode == "latch" then
+			return string.format("Toggle Latch  ·  %s  ·  a pulse at the back flips it    [E] flip", if m:GetAttribute("LatchOn") then "on" else "off"), true
+		elseif mode == "counter" then
+			return string.format("Counter  ·  %d of %d pulses    [E] change", m:GetAttribute("Count") :: number? or 0, ({ 2, 3, 5, 10 })[setting]), true
+		end
+	elseif id == "pressure_plate" then
+		return "Pressure Plate  ·  " .. (if m:GetAttribute("Sensing") then "pressed" else "lets power through while something stands on it"), false
+	elseif id == "item_sensor" then
+		return "Item Sensor  ·  " .. (if m:GetAttribute("Sensing") then "sees something" else "lets power through while something is in front of it"), false
 	elseif id == "sawmill" then
 		return string.format("Sawmill  ·  %s", if m:GetAttribute("LogUid") then "cutting" else "lay a log on the table and power it"), false
 	elseif id == "smelter" or id == "kiln" then

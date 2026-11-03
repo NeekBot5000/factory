@@ -29,7 +29,8 @@ CircuitService.MIN_WIND = 0.35
 -- where a wire plugs into each machine (Godot's terminal(), metres, around the machine's origin)
 local TERMINAL = {
 	crank = { 0, 0.98, 0 }, lever = { -0.18, 0.2, 0 }, button = { 0, 0.6, -0.08 }, lamp = { 0, 0.35, 0.12 }, bell = { 0, 0.35, 0.12 },
-	windmill = { 0.3, 0.35, 0.3 }, generator = { 0.36, 0.45, 0.3 }, battery = { 0, 0.82, 0 }, truck_caller = { 0, 0.3, 0.2 },
+	windmill = { 0.3, 0.35, 0.3 }, gate_diode = { 0, 0.22, 0 }, gate_and = { 0, 0.22, 0 }, gate_not = { 0, 0.22, 0 },
+	gate_timer = { 0, 0.22, 0 }, gate_delay = { 0, 0.22, 0 }, gate_latch = { 0, 0.22, 0 }, gate_counter = { 0, 0.22, 0 }, generator = { 0.36, 0.45, 0.3 }, battery = { 0, 0.82, 0 }, truck_caller = { 0, 0.3, 0.2 },
 }
 
 function CircuitService.wind(): number
@@ -69,14 +70,56 @@ local function isSource(m: Model): boolean
 	return false
 end
 
+local function isGate(m: Model): boolean
+	return string.sub(m:GetAttribute("Build") :: string? or "", 1, 5) == "gate_"
+end
+
 local function conducts(m: Model): boolean
 	local id = m:GetAttribute("Build")
+	if isGate(m) then
+		return false          -- (a logic block only lets power out of its front, and only when its logic says so)
+	end
 	if id == "lever" then
 		return m:GetAttribute("On") == true
 	elseif id == "button" then
 		return (m:GetAttribute("Pressed") :: number? or 0) > 0
+	elseif id == "pressure_plate" or id == "item_sensor" or id == "level_sensor" then
+		return m:GetAttribute("Sensing") == true
 	end
 	return true
+end
+
+-- the sensors (Godot's Sensor): a pressure plate with something heavy (or someone) on it, an item sensor with
+-- something loose in the grid square in front of it
+local function sense(m: Model)
+	local id = m:GetAttribute("Build")
+	if id ~= "pressure_plate" and id ~= "item_sensor" then
+		return
+	end
+	local size = m:GetAttribute("Size") :: number? or 1
+	local off, box = if id == "pressure_plate" then Vector3.new(0, 0.2, 0) else Vector3.new(0, 0.4, -1), if id == "pressure_plate" then Vector3.new(0.8, 0.3, 0.8) else Vector3.new(0.9, 0.8, 0.9)
+	local cf = m:GetPivot() * CFrame.new(off * M * size)
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	local roots = {}
+	for _, name in { "Loose", "Logs" } do
+		local f = workspace:FindFirstChild(name)
+		if f then
+			table.insert(roots, f)
+		end
+	end
+	if id == "pressure_plate" then
+		for _, p in Players:GetPlayers() do
+			if p.Character then
+				table.insert(roots, p.Character)
+			end
+		end
+	end
+	params.FilterDescendantsInstances = roots
+	local on = #workspace:GetPartBoundsInBox(cf, box * M * size, params) > 0
+	if m:GetAttribute("Sensing") ~= on then
+		m:SetAttribute("Sensing", on)
+	end
 end
 
 -- ------------------------------------------------------------------ wires
@@ -194,29 +237,151 @@ local function isBelt(m: Model): boolean
 	return id == "conveyor" or id == "ramp"
 end
 
--- ------------------------------------------------------------------ the tick
-local function solve(list: { Model }, links: { [Model]: { Model } }): { [Model]: boolean }
-	local live: { [Model]: boolean } = {}
-	local queue = {}
-	for _, m in list do
-		if isSource(m) then
-			live[m] = true
-			table.insert(queue, m)
-		end
+-- ------------------------------------------------------------------ logic blocks (Godot's Gate)
+-- back: the power it passes on; sides: control (relays) or supply (latch, counter); front: the only way out
+local PULSE = 0.5
+local TIMER_STEPS, DELAY_STEPS, COUNT_STEPS = { 1, 2, 4, 8 }, { 0.5, 1, 2, 4 }, { 2, 3, 5, 10 }
+
+function CircuitService.sideOf(g: Model, other: Model): string
+	local lp = g:GetPivot():PointToObjectSpace(CircuitService.terminal(other)) / M
+	if lp.Z < -0.3 and math.abs(lp.Z) >= math.abs(lp.X) * 0.7 then
+		return "front"
 	end
-	while #queue > 0 do
-		local m = table.remove(queue) :: Model
-		if not (isSource(m) or conducts(m)) then
-			continue      -- it gets power itself, but doesn't pass it on
-		end
-		for _, n in links[m] or {} do
-			if not live[n] then
-				live[n] = true
-				table.insert(queue, n)
+	if math.abs(lp.X) > math.abs(lp.Z) then
+		return "side"
+	end
+	return if lp.Z >= 0 then "back" else "front"
+end
+
+local function gateMode(g: Model): string
+	return string.sub(g:GetAttribute("Build") :: string, 6)
+end
+
+local function num(m: Model, k: string): number
+	return m:GetAttribute(k) :: number? or 0
+end
+
+local function wouldPass(g: Model, fed: { back: boolean, side: boolean }): boolean
+	local mode, back, side = gateMode(g), fed.back, fed.side
+	local setting = num(g, "Setting") + 1
+	if mode == "diode" then
+		return back
+	elseif mode == "and" then
+		return back and side
+	elseif mode == "not" then
+		return back and not side
+	elseif mode == "timer" then
+		return back and num(g, "Clock") < PULSE
+	elseif mode == "delay" then
+		local d = DELAY_STEPS[setting]
+		return (back and num(g, "Held") >= d) or (not back and num(g, "Held") >= d and num(g, "Released") < d)
+	elseif mode == "latch" then
+		return side and g:GetAttribute("LatchOn") == true
+	elseif mode == "counter" then
+		return side and num(g, "Pulse") > 0
+	end
+	return false
+end
+
+local function gateStep(g: Model, fed: { back: boolean, side: boolean }, dt: number)
+	local mode, back = gateMode(g), fed.back
+	local setting = num(g, "Setting") + 1
+	if mode == "timer" then
+		g:SetAttribute("Clock", (num(g, "Clock") + dt) % TIMER_STEPS[setting])
+	elseif mode == "delay" then
+		if back then
+			g:SetAttribute("Held", num(g, "Held") + dt)
+			g:SetAttribute("Released", 0)
+		else
+			g:SetAttribute("Released", num(g, "Released") + dt)
+			if num(g, "Released") >= DELAY_STEPS[setting] then
+				g:SetAttribute("Held", 0)
 			end
 		end
+	elseif mode == "latch" then
+		if back and not g:GetAttribute("BackWas") then
+			g:SetAttribute("LatchOn", not g:GetAttribute("LatchOn"))
+			remotes.Fx:FireAllClients("click", g:GetPivot().Position, if g:GetAttribute("LatchOn") then 1.3 else 0.9, -6)
+		end
+	elseif mode == "counter" then
+		g:SetAttribute("Pulse", math.max(0, num(g, "Pulse") - dt))
+		if back and not g:GetAttribute("BackWas") then
+			local c = num(g, "Count") + 1
+			if c >= COUNT_STEPS[setting] then
+				c = 0
+				g:SetAttribute("Pulse", 1.0)
+			end
+			g:SetAttribute("Count", c)
+		end
 	end
-	return live
+	g:SetAttribute("BackWas", back)
+end
+
+-- ------------------------------------------------------------------ the tick
+-- Spreads power from every source (Godot's _solve). Logic blocks only let it out of their front, and only when their
+-- logic says so; since that depends on what reaches their inputs, it settles over a few rounds.
+local function solve(list: { Model }, links: { [Model]: { Model } }): ({ [Model]: boolean }, { [Model]: { back: boolean, side: boolean } })
+	local gates = {}
+	for _, m in list do
+		if isGate(m) then
+			table.insert(gates, m)
+		end
+	end
+	local live: { [Model]: boolean } = {}
+	local fed: { [Model]: { back: boolean, side: boolean } } = {}
+	for _ = 1, 8 do
+		live, fed = {}, {}
+		for _, g in gates do
+			fed[g] = { back = false, side = false }
+		end
+		local queue = {}
+		for _, m in list do
+			if isSource(m) or (isGate(m) and m:GetAttribute("Passing") == true) then
+				live[m] = true
+				table.insert(queue, m)
+			end
+		end
+		while #queue > 0 do
+			local m = table.remove(queue) :: Model
+			local passing = isGate(m) and m:GetAttribute("Passing") == true
+			if not (isSource(m) or conducts(m) or passing) then
+				continue      -- it gets power itself, but doesn't pass it on
+			end
+			for _, n in links[m] or {} do
+				if isGate(m) and CircuitService.sideOf(m, n) ~= "front" then
+					continue
+				end
+				if isGate(n) then
+					local side = CircuitService.sideOf(n, m)
+					if side ~= "front" then
+						(fed[n] :: any)[side] = true
+					end
+					continue
+				end
+				if not live[n] then
+					live[n] = true
+					table.insert(queue, n)
+				end
+			end
+		end
+		local changed = false
+		for _, g in gates do
+			local want = wouldPass(g, fed[g])
+			if want ~= (g:GetAttribute("Passing") == true) then
+				g:SetAttribute("Passing", want)
+				changed = true
+			end
+		end
+		if not changed then
+			break
+		end
+	end
+	for _, g in gates do
+		if g:GetAttribute("Passing") then
+			live[g] = true
+		end
+	end
+	return live, fed
 end
 
 local function powerOn(m: Model)
@@ -312,13 +477,16 @@ function CircuitService.step(dt: number)
 			end
 		end
 	end
+	for _, m in list do
+		sense(m)
+	end
 	-- batteries charge from a network that has other power; if it has none, they power it themselves
 	for _, m in list do
 		if m:GetAttribute("Build") == "battery" then
 			m:SetAttribute("Feeding", false)
 		end
 	end
-	local live = solve(list, links)
+	local live, fed = solve(list, links)
 	local any = false
 	for _, m in list do
 		if m:GetAttribute("Build") == "battery" and not live[m] and (m:GetAttribute("Charge") :: number? or 0) > 0 then
@@ -327,7 +495,12 @@ function CircuitService.step(dt: number)
 		end
 	end
 	if any then
-		live = solve(list, links)
+		live, fed = solve(list, links)
+	end
+	for _, m in list do
+		if isGate(m) then
+			gateStep(m, fed[m] or { back = false, side = false }, dt)
+		end
 	end
 	for _, m in list do
 		local on = live[m] == true
@@ -371,7 +544,10 @@ function CircuitService.step(dt: number)
 	-- wires glow when power flows through them
 	for _, w in wireFolder():GetChildren() do
 		local a, b = uids[w:GetAttribute("A") :: string], uids[w:GetAttribute("B") :: string]
-		local flows = a ~= nil and b ~= nil and live[a] == true and live[b] == true and (isSource(a) or conducts(a) or isSource(b) or conducts(b))
+		local function feeds(x: Model): boolean
+			return isSource(x) or conducts(x) or (isGate(x) and x:GetAttribute("Passing") == true)
+		end
+		local flows = a ~= nil and b ~= nil and live[a] == true and live[b] == true and (feeds(a) or feeds(b))
 		if w:GetAttribute("Live") ~= flows then
 			w:SetAttribute("Live", flows)
 			local beam = w:FindFirstChild("Beam", true) :: Beam?
@@ -459,6 +635,19 @@ function CircuitService.use(m: Model): boolean
 	elseif id == "assembler" then
 		(require(script.Parent.ProductionService) :: any).cycle(m)
 		return true
+	elseif isGate(m) then
+		local mode = gateMode(m)
+		if mode == "timer" or mode == "delay" or mode == "counter" then
+			local s = (num(m, "Setting") + 1) % 4
+			m:SetAttribute("Setting", s)
+			m:SetAttribute("Count", 0)
+			remotes.Fx:FireAllClients("click", at, 0.8 + s * 0.15, -4)
+			return true
+		elseif mode == "latch" then
+			m:SetAttribute("LatchOn", not m:GetAttribute("LatchOn"))
+			remotes.Fx:FireAllClients("click", at, if m:GetAttribute("LatchOn") then 1.3 else 0.9, -4)
+			return true
+		end
 	end
 	return false
 end

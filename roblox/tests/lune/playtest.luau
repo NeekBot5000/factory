@@ -1068,6 +1068,42 @@ do
 	check(nw == #ws.Wires:GetChildren(), "and the wires are saved with your machines (" .. nw .. ")")
 end
 
+-- ---------------------------------------------------------------- logic blocks
+do
+	local BS, CS = A.service("BuildService"), A.service("CircuitService")
+	local base = V3(30, 0, -45)
+	local function mk(id, off)
+		local m = BS.make(id, roblox.CFrame.new(base + off), 1, 101, true, {})
+		A.service("BuildBehaviors").activate(m)
+		return m
+	end
+	-- a one-way block: power in the back (+Z: behind it), out the front (-Z)
+	local crank, diode, lamp = mk("crank", V3(0, 0, 6)), mk("gate_diode", V3(0, 0, 0)), mk("lamp", V3(0, 0, -6))
+	CS.toggle(crank, diode)
+	CS.toggle(diode, lamp)
+	CS.use(crank)
+	task.wait(0.3)
+	check(CS.sideOf(diode, crank) == "back" and CS.sideOf(diode, lamp) == "front" and lamp:GetAttribute("Powered"), "a one-way block passes power from its back out of its front")
+	local crank2, lamp2 = mk("crank", V3(12, 0, -6)), mk("lamp", V3(12, 0, 6))
+	local d2 = mk("gate_diode", V3(12, 0, 0))
+	CS.toggle(crank2, d2)
+	CS.toggle(d2, lamp2)
+	CS.use(crank2)
+	task.wait(0.3)
+	check(not lamp2:GetAttribute("Powered"), "but not the other way")
+	-- a relay: back -> front only while a side is powered
+	local c3, relay, l3, side = mk("crank", V3(24, 0, 6)), mk("gate_and", V3(24, 0, 0)), mk("lamp", V3(24, 0, -6)), mk("crank", V3(30, 0, 0))
+	CS.toggle(c3, relay)
+	CS.toggle(relay, l3)
+	CS.toggle(side, relay)
+	CS.use(c3)
+	task.wait(0.3)
+	local before = l3:GetAttribute("Powered")
+	CS.use(side)
+	task.wait(0.3)
+	check(not before and l3:GetAttribute("Powered"), "a relay passes power only while its side is powered")
+end
+
 -- ---------------------------------------------------------------- production
 do
 	local BS, PS = A.service("BuildService"), A.service("ProductionService")
