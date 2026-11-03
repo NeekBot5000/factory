@@ -38,35 +38,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Is the key there? (says set or missing for likely names, never shows a value)
-        env:
-          S_ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY != '' && 'set' || '' }}
-          V_ROBLOX_API_KEY: ${{ vars.ROBLOX_API_KEY != '' && 'set' || '' }}
-          S_ROBLOX_KEY: ${{ secrets.ROBLOX_KEY != '' && 'set' || '' }}
-          V_ROBLOX_KEY: ${{ vars.ROBLOX_KEY != '' && 'set' || '' }}
-          S_ROBLOX_APIKEY: ${{ secrets.ROBLOX_APIKEY != '' && 'set' || '' }}
-          V_ROBLOX_APIKEY: ${{ vars.ROBLOX_APIKEY != '' && 'set' || '' }}
-          S_ROBLOX_API: ${{ secrets.ROBLOX_API != '' && 'set' || '' }}
-          V_ROBLOX_API: ${{ vars.ROBLOX_API != '' && 'set' || '' }}
-          S_ROBLOX_OPEN_CLOUD_KEY: ${{ secrets.ROBLOX_OPEN_CLOUD_KEY != '' && 'set' || '' }}
-          V_ROBLOX_OPEN_CLOUD_KEY: ${{ vars.ROBLOX_OPEN_CLOUD_KEY != '' && 'set' || '' }}
-          S_OPEN_CLOUD_KEY: ${{ secrets.OPEN_CLOUD_KEY != '' && 'set' || '' }}
-          V_OPEN_CLOUD_KEY: ${{ vars.OPEN_CLOUD_KEY != '' && 'set' || '' }}
-          S_OPENCLOUD_KEY: ${{ secrets.OPENCLOUD_KEY != '' && 'set' || '' }}
-          V_OPENCLOUD_KEY: ${{ vars.OPENCLOUD_KEY != '' && 'set' || '' }}
-          S_RBX_API_KEY: ${{ secrets.RBX_API_KEY != '' && 'set' || '' }}
-          V_RBX_API_KEY: ${{ vars.RBX_API_KEY != '' && 'set' || '' }}
-          S_ROBLOX_TOKEN: ${{ secrets.ROBLOX_TOKEN != '' && 'set' || '' }}
-          V_ROBLOX_TOKEN: ${{ vars.ROBLOX_TOKEN != '' && 'set' || '' }}
-          S_API_KEY: ${{ secrets.API_KEY != '' && 'set' || '' }}
-          V_API_KEY: ${{ vars.API_KEY != '' && 'set' || '' }}
-          S_APIKEY: ${{ secrets.APIKEY != '' && 'set' || '' }}
-          V_APIKEY: ${{ vars.APIKEY != '' && 'set' || '' }}
-          S_KEY: ${{ secrets.KEY != '' && 'set' || '' }}
-          V_KEY: ${{ vars.KEY != '' && 'set' || '' }}
-        run: |
-          env | grep -E '^(S|V)_' | sort | sed -e 's/^S_/secret  /' -e 's/^V_/variable /' -e 's/=set$/: set/' -e 's/=$/: missing/'
-
       - name: Upload new or changed assets
         run: python3 tools/roblox_assets.py
 
