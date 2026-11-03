@@ -12,7 +12,6 @@ local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
 local TreeVisuals = {}
 local DETAIL_RANGE = 120
 local detailed: { [Model]: Folder } = {}
-local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local LAYER_COLOR = { [0] = Color3.fromRGB(91, 64, 48), [1] = Color3.fromRGB(181, 101, 58) }
 
@@ -92,13 +91,23 @@ local function drop(tree: Model)
 end
 
 function TreeVisuals.start()
-	remotes.TreeChanged.OnClientEvent:Connect(function(tree: Model)
-		-- rebuild from the Bark attribute (it has replicated by the time the event arrives, or will next frame)
-		task.defer(function()
-			if tree.Parent and workspace.CurrentCamera and (tree:GetPivot().Position - workspace.CurrentCamera.CFrame.Position).Magnitude < DETAIL_RANGE then
+	-- redraw a tree when its bark changes (the attribute replicates with the change itself; trees that stream in
+	-- later are hooked up as they arrive)
+	local function watch(inst: Instance)
+		local tree = inst :: Model
+		tree:GetAttributeChangedSignal("Bark"):Connect(function()
+			local cam = workspace.CurrentCamera
+			if tree.Parent and cam and (tree:GetPivot().Position - cam.CFrame.Position).Magnitude < DETAIL_RANGE then
 				build(tree)
 			end
 		end)
+	end
+	for _, t in CollectionService:GetTagged("Tree") do
+		watch(t)
+	end
+	CollectionService:GetInstanceAddedSignal("Tree"):Connect(watch)
+	CollectionService:GetInstanceRemovedSignal("Tree"):Connect(function(inst)
+		detailed[inst :: Model] = nil
 	end)
 	-- every couple of seconds: detail for nearby stripped trees, plain trunks for far ones
 	local acc = 0

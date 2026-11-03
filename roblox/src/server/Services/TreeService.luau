@@ -62,7 +62,10 @@ local function spawnSheet(player: Player, tree: Model, layer: number, n: number,
 	sheet:SetAttribute("Owner", player.UserId)
 	sheet:SetAttribute("Kind", "bark")
 	sheet.Parent = loose
-	sheet:SetNetworkOwner(player)     -- the player who peeled it simulates it: carrying feels instant
+	-- the player who peeled it simulates it, so carrying feels instant (can fail if the player just left)
+	pcall(function()
+		sheet:SetNetworkOwner(player)
+	end)
 	local list = sheetsOf[player] or {}
 	sheetsOf[player] = list
 	table.insert(list, sheet)
@@ -117,6 +120,10 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 			end
 		end
 	end
+	if #strips > 0 then
+		-- the bark state first (clients redraw when it changes), then the effects event
+		t:SetAttribute("Bark", BarkGrid.encode(g))
+	end
 	for _, s in strips do
 		spawnSheet(player, t, s.layer, #s.panels, point :: Vector3)
 		remotes.TreeChanged:FireAllClients(t, s.layer, s.panels)
@@ -127,7 +134,6 @@ local function onStrip(player: Player, tree: unknown, point: unknown, toolId: un
 			hum:TakeDamage(tool.hurt)
 		end
 	end
-	t:SetAttribute("Bark", BarkGrid.encode(g))     -- saved with the world; late joiners rebuild from it
 end
 
 function TreeService.start()

@@ -9,7 +9,7 @@ local InputController = require(script.Parent.InputController)
 
 local CarryController = {}
 local player = Players.LocalPlayer
-local HOLD_DIST = 7
+local HOLD_DIST = 5
 
 local function held(): BasePart?
 	local loose = workspace:FindFirstChild("Loose")
@@ -53,8 +53,11 @@ function CarryController.start()
 		end
 		local align = p:FindFirstChildOfClass("AlignPosition")
 		local cam = workspace.CurrentCamera
-		if align and cam then
-			align.Position = cam.CFrame.Position + cam.CFrame.LookVector * HOLD_DIST
+		local head = player.Character and player.Character:FindFirstChild("Head") :: BasePart?
+		if align and cam and head then
+			-- in front of the character, along the aim: works zoomed in (first person) and zoomed out (third)
+			local behind = (head.Position - cam.CFrame.Position).Magnitude
+			align.Position = cam.CFrame.Position + cam.CFrame.LookVector * (behind + HOLD_DIST)
 		end
 	end)
 end

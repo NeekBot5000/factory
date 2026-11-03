@@ -1,6 +1,14 @@
 # Setting up Timber for Roblox
 
-About 20 minutes. You need Roblox Studio and VS Code, both of which you have.
+## Quick start: no installs (2 minutes)
+1. Get `Timber.rbxl`, the whole game as one Roblox place file:
+   - **On GitHub:** **Actions** > the latest green **Test & build** run > **Artifacts** > **Timber-roblox**.
+   - **Or** use the file Claude sent you.
+2. Double-click it, or in Studio choose **File > Open from File**.
+3. Press **Play**.
+
+This is enough to try the game. To work on the code from VS Code, with changes appearing in Studio as you save, do the
+full setup below. It takes about 20 minutes.
 
 ## 1. Get the project onto your computer
 - **With Git** (in a terminal): `git clone https://github.com/NeekBot5000/factory.git`

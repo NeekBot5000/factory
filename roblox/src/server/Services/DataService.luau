@@ -8,7 +8,10 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local DataService = {}
-local store = DataStoreService:GetDataStore("Timber_v1")
+-- (in a place that was never published, even asking for the store throws: then the game plays without saving)
+local storeOk, store = pcall(function()
+	return DataStoreService:GetDataStore("Timber_v1")
+end)
 local profiles: { [Player]: any } = {}
 local LOCK_SECONDS = 180
 
@@ -46,6 +49,11 @@ local function retry<T>(f: () -> T): (boolean, T?)
 end
 
 local function load(player: Player)
+	if not storeOk then
+		warn("Timber: saving is off - publish the place and turn on Studio Access to API Services")
+		profiles[player] = deepCopy(TEMPLATE)
+		return
+	end
 	local key = "p_" .. player.UserId
 	local ok, data = retry(function()
 		return store:UpdateAsync(key, function(old)
@@ -79,7 +87,7 @@ end
 
 local function save(player: Player, release: boolean)
 	local data = profiles[player]
-	if not data then
+	if not data or not storeOk then
 		return
 	end
 	retry(function()

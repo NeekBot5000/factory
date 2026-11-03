@@ -141,6 +141,23 @@ jobs:
           ./luau/luau-analyze roblox/src/shared/*.luau roblox/tests/run.luau
           for f in $(find roblox/src -name '*.luau'); do ./luau/luau-compile --text "$f" > /dev/null; done
 
+      - name: Roblox version - build the place with Rojo and check it with Lune
+        run: |
+          wget -q https://github.com/rojo-rbx/rojo/releases/download/v7.7.1/rojo-7.7.1-linux-x86_64.zip -O luau/rojo.zip
+          wget -q https://github.com/lune-org/lune/releases/download/v0.10.4/lune-0.10.4-linux-x86_64.zip -O luau/lune.zip
+          unzip -q -o luau/rojo.zip -d luau && unzip -q -o luau/lune.zip -d luau
+          mkdir -p build/roblox
+          (cd roblox && ../luau/rojo build -o ../build/roblox/Timber.rbxl .)
+          ./luau/lune run roblox/tests/lune/testworld.luau build/roblox/Timber.rbxl | tee lune.log
+          timeout 60 ./luau/lune run roblox/tests/lune/strip.luau build/roblox/Timber.rbxl | tee -a lune.log
+          grep -q "LUNE TESTWORLD PASS" lune.log && grep -q "LUNE STRIP PASS" lune.log
+
+      - name: Upload the Roblox place
+        uses: actions/upload-artifact@v4
+        with:
+          name: Timber-roblox
+          path: build/roblox/Timber.rbxl
+
       - name: Export Web, Windows and Linux
         run: |
           set -o pipefail

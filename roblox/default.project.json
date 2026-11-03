@@ -3,19 +3,77 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "Shared": { "$path": "src/shared" }
+      "Shared": {
+        "$path": "src/shared"
+      }
     },
     "ServerScriptService": {
-      "Server": { "$path": "src/server" }
+      "Server": {
+        "$path": "src/server"
+      }
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "Client": { "$path": "src/client" }
+        "Client": {
+          "$path": "src/client"
+        }
       }
     },
     "Workspace": {
       "$properties": {
         "StreamingEnabled": true
+      },
+      "Baseplate": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "Size": [
+            1024,
+            16,
+            1024
+          ],
+          "Position": [
+            0,
+            -8,
+            0
+          ],
+          "Color": [
+            0.36,
+            0.62,
+            0.29
+          ],
+          "Material": "Grass",
+          "Locked": true
+        }
+      },
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true,
+          "Size": [
+            8,
+            1,
+            8
+          ],
+          "Position": [
+            0,
+            0.5,
+            14
+          ],
+          "Color": [
+            0.55,
+            0.45,
+            0.35
+          ],
+          "Material": "WoodPlanks",
+          "Duration": 0
+        }
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "ClockTime": 13.5,
+        "Brightness": 2.5
       }
     }
   }
