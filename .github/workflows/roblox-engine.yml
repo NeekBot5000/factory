@@ -11,6 +11,8 @@ on:
   push:
     paths:
       - "roblox/tests/engine/run.luau"
+      - "roblox/tests/engine/scenes.luau"
+      - "roblox/tests/engine/views.json"
       - "tools/roblox_engine.py"
       - ".github/workflows/roblox-engine.yml"
 
@@ -28,6 +30,7 @@ jobs:
       ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
       ROBLOX_UNIVERSE_ID: ${{ vars.ROBLOX_UNIVERSE_ID }}
       ROBLOX_PLACE_ID: ${{ vars.ROBLOX_PLACE_ID }}
+      ROBLOX_USER_ID: ${{ vars.ROBLOX_USER_ID || secrets.ROBLOX_USER_ID || '1199254307' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -35,7 +38,9 @@ jobs:
         run: |
           mkdir -p luau
           wget -q https://github.com/rojo-rbx/rojo/releases/download/v7.7.1/rojo-7.7.1-linux-x86_64.zip -O luau/rojo.zip
-          unzip -q -o luau/rojo.zip -d luau
+          wget -q https://github.com/lune-org/lune/releases/download/v0.10.4/lune-0.10.4-linux-x86_64.zip -O luau/lune.zip
+          unzip -q -o luau/rojo.zip -d luau && unzip -q -o luau/lune.zip -d luau
+          pip install -q pillow
           (cd roblox && ../luau/rojo build -o ../Timber.rbxl .)
 
       - name: Look at it in Roblox
@@ -45,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add roblox/tests/engine/out
+          git add roblox/tests/engine/out roblox/tests/engine/scenes.lock.json 2>/dev/null || git add roblox/tests/engine/out
           if git diff --cached --quiet; then
             echo "Nothing new."
             exit 0

@@ -56,6 +56,27 @@ Find both in the Creator Dashboard: open the experience, then the **...** menu o
 and choose **Copy Universe ID** or **Copy Place ID**. Then **Run workflow** with **publish** ticked. It replaces the
 published place with the code from GitHub, so anything built only by hand in Studio isn't included.
 
+## Let GitHub look at the game in Roblox itself (optional, recommended)
+The **Roblox engine check** workflow (`tools/roblox_engine.py`) tests the game in Roblox itself, not just in the
+Lune stand-in:
+- Roblox's own renderer draws the world from the same 10 views as the Godot game, so the two can be compared side by
+  side (`roblox/tests/engine/out/pair_<view>.jpg`).
+- A real Roblox server runs the game and checks the physics, the meshes and any errors
+  (`roblox/tests/engine/out/engine.json`). It uses a *saved* version of your place, so the published game isn't
+  touched.
+
+It needs three more permissions on the same API key, and the two variables from the section above:
+1. Open https://create.roblox.com/dashboard/credentials, then the Timber key, then **Edit**.
+2. Under **Access Permissions**, add each of these and tick what's listed:
+   - **Legacy Assets**: **Manage** (lets it download what Roblox made of the uploaded models);
+   - **universe-places**: your Timber experience, **Write**;
+   - **Luau execution sessions** (`universe.place.luau-execution-session`): your Timber experience, **Write**.
+3. Save the key. The secret on GitHub stays the same.
+4. Add the repository variables `ROBLOX_UNIVERSE_ID` and `ROBLOX_PLACE_ID` if you haven't (see above).
+5. Run **Actions** > **Roblox engine check** > **Run workflow**. The results are committed back to the branch.
+
+If a permission is missing, the run's log names the step Roblox refused.
+
 ## Control Studio with Claude on your computer (optional)
 Roblox Studio has a built-in MCP server. With it, a Claude running *on your computer* (the Claude desktop app or
 Claude Code) can read your place, edit scripts, run Luau, insert assets and start Play tests.

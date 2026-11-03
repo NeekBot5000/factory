@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
-"""Looks at the Roblox version in Roblox itself, from CI (the roblox-engine workflow):
+"""Looks at the Roblox version in Roblox itself, from CI (the roblox-engine workflow). Results go to
+roblox/tests/engine/out/.
 
-1. Roblox's own renders of the uploaded models (the thumbnail service draws them with Roblox's renderer), and
-   Roblox's 3D version of each (the OBJ, materials and textures it made from the .glb). These go to
-   roblox/tests/engine/out/thumb_<key>.png and out/3d/<key>/, so they can be rendered next to the Godot game.
-2. A real Roblox server running the game: it saves the Rojo-built place as a new version of the experience
-   (versionType=Saved, so the published game is untouched), runs roblox/tests/engine/run.luau there with Open Cloud
-   Luau Execution, and writes what it returns to out/engine.json.
+1. Roblox's renders of the uploaded models as they are (uncoloured: WorldMeshes colours them in the game):
+   thumb_<key>.png.
+2. The world as a player sees it, drawn by Roblox's renderer:
+   - the converted models and textures Roblox made from the uploads feed the game's own scripts in the Lune harness
+     (tests/engine/scenes.luau);
+   - each Godot view (tests/engine/views.json) is uploaded as a model with a ThumbnailCamera;
+   - Roblox's thumbnail of it is scene_<view>.png, and pair_<view>.jpg puts Godot's view above it.
+3. The game in a real Roblox server: the built place is saved as a new version of the experience (versionType=Saved,
+   so the published game is untouched), and tests/engine/run.luau runs there with Open Cloud Luau Execution
+   (physics, meshes, errors): engine.json.
 
-Needs ROBLOX_API_KEY. Part 2 also needs ROBLOX_UNIVERSE_ID and ROBLOX_PLACE_ID, and the key needs the
-universe-places Write and universe.place.luau-execution-session Write permissions (roblox/SETUP.md). It never
-prints the key, and says exactly which step Roblox refused, so a missing permission is easy to add."""
+Needs ROBLOX_API_KEY. The key's permissions:
+- Assets Read and Write: for 1 and 2;
+- Legacy Assets Manage (legacy-asset:manage): for 2, to download the converted assets;
+- universe-places Write and Luau execution sessions Write: for 3, with ROBLOX_UNIVERSE_ID and ROBLOX_PLACE_ID.
+It never prints the key, and says which step Roblox refused, so a missing permission is easy to add."""
 import json
 import os
 import sys
@@ -24,7 +31,7 @@ KEY = os.environ.get("ROBLOX_API_KEY", "")
 UNIVERSE = os.environ.get("ROBLOX_UNIVERSE_ID", "")
 PLACE = os.environ.get("ROBLOX_PLACE_ID", "")
 PLACE_FILE = os.environ.get("PLACE_FILE", "Timber.rbxl")
-os.makedirs(os.path.join(OUT, "3d"), exist_ok=True)
+os.makedirs(OUT, exist_ok=True)
 report = {"steps": []}
 
 
@@ -37,9 +44,15 @@ def http(url, data=None, headers=None, method=None, auth=False, timeout=120):
     h = dict(headers or {})
     if auth:
         h["x-api-key"] = KEY
-    req = urllib.request.Request(url, data=data, headers=h, method=method)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+    for attempt in range(6):
+        req = urllib.request.Request(url, data=data, headers=h, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or attempt == 5:
+                raise
+            time.sleep(10 * (attempt + 1))      # (Roblox's rate limit: wait and try again)
 
 
 def err_text(e):
@@ -48,55 +61,97 @@ def err_text(e):
     return str(e)
 
 
-def cdn(h):
-    # Roblox's CDN host for a hash (the same rule its clients use)
-    i = 31
-    for c in h[:32]:
-        i ^= ord(c)
-    return f"https://t{i % 8}.rbxcdn.com/{h}"
-
-
 # ------------------------------------------------------------------ 1. Roblox's renders of the uploaded models
 lock = json.load(open(os.path.join(ROOT, "assets.lock.json")))
 wanted = {a["key"]: a for a in json.load(open(os.path.join(ROOT, "assets.json")))}
 models = {k: v["id"] for k, v in lock.items() if wanted.get(k, {}).get("type") == "Model"}
-for k, aid in models.items():
+
+
+def thumbnail(aid, dest):
+    """Roblox's render of an asset (its thumbnail), saved as a PNG. Returns the state, or raises."""
+    got = {}
+    for _ in range(24):
+        info = json.loads(http(f"https://thumbnails.roblox.com/v1/assets?assetIds={aid}&size=768x432&format=Png&isCircular=false"))
+        got = (info.get("data") or [{}])[0]
+        if got.get("state") in ("Completed", "Blocked", "Error"):
+            break
+        time.sleep(5)
+    if got.get("imageUrl") and got.get("state") == "Completed":
+        open(dest, "wb").write(http(got["imageUrl"]))
+    return got.get("state")
+
+
+# ------------------------------------------------------------------ 1b. the world as a player sees it, drawn by Roblox
+# The converted models and textures Roblox made from the uploads, fed to the game's own WorldMeshes in the Lune
+# harness (tests/engine/scenes.luau); each Godot view is uploaded as a model with a ThumbnailCamera, and Roblox's
+# thumbnail of it is the scene drawn by Roblox's renderer: out/scene_<view>.png, out/pair_<view>.jpg (Godot above).
+def scenes():
+    os.makedirs("build/assets", exist_ok=True)
+    missing = []
+    for k, v in lock.items():
+        if wanted.get(k, {}).get("type") not in ("Model", "Decal"):
+            continue
+        try:
+            info = json.loads(http(f"https://apis.roblox.com/asset-delivery-api/v1/assetId/{v['id']}", auth=True))
+            open(f"build/assets/{k}.rbxm", "wb").write(http(info["location"]))
+        except Exception as e:  # noqa: BLE001
+            missing.append(f"{k}: {err_text(e)}")
+    if missing:
+        step("download what Roblox made of the uploads", False,
+             f"{len(missing)} failed, e.g. {missing[0]} - the key needs the legacy-asset:manage permission (Legacy Assets > Manage)")
+        return
+    step("download what Roblox made of the uploads", True)
+    import subprocess
+    env = dict(os.environ, TIMBER_ASSETS="build/assets")
+    r = subprocess.run([os.environ.get("LUNE", "./luau/lune"), "run", "roblox/tests/engine/scenes.luau", PLACE_FILE, "build/scenes"],
+                       env=env, capture_output=True, text=True, timeout=900)
+    print("\n".join(l for l in r.stdout.splitlines() if l.startswith("SCENES")), flush=True)
+    if r.returncode != 0:
+        step("build the scenes with the game's scripts", False, (r.stderr or r.stdout)[-600:])
+        return
+    step("build the scenes with the game's scripts", True)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import roblox_assets as ra
+    user = os.environ.get("ROBLOX_USER_ID", "")
+    slock_path = os.path.join(ROOT, "tests", "engine", "scenes.lock.json")
+    slock = json.load(open(slock_path)) if os.path.exists(slock_path) else {}
+    views = json.load(open(os.path.join(ROOT, "tests", "engine", "views.json")))
+    for v in views:
+        name = v["name"]
+        path = f"build/scenes/{name}.rbxm"
+        req = {"assetType": "Model", "displayName": f"Timber view {name}", "description": "Timber: a view of the game for the visual check",
+               "creationContext": {"creator": {"userId": str(user)}}}
+        try:
+            aid = None
+            if name in slock:
+                try:
+                    body, btype = ra.multipart({**req, "assetId": slock[name]}, path, "model/x-rbxm")
+                    aid = ra.wait(ra.call("PATCH", f"{ra.API}/assets/{slock[name]}", KEY, body, btype), KEY)
+                except RuntimeError as e:
+                    print(f"{name}: couldn't update ({e}), uploading anew", flush=True)
+            if aid is None:
+                body, btype = ra.multipart(req, path, "model/x-rbxm")
+                aid = ra.wait(ra.call("POST", f"{ra.API}/assets", KEY, body, btype), KEY)
+            slock[name] = aid
+            state = thumbnail(aid, os.path.join(OUT, f"scene_{name}.png"))
+            step(f"Roblox's render of the {name} view", state == "Completed", f"asset {aid}: {state}")
+        except Exception as e:  # noqa: BLE001
+            step(f"Roblox's render of the {name} view", False, err_text(e))
+    json.dump(slock, open(slock_path, "w"), indent=2, sort_keys=True)
     try:
-        got = None
-        for _ in range(6):
-            info = json.loads(http(f"https://thumbnails.roblox.com/v1/assets?assetIds={aid}&size=768x432&format=Png&isCircular=false"))
-            got = (info.get("data") or [{}])[0]
-            if got.get("state") == "Completed":
-                break
-            time.sleep(5)
-        if got and got.get("imageUrl"):
-            open(os.path.join(OUT, f"thumb_{k}.png"), "wb").write(http(got["imageUrl"]))
-            step(f"Roblox's render of {k}", True, got.get("state"))
-        else:
-            step(f"Roblox's render of {k}", False, json.dumps(got))
+        from PIL import Image
+        for v in views:
+            g = os.path.join(ROOT, "tests", "engine", "godot", f"godot_{v['name']}.jpg")
+            r_ = os.path.join(OUT, f"scene_{v['name']}.png")
+            if os.path.exists(g) and os.path.exists(r_):
+                a, b = Image.open(g).convert("RGB"), Image.open(r_).convert("RGB").resize(Image.open(g).size)
+                im = Image.new("RGB", (a.width, a.height * 2))
+                im.paste(a, (0, 0))
+                im.paste(b, (0, a.height))
+                im.save(os.path.join(OUT, f"pair_{v['name']}.jpg"), quality=85)
     except Exception as e:  # noqa: BLE001
-        step(f"Roblox's render of {k}", False, err_text(e))
-    try:
-        got = None
-        for _ in range(6):
-            got = json.loads(http(f"https://thumbnails.roblox.com/v1/assets-thumbnail-3d?assetId={aid}"))
-            if got.get("state") == "Completed":
-                break
-            time.sleep(5)
-        if got and got.get("imageUrl"):
-            meta = json.loads(http(got["imageUrl"]))
-            d = os.path.join(OUT, "3d", k)
-            os.makedirs(d, exist_ok=True)
-            json.dump(meta, open(os.path.join(d, "meta.json"), "w"), indent=1)
-            open(os.path.join(d, "model.obj"), "wb").write(http(cdn(meta["obj"])))
-            open(os.path.join(d, "model.mtl"), "wb").write(http(cdn(meta["mtl"])))
-            for t in meta.get("textures", []):
-                open(os.path.join(d, t), "wb").write(http(cdn(t)))
-            step(f"Roblox's 3D version of {k}", True, f"{len(meta.get('textures', []))} textures")
-        else:
-            step(f"Roblox's 3D version of {k}", False, json.dumps(got))
-    except Exception as e:  # noqa: BLE001
-        step(f"Roblox's 3D version of {k}", False, err_text(e))
+        print("pairs:", e, flush=True)
+
 
 # ------------------------------------------------------------------ 2. the game in a real Roblox server
 def engine():
@@ -154,6 +209,13 @@ def engine():
         print("LOG  " + line, flush=True)
 
 
+for k, aid in models.items():
+    try:
+        state = thumbnail(aid, os.path.join(OUT, f"thumb_{k}.png"))
+        step(f"Roblox's render of {k} (uncoloured: WorldMeshes colours it in the game)", state == "Completed", state)
+    except Exception as e:  # noqa: BLE001
+        step(f"Roblox's render of {k}", False, err_text(e))
+scenes()
 engine()
 json.dump(report, open(os.path.join(OUT, "report.json"), "w"), indent=1)
 sys.exit(0)

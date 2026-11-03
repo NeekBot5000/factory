@@ -6,6 +6,7 @@ local fs = require("@lune/fs")
 local luau = require("@lune/luau")
 local roblox = require("@lune/roblox")
 local task = require("@lune/task")
+local process = require("@lune/process")
 
 local Harness = {}
 
@@ -133,6 +134,32 @@ function Harness.boot(placePath: string, jobId: string)
 		return out
 	end
 
+	-- InsertService: with TIMBER_ASSETS set to a folder of downloaded assets (<key>.rbxm, tools/inspect_roblox_assets.py),
+	-- LoadAsset gives what Roblox would, so WorldMeshes builds the real world (tests/engine/scenes.luau)
+	local assetDir = process.env.TIMBER_ASSETS
+	local FakeInsert = nil
+	if assetDir then
+		local serde = require("@lune/serde")
+		local lock = serde.decode("json", fs.readFile(process.env.TIMBER_LOCK or "roblox/assets.lock.json"))
+		local byId = {}
+		for k, v in lock do
+			byId[tostring(v.id)] = k
+		end
+		FakeInsert = {}
+		function FakeInsert:LoadAsset(id)
+			local key = byId[tostring(id)]
+			local path = key and (assetDir .. "/" .. key .. ".rbxm")
+			if not path or not fs.isFile(path) then
+				error("asset " .. tostring(id) .. " wasn't downloaded")
+			end
+			local container = roblox.Instance.new("Model")
+			for _, inst in roblox.deserializeModel(fs.readFile(path)) do
+				inst.Parent = container
+			end
+			return container
+		end
+	end
+
 	local fakeGame = setmetatable({}, {
 		__index = function(_, k)
 			if k == "GetService" then
@@ -142,6 +169,7 @@ function Harness.boot(placePath: string, jobId: string)
 					if name == "ProximityPromptService" then return ProximityPromptService end
 					if name == "RunService" then return RunService end
 					if name == "CollectionService" then return CollectionService end
+					if name == "InsertService" and FakeInsert then return FakeInsert end
 					return game:GetService(name)
 				end
 			end
