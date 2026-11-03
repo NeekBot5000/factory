@@ -735,6 +735,22 @@ function RailService.start()
 		if not head or (head.CFrame.Position - target.CFrame.Position).Magnitude > 6 * M then
 			return
 		end
+		-- a log: nail it in place, or let it go again (Godot's Log.set_locked)
+		local lg = target:FindFirstAncestorWhichIsA("Model")
+		if how ~= "turn" and lg and lg:GetAttribute("Kind") == "log" then
+			local trunk = lg:FindFirstChild("Trunk") :: BasePart?
+			if trunk and not trunk:GetAttribute("HeldBy") then
+				local on = not lg:GetAttribute("Locked")
+				lg:SetAttribute("Locked", on)
+				trunk.Anchored = on
+				if on then
+					trunk.AssemblyLinearVelocity = Vector3.zero
+				end
+				remotes.Fx:FireAllClients("clink", trunk.CFrame.Position, if on then 0.8 else 1.2, 0)
+				remotes.Fx:FireAllClients("thud", trunk.CFrame.Position, 1.5, -4)
+			end
+			return
+		end
 		local laid = railOf(target)
 		if laid then
 			if how == "turn" then

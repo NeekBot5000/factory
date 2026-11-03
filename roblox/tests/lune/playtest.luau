@@ -1414,8 +1414,22 @@ do
 			end
 		end
 		check(MS.rock(idx) == nil and after - before >= 2 and charge.Parent == nil, "wired to a switch with power it goes off, and the rock bursts into every chunk")
-		Tools.equip(alice, prev)
 		crank:Destroy()
+		-- the hammer nails a log in place, and lets it go again
+		local logs = ws:FindFirstChild("Logs")
+		local lg = logs and logs:FindFirstChildWhichIsA("Model")
+		if lg and lg:FindFirstChild("Trunk") then
+			Tools.grant(alice, "hammer")
+			task.wait(1.3)
+			A.stand(alice, lg.Trunk.CFrame.Position + V3(0, 3, 6))
+			A.remotes.Hammer.OnServerEvent:Fire(alice, lg.Trunk)
+			task.wait(0.05)
+			local locked = lg:GetAttribute("Locked") == true and lg.Trunk.Anchored
+			A.remotes.Hammer.OnServerEvent:Fire(alice, lg.Trunk)
+			task.wait(0.05)
+			check(locked and not lg:GetAttribute("Locked") and not lg.Trunk.Anchored, "the hammer locks a log in place, and unlocks it")
+		end
+		Tools.equip(alice, prev)
 	end
 end
 

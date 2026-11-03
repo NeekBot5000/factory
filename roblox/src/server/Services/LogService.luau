@@ -230,6 +230,11 @@ function LogService.split(log: Model, cuts: { number }): { Model }
 			t.AssemblyLinearVelocity = v
 			t.AssemblyAngularVelocity = w * 0.5
 		end)
+		if log:GetAttribute("Locked") then
+			-- (a locked log's pieces stay nailed in place)
+			piece:SetAttribute("Locked", true)
+			t.Anchored = true
+		end
 		table.insert(out, piece)
 	end
 	-- the leafy top stays with the top piece

@@ -1,7 +1,10 @@
 --!strict
 -- The finished builds' looks that move, on each client: the campfire's flames flicker and its light wavers (Godot's
--- Campfire._physics_process), and a compost pile's mound rises with what's in it.
+-- Campfire._physics_process), a compost pile's mound rises with what's in it, and a drone's rotors spin while it
+-- has power (Drone._physics_process: up to 40 rad/s).
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Builds = require(ReplicatedStorage.Shared.Builds)
 
 local BuildFx = {}
 
@@ -14,6 +17,19 @@ function BuildFx.start()
 			return
 		end
 		for _, m in f:GetChildren() do
+			local spin = m:GetAttribute("Spin") :: number?
+			if spin and spin > 0 and m:IsA("Model") then
+				local def = Builds.def(m:GetAttribute("Build") :: string)
+				local size = m:GetAttribute("Size") :: number? or 1
+				for _, p in m:GetDescendants() do
+					local g = p:IsA("BasePart") and p:GetAttribute("Group") :: string?
+					local at = g and def and (def :: any).groups and (def :: any).groups[g]
+					if at then
+						local hub = m:GetPivot() * CFrame.new(at[1] * size, at[2] * size, at[3] * size)
+						;(p :: BasePart).CFrame = hub * CFrame.Angles(0, spin * 40 * dt, 0) * hub:ToObjectSpace((p :: BasePart).CFrame)
+					end
+				end
+			end
 			if m:GetAttribute("Build") == "campfire" then
 				local flames = m:FindFirstChild("Flames")
 				local size = m:GetAttribute("Size") :: number? or 1

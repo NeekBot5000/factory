@@ -460,6 +460,9 @@ function railAimed(): BasePart?
 	if m and m:GetAttribute("Kind") == "rail" then
 		return part
 	end
+	if m and m:GetAttribute("Kind") == "log" then
+		return part          -- (a log: the hammer locks it in place / unlocks it)
+	end
 	local item = if part.Parent and part.Parent:IsA("BasePart") then part.Parent :: BasePart else part
 	local kind = item:GetAttribute("Product")
 	if kind == "rail" or kind == "curved_rail" then

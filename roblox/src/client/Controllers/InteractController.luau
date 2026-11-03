@@ -299,6 +299,13 @@ function InteractController.target(): (string, (() -> ())?)
 		local worth = string.format("worth $%.2f", InteractController.logValue(log))
 		local liftable = not log:GetAttribute("HasCrown") and (log:GetAttribute("Bands") :: number) * Config.Tree.bandH <= Config.Saw.carryMax
 		local trunk = log:FindFirstChild("Trunk")
+		if State.tool == "hammer" then
+			-- the hammer nails a log in place (Godot's Log.set_locked)
+			return (if log:GetAttribute("Locked") then "[Click] unlock    " else "[Click] lock in place    ") .. worth, nil
+		end
+		if log:GetAttribute("Locked") then
+			return worth, nil
+		end
 		if liftable and trunk and not trunk:GetAttribute("HeldBy") then
 			return "[E] grab    " .. worth, function()
 				remotes.Grab:FireServer(trunk)
