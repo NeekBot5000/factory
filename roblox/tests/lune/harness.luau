@@ -211,7 +211,14 @@ function Harness.boot(placePath: string, jobId: string)
 		Random = {
 			new = function(seed)
 				local s = seed
-				return { NextNumber = function(_, a, b) s = (s * 1103515245 + 12345) % 2147483648 return a + (b - a) * (s / 2147483648) end }
+				local function nxt()
+					s = (s * 1103515245 + 12345) % 2147483648
+					return s / 2147483648
+				end
+				return {
+					NextNumber = function(_, a, b) return a + (b - a) * nxt() end,
+					NextInteger = function(_, a, b) return a + math.floor((b - a + 1) * nxt()) end,
+				}
 			end,
 		},
 		task = task,

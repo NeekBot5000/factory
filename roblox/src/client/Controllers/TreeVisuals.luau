@@ -1,104 +1,155 @@
 --!strict
--- Draws bark on this client only. An untouched tree is one cheap MeshPart (its "Trunk"). The first time a tree
--- near you loses bark, it switches to panels: one Part per bark panel that's still there, made on this client and
--- never replicated (no network cost), and only for trees within DETAIL_RANGE. Far away, trees go back to their single
--- trunk. With StreamingEnabled, trees outside the streaming radius don't exist on the client at all.
--- (If EditableMesh is available to the experience, it can replace the panel Parts with one mesh per layer.)
+-- Draws the bark the way the Godot game does (ForestTree.gd _rebuild / _panel_color): the trunk is 16 panels round
+-- and one panel per 0.18 m high, every panel a slightly different shade of its kind's bark (birch has dark flecks),
+-- so a tree has that checkered low-poly look. Peel the outer bark and the inner layer shows underneath in its own
+-- colour; peel that and the pale wood shows.
+-- Each panel is a Part, made on this client only (never replicated, so no network cost), and only for trees near
+-- you. Far trees are the server's plain trunk. A tree is redrawn when its "Bark" attribute changes.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
+local Config = require(ReplicatedStorage.Shared.Config)
 local BarkGrid = require(ReplicatedStorage.Shared.BarkGrid)
 
 local TreeVisuals = {}
-local DETAIL_RANGE = 120
-local detailed: { [Model]: Folder } = {}
+local M = Config.StudsPerMetre
+local T = Config.Tree
+local DETAIL_RANGE = 110          -- studs: nearer trees get their panels
+local PER_FRAME = 2               -- trees built per frame, so walking into the forest doesn't hitch
+local queue: { Model } = {}
 
-local LAYER_COLOR = { [0] = Color3.fromRGB(91, 64, 48), [1] = Color3.fromRGB(181, 101, 58) }
+local function shade(c: Color3, k: number): Color3
+	-- Godot's Color.lightened (k > 0) / darkened (k < 0)
+	return if k >= 0 then c:Lerp(Color3.new(1, 1, 1), k) else c:Lerp(Color3.new(0, 0, 0), -k)
+end
 
-local function build(tree: Model)
-	local old = detailed[tree]
+-- a fixed pseudo-random 0..1 for a panel (Godot hashes (i, j, seed + layer * 7) the same way every time)
+local function hash01(i: number, j: number, seed: number): number
+	local h = bit32.bxor(bit32.band(i * 73856093, 0xFFFFFFFF), bit32.band(j * 19349663, 0xFFFFFFFF), bit32.band(seed * 83492791, 0xFFFFFFFF))
+	h = bit32.band(bit32.bxor(h, bit32.rshift(h, 13)) * 1274126177, 0xFFFFFFFF)
+	h = bit32.bxor(h, bit32.rshift(h, 16))
+	return (h % 1000) / 1000
+end
+
+-- the colour of one panel (Godot's _panel_color)
+function TreeVisuals.panelColor(species: string, layer: number, i: number, j: number, seed: number): Color3
+	local sp = (Config.Species :: any)[species] or Config.Species.oak
+	local h = hash01(i, j, seed + layer * 7)
+	if layer == BarkGrid.OUTER then
+		local bark = Color3.fromHex(sp.bark)
+		if species == "birch" then
+			return if h < 0.12 then shade(bark, -0.35) else shade(bark, -h * 0.08)
+		end
+		return shade(bark, (h - 0.5) * 0.18)
+	end
+	return shade(Color3.fromHex(sp.inner), (h - 0.5) * 0.12)
+end
+
+local function panel(folder: Instance, base: CFrame, i: number, j: number, rOut: number, thick: number, color: Color3)
+	-- a flat panel whose outer face is the Godot quad between corners i and i+1 at radius rOut
+	local half = math.pi / T.sectors
+	local chord = 2 * rOut * math.sin(half)
+	local a = (i + 0.5) / T.sectors * 2 * math.pi
+	local bandH = T.bandH * M
+	local face = rOut * math.cos(half)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Material = Enum.Material.SmoothPlastic
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Size = Vector3.new(chord * 1.005, bandH, thick)
+	p.Color = color
+	-- Godot's angle runs from +X towards +Z: x = cos(a) r, z = sin(a) r
+	local dir = Vector3.new(math.cos(a), 0, math.sin(a))
+	local center = base.Position + base:VectorToWorldSpace(dir * (face - thick / 2) + Vector3.new(0, (j + 0.5) * bandH, 0))
+	p.CFrame = CFrame.lookAt(center, center + base:VectorToWorldSpace(dir))
+	p.Parent = folder
+end
+
+function TreeVisuals.build(tree: Model)
+	local old = tree:FindFirstChild("BarkPanels")
 	if old then
 		old:Destroy()
 	end
+	local sectors, bands = tree:GetAttribute("Sectors") :: number or 16, tree:GetAttribute("Bands") :: number or 33
 	local s = tree:GetAttribute("Bark")
-	local sectors, bands = tree:GetAttribute("Sectors") :: number or 16, tree:GetAttribute("Bands") :: number or 40
-	local g = if typeof(s) == "string" then BarkGrid.decode(sectors, bands, s) else nil
+	local g = if typeof(s) == "string" then BarkGrid.decode(sectors, bands, s) else BarkGrid.new(sectors, bands)
 	if not g then
 		return
 	end
+	local species = tree:GetAttribute("Species") :: string or "oak"
+	local sp = (Config.Species :: any)[species] or Config.Species.oak
+	local seed = tree:GetAttribute("Seed") :: number or 1
+	local R = tree:GetAttribute("Radius") :: number or 1.2
+	local rMid = R - T.outerT * M
+	local rCore = rMid - T.innerT * M
+	local base = tree:GetPivot()
 	local folder = Instance.new("Folder")
 	folder.Name = "BarkPanels"
-	local base = tree:GetPivot()
-	local radius = tree:GetAttribute("Radius") :: number or 1.4
-	local height = tree:GetAttribute("Height") :: number or 20
-	local bandH = height / bands
-	-- each column round the trunk is drawn as runs of the same visible layer, one tall Part per run (a tree with a
-	-- patch off is ~40 Parts, not 640). Where both layers are gone, the wooden core (the Trunk's inner cylinder) shows.
-	local function visible(i: number, j: number): number
-		if BarkGrid.has(g, 0, i, j) then
-			return 0
-		elseif BarkGrid.has(g, 1, i, j) then
-			return 1
-		end
-		return -1
-	end
+	-- the wood: one tall panel per side (only seen where both layers are gone)
+	local wood = Color3.fromHex(sp.wood)
 	for i = 0, sectors - 1 do
-		local j = 0
-		while j < bands do
-			local layer = visible(i, j)
-			local j1 = j
-			while j1 + 1 < bands and visible(i, j1 + 1) == layer do
-				j1 += 1
+		local half = math.pi / sectors
+		local a = (i + 0.5) / sectors * 2 * math.pi
+		local h = bands * T.bandH * M
+		local p = Instance.new("Part")
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.Material = Enum.Material.SmoothPlastic
+		p.Size = Vector3.new(2 * rCore * 0.985 * math.sin(half) * 1.01, h, rCore * 0.4)
+		p.Color = wood
+		local dir = Vector3.new(math.cos(a), 0, math.sin(a))
+		local center = base.Position + base:VectorToWorldSpace(dir * (rCore * 0.985 * math.cos(half) - rCore * 0.2) + Vector3.new(0, h / 2, 0))
+		p.CFrame = CFrame.lookAt(center, center + base:VectorToWorldSpace(dir))
+		p.Parent = folder
+	end
+	for j = 0, bands - 1 do
+		for i = 0, sectors - 1 do
+			if BarkGrid.has(g, BarkGrid.OUTER, i, j) then
+				panel(folder, base, i, j, R, T.outerT * M, TreeVisuals.panelColor(species, BarkGrid.OUTER, i, j, seed))
+			elseif BarkGrid.has(g, BarkGrid.INNER, i, j) then
+				panel(folder, base, i, j, rMid, T.innerT * M, TreeVisuals.panelColor(species, BarkGrid.INNER, i, j, seed))
 			end
-			if layer >= 0 then
-				local r = radius - layer * 0.15
-				local w = 2 * math.pi * r / sectors
-				local a = (i + 0.5) / sectors * 2 * math.pi
-				local h = (j1 - j + 1) * bandH
-				local p = Instance.new("Part")
-				p.Anchored = true
-				p.CanCollide = false
-				p.CanQuery = false
-				p.CanTouch = false
-				p.CastShadow = false
-				p.Size = Vector3.new(w * 1.02, h, 0.15)
-				p.Color = LAYER_COLOR[layer]
-				p.Material = Enum.Material.Wood
-				p.CFrame = base * CFrame.Angles(0, -a, 0) * CFrame.new(r, j * bandH + h / 2, 0) * CFrame.Angles(0, math.pi / 2, 0)
-				p.Parent = folder
-			end
-			j = j1 + 1
 		end
 	end
 	folder.Parent = tree
-	detailed[tree] = folder
 	local trunk = tree:FindFirstChild("Trunk") :: BasePart?
 	if trunk then
-		trunk.Transparency = 1
+		trunk.LocalTransparencyModifier = 1
 	end
 end
 
 local function drop(tree: Model)
-	local f = detailed[tree]
+	local f = tree:FindFirstChild("BarkPanels")
 	if f then
 		f:Destroy()
-		detailed[tree] = nil
 	end
 	local trunk = tree:FindFirstChild("Trunk") :: BasePart?
 	if trunk then
-		trunk.Transparency = 0
+		trunk.LocalTransparencyModifier = 0
+	end
+end
+
+local function want(tree: Model)
+	if not table.find(queue, tree) then
+		table.insert(queue, tree)
 	end
 end
 
 function TreeVisuals.start()
-	-- redraw a tree when its bark changes (the attribute replicates with the change itself; trees that stream in
-	-- later are hooked up as they arrive)
+	-- a tree's bark changed: redraw it straight away if it's near
 	local function watch(inst: Instance)
 		local tree = inst :: Model
 		tree:GetAttributeChangedSignal("Bark"):Connect(function()
-			local cam = workspace.CurrentCamera
-			if tree.Parent and cam and (tree:GetPivot().Position - cam.CFrame.Position).Magnitude < DETAIL_RANGE then
-				build(tree)
+			if tree:FindFirstChild("BarkPanels") then
+				TreeVisuals.build(tree)
 			end
 		end)
 	end
@@ -106,14 +157,21 @@ function TreeVisuals.start()
 		watch(t)
 	end
 	CollectionService:GetInstanceAddedSignal("Tree"):Connect(watch)
-	CollectionService:GetInstanceRemovedSignal("Tree"):Connect(function(inst)
-		detailed[inst :: Model] = nil
-	end)
-	-- every couple of seconds: detail for nearby stripped trees, plain trunks for far ones
-	local acc = 0
+	local acc = 1
 	RunService.Heartbeat:Connect(function(dt)
+		-- build a couple of queued trees each frame
+		for _ = 1, PER_FRAME do
+			local tree = table.remove(queue, 1)
+			if not tree then
+				break
+			end
+			if tree.Parent and not tree:FindFirstChild("BarkPanels") then
+				TreeVisuals.build(tree)
+			end
+		end
+		-- twice a second: queue trees that came near, drop the ones that went far
 		acc += dt
-		if acc < 2 then
+		if acc < 0.5 then
 			return
 		end
 		acc = 0
@@ -124,9 +182,10 @@ function TreeVisuals.start()
 		for _, inst in CollectionService:GetTagged("Tree") do
 			local tree = inst :: Model
 			local near = (tree:GetPivot().Position - cam.CFrame.Position).Magnitude < DETAIL_RANGE
-			if near and not detailed[tree] and tree:GetAttribute("Bark") then
-				build(tree)
-			elseif not near and detailed[tree] then
+			local built = tree:FindFirstChild("BarkPanels") ~= nil
+			if near and not built then
+				want(tree)
+			elseif not near and built then
 				drop(tree)
 			end
 		end

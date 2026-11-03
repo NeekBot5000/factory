@@ -135,8 +135,45 @@ check(stripped, "a click swings, and the blade landing asks the server for the b
 task.wait(0.2)
 C.frames(3)
 check(#ws.Loose:GetChildren() > 0, "bark comes off")
+C.frames(3)
 local panels = tree:FindFirstChild("BarkPanels")
 check(panels ~= nil, "the tree is redrawn with its bark panels")
+if panels then
+	local bands = tree:GetAttribute("Bands")
+	local R = tree:GetAttribute("Radius")
+	local n, thin, off, inner = 0, 0, 0, 0
+	local outerColors = {}
+	local sp = tree:GetAttribute("Species")
+	local Config = C.require(S.game.ReplicatedStorage.Shared.Config)
+	local innerHex = Config.Species[sp].inner
+	for _, p in panels:GetChildren() do
+		n += 1
+		local sz = p.Size
+		if math.min(sz.X, sz.Y, sz.Z) < 0.05 or sz.X > 2 or sz.Y > 1 and sz.Y < bands * 0.54 - 0.1 then
+			thin += 1
+		end
+		local lp = tree.WorldPivot:PointToObjectSpace(p.CFrame.Position)
+		local rr = math.sqrt(lp.X * lp.X + lp.Z * lp.Z)
+		if rr > R + 0.05 or rr < R * 0.5 then
+			off += 1
+		end
+		local c = p.Color
+		local ic = roblox.Color3.fromHex(innerHex)
+		if math.abs(c.R - ic.R) < 0.08 and math.abs(c.G - ic.G) < 0.08 and math.abs(c.B - ic.B) < 0.08 then
+			inner += 1
+		end
+		outerColors[string.format("%.2f", c.R)] = true
+	end
+	local shades = 0
+	for _ in outerColors do
+		shades += 1
+	end
+	check(n > 16 * (bands - 2), string.format("a panel for every spot of bark, 16 round and %d high, plus the wood (%d parts)", bands, n))
+	check(thin == 0, "no panel is a sliver or a line: each is a proper flat block (" .. thin .. " bad)")
+	check(off == 0, "every panel sits on the trunk's surface (" .. off .. " off)")
+	check(shades > 4, "panels vary in shade, the Godot checkered look (" .. shades .. " shades)")
+	check(inner > 0, "where the outer bark came off, the inner layer shows in its own colour (" .. inner .. " panels)")
+end
 
 print(string.format("\nCLIENT RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
 process.exit(if fails == 0 then 0 else 1)

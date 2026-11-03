@@ -8,15 +8,6 @@ local Config = require(ReplicatedStorage.Shared.Config)
 
 local TestWorld = {}
 
-local SPECIES_COLORS = {
-	oak = { Color3.fromRGB(91, 64, 48), Color3.fromRGB(79, 154, 60) },
-	pine = { Color3.fromRGB(77, 58, 46), Color3.fromRGB(47, 107, 58) },
-	birch = { Color3.fromRGB(232, 228, 218), Color3.fromRGB(127, 179, 74) },
-	hickory = { Color3.fromRGB(110, 100, 88), Color3.fromRGB(79, 154, 60) },
-	cedar = { Color3.fromRGB(122, 74, 53), Color3.fromRGB(61, 107, 69) },
-	cork = { Color3.fromRGB(176, 157, 128), Color3.fromRGB(90, 140, 70) },
-	eucalyptus = { Color3.fromRGB(169, 172, 160), Color3.fromRGB(120, 170, 90) },
-}
 
 local function part(props: { [string]: any }): Part
 	local p = Instance.new("Part")
@@ -30,50 +21,70 @@ local function part(props: { [string]: any }): Part
 	return p
 end
 
--- low-poly crowns: a few overlapping blocks turned at odd angles read as "stylised tree" from any distance
-local function crownPart(parent: Instance, at: Vector3, size: Vector3, color: Color3, rng: Random)
-	local p = part({ Size = size, CFrame = CFrame.new(at) * CFrame.Angles(rng:NextNumber(-0.4, 0.4), rng:NextNumber(0, 6.28), rng:NextNumber(-0.4, 0.4)),
-		Color = color, Material = Enum.Material.SmoothPlastic, CanCollide = false, CastShadow = true })
-	p.Parent = parent
+local M = Config.StudsPerMetre
+
+local function hex(h: string, lighten: number?): Color3
+	local c = Color3.fromHex(h)
+	local k = lighten or 0
+	return if k >= 0 then c:Lerp(Color3.new(1, 1, 1), k) else c:Lerp(Color3.new(0, 0, 0), -k)
 end
 
-local function makeTree(parent: Instance, species: string, at: Vector3, radius: number, height: number, rng: Random)
+-- A tree, built like the Godot game's ForestTree: an invisible trunk to hit and bump into (the bark itself is drawn
+-- by each client, panel by panel: Client/Controllers/TreeVisuals), a darker root flare, and the crown for its kind.
+-- radius is in metres, bands the trunk's height in 0.18 m panels; the model's pivot is the base of the trunk.
+local function makeTree(parent: Instance, species: string, at: Vector3, radius: number, bands: number, rng: Random)
+	local T = Config.Tree
+	local sp = (Config.Species :: any)[species]
 	local m = Instance.new("Model")
 	m.Name = "Tree_" .. species
-	local colors = SPECIES_COLORS[species]
-	-- the wooden core shows where both bark layers are gone
-	local core = part({ Name = "Core", Shape = Enum.PartType.Cylinder, Size = Vector3.new(height, (radius - 0.3) * 2, (radius - 0.3) * 2),
-		CFrame = CFrame.new(at + Vector3.new(0, height / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(226, 192, 141), Material = Enum.Material.Wood })
-	core.Parent = m
-	local trunk = part({ Name = "Trunk", Shape = Enum.PartType.Cylinder, Size = Vector3.new(height, radius * 2, radius * 2),
-		CFrame = core.CFrame, Color = colors[1], Material = Enum.Material.Wood })
+	local R = radius * M
+	local H = bands * T.bandH * M
+	-- the trunk: what you hit and walk into, and what far-away trees show (until a client draws the panels)
+	local trunk = part({ Name = "Trunk", Shape = Enum.PartType.Cylinder, Size = Vector3.new(H, R * 2, R * 2),
+		CFrame = CFrame.new(at + Vector3.new(0, H / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromHex(sp.bark), Material = Enum.Material.SmoothPlastic })
 	trunk.Parent = m
-	-- a flared root so it doesn't look stuck in the ground
-	part({ Name = "Roots", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, radius * 2.8, radius * 2.8),
-		CFrame = CFrame.new(at + Vector3.new(0, 0.4, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = colors[1]:Lerp(Color3.new(0, 0, 0), 0.2), Material = Enum.Material.Wood }).Parent = m
+	-- the root flare (Godot: a 0.35 m cone from 1.45 to 1.02 of the radius, a little darker)
+	part({ Name = "Roots", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.35 * M, R * 2.47, R * 2.47),
+		CFrame = CFrame.new(at + Vector3.new(0, 0.1 * M, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = hex(sp.bark, -0.15),
+		Material = Enum.Material.SmoothPlastic, CanCollide = false }).Parent = m
 	local crown = Instance.new("Model")
 	crown.Name = "Crown"
-	local leaf = colors[2]
+	local function blob(center: Vector3, r: number, color: Color3)
+		part({ Name = "Leaves", Shape = Enum.PartType.Ball, Size = Vector3.one * r * 2 * M, CFrame = CFrame.new(at + center * M),
+			Color = color, Material = Enum.Material.SmoothPlastic, CanCollide = false }).Parent = crown
+	end
+	local th = bands * T.bandH
 	if species == "pine" or species == "cedar" then
-		-- stacked, shrinking tiers
+		-- four stacked cones, shrinking upwards
+		local green = if species == "pine" then "2f6b3a" else "3d6b45"
 		for k = 0, 3 do
-			local w = radius * (5.5 - k * 1.1)
-			crownPart(crown, at + Vector3.new(0, height - 4 + k * 3.2, 0), Vector3.new(w, 3.6, w), leaf:Lerp(Color3.new(1, 1, 1), k * 0.04), rng)
+			local r = 2.0 - k * 0.42
+			local y = th - 1.2 + k * 1.05 + 0.9
+			local tier = part({ Name = "Leaves", Size = Vector3.new(r * 1.45 * M, 1.9 * M, r * 1.45 * M),
+				CFrame = CFrame.new(at + Vector3.new(0, y * M, 0)) * CFrame.Angles(0, math.rad(rng:NextNumber(0, 60)), 0),
+				Color = hex(green, k * 0.04), Material = Enum.Material.SmoothPlastic, CanCollide = false })
+			tier.Parent = crown
+		end
+	elseif species == "birch" or species == "eucalyptus" then
+		for _ = 1, 4 do
+			local off = Vector3.new(rng:NextNumber(-0.8, 0.8), th + rng:NextNumber(-0.6, 1.2), rng:NextNumber(-0.8, 0.8))
+			blob(off, rng:NextNumber(0.9, 1.4), hex("7fb34a", math.floor(rng:NextNumber(0, 0.1) / 0.02 + 0.5) * 0.02))
 		end
 	else
-		crownPart(crown, at + Vector3.new(0, height + radius * 1.5, 0), Vector3.one * radius * 6.5, leaf, rng)
-		for k = 1, 4 do
-			local off = Vector3.new(rng:NextNumber(-1, 1), rng:NextNumber(-0.5, 1), rng:NextNumber(-1, 1)) * radius * 3
-			crownPart(crown, at + Vector3.new(0, height + radius * 1.2, 0) + off, Vector3.one * radius * rng:NextNumber(3.5, 5), leaf:Lerp(Color3.new(1, 1, 0.6), rng:NextNumber(0, 0.12)), rng)
+		blob(Vector3.new(0, th + 0.9, 0), 1.9, hex("4f9a3c"))
+		for _ = 1, 3 do
+			local off = Vector3.new(rng:NextNumber(-1.3, 1.3), th + rng:NextNumber(0.2, 1.6), rng:NextNumber(-1.3, 1.3))
+			blob(off, 1.2, hex("5aab44", math.floor(rng:NextNumber(0, 0.08) / 0.02 + 0.5) * 0.02))
 		end
 	end
 	crown.Parent = m
 	m.WorldPivot = CFrame.new(at)          -- the pivot is the base of the trunk: the bark grid measures up from here
 	m:SetAttribute("Species", species)
-	m:SetAttribute("Sectors", 16)
-	m:SetAttribute("Bands", 40)
-	m:SetAttribute("Radius", radius)
-	m:SetAttribute("Height", height)
+	m:SetAttribute("Sectors", T.sectors)
+	m:SetAttribute("Bands", bands)
+	m:SetAttribute("Radius", R)            -- studs (the bark is drawn from this)
+	m:SetAttribute("Height", H)
+	m:SetAttribute("Seed", rng:NextInteger(1, 1000000))
 	m.Parent = parent
 	CollectionService:AddTag(m, "Tree")
 end
@@ -204,7 +215,8 @@ function TestWorld.start()
 		if math.abs(at.X - ROAD_X) < 12 then
 			at += Vector3.new(if at.X < ROAD_X then -14 else 14, 0, 0)      -- keep the road clear for the truck
 		end
-		makeTree(forest, species[(n % #species) + 1], at, rng:NextNumber(1.1, 1.6), rng:NextNumber(18, 26), rng)
+		makeTree(forest, species[(n % #species) + 1], at, rng:NextNumber(Config.Tree.minRadius, Config.Tree.maxRadius),
+			rng:NextInteger(Config.Tree.minBands, Config.Tree.maxBands), rng)
 	end
 	local rocks = Instance.new("Folder")
 	rocks.Name = "Rocks"

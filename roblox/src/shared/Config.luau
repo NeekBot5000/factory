@@ -55,14 +55,19 @@ Config.Tutorial = {
 }
 Config.TutorialDone = "That's the basics. The rest is yours to find out."
 
+-- Trees, from the Godot game's ForestTree.gd (metres; x3 for studs). A trunk is 16 panels round and `bands` panels
+-- high (0.18 m each), with two layers of bark: outer (0.045 m thick) over inner (0.035 m) over the wood.
+Config.Tree = { sectors = 16, bandH = 0.18, outerT = 0.045, innerT = 0.035, minRadius = 0.3, maxRadius = 0.46, minBands = 26, maxBands = 40 }
+
+-- bark / inner / wood colours, what each layer is worth (oak = 1), and each kind's quirk
 Config.Species = {
-	oak = { name = "Oak", outer = 1.0, inner = 1.0 },
-	pine = { name = "Pine", outer = 1.0, inner = 1.0 },
-	birch = { name = "Birch", outer = 1.6, inner = 1.0 },
-	hickory = { name = "Shagbark Hickory", outer = 1.1, inner = 1.1, handsSafe = true },
-	cedar = { name = "Western Red Cedar", outer = 1.6, inner = 1.6, tallStrips = true },
-	cork = { name = "Cork Oak", outer = 1.5, inner = 1.0, regrows = true },
-	eucalyptus = { name = "Rainbow Eucalyptus", outer = 0.8, inner = 1.0, ages = true },
+	oak = { name = "Oak", bark = "5b4030", inner = "b5653a", wood = "e2c08d", outer = 1.0, innerV = 1.0 },
+	pine = { name = "Pine", bark = "4d3a2e", inner = "b7703f", wood = "ead1a0", outer = 1.0, innerV = 1.0 },
+	birch = { name = "Birch", bark = "e8e4da", inner = "c9875a", wood = "f0dcb4", outer = 1.6, innerV = 1.0 },
+	hickory = { name = "Shagbark Hickory", bark = "6e6458", inner = "d0a878", wood = "e8d2a8", outer = 1.1, innerV = 1.1, handsSafe = true },
+	cedar = { name = "Western Red Cedar", bark = "7a4a35", inner = "a5482e", wood = "c98f6b", outer = 1.6, innerV = 1.6, tallStrips = true },
+	cork = { name = "Cork Oak", bark = "b09d80", inner = "b5653a", wood = "e2c08d", outer = 1.5, innerV = 1.0, regrows = true },
+	eucalyptus = { name = "Rainbow Eucalyptus", bark = "a9aca0", inner = "6ccf6a", wood = "efe2c4", outer = 0.8, innerV = 1.0, ages = true },
 }
 
 -- dollars per bark panel before the species multiplier

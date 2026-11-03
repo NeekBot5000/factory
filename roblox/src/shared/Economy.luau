@@ -5,7 +5,7 @@ local Economy = {}
 -- what a sheet of `panels` bark panels from a tree of `species` is worth
 function Economy.barkValue(config: any, species: string, layer: number, panels: number, extra: number?): number
 	local sp = config.Species[species] or config.Species.oak
-	local per = if layer == 0 then config.PanelValue.outer * sp.outer else config.PanelValue.inner * sp.inner
+	local per = if layer == 0 then config.PanelValue.outer * sp.outer else config.PanelValue.inner * sp.innerV
 	return math.floor(per * panels * (extra or 1) * 100 + 0.5) / 100
 end
 
