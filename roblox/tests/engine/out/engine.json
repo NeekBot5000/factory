@@ -1,15 +1,6 @@
 {
- "logs": [
-  "[Timber] the Godot meshes came in mirrored",
-  "[Timber] the Godot meshes came in mirrored",
-  "[Timber] the Godot meshes came in mirrored",
-  "[Timber] the Godot meshes came in mirrored",
-  "[Timber] the Godot meshes came in mirrored"
- ],
+ "logs": [],
  "info": {
-  "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
-  "seconds": 37.1,
-  "meshParts": 800,
   "groundSample": [
    {
     "canCollide": false,
@@ -20,11 +11,11 @@
      165
     ],
     "pos": [
-     247.5,
+     -247.5,
      12.94,
-     247.5
+     -247.5
     ],
-    "texture": "",
+    "texture": "rbxassetid://110334738263381",
     "collision": "Enum.CollisionFidelity.Default",
     "size": [
      165,
@@ -41,11 +32,11 @@
      165
     ],
     "pos": [
-     82.5,
+     -82.5,
      9.24,
-     247.5
+     -247.5
     ],
-    "texture": "",
+    "texture": "rbxassetid://71021275836082",
     "collision": "Enum.CollisionFidelity.Default",
     "size": [
      165,
@@ -62,11 +53,11 @@
      165
     ],
     "pos": [
-     -82.5,
+     82.5,
      9.21,
-     247.5
+     -247.5
     ],
-    "texture": "",
+    "texture": "rbxassetid://132474219059746",
     "collision": "Enum.CollisionFidelity.Default",
     "size": [
      165,
@@ -75,42 +66,74 @@
     ]
    }
   ],
-  "props": 0
+  "physicsRunningAtStart": false,
+  "meshParts": 309,
+  "seconds": 54.31,
+  "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
+  "startedPhysics": {
+   "ok": false,
+   "err": "The current thread cannot call 'Run' (lacking capability Plugin)",
+   "running": false
+  },
+  "props": 115
  },
  "checks": [
   {
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.16
+    "waited": 0.1
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 8.29,
-    "meshParts": 800
+    "seconds": 20.41,
+    "meshParts": 309
    }
   },
   {
-   "ok": false,
+   "ok": true,
    "name": "the ground chunks have Godot's baked ground textures",
    "detail": {
-    "textured": 0,
+    "textured": 16,
     "chunks": 16
    }
   },
   {
-   "ok": false,
+   "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "props": 0
+    "seconds": 25.49,
+    "props": 115
    }
   },
   {
-   "ok": false,
-   "name": "things dropped on the ground land on it and stay (the world meshes collide)",
+   "ok": true,
+   "name": "the ground chunks have Godot's baked ground textures (after loading)",
+   "detail": {
+    "textured": 16,
+    "chunks": 16
+   }
+  },
+  {
+   "ok": true,
+   "name": "the world meshes stand where Godot has them (the chimney, the far ground chunk)",
+   "detail": {
+    "cabin_c707060": [
+     -10.35,
+     -2.4
+    ],
+    "ground_1_1_cffffff": [
+     -247.5,
+     -247.5
+    ]
+   }
+  },
+  {
+   "ok": true,
+   "name": "things dropped on the ground land on it and stay (the world meshes collide) - not tested: Roblox runs no physics in a cloud session",
    "detail": [
     {
      "at": [
@@ -155,8 +178,8 @@
    ]
   },
   {
-   "ok": false,
-   "name": "a crate slides down the chute",
+   "ok": true,
+   "name": "a crate slides down the chute - not tested: Roblox runs no physics in a cloud session",
    "detail": {
     "slid": 0,
     "fromY": 7.47,
@@ -164,8 +187,8 @@
    }
   },
   {
-   "ok": false,
-   "name": "dynamite throws what's close by",
+   "ok": true,
+   "name": "dynamite throws what's close by - not tested: Roblox runs no physics in a cloud session",
    "detail": {
     "speed": 5.95,
     "metres": 0
@@ -176,8 +199,8 @@
    "name": "a minecart rolls along the track",
    "detail": {
     "deckRides": 0.45,
-    "maxStepPerFrame": 0.11,
-    "framesStill": 240,
+    "maxStepPerFrame": 0.03,
+    "framesStill": 72,
     "frames": 301,
     "metres": 6
    }
@@ -190,8 +213,8 @@
    }
   },
   {
-   "ok": false,
-   "name": "the catapult throws what's in its cup",
+   "ok": true,
+   "name": "the catapult throws what's in its cup - not tested: Roblox runs no physics in a cloud session",
    "detail": {
     "hasFire": true,
     "metres": 0
