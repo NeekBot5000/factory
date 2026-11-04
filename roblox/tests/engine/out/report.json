@@ -27,13 +27,78 @@
   },
   {
    "step": "download what Roblox made of the uploads",
-   "ok": false,
-   "detail": "27 failed, e.g. GodotCrowns: 403 {\"errors\":[{\"code\":0,\"message\":\"Scope not authorized.\"}]}\n - the key needs the legacy-asset:manage permission (Legacy Assets > Manage)"
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "build the scenes with the game's scripts",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "step": "Roblox's render of the porch view",
+   "ok": true,
+   "detail": "asset 87742142934693: Completed"
+  },
+  {
+   "step": "Roblox's render of the clearing view",
+   "ok": true,
+   "detail": "asset 102020356937227: Completed"
+  },
+  {
+   "step": "Roblox's render of the tree view",
+   "ok": true,
+   "detail": "asset 136146192582715: Completed"
+  },
+  {
+   "step": "Roblox's render of the cabin view",
+   "ok": true,
+   "detail": "asset 85504288469602: Completed"
+  },
+  {
+   "step": "Roblox's render of the sign view",
+   "ok": true,
+   "detail": "asset 127805969834683: Completed"
+  },
+  {
+   "step": "Roblox's render of the inside view",
+   "ok": true,
+   "detail": "asset 96438686837603: Completed"
+  },
+  {
+   "step": "Roblox's render of the block view",
+   "ok": true,
+   "detail": "asset 91530937395793: Completed"
+  },
+  {
+   "step": "Roblox's render of the dock view",
+   "ok": true,
+   "detail": "asset 108886249122576: Completed"
+  },
+  {
+   "step": "Roblox's render of the giant view",
+   "ok": true,
+   "detail": "asset 87854662217425: Completed"
+  },
+  {
+   "step": "Roblox's render of the truck view",
+   "ok": true,
+   "detail": "asset 125866220515499: Completed"
   },
   {
    "step": "save the built place as a new version (not published)",
-   "ok": false,
-   "detail": "403 {\"errors\":[{\"code\":0,\"message\":\"Scope not authorized.\"}]}\n - the key needs universe-places Write for this experience"
+   "ok": true,
+   "detail": "version 5"
+  },
+  {
+   "step": "start a Luau execution task on it",
+   "ok": true,
+   "detail": "universes/10774584468/places/78431518839981/versions/5/luau-execution-sessions/dd84c38a-2f9f-41aa-ac81-72bdf0a954b4/tasks/dd84c38a-2f9f-41aa-ac81-72bdf0a954b4"
+  },
+  {
+   "step": "the task finished",
+   "ok": true,
+   "detail": ""
   }
  ]
 }

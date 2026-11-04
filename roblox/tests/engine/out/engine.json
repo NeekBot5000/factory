@@ -1,0 +1,13 @@
+{
+ "logs": [],
+ "info": [],
+ "checks": [
+  {
+   "ok": false,
+   "name": "the game's server scripts run in the cloud session",
+   "detail": {
+    "waited": 30.03
+   }
+  }
+ ]
+}
