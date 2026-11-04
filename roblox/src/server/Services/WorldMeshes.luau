@@ -133,6 +133,7 @@ function WorldMeshes.load(key: string): Model?
 			local tex = ck and groundTexture(ck)
 			if tex then
 				(p :: MeshPart).TextureID = tex
+				p:SetAttribute("GodotTexture", tex)     -- (for the engine check's scenes: tests/engine/scenes.luau)
 			end
 		end
 		if k ~= 1 then

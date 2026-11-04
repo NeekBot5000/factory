@@ -45,6 +45,21 @@ for _, d in S.workspace:GetDescendants() do
 end
 print("SCENES mesh parts in the world: " .. meshParts)
 
+-- (Lune keeps a MeshPart's texture as TextureContent, and drops a plain TextureID: put the ground's back)
+local fixed = 0
+for _, d in S.workspace:GetDescendants() do
+	local tex = d.ClassName == "MeshPart" and d:GetAttribute("GodotTexture")
+	if tex then
+		local ok = pcall(function()
+			d.TextureContent = roblox.Content.fromUri(tex)
+		end)
+		if ok then
+			fixed += 1
+		end
+	end
+end
+print("SCENES ground textures put on: " .. fixed)
+
 local SKIP = { Camera = true, Terrain = true, Script = true, LocalScript = true, ModuleScript = true }
 for _, v in views do
 	local b = v.basis
