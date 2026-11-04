@@ -101,11 +101,17 @@ def scenes():
              f"{len(missing)} failed, e.g. {missing[0]} - the key needs the legacy-asset:manage permission (Legacy Assets > Manage)")
         return
     step("download what Roblox made of the uploads", True)
+    # (kept in the repo too, so the scenes can be rebuilt and checked without Roblox: roblox/tests/engine/cache/)
+    import shutil
+    cache = os.path.join(ROOT, "tests", "engine", "cache")
+    os.makedirs(cache, exist_ok=True)
+    for f in os.listdir("build/assets"):
+        shutil.copy(os.path.join("build/assets", f), os.path.join(cache, f))
     import subprocess
     env = dict(os.environ, TIMBER_ASSETS="build/assets")
     r = subprocess.run([os.environ.get("LUNE", "./luau/lune"), "run", "roblox/tests/engine/scenes.luau", PLACE_FILE, "build/scenes"],
                        env=env, capture_output=True, text=True, timeout=900)
-    print("\n".join(l for l in r.stdout.splitlines() if l.startswith("SCENES")), flush=True)
+    print("\n".join(l for l in (r.stdout + r.stderr).splitlines() if l.startswith("SCENES") or "warn" in l.lower() or "error" in l.lower())[:6000], flush=True)
     if r.returncode != 0:
         step("build the scenes with the game's scripts", False, (r.stderr or r.stdout)[-600:])
         return

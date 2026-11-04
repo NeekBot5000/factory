@@ -50,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add roblox/tests/engine/out roblox/tests/engine/scenes.lock.json 2>/dev/null || git add roblox/tests/engine/out
+          git add roblox/tests/engine/out roblox/tests/engine/scenes.lock.json roblox/tests/engine/cache 2>/dev/null || git add roblox/tests/engine/out
           if git diff --cached --quiet; then
             echo "Nothing new."
             exit 0

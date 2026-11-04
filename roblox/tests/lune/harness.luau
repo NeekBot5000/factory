@@ -346,9 +346,9 @@ function Harness.boot(placePath: string, jobId: string)
 		end
 	end)
 
-	-- starts the services in the same order as init.server.luau
+	-- starts the services in the same order as the server does (src/server/Boot.luau)
 	function server.start()
-		local src = game:GetService("ServerScriptService").Server.Source
+		local src = game:GetService("ServerScriptService").Server.Boot.Source
 		local order = string.match(src, "local order = (%b{})")
 		for name in string.gmatch(order, "\"(%w+)\"") do
 			server.service(name).start()

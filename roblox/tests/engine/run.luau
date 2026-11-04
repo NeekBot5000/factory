@@ -26,9 +26,12 @@ local function r2(v: number): number
 end
 
 local t0 = os.clock()
--- 1. did the game's own server scripts start? (they make the Remotes folder first)
+-- 1. start the game's server, as its Script does (Roblox doesn't run a place's scripts in a Luau execution session)
+local booted, bootErr = pcall(function()
+	require(ServerScriptService:WaitForChild("Server"):WaitForChild("Boot") :: ModuleScript).start()
+end)
 local remotes = ReplicatedStorage:WaitForChild("Remotes", 30)
-check("the game's server scripts run in the cloud session", remotes ~= nil, { waited = r2(os.clock() - t0) })
+check("the game's server starts in a real Roblox server", booted and remotes ~= nil, { waited = r2(os.clock() - t0), err = if booted then nil else tostring(bootErr) })
 if not remotes then
 	return HttpService:JSONEncode(out)
 end
