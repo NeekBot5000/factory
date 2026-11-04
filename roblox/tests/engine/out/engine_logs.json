@@ -1,8 +1,14 @@
 {
  "luauExecutionSessionTaskLogs": [
   {
-   "path": "universes/10774584468/places/78431518839981/versions/5/luau-execution-sessions/dd84c38a-2f9f-41aa-ac81-72bdf0a954b4/tasks/dd84c38a-2f9f-41aa-ac81-72bdf0a954b4/logs/1",
-   "messages": []
+   "path": "universes/10774584468/places/78431518839981/versions/6/luau-execution-sessions/fe8394ce-ff3d-47a9-b8d8-8b0fea028de5/tasks/fe8394ce-ff3d-47a9-b8d8-8b0fea028de5/logs/1",
+   "messages": [
+    "[Timber] the Godot meshes came in mirrored",
+    "[Timber] the Godot meshes came in mirrored",
+    "[Timber] the Godot meshes came in mirrored",
+    "[Timber] the Godot meshes came in mirrored",
+    "[Timber] the Godot meshes came in mirrored"
+   ]
   }
  ]
 }

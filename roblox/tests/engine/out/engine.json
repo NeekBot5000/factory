@@ -1,12 +1,200 @@
 {
- "logs": [],
- "info": [],
+ "logs": [
+  "[Timber] the Godot meshes came in mirrored",
+  "[Timber] the Godot meshes came in mirrored",
+  "[Timber] the Godot meshes came in mirrored",
+  "[Timber] the Godot meshes came in mirrored",
+  "[Timber] the Godot meshes came in mirrored"
+ ],
+ "info": {
+  "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
+  "seconds": 37.1,
+  "meshParts": 800,
+  "groundSample": [
+   {
+    "canCollide": false,
+    "name": "ground_1_1_cffffff",
+    "meshSize": [
+     165,
+     18.01,
+     165
+    ],
+    "pos": [
+     247.5,
+     12.94,
+     247.5
+    ],
+    "texture": "",
+    "collision": "Enum.CollisionFidelity.Default",
+    "size": [
+     165,
+     18.01,
+     165
+    ]
+   },
+   {
+    "canCollide": false,
+    "name": "ground_2_1_cffffff",
+    "meshSize": [
+     165,
+     20.74,
+     165
+    ],
+    "pos": [
+     82.5,
+     9.24,
+     247.5
+    ],
+    "texture": "",
+    "collision": "Enum.CollisionFidelity.Default",
+    "size": [
+     165,
+     20.74,
+     165
+    ]
+   },
+   {
+    "canCollide": false,
+    "name": "ground_3_1_cffffff",
+    "meshSize": [
+     165,
+     30.2,
+     165
+    ],
+    "pos": [
+     -82.5,
+     9.21,
+     247.5
+    ],
+    "texture": "",
+    "collision": "Enum.CollisionFidelity.Default",
+    "size": [
+     165,
+     30.2,
+     165
+    ]
+   }
+  ],
+  "props": 0
+ },
  "checks": [
   {
-   "ok": false,
-   "name": "the game's server scripts run in the cloud session",
+   "ok": true,
+   "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 30.03
+    "waited": 0.16
+   }
+  },
+  {
+   "ok": true,
+   "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
+   "detail": {
+    "seconds": 8.29,
+    "meshParts": 800
+   }
+  },
+  {
+   "ok": false,
+   "name": "the ground chunks have Godot's baked ground textures",
+   "detail": {
+    "textured": 0,
+    "chunks": 16
+   }
+  },
+  {
+   "ok": false,
+   "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
+   "detail": {
+    "props": 0
+   }
+  },
+  {
+   "ok": false,
+   "name": "things dropped on the ground land on it and stay (the world meshes collide)",
+   "detail": [
+    {
+     "at": [
+      0,
+      30
+     ],
+     "godotHeight": 0,
+     "restsAt": 30.66,
+     "speed": 0,
+     "ground": 1.41
+    },
+    {
+     "at": [
+      40,
+      -40
+     ],
+     "godotHeight": 1.74,
+     "restsAt": 32.38,
+     "speed": 0,
+     "ground": 3.13
+    },
+    {
+     "at": [
+      -60,
+      15
+     ],
+     "godotHeight": -0.2,
+     "restsAt": 30.45,
+     "speed": 0,
+     "ground": 1.2
+    },
+    {
+     "at": [
+      90,
+      90
+     ],
+     "godotHeight": 1.58,
+     "restsAt": 32.14,
+     "speed": 0,
+     "ground": 2.89
+    }
+   ]
+  },
+  {
+   "ok": false,
+   "name": "a crate slides down the chute",
+   "detail": {
+    "slid": 0,
+    "fromY": 7.47,
+    "toY": 7.47
+   }
+  },
+  {
+   "ok": false,
+   "name": "dynamite throws what's close by",
+   "detail": {
+    "speed": 5.95,
+    "metres": 0
+   }
+  },
+  {
+   "ok": true,
+   "name": "a minecart rolls along the track",
+   "detail": {
+    "deckRides": 0.45,
+    "maxStepPerFrame": 0.11,
+    "framesStill": 240,
+    "frames": 301,
+    "metres": 6
+   }
+  },
+  {
+   "ok": true,
+   "name": "a drone with a charged cell rises to about 3 m",
+   "detail": {
+    "metres": 3
+   }
+  },
+  {
+   "ok": false,
+   "name": "the catapult throws what's in its cup",
+   "detail": {
+    "hasFire": true,
+    "metres": 0
    }
   }
  ]
