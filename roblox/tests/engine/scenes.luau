@@ -72,9 +72,25 @@ for _, v in views do
 	-- let the client draw what's near this view (trees close by get their full look)
 	C.camera.CFrame = cf
 	-- (TreeVisuals draws 2 trees' bark a frame, for every tree within 110 studs: give it time to finish)
-	for _ = 1, 200 do
+	for _ = 1, 40 do
 		C.frame(1 / 30)
 		task.wait()
+	end
+	-- what the client hides on its own screen (LocalTransparencyModifier: a drawn tree's plain trunk under its bark
+	-- panels) isn't saved in a model, so it's put into Transparency for the picture, as the player sees it
+	for _, d in S.workspace:GetDescendants() do
+		if d:IsA("BasePart") then
+			local ok, ltm = pcall(function()
+				return d.LocalTransparencyModifier
+			end)
+			if ok and ltm and ltm > 0 then
+				d:SetAttribute("SceneTransparency", d:GetAttribute("SceneTransparency") or d.Transparency)
+				d.Transparency = math.max(d.Transparency, ltm)
+			elseif d:GetAttribute("SceneTransparency") ~= nil then
+				d.Transparency = d:GetAttribute("SceneTransparency")
+				d:SetAttribute("SceneTransparency", nil)
+			end
+		end
 	end
 	local scene = roblox.Instance.new("Model")
 	scene.Name = "Timber_" .. v.name
