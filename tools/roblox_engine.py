@@ -225,6 +225,17 @@ for k, aid in models.items():
         step(f"Roblox's render of {k} (uncoloured: WorldMeshes colours it in the game)", state == "Completed", state)
     except Exception as e:  # noqa: BLE001
         step(f"Roblox's render of {k}", False, err_text(e))
+# the ground and sky images: are they there for Roblox to draw? (an image still waiting for moderation draws blank)
+for k in ("Ground_2_2", "Ground_3_3", "SkyUp"):
+    if k in lock:
+        try:
+            info = json.loads(http(f"https://thumbnails.roblox.com/v1/assets?assetIds={lock[k]['id']}&size=420x420&format=Png&isCircular=false"))
+            got = (info.get("data") or [{}])[0]
+            if got.get("state") == "Completed" and got.get("imageUrl"):
+                open(os.path.join(OUT, f"thumb_{k}.png"), "wb").write(http(got["imageUrl"]))
+            step(f"the {k} image is ready to draw", got.get("state") == "Completed", got.get("state"))
+        except Exception as e:  # noqa: BLE001
+            step(f"the {k} image is ready to draw", False, err_text(e))
 scenes()
 engine()
 json.dump(report, open(os.path.join(OUT, "report.json"), "w"), indent=1)
