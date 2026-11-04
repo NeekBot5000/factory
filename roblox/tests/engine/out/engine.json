@@ -68,7 +68,7 @@
   ],
   "physicsRunningAtStart": false,
   "meshParts": 309,
-  "seconds": 49.21,
+  "seconds": 41.07,
   "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
   "startedPhysics": {
    "ok": false,
@@ -82,14 +82,14 @@
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.11
+    "waited": 0.08
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 17.36,
+    "seconds": 10.24,
     "meshParts": 309
    }
   },
@@ -105,7 +105,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 20.4,
+    "seconds": 12.27,
     "props": 115
    }
   },

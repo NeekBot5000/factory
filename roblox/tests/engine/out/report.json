@@ -26,19 +26,24 @@
    "detail": "Completed"
   },
   {
-   "step": "the Ground_2_2 image is ready to draw",
-   "ok": false,
-   "detail": "Pending"
+   "step": "the Ground_2_2 decal (113503244350987) is ready to draw",
+   "ok": true,
+   "detail": "Completed"
   },
   {
-   "step": "the Ground_3_3 image is ready to draw",
-   "ok": false,
-   "detail": "Pending"
+   "step": "the Ground_2_2 image (130247371150661) is ready to draw",
+   "ok": true,
+   "detail": "Completed"
   },
   {
-   "step": "the SkyUp image is ready to draw",
-   "ok": false,
-   "detail": "Pending"
+   "step": "the SkyUp decal (103322617598992) is ready to draw",
+   "ok": true,
+   "detail": "Completed"
+  },
+  {
+   "step": "the SkyUp image (122912589435818) is ready to draw",
+   "ok": true,
+   "detail": "Completed"
   },
   {
    "step": "download what Roblox made of the uploads",
@@ -108,7 +113,7 @@
   {
    "step": "start a Luau execution task on it",
    "ok": true,
-   "detail": "universes/10774584468/places/78431518839981/versions/7/luau-execution-sessions/a6d0d15e-c012-4d9b-b740-d37b66deff74/tasks/a6d0d15e-c012-4d9b-b740-d37b66deff74"
+   "detail": "universes/10774584468/places/78431518839981/versions/7/luau-execution-sessions/cef5a42e-2aa6-451c-be9d-b655369f1f98/tasks/cef5a42e-2aa6-451c-be9d-b655369f1f98"
   },
   {
    "step": "the task finished",
