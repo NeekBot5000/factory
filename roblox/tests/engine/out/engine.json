@@ -67,8 +67,8 @@
    }
   ],
   "physicsRunningAtStart": false,
-  "meshParts": 309,
-  "seconds": 41.08,
+  "meshParts": 800,
+  "seconds": 37.03,
   "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
   "startedPhysics": {
    "ok": false,
@@ -89,8 +89,8 @@
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 9.22,
-    "meshParts": 309
+    "seconds": 7.2,
+    "meshParts": 800
    }
   },
   {
@@ -105,7 +105,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 12.27,
+    "seconds": 8.22,
     "props": 115
    }
   },
