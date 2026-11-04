@@ -26,6 +26,21 @@
    "detail": "Completed"
   },
   {
+   "step": "the Ground_2_2 image is ready to draw",
+   "ok": false,
+   "detail": "Pending"
+  },
+  {
+   "step": "the Ground_3_3 image is ready to draw",
+   "ok": false,
+   "detail": "Pending"
+  },
+  {
+   "step": "the SkyUp image is ready to draw",
+   "ok": false,
+   "detail": "Pending"
+  },
+  {
    "step": "download what Roblox made of the uploads",
    "ok": true,
    "detail": ""
@@ -93,7 +108,7 @@
   {
    "step": "start a Luau execution task on it",
    "ok": true,
-   "detail": "universes/10774584468/places/78431518839981/versions/7/luau-execution-sessions/02f87b1b-c14c-4c41-af25-39987178d3c5/tasks/02f87b1b-c14c-4c41-af25-39987178d3c5"
+   "detail": "universes/10774584468/places/78431518839981/versions/7/luau-execution-sessions/a6d0d15e-c012-4d9b-b740-d37b66deff74/tasks/a6d0d15e-c012-4d9b-b740-d37b66deff74"
   },
   {
    "step": "the task finished",
