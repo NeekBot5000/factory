@@ -71,7 +71,8 @@ for _, v in views do
 	)
 	-- let the client draw what's near this view (trees close by get their full look)
 	C.camera.CFrame = cf
-	for _ = 1, 20 do
+	-- (TreeVisuals draws 2 trees' bark a frame, for every tree within 110 studs: give it time to finish)
+	for _ = 1, 200 do
 		C.frame(1 / 30)
 		task.wait()
 	end
