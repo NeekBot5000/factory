@@ -93,7 +93,11 @@ def scenes():
             continue
         try:
             info = json.loads(http(f"https://apis.roblox.com/asset-delivery-api/v1/assetId/{v['id']}", auth=True))
-            open(f"build/assets/{k}.rbxm", "wb").write(http(info["location"]))
+            data = http(info["location"])
+            if data[:2] == b"\x1f\x8b":
+                import gzip
+                data = gzip.decompress(data)        # (Roblox serves them gzipped)
+            open(f"build/assets/{k}.rbxm", "wb").write(data)
         except Exception as e:  # noqa: BLE001
             missing.append(f"{k}: {err_text(e)}")
     if missing:

@@ -9,6 +9,7 @@
 -- part's name, for the hint), Heavy.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Weight = require(ReplicatedStorage.Shared.Weight)
 
@@ -305,7 +306,7 @@ function DroneService.start()
 	task.spawn(function()
 		local last = os.clock()
 		while true do
-			task.wait(0.05)
+			RunService.Heartbeat:Wait()      -- (every frame: carts, drones and turntables move smoothly)
 			local now = os.clock()
 			local ok, err = pcall(DroneService.step, now - last)
 			if not ok then

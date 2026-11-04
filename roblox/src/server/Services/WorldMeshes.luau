@@ -25,6 +25,20 @@ end
 
 -- the image a ground chunk's texture points at (its Decal asset, loaded once), or nil
 local groundTextures: { [string]: string } = {}
+-- the image a Decal asset points at (Decal.Texture; newer files call it TextureContent, a Content with a Uri)
+local function decalImage(decal: Instance): string?
+	local ok, t = pcall(function()
+		return (decal :: any).Texture
+	end)
+	if ok and typeof(t) == "string" and t ~= "" then
+		return t
+	end
+	local ok2, c = pcall(function()
+		return (decal :: any).TextureContent.Uri
+	end)
+	return if ok2 and typeof(c) == "string" and c ~= "" then c else nil
+end
+
 local function groundTexture(ck: string): string?
 	if groundTextures[ck] then
 		return groundTextures[ck]
@@ -38,7 +52,7 @@ local function groundTexture(ck: string): string?
 		return InsertService:LoadAsset(tonumber(id) :: number)
 	end)
 	local decal = got and container and (container :: Instance):FindFirstChildWhichIsA("Decal", true)
-	local tex = if decal then (decal :: Decal).Texture else nil
+	local tex = if decal then decalImage(decal) else nil
 	if got and container then
 		(container :: Instance):Destroy()
 	end
@@ -76,16 +90,19 @@ function WorldMeshes.load(key: string): Model?
 			end
 		end
 	end
-	-- the import's scale and offset, from the markers (Godot put them at 0 and at +30 studs along X)
+	-- the import's scale and offset, from the markers (Godot put them at 0 and at +30 studs along X). Roblox's glTF
+	-- import turns the scene round 180 degrees about the vertical (glTF and Roblox disagree on which way is forward:
+	-- the X marker comes in at -30, the ground chunks and the cabin's porch on the far side), so it's turned back.
 	local k, o = 1, Vector3.zero
+	local turn = CFrame.identity
 	if origin and xmark then
-		local span = (xmark.Position - origin.Position).Magnitude
+		local span = (xmark.CFrame.Position - origin.CFrame.Position).Magnitude
 		if span > 0.001 then
 			k = 30 / span
 		end
-		o = origin.Position
-		if (xmark.Position - origin.Position).X < 0 then
-			warn("[Timber] the Godot meshes came in mirrored")
+		o = origin.CFrame.Position
+		if (xmark.CFrame.Position - origin.CFrame.Position).X < 0 then
+			turn = CFrame.Angles(0, math.pi, 0)
 		end
 	end
 	for _, p in parts do
@@ -106,6 +123,9 @@ function WorldMeshes.load(key: string): Model?
 		if kind == "glow" then
 			p.Material = Enum.Material.Neon       -- (Godot's emissive materials: the lamp, the computer's screen)
 		end
+		if p:IsA("MeshPart") then
+			p.TextureID = ""        -- (the import's own materials: Godot's colours come from the names instead)
+		end
 		if kind == "ground" then
 			-- the forest floor: Godot paints it with a shader (lighter and darker patches, drier areas, grain, pebbles
 			-- on the dirt); its colours are baked into an image a chunk (ExportRobloxWorld), put on with TextureID
@@ -115,13 +135,10 @@ function WorldMeshes.load(key: string): Model?
 				(p :: MeshPart).TextureID = tex
 			end
 		end
-		if p:IsA("MeshPart") then
-			p.TextureID = ""
-		end
 		if k ~= 1 then
 			p.Size *= k
 		end
-		p.CFrame = CFrame.new((p.Position - o) * k) * p.CFrame.Rotation
+		p.CFrame = turn * (CFrame.new((p.CFrame.Position - o) * k) * p.CFrame.Rotation)
 		p:SetAttribute("GodotName", base)
 		p.Parent = model
 	end
@@ -324,7 +341,7 @@ local function sky()
 			end)
 			local decal = got and container and (container :: Instance):FindFirstChildWhichIsA("Decal", true)
 			if decal then
-				(s :: any)[prop] = (decal :: Decal).Texture
+				(s :: any)[prop] = decalImage(decal) or ""
 			end
 			if got and container then
 				(container :: Instance):Destroy()

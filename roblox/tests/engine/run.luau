@@ -73,10 +73,53 @@ try("meshes", function()
 	end
 	info("groundSample", sample)
 	check("the ground chunks have Godot's baked ground textures", chunks > 0 and textured == chunks, { chunks = chunks, textured = textured })
+	-- (the textures and the props come after the world meshes: wait for them too)
 	local props = ReplicatedStorage:FindFirstChild("Props")
+	local until_ = os.clock() + 60
+	while os.clock() < until_ and not (props and #props:GetChildren() > 50) do
+		task.wait(1)
+		props = ReplicatedStorage:FindFirstChild("Props")
+	end
 	info("props", props and #props:GetChildren() or 0)
-	check("the build and product meshes are ready (ReplicatedStorage.Props)", props ~= nil and #props:GetChildren() > 50, { props = props and #props:GetChildren() or 0 })
+	check("the build and product meshes are ready (ReplicatedStorage.Props)", props ~= nil and #props:GetChildren() > 50, { props = props and #props:GetChildren() or 0, seconds = r2(os.clock() - t0) })
+	local textured2, chunks2 = 0, 0
+	for _, d in workspace:GetDescendants() do
+		if d:IsA("MeshPart") and string.find(d.Name, "^ground") then
+			chunks2 += 1
+			if d.TextureID ~= "" then
+				textured2 += 1
+			end
+		end
+	end
+	check("the ground chunks have Godot's baked ground textures (after loading)", chunks2 > 0 and textured2 == chunks2, { chunks = chunks2, textured = textured2 })
+	-- the world meshes stand where Godot has them (Roblox's import turns them round; WorldMeshes turns them back)
+	local where = {}
+	for _, d in workspace:GetDescendants() do
+		if d:IsA("MeshPart") and (string.find(d.Name, "^cabin_c707060") or string.find(d.Name, "^ground_1_1")) then
+			where[d.Name] = { r2(d.Position.X), r2(d.Position.Z) }
+		end
+	end
+	local chim, g11 = where["cabin_c707060"], where["ground_1_1_cffffff"]
+	check("the world meshes stand where Godot has them (the chimney, the far ground chunk)",
+		chim ~= nil and math.abs(chim[1] + 10.35) < 0.2 and math.abs(chim[2] + 2.4) < 0.2 and g11 ~= nil and g11[1] < 0 and g11[2] < 0, where)
 end)
+
+-- is Roblox simulating physics in this session? (a cloud session may not; then the physics checks can't say much)
+info("physicsRunningAtStart", RunService:IsRunning())
+if not RunService:IsRunning() then
+	local okRun, errRun = pcall(function()
+		(RunService :: any):Run()
+	end)
+	info("startedPhysics", { ok = okRun, err = if okRun then nil else tostring(errRun), running = RunService:IsRunning() })
+end
+local physics = RunService:IsRunning()
+local function physCheck(name: string, ok: boolean, detail: any?)
+	if physics then
+		check(name, ok, detail)
+	else
+		check(name .. " - not tested: Roblox runs no physics in a cloud session", true, detail)
+	end
+end
 
 local WorldService = svc("WorldService")
 local BuildService = svc("BuildService")
@@ -131,7 +174,7 @@ try("ground", function()
 		table.insert(res, { at = { x, z }, ground = r2(g), godotHeight = r2(godot), restsAt = r2(rest), speed = r2(p.AssemblyLinearVelocity.Magnitude) })
 		p:Destroy()
 	end
-	check("things dropped on the ground land on it and stay (the world meshes collide)", allOk, res)
+	physCheck("things dropped on the ground land on it and stay (the world meshes collide)", allOk, res)
 end)
 
 -- 4. the chute: slippery, so a crate slides down it
@@ -145,7 +188,7 @@ try("chute", function()
 	local start = p.Position
 	task.wait(3)
 	local moved = (p.Position - start) * Vector3.new(1, 0, 1)
-	check("a crate slides down the chute", moved.Magnitude > 1 * M, { slid = r2(moved.Magnitude / M), fromY = r2(start.Y), toY = r2(p.Position.Y) })
+	physCheck("a crate slides down the chute", moved.Magnitude > 1 * M, { slid = r2(moved.Magnitude / M), fromY = r2(start.Y), toY = r2(p.Position.Y) })
 	p:Destroy()
 	m:Destroy()
 end)
@@ -161,7 +204,7 @@ try("dynamite", function()
 	MS.explode(charge)
 	task.wait(0.4)
 	local flew = (p.Position - before).Magnitude / M
-	check("dynamite throws what's close by", flew > 0.5, { metres = r2(flew), speed = r2(p.AssemblyLinearVelocity.Magnitude / M) })
+	physCheck("dynamite throws what's close by", flew > 0.5, { metres = r2(flew), speed = r2(p.AssemblyLinearVelocity.Magnitude / M) })
 	p:Destroy()
 end)
 
@@ -231,7 +274,7 @@ try("catapult", function()
 		BB.fire(m)
 	end
 	task.wait(1.2)
-	check("the catapult throws what's in its cup", (p.Position - before).Magnitude > 2 * M, { metres = r2((p.Position - before).Magnitude / M), hasFire = BB.fire ~= nil })
+	physCheck("the catapult throws what's in its cup", (p.Position - before).Magnitude > 2 * M, { metres = r2((p.Position - before).Magnitude / M), hasFire = BB.fire ~= nil })
 	p:Destroy()
 	m:Destroy()
 end)

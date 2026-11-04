@@ -11,6 +11,7 @@
 --   out of a crate on the cart behind it. Drone Pad: powered, it charges battery cells left on it.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Rail = require(ReplicatedStorage.Shared.Rail)
 local Land = require(ReplicatedStorage.Shared.Land)
@@ -791,7 +792,7 @@ function RailService.start()
 	task.spawn(function()
 		local last = os.clock()
 		while true do
-			task.wait(0.05)
+			RunService.Heartbeat:Wait()      -- (every frame: carts, drones and turntables move smoothly)
 			local now = os.clock()
 			local ok, err = pcall(RailService.step, now - last)
 			if not ok then

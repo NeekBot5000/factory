@@ -11,6 +11,7 @@
 --   rotator   (Rotator.gd) spins what's stuck on it (the hammer sticks it on and lets go)
 --   charger   (Charger.gd) charges the battery cells dropped into it
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Builds = require(ReplicatedStorage.Shared.Builds)
 
@@ -640,7 +641,7 @@ function FactoryService.start()
 	task.spawn(function()
 		local last = os.clock()
 		while true do
-			task.wait(0.05)
+			RunService.Heartbeat:Wait()      -- (every frame: carts, drones and turntables move smoothly)
 			local now = os.clock()
 			local ok, err = pcall(FactoryService.step, now - last)
 			if not ok then
