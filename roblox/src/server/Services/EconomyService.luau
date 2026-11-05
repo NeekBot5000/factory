@@ -280,6 +280,42 @@ local function phoneShip(player: Player)
 	end
 end
 
+-- The daily reward (a Roblox staple: a reason to come back tomorrow). From the day after you first play, the first
+-- time you play each day you get money, more for each day in a row, up to a week: $15, then $30 ... $105 from the
+-- 7th day on. Miss a day and the streak starts again. Days are UTC days. Returns what was paid (0 if none today).
+EconomyService.DAILY = { per = 15, maxDays = 7 }
+function EconomyService.daily(player: Player, today: number?): number
+	local data = DataService.get(player)
+	if not data then
+		return 0
+	end
+	local day = today or math.floor(os.time() / 86400)
+	if not data.daily then
+		-- your very first day: you start with nothing, as in Godot; the rewards start tomorrow
+		data.daily = { last = day, streak = 0 }
+		return 0
+	end
+	local d = data.daily
+	if d.last == day then
+		return 0
+	end
+	d.streak = if d.last == day - 1 then d.streak + 1 else 1
+	d.last = day
+	local amount = EconomyService.DAILY.per * math.min(d.streak, EconomyService.DAILY.maxDays)
+	EconomyService.addMoney(player, amount)
+	player:SetAttribute("Streak", d.streak)
+	local nextAmount = EconomyService.DAILY.per * math.min(d.streak + 1, EconomyService.DAILY.maxDays)
+	local text = if d.streak == 1 then string.format("Daily reward: +$%d    come back tomorrow for $%d", amount, nextAmount)
+		else string.format("Day %d in a row: +$%d    come back tomorrow for $%d", d.streak, amount, nextAmount)
+	-- (after the title screen: a few seconds in)
+	task.delay(8, function()
+		if player.Parent then
+			remotes.Notify:FireClient(player, text, "ffd27a", "buy")
+		end
+	end)
+	return amount
+end
+
 function EconomyService.start()
 	remotes.PhoneShip.OnServerEvent:Connect(phoneShip)
 	TutorialService.loaded = function(player)
@@ -287,6 +323,9 @@ function EconomyService.start()
 	end
 	remotes.Buy.OnServerEvent:Connect(buy)
 	-- someone who owns a bigger truck joins: it's the one that's parked (or comes back next)
+	table.insert(DataService.onLoaded, function(player)
+		EconomyService.daily(player)
+	end)
 	table.insert(DataService.onLoaded, function()
 		local t = workspace:FindFirstChild("Truck") :: Model?
 		local want = EconomyService.truckLevel()

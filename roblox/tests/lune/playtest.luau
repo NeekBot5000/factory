@@ -1400,6 +1400,26 @@ do
 	end
 end
 
+-- ---------------------------------------------------------------- the daily reward
+do
+	local E = A.service("EconomyService")
+	local d = A.service("DataService").get(alice)
+	local money0, daily0 = d.money, d.daily
+	d.daily = nil
+	local first = E.daily(alice, 1000)
+	check(first == 0 and d.money == money0, "your first day: no daily reward yet (you start with nothing, as in Godot)")
+	local paid = { E.daily(alice, 1001), E.daily(alice, 1002), E.daily(alice, 1002) }
+	check(paid[1] == 15 and paid[2] == 30 and paid[3] == 0, "the next day $15, the day after $30, and only once a day")
+	check(E.daily(alice, 1005) == 15 and alice:GetAttribute("Streak") == 1, "miss a day and the streak starts again")
+	local last = 0
+	for day = 1006, 1015 do
+		last = E.daily(alice, day)
+	end
+	check(last == 105, "a week in a row and more: $105 a day (" .. last .. ")")
+	d.money, d.daily = money0, daily0
+	alice:SetAttribute("Money", money0)
+end
+
 -- ---------------------------------------------------------------- dynamite
 do
 	local BS, CS, MS = A.service("BuildService"), A.service("CircuitService"), A.service("MiningService")
