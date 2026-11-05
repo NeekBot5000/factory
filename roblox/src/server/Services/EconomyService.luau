@@ -64,13 +64,35 @@ local function inBed(t: Model): { BasePart }
 end
 
 -- what one thing in the bed is worth
+-- Wood of the day (the user's growth idea #9, prices that move; a daily boosted item, as many Roblox games have):
+-- each UTC day one species pays WOOD_BONUS times as much at the mill, bark and logs alike. The phone says which.
+EconomyService.WOOD_BONUS = 1.5
+function EconomyService.woodOfTheDay(today: number?): string
+	local names = {}
+	for id in Config.Species :: any do
+		table.insert(names, id)
+	end
+	table.sort(names)
+	local day = today or math.floor(os.time() / 86400)
+	return names[day % #names + 1]
+end
+
 local function worth(p: BasePart): number
+	local species, v
 	if p.Name == "Trunk" and p.Parent and p.Parent:GetAttribute("Kind") == "log" then
 		local LogService = require(script.Parent.LogService) :: any
-		return LogService.value(p.Parent)
+		v = LogService.value(p.Parent)
+		species = p.Parent:GetAttribute("Species")
+	else
+		v = p:GetAttribute("Value") :: number? or 0
+		species = p:GetAttribute("Species")
 	end
-	return p:GetAttribute("Value") :: number
+	if species ~= nil and species == EconomyService.woodOfTheDay() then
+		v *= EconomyService.WOOD_BONUS
+	end
+	return v
 end
+EconomyService.worth = worth
 
 function EconomyService.bedValue(player: Player?): number
 	local t = truck()
@@ -342,6 +364,13 @@ function EconomyService.redeem(player: Player, code: unknown): (number, string)
 end
 
 function EconomyService.start()
+	-- (the wood of the day, for the phone; checked hourly so a new day shows)
+	task.spawn(function()
+		while true do
+			ReplicatedStorage:SetAttribute("WoodOfTheDay", EconomyService.woodOfTheDay())
+			task.wait(3600)
+		end
+	end)
 	remotes.PhoneShip.OnServerEvent:Connect(phoneShip)
 	TutorialService.loaded = function(player)
 		return EconomyService.bedValue(player) > 0

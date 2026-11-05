@@ -25,6 +25,12 @@ end
 
 local A = Harness.boot(place, "server-A")
 A.start()
+-- (the wood of the day pays more at the mill; it depends on the date, so the tests pin it: no bonus, except where
+-- a test checks the bonus itself)
+local woodOfTheDay = A.service("EconomyService").woodOfTheDay
+A.service("EconomyService").woodOfTheDay = function()
+	return "none"
+end
 local Data = A.service("DataService")
 local bob = nil
 local Carry = A.service("CarryService")
@@ -1459,6 +1465,34 @@ do
 	local fresh = require("@lune/serde").decode("json", alice:GetAttribute("Jobs"))
 	check(not fresh[1].done and fresh[1].need == 3 and fresh[1].have == 0, "a new day, new jobs, counted from zero")
 	d.jobs, d.felled, d.earned = jobs0, felled0, earned0
+	-- the wood of the day: one species a day, in turn, pays 1.5x at the mill (bark and logs)
+	local E2 = A.service("EconomyService")
+	local seen = {}
+	for dd = 0, 6 do
+		seen[woodOfTheDay(dd)] = true
+	end
+	local n = 0
+	for _ in seen do
+		n += 1
+	end
+	check(n == 7 and woodOfTheDay(5) ~= woodOfTheDay(6), "the wood of the day goes round all seven species, a different one each day")
+	local sheet = roblox.Instance.new("Part")
+	sheet:SetAttribute("Value", 2)
+	sheet:SetAttribute("Species", "birch")
+	sheet:SetAttribute("Kind", "bark")
+	E2.woodOfTheDay = function()
+		return "birch"
+	end
+	local onDay = E2.worth(sheet)
+	E2.woodOfTheDay = function()
+		return "oak"
+	end
+	local offDay = E2.worth(sheet)
+	E2.woodOfTheDay = function()
+		return "none"
+	end
+	sheet:Destroy()
+	check(math.abs(onDay - 3) < 0.01 and math.abs(offDay - 2) < 0.01, string.format("birch bark on birch day is worth 1.5x ($%.2f, other days $%.2f)", onDay, offDay))
 	d.money, d.daily = money0, daily0
 	alice:SetAttribute("Money", money0)
 end
