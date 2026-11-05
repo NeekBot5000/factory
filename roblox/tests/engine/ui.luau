@@ -77,6 +77,44 @@ local function shoot(name: string, guiNames: { string })
 	end
 end
 
+-- 0. a probe: does Roblox's renderer draw a SurfaceGui at all? (a big red box and big text)
+do
+	local model = roblox.Instance.new("Model")
+	model.Name = "TimberUI_probe"
+	local panel = roblox.Instance.new("Part")
+	panel.Anchored = true
+	panel.Size = V3(8.44, 3.9, 0.1)
+	panel.Color = roblox.Color3.fromHex("4f8a35")
+	panel.Parent = model
+	for _, face in { roblox.Enum.NormalId.Front, roblox.Enum.NormalId.Back } do
+		local sg = roblox.Instance.new("SurfaceGui")
+		sg.Face = face
+		sg.SizingMode = roblox.Enum.SurfaceGuiSizingMode.PixelsPerStud
+		sg.PixelsPerStud = 100
+		sg.LightInfluence = 0
+		sg.AlwaysOnTop = false
+		sg.Parent = panel
+		local f = roblox.Instance.new("Frame")
+		f.Size = roblox.UDim2.fromScale(0.5, 0.5)
+		f.Position = roblox.UDim2.fromScale(0.25, 0.25)
+		f.BackgroundColor3 = roblox.Color3.new(1, 0, 0)
+		f.Parent = sg
+		local t = roblox.Instance.new("TextLabel")
+		t.Size = roblox.UDim2.fromScale(1, 0.25)
+		t.BackgroundTransparency = 1
+		t.Text = "TIMBER"
+		t.TextScaled = true
+		t.TextColor3 = roblox.Color3.new(1, 1, 1)
+		t.Parent = sg
+	end
+	local cam = roblox.Instance.new("Camera")
+	cam.Name = "ThumbnailCamera"
+	cam.CFrame = roblox.CFrame.new(V3(0, 0, -14), V3(0, 0, 0))
+	cam.FieldOfView = 40
+	cam.Parent = model
+	fs.writeFile(outDir .. "/probe_gui.rbxm", roblox.serializeModel({ model }))
+end
+
 -- 1. the title screen
 shoot("title", { "TitleMenu" })
 local newGame = title and C.find(title, function(d)
