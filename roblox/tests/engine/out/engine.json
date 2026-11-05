@@ -1,6 +1,56 @@
 {
  "logs": [],
  "info": {
+  "seconds": 45.74,
+  "terrainCalibration": [
+   {
+    "occ": 0,
+    "surfaceAboveFullLayer": 2
+   },
+   {
+    "occ": 0.1,
+    "surfaceAboveFullLayer": 2.41
+   },
+   {
+    "occ": 0.2,
+    "surfaceAboveFullLayer": 2.8
+   },
+   {
+    "occ": 0.3,
+    "surfaceAboveFullLayer": 3.2
+   },
+   {
+    "occ": 0.4,
+    "surfaceAboveFullLayer": 3.59
+   },
+   {
+    "occ": 0.5,
+    "surfaceAboveFullLayer": 4
+   },
+   {
+    "occ": 0.6,
+    "surfaceAboveFullLayer": 4.41
+   },
+   {
+    "occ": 0.7,
+    "surfaceAboveFullLayer": 4.8
+   },
+   {
+    "occ": 0.8,
+    "surfaceAboveFullLayer": 5.2
+   },
+   {
+    "occ": 0.9,
+    "surfaceAboveFullLayer": 5.59
+   },
+   {
+    "occ": 1,
+    "surfaceAboveFullLayer": 6
+   }
+  ],
+  "props": 115,
+  "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
+  "physicsRunningAtStart": false,
   "groundSample": [
    {
     "canCollide": false,
@@ -66,62 +116,254 @@
     ]
    }
   ],
-  "physicsRunningAtStart": false,
-  "seconds": 48.18,
-  "meshParts": 800,
-  "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
-  "terrainCalibration": [
+  "meshParts": 816,
+  "terrainColumns": [
    {
-    "occ": 0,
-    "surfaceAboveFullLayer": "none"
+    "asked": -0.34,
+    "got": 1.64,
+    "o": 0.92,
+    "cellBottom": -4
    },
    {
-    "occ": 0.1,
-    "surfaceAboveFullLayer": "none"
+    "asked": -1,
+    "got": 1.02,
+    "o": 0.75,
+    "cellBottom": -4
    },
    {
-    "occ": 0.2,
-    "surfaceAboveFullLayer": "none"
+    "asked": 0.03,
+    "got": 2.01,
+    "o": 0.01,
+    "cellBottom": 0
    },
    {
-    "occ": 0.3,
-    "surfaceAboveFullLayer": "none"
+    "asked": 0.63,
+    "got": 2.72,
+    "o": 0.16,
+    "cellBottom": 0
    },
    {
-    "occ": 0.4,
-    "surfaceAboveFullLayer": "none"
+    "asked": 0.94,
+    "got": 3.04,
+    "o": 0.24,
+    "cellBottom": 0
    },
    {
-    "occ": 0.5,
-    "surfaceAboveFullLayer": "none"
+    "asked": 0,
+    "got": 1.94,
+    "o": 1,
+    "cellBottom": -4
    },
    {
-    "occ": 0.6,
-    "surfaceAboveFullLayer": "none"
+    "asked": 0.89,
+    "got": 2.76,
+    "o": 0.22,
+    "cellBottom": 0
    },
    {
-    "occ": 0.7,
-    "surfaceAboveFullLayer": "none"
+    "asked": -1.95,
+    "got": 0.06,
+    "o": 0.51,
+    "cellBottom": -4
    },
    {
-    "occ": 0.8,
-    "surfaceAboveFullLayer": "none"
+    "asked": -0.87,
+    "got": 1.23,
+    "o": 0.78,
+    "cellBottom": -4
    },
    {
-    "occ": 0.9,
-    "surfaceAboveFullLayer": "none"
+    "asked": -1.8,
+    "got": 0.22,
+    "o": 0.55,
+    "cellBottom": -4
    },
    {
-    "occ": 1,
-    "surfaceAboveFullLayer": "none"
+    "asked": -3.47,
+    "got": -1.32,
+    "o": 0.13,
+    "cellBottom": -4
+   },
+   {
+    "asked": -1.2,
+    "got": 0.83,
+    "o": 0.7,
+    "cellBottom": -4
+   },
+   {
+    "asked": -1.89,
+    "got": 0.18,
+    "o": 0.53,
+    "cellBottom": -4
+   },
+   {
+    "asked": -0.6,
+    "got": 1.41,
+    "o": 0.85,
+    "cellBottom": -4
+   },
+   {
+    "asked": -0.6,
+    "got": 1.41,
+    "o": 0.85,
+    "cellBottom": -4
+   },
+   {
+    "asked": -0.92,
+    "got": 1.05,
+    "o": 0.77,
+    "cellBottom": -4
+   },
+   {
+    "asked": -2.51,
+    "got": -0.48,
+    "o": 0.37,
+    "cellBottom": -4
+   },
+   {
+    "asked": 0.6,
+    "got": 2.57,
+    "o": 0.15,
+    "cellBottom": 0
+   },
+   {
+    "asked": 0.95,
+    "got": 2.91,
+    "o": 0.24,
+    "cellBottom": 0
+   },
+   {
+    "asked": 3.32,
+    "got": 5.28,
+    "o": 0.83,
+    "cellBottom": 0
+   },
+   {
+    "asked": 4.55,
+    "got": 6.29,
+    "o": 0.14,
+    "cellBottom": 4
+   },
+   {
+    "asked": 3.21,
+    "got": 5.13,
+    "o": 0.8,
+    "cellBottom": 0
+   },
+   {
+    "asked": 1.26,
+    "got": 3.22,
+    "o": 0.32,
+    "cellBottom": 0
+   },
+   {
+    "asked": -1.35,
+    "got": 0.69,
+    "o": 0.66,
+    "cellBottom": -4
+   },
+   {
+    "asked": -2.1,
+    "got": -0.02,
+    "o": 0.47,
+    "cellBottom": -4
+   },
+   {
+    "asked": -0.24,
+    "got": 1.78,
+    "o": 0.94,
+    "cellBottom": -4
+   },
+   {
+    "asked": 2.26,
+    "got": 4.18,
+    "o": 0.56,
+    "cellBottom": 0
+   },
+   {
+    "asked": 0.66,
+    "got": 2.69,
+    "o": 0.17,
+    "cellBottom": 0
+   },
+   {
+    "asked": -2.29,
+    "got": -0.28,
+    "o": 0.43,
+    "cellBottom": -4
+   },
+   {
+    "asked": -4.46,
+    "got": -2.2,
+    "o": 0.89,
+    "cellBottom": -8
+   },
+   {
+    "asked": -2.93,
+    "got": -0.89,
+    "o": 0.27,
+    "cellBottom": -4
+   },
+   {
+    "asked": -4.07,
+    "got": -2.16,
+    "o": 0.98,
+    "cellBottom": -8
+   },
+   {
+    "asked": -5.25,
+    "got": -3.11,
+    "o": 0.69,
+    "cellBottom": -8
+   },
+   {
+    "asked": -2.98,
+    "got": -0.93,
+    "o": 0.25,
+    "cellBottom": -4
+   },
+   {
+    "asked": 9.19,
+    "got": 11.09,
+    "o": 0.3,
+    "cellBottom": 8
+   },
+   {
+    "asked": 10.81,
+    "got": 12.67,
+    "o": 0.7,
+    "cellBottom": 8
+   },
+   {
+    "asked": 8.05,
+    "got": 10.02,
+    "o": 0.01,
+    "cellBottom": 8
+   },
+   {
+    "asked": 8.66,
+    "got": 10.43,
+    "o": 0.16,
+    "cellBottom": 8
+   },
+   {
+    "asked": 9.75,
+    "got": 12.06,
+    "o": 0.44,
+    "cellBottom": 8
+   },
+   {
+    "asked": 14.41,
+    "got": 16.48,
+    "o": 0.6,
+    "cellBottom": 12
    }
   ],
   "startedPhysics": {
    "ok": false,
    "err": "The current thread cannot call 'Run' (lacking capability Plugin)",
    "running": false
-  },
-  "props": 115
+  }
  },
  "checks": [
   {
@@ -135,8 +377,8 @@
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 14.3,
-    "meshParts": 800
+    "seconds": 7.19,
+    "meshParts": 816
    }
   },
   {
@@ -151,7 +393,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 16.33,
+    "seconds": 8.21,
     "props": 115
    }
   },
@@ -285,8 +527,8 @@
    "ok": true,
    "name": "the server keeps up (about 60 frames a second, no long stalls)",
    "detail": {
-    "worstFrameMs": 18.01,
-    "memoryMb": 441.89,
+    "worstFrameMs": 17.43,
+    "memoryMb": 442.03,
     "instances": 4151,
     "fps": 60
    }
