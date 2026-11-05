@@ -402,6 +402,21 @@ try("leaderboard", function()
 	check("the all-time leaderboard reads Roblox's OrderedDataStore", typeof(got) == "string", { allTime = got })
 end)
 
+-- 8d. tonight's server features in the real world: the golden tree finds a tree near the cabin and puts it back;
+-- the wood of the day is published for the phones
+try("events", function()
+	local EV = svc("EventService")
+	local t = EV.startGolden()
+	local trunk = t and t:FindFirstChild("Trunk")
+	local ok = t ~= nil and t:GetAttribute("Golden") == true and trunk ~= nil and trunk:FindFirstChild("GoldenSparkles") ~= nil
+	EV.endGolden()
+	local back = t ~= nil and t:GetAttribute("Golden") == nil and trunk ~= nil and trunk:FindFirstChild("GoldenSparkles") == nil
+	check("the golden tree picks a standing tree near the cabin, and goes back to normal after", ok and back,
+		{ tree = t and t.Name, at = t and tostring(t:GetPivot().Position) })
+	local wood = ReplicatedStorage:GetAttribute("WoodOfTheDay")
+	check("the wood of the day is published for the phones", typeof(wood) == "string" and wood ~= "", { wood = wood })
+end)
+
 -- 9. everything the game printed: warnings and errors are bugs to fix
 for _, l in LogService:GetLogHistory() do
 	if l.messageType == Enum.MessageType.MessageWarning or l.messageType == Enum.MessageType.MessageError then
