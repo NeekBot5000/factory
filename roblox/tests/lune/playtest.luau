@@ -1967,6 +1967,9 @@ do
 	local bd = Data.get(bob)
 	bd.money = 50
 	bd.owned.hatchet = true
+	bd.earned = 400
+	A.service("EconomyService").redeem(bob, "timber")
+	bd.daily = { last = 1000, streak = 3 }
 	A.remotes.Settings.OnServerEvent:Fire(bob, { fov = 200, volume = 0.3, music = "loud", bob = false, junk = 1 })
 	task.wait(0.05)
 	bd = Data.get(bob)
@@ -1978,6 +1981,8 @@ do
 	bd = Data.get(bob)
 	check(bd.money == 0 and not bd.owned.hatchet and bd.tutorial == 1 and bd.settings.volume == 0.3, "New Game starts their save over (keeping their settings)")
 	check(bob:GetAttribute("Fresh") == true and bob:GetAttribute("Tool") == "hands", "bare-handed, back at Getting started")
+	check(A.service("EconomyService").redeem(bob, "TIMBER") == 0 and bd.daily and bd.daily.streak == 3 and bd.bestEarned == 400,
+		"but a new game doesn't hand out codes again, or lose the daily streak or the all-time best")
 end
 
 -- ---------------------------------------------------------------- saving

@@ -54,7 +54,7 @@ function LeaderboardService.start()
 	-- (saved with the player's data: whole dollars)
 	table.insert(DataService.beforeSave, function(player, data)
 		local b = board()
-		local earned = math.floor(data.earned or 0)
+		local earned = math.floor(math.max(data.earned or 0, data.bestEarned or 0))   -- (a new game doesn't lower it)
 		if b and earned > 0 and written[player.UserId] ~= earned then
 			written[player.UserId] = earned
 			task.spawn(pcall, function()

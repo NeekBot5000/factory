@@ -189,6 +189,11 @@ function DataService.reset(player: Player)
 	local fresh = deepCopy(TEMPLATE)
 	fresh.settings = data.settings
 	fresh._lock = data._lock
+	-- (a new game keeps what belongs to the player rather than to the camp: the codes already used, so they can't be
+	-- used again; the daily streak; and the best they've ever earned, for the all-time leaderboard)
+	fresh.codes = data.codes
+	fresh.daily = data.daily
+	fresh.bestEarned = math.max(data.bestEarned or 0, data.earned or 0)
 	profiles[player] = fresh
 	DataService.publish(player)
 end
