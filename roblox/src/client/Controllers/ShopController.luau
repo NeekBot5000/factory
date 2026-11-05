@@ -169,6 +169,21 @@ function ShopController.open(fromPhone: boolean?)
 			ShopController.close()
 		end, { Size = UDim2.fromOffset(150, 38), LayoutOrder = 0 })
 		right.Size = UDim2.fromOffset(500, 40)
+		-- and invites friends (Roblox's own invite window), when Roblox lets this player send invites
+		task.spawn(function()
+			local SocialService = game:GetService("SocialService")
+			local ok, can = pcall(function()
+				return SocialService:CanSendGameInviteAsync(player)
+			end)
+			if ok and can and right.Parent then
+				UiKit.button(right, "Invite friends", Color3.fromHex("2e6da4"), C.white, function()
+					pcall(function()
+						SocialService:PromptGameInvite(player)
+					end)
+				end, { Size = UDim2.fromOffset(150, 38), LayoutOrder = -1 })
+				right.Size = UDim2.fromOffset(664, 40)
+			end
+		end)
 	end
 	-- sidebar
 	local side = frame(win, C.side, { Position = UDim2.fromOffset(0, 66), Size = UDim2.new(0, 230, 1, -100) })
