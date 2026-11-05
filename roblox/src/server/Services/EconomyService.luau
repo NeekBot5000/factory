@@ -317,12 +317,36 @@ function EconomyService.daily(player: Player, today: number?): number
 	return amount
 end
 
+-- a code typed into the phone: pays once per player; returns what it paid and why not (for the toast)
+function EconomyService.redeem(player: Player, code: unknown): (number, string)
+	local data = DataService.get(player)
+	if not data or typeof(code) ~= "string" or #code > 40 then
+		return 0, "That code doesn't work"
+	end
+	local key = string.upper((string.gsub(code, "%s", "")))
+	local amount = (Config.Codes :: any)[key]
+	if typeof(amount) ~= "number" then
+		return 0, "That code doesn't work"
+	end
+	data.codes = data.codes or {}
+	if data.codes[key] then
+		return 0, "You've already used that code"
+	end
+	data.codes[key] = true
+	EconomyService.addMoney(player, amount)
+	return amount, string.format("Code %s: +$%d", key, amount)
+end
+
 function EconomyService.start()
 	remotes.PhoneShip.OnServerEvent:Connect(phoneShip)
 	TutorialService.loaded = function(player)
 		return EconomyService.bedValue(player) > 0
 	end
 	remotes.Buy.OnServerEvent:Connect(buy)
+	remotes.Redeem.OnServerEvent:Connect(function(player, code)
+		local paid, text = EconomyService.redeem(player, code)
+		remotes.Notify:FireClient(player, text, if paid > 0 then "7aff9a" else "ff8a6a", if paid > 0 then "buy" else nil)
+	end)
 	-- someone who owns a bigger truck joins: it's the one that's parked (or comes back next)
 	table.insert(DataService.onLoaded, function(player)
 		EconomyService.daily(player)

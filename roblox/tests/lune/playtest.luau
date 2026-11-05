@@ -1416,6 +1416,14 @@ do
 		last = E.daily(alice, day)
 	end
 	check(last == 105, "a week in a row and more: $105 a day (" .. last .. ")")
+	-- codes from the phone: each pays once, typed any way
+	local codes0 = d.codes
+	d.codes = nil
+	local paidA = E.redeem(alice, " timber")
+	local paidB, why = E.redeem(alice, "TIMBER")
+	local paidC = E.redeem(alice, "free-money")
+	check(paidA == 100 and paidB == 0 and string.find(why, "already") ~= nil and paidC == 0, "a code pays once, typed any way; a made-up one pays nothing")
+	d.codes = codes0
 	d.money, d.daily = money0, daily0
 	alice:SetAttribute("Money", money0)
 end

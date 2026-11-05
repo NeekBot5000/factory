@@ -248,7 +248,29 @@ function ShopController.open(fromPhone: boolean?)
 	UiKit.label(side, "YOUR CABIN", 12, C.muted, UiKit.Bold, { LayoutOrder = 10 })
 	UiKit.label(side, string.format("Owned: %d of %d items", have, n), 14, C.ink, UiKit.Body, { LayoutOrder = 11 })
 	if fromPhone then
-		-- the TimberPhone: who's on this server, by what they've earned at the mill, and the trees they've felled
+		-- the TimberPhone: codes (type one in, the server checks it)
+		UiKit.label(side, "CODES", 12, C.muted, UiKit.Bold, { LayoutOrder = 12 })
+		local codeBox = Instance.new("TextBox")
+		codeBox.Name = "CodeBox"
+		codeBox.PlaceholderText = "Type a code"
+		codeBox.Text = ""
+		codeBox.ClearTextOnFocus = false
+		codeBox.Font = Enum.Font.GothamMedium
+		codeBox.TextSize = 15
+		codeBox.TextColor3 = C.ink
+		codeBox.BackgroundColor3 = Color3.fromHex("f6f1e9")
+		codeBox.BorderSizePixel = 0
+		codeBox.Size = UDim2.new(1, 0, 0, 34)
+		codeBox.LayoutOrder = 13
+		UiKit.corner(codeBox, 8)
+		codeBox.Parent = side
+		UiKit.button(side, "Redeem", C.orange, C.white, function()
+			if codeBox.Text ~= "" then
+				(ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Redeem") :: RemoteEvent):FireServer(codeBox.Text)
+				codeBox.Text = ""
+			end
+		end, { Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 14 })
+		-- who's on this server, by what they've earned at the mill, and the trees they've felled
 		UiKit.label(side, "LUMBERJACKS HERE", 12, C.muted, UiKit.Bold, { LayoutOrder = 20 })
 		local everyone = Players:GetPlayers()
 		table.sort(everyone, function(a, b)

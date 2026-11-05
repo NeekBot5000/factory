@@ -343,6 +343,13 @@ Config.StudsPerMetre = 3
 -- much higher so their feet are on the ground you see, as in Godot (WorldService, Health)
 Config.GroundSink = 0.6
 
+-- Codes to type into the TimberPhone (a Roblox staple: post them where players follow the game). Each pays once per
+-- player. Add or retire codes here and publish; codes are matched without regard to case.
+Config.Codes = {
+	TIMBER = 100,
+	LUMBERJACK = 250,
+} :: { [string]: number }
+
 -- Roblox badges for the trophies (and one for playing at all): make each badge on the Creator Dashboard
 -- (Creations > Timber > Engagement > Badges), then put its id here. 0 = no badge yet (nothing is awarded).
 Config.Badges = {
