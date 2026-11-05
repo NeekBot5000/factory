@@ -16,6 +16,44 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local GREEN = "7aff9a"
 local STUDS = Config.StudsPerMetre
 
+-- The friends boost (a common Roblox trend that makes inviting friends worth it): while a Roblox friend of yours is
+-- on the same server, the mill pays you FRIEND_BOOST times as much. Friendships are looked up once, when someone
+-- joins (Player:IsFriendsWith asks Roblox's web service, so it can fail; then there's no boost).
+EconomyService.FRIEND_BOOST = 1.1
+EconomyService.friends = {} :: { [number]: { [number]: boolean } }
+function EconomyService.friendBoost(player: Player): number
+	local mine = EconomyService.friends[player.UserId]
+	if mine then
+		for _, p in Players:GetPlayers() do
+			if p ~= player and mine[p.UserId] then
+				return EconomyService.FRIEND_BOOST
+			end
+		end
+	end
+	return 1
+end
+local function lookUpFriends(newcomer: Player)
+	for _, p in Players:GetPlayers() do
+		if p ~= newcomer then
+			task.spawn(function()
+				local ok, yes = pcall(function()
+					return newcomer:IsFriendsWith(p.UserId)
+				end)
+				if ok and yes == true and newcomer.Parent and p.Parent then
+					local f = EconomyService.friends
+					f[newcomer.UserId] = f[newcomer.UserId] or {}
+					f[p.UserId] = f[p.UserId] or {}
+					f[newcomer.UserId][p.UserId] = true
+					f[p.UserId][newcomer.UserId] = true
+					local pct = math.floor((EconomyService.FRIEND_BOOST - 1) * 100 + 0.5)
+					remotes.Notify:FireClient(newcomer, string.format("Your friend %s is here: +%d%% at the mill", p.DisplayName, pct), "8fd0ff", "reveal")
+					remotes.Notify:FireClient(p, string.format("Your friend %s is here: +%d%% at the mill", newcomer.DisplayName, pct), "8fd0ff", "reveal")
+				end
+			end)
+		end
+	end
+end
+
 -- the CarryService lets go of anything that drives off in the truck (set by CarryService)
 EconomyService.release = function(_part: BasePart) end
 
@@ -207,7 +245,7 @@ function EconomyService.ship(player: Player, force: boolean?): boolean
 			local who = Players:GetPlayerByUserId(userId)
 			local data = who and DataService.get(who)
 			if who and data then
-				amount = math.floor(amount * 100 + 0.5) / 100
+				amount = math.floor(amount * EconomyService.friendBoost(who) * 100 + 0.5) / 100
 				EconomyService.addMoney(who, amount)
 				data.earned = (data.earned or 0) + amount
 				who:SetAttribute("Earned", data.earned)
@@ -378,6 +416,10 @@ function EconomyService.start()
 		end
 	end)
 	remotes.PhoneShip.OnServerEvent:Connect(phoneShip)
+	Players.PlayerAdded:Connect(lookUpFriends)
+	Players.PlayerRemoving:Connect(function(p)
+		EconomyService.friends[p.UserId] = nil
+	end)
 	TutorialService.loaded = function(player)
 		return EconomyService.bedValue(player) > 0
 	end

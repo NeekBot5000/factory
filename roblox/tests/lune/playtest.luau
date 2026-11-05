@@ -1495,6 +1495,14 @@ do
 	end
 	sheet:Destroy()
 	check(math.abs(onDay - 3) < 0.01 and math.abs(offDay - 2) < 0.01, string.format("birch bark on birch day is worth 1.5x ($%.2f, other days $%.2f)", onDay, offDay))
+	-- the friends boost: a Roblox friend on your server, +10% at the mill
+	check(E2.friendBoost(alice) == 1, "no friends here: no boost")
+	E2.friends[alice.UserId] = { [bob.UserId] = true }
+	local withBob = E2.friendBoost(alice)
+	E2.friends[alice.UserId] = { [999999] = true }
+	local friendAway = E2.friendBoost(alice)
+	E2.friends[alice.UserId] = nil
+	check(math.abs(withBob - 1.1) < 1e-6 and friendAway == 1, "a friend on your server: the mill pays 10% more (only while they're here)")
 	d.money, d.daily = money0, daily0
 	alice:SetAttribute("Money", money0)
 end
