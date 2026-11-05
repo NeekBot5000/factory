@@ -65,7 +65,7 @@ local function ground()
 	local size = (g.n - 1) * g.step
 	local nx = math.floor(size / res)
 	local y0, ny = -24, 18                  -- -24 .. +48 studs covers Godot's lowest valley to its outer rim
-	local SINK = 0.6                        -- studs below the mesh, so the voxels' softer shape stays hidden under it
+	local SINK = Config.GroundSink          -- studs below the mesh, so the voxels' softer shape stays hidden under it
 	local mats, occ = {}, {}
 	for ix = 1, nx do
 		mats[ix], occ[ix] = {}, {}

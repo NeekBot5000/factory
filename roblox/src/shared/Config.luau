@@ -339,6 +339,9 @@ Config.ComboMax = 4             -- the combo axe grows 0.05 m a hit in a row, up
 -- the player (Godot's Player.gd, in metres; x3 for studs)
 Config.Player = { walk = 4.2, sprint = 6.8, jump = 4.6, gravity = 12, grabReach = 2.6, fov = 75, regenDelay = 3, regenPerSecond = 5, faintSeconds = 2.2 }
 Config.StudsPerMetre = 3
+-- the walkable terrain lies this far (studs) under Godot's ground mesh, which is what you see; characters stand this
+-- much higher so their feet are on the ground you see, as in Godot (WorldService, Health)
+Config.GroundSink = 0.6
 
 -- the truck (Godot's Truck.gd): drives to the mill, waits, pays, comes back
 Config.Truck = { speed = 10, awaySeconds = 4 }

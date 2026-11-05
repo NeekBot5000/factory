@@ -7,6 +7,11 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local character = script.Parent
 local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 humanoid.BreakJointsOnDeath = false       -- you faint (fall over and the screen goes dark), you don't fall apart
+-- the ground you walk on (terrain) lies a little under the ground you see (Godot's mesh): stand that much higher,
+-- so your feet are on what you see and your eyes are where Godot's are
+task.defer(function()
+	humanoid.HipHeight += Config.GroundSink
+end)
 local lastHealth = humanoid.Health
 local sinceHurt = 99
 
