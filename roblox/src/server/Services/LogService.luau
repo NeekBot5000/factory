@@ -142,6 +142,13 @@ function LogService.fell(tree: Model, cutJ: number, away: Vector3, player: Playe
 			TrophyService.award(player, "giant")
 		end
 		TrophyService.award(player, "first_tree")
+		-- (trees felled: the phone's Lumberjacks list shows everyone's)
+		local DataService = require(script.Parent.DataService) :: any
+		local data = DataService.get(player)
+		if data then
+			data.felled = (data.felled or 0) + 1
+			player:SetAttribute("Felled", data.felled)
+		end
 	end
 	local bands = tree:GetAttribute("Bands") :: number
 	cutJ = math.clamp(cutJ, 1, bands - 2)

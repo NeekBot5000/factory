@@ -1817,6 +1817,10 @@ do
 	Tools.equip(alice, "double_bit")
 end
 
+-- ---------------------------------------------------------------- the phone's Lumberjacks list
+check((alice:GetAttribute("Felled") or 0) >= 1 and (alice:GetAttribute("Earned") or 0) > 0,
+	string.format("everyone on the server sees what you've earned and felled ($%s, %s trees)", tostring(alice:GetAttribute("Earned")), tostring(alice:GetAttribute("Felled"))))
+
 -- ---------------------------------------------------------------- trying to cheat
 local m1 = data.money
 buy:Fire(alice, "greataxe")

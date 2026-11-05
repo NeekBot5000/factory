@@ -228,6 +228,27 @@ function ShopController.open(fromPhone: boolean?)
 	end
 	UiKit.label(side, "YOUR CABIN", 12, C.muted, UiKit.Bold, { LayoutOrder = 10 })
 	UiKit.label(side, string.format("Owned: %d of %d items", have, n), 14, C.ink, UiKit.Body, { LayoutOrder = 11 })
+	if fromPhone then
+		-- the TimberPhone: who's on this server, by what they've earned at the mill, and the trees they've felled
+		UiKit.label(side, "LUMBERJACKS HERE", 12, C.muted, UiKit.Bold, { LayoutOrder = 20 })
+		local everyone = Players:GetPlayers()
+		table.sort(everyone, function(a, b)
+			return (a:GetAttribute("Earned") :: number? or 0) > (b:GetAttribute("Earned") :: number? or 0)
+		end)
+		for k, p in everyone do
+			if k > 5 then
+				break
+			end
+			local felled = p:GetAttribute("Felled") :: number? or 0
+			local okName, display = pcall(function()
+				return p.DisplayName
+			end)
+			local name = if okName and typeof(display) == "string" and display ~= "" then display else p.Name
+			UiKit.label(side, string.format("%d. %s   $%d   %d tree%s", k, name, math.floor(p:GetAttribute("Earned") :: number? or 0),
+				felled, if felled == 1 then "" else "s"), 14, if p == player then C.price else C.ink, if p == player then UiKit.Bold else UiKit.Body,
+				{ LayoutOrder = 20 + k, TextTruncate = Enum.TextTruncate.AtEnd, Size = UDim2.new(1, 0, 0, 18), AutomaticSize = Enum.AutomaticSize.None })
+		end
+	end
 	-- the page of products
 	local page = Instance.new("ScrollingFrame")
 	page.BackgroundTransparency = 1

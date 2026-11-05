@@ -103,6 +103,24 @@ do
 	check(alice:GetAttribute("Tool") == "hatchet", "and tapping the hatchet's slot takes the hatchet out again")
 end
 
+-- the TimberPhone: Tab opens it, with the server's lumberjacks by what they've earned
+do
+	S.service("ToolService").grant(alice, "phone")
+	alice:SetAttribute("Earned", 42)
+	alice:SetAttribute("Felled", 3)
+	task.wait(0.2)
+	C.frames(2)
+	C.press(K.Tab)
+	C.frames(3)
+	local shop = C.gui("TimberMart")
+	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and d.Text == "LUMBERJACKS HERE" end) ~= nil, "Tab opens the TimberPhone, with the Lumberjacks list")
+	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "1. Alice", 1, true) ~= nil and string.find(d.Text, "$42", 1, true) ~= nil end) ~= nil,
+		"and you're on it, with what you've earned and felled")
+	C.press(K.Tab)
+	C.frames(2)
+end
+
+
 -- number keys and Q
 C.press(K.One)
 task.wait(0.1)

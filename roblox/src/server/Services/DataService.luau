@@ -167,6 +167,9 @@ function DataService.publish(player: Player)
 	player:SetAttribute("Settings", HttpService:JSONEncode(data.settings or {}))
 	player:SetAttribute("Land", table.concat(data.land or {}, ";"))
 	player:SetAttribute("Charges", (data.charges or {}).dynamite or 0)
+	-- (everyone on the server sees these: the phone's Lumberjacks list)
+	player:SetAttribute("Earned", data.earned or 0)
+	player:SetAttribute("Felled", data.felled or 0)
 	local tro = {}
 	for id, yes in data.trophies or {} do
 		if yes then

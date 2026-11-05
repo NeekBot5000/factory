@@ -188,6 +188,7 @@ function EconomyService.ship(player: Player, force: boolean?): boolean
 				amount = math.floor(amount * 100 + 0.5) / 100
 				EconomyService.addMoney(who, amount)
 				data.earned = (data.earned or 0) + amount
+				who:SetAttribute("Earned", data.earned)
 				remotes.Sold:FireClient(who, amount)
 				TutorialService.check(who)
 			end
