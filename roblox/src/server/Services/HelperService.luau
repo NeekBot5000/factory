@@ -4,6 +4,7 @@
 --         step closer; logs longer than 1.2 m and baskets stay put
 --   can   (Player.water / Sapling.water) water a sapling that has taken root: it grows twice as fast for a minute
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Physics = require(script.Parent.Physics)
 local Config = require(ReplicatedStorage.Shared.Config)
 local ToolService = require(script.Parent.ToolService)
 
@@ -56,6 +57,7 @@ function HelperService.rake(player: Player): number
 		if to.Magnitude < 0.7 * M then
 			continue        -- already at your feet
 		end
+		Physics.take(b :: any)
 		b.AssemblyLinearVelocity = to.Unit * math.clamp(to.Magnitude / M * 1.3, 1.2, 2.8) * M + Vector3.new(0, 0.9 * M, 0)
 		n += 1
 	end

@@ -11,6 +11,7 @@
 --   out of a crate on the cart behind it. Drone Pad: powered, it charges battery cells left on it.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Physics = require(script.Parent.Physics)
 local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Rail = require(ReplicatedStorage.Shared.Rail)
@@ -498,6 +499,7 @@ local function turnAt(m: Model, pivot: Rail.Cell, newDir: Rail.Cell)
 		return CFrame.new(p) * rot * CFrame.new(-p) * cf
 	end
 	for _, b in riders(m) do
+		Physics.take(b :: any)
 		b.CFrame = xf(b.CFrame)
 	end
 	for _, b in RailService.deck(m) do
@@ -517,6 +519,7 @@ local function roll(m: Model, s: CartState, dt: number)
 		b:PivotTo(b:GetPivot() + moved)
 	end
 	for _, b in riders(m) do
+		Physics.take(b :: any)
 		b.CFrame = b.CFrame + moved
 	end
 	if s.t < 1 then
@@ -611,6 +614,7 @@ local function unloadOne(m: Model)
 				local stuff = FS.contents(b)
 				if #stuff > 0 then
 					local p = stuff[1]
+					Physics.take(p :: any)
 					p.CFrame = m:GetPivot() * CFrame.new(Vector3.new(0, 0.7, -0.75) * M)
 					p.AssemblyLinearVelocity = m:GetPivot().LookVector * 1.0 * M
 					remotes.Fx:FireAllClients("thud", m:GetPivot().Position, 1.3, -8)

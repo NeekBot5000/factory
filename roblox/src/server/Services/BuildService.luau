@@ -11,6 +11,7 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Physics = require(script.Parent.Physics)
 local ServerStorage = game:GetService("ServerStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Builds = require(ReplicatedStorage.Shared.Builds)
@@ -343,6 +344,7 @@ function BuildService.cancel(player: Player, plan: Model): boolean
 			if thing:IsA("Model") then
 				(thing :: Model):PivotTo(CFrame.new(at) * ((thing :: Model):GetPivot() - (thing :: Model):GetPivot().Position))
 			else
+				Physics.take(root :: any)
 				root.CFrame = CFrame.new(at) * (root.CFrame - root.Position)
 			end
 			root.AssemblyLinearVelocity = Vector3.new(math.random() * 3 - 1.5, 1.5 + math.random() * 1.5, math.random() * 3 - 1.5) * M

@@ -10,6 +10,7 @@
 -- State lives in attributes on each build, so it's saved with it (BuildService) and clients can show it.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Physics = require(script.Parent.Physics)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Builds = require(ReplicatedStorage.Shared.Builds)
 local ToolService = require(script.Parent.ToolService)
@@ -497,6 +498,7 @@ local function show(m: Model, on: boolean)
 		local v = if on then m:GetPivot().LookVector * CircuitService.BELT_SPEED * M else Vector3.zero
 		for _, p in m:GetChildren() do
 			if p:IsA("BasePart") and (p:GetAttribute("Group") == "Slats" or p:GetAttribute("Res") == "bark") then
+				Physics.take(p :: any)
 				p.AssemblyLinearVelocity = v
 			end
 		end

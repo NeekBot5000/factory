@@ -10,6 +10,7 @@
 -- BuildService calls activate() on each finished build.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Physics = require(script.Parent.Physics)
 local TweenService = game:GetService("TweenService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Builds = require(ReplicatedStorage.Shared.Builds)
@@ -147,6 +148,7 @@ local function compostStep(m: Model, dt: number)
 			stock -= LEAVES_PER_SAPLING
 			local kinds = { "oak", "birch", "pine" }
 			local s = LogService.sapling((m:GetPivot() * CFrame.new(0, 1.0 * M * size, 0)).Position, kinds[math.random(1, 3)])
+			Physics.take(s :: any)
 			s.AssemblyLinearVelocity = Vector3.new(math.random() * 2.4 - 1.2, 3.0, math.random() * 2.4 - 1.2) * M
 			remotes.Fx:FireAllClients("reveal", m:GetPivot().Position, 1.2, -4)
 		end
@@ -198,6 +200,7 @@ function BuildBehaviors.fire(m: Model)
 		local vel = m:GetPivot():VectorToWorldSpace(LAUNCH) * math.sqrt(size) * M
 		for _, item in load do
 			if item.Parent and not item:GetAttribute("HeldBy") then
+				Physics.take(item :: any)
 				item.AssemblyLinearVelocity = vel + Vector3.new(math.random() * 1.2 - 0.6, math.random() - 0.5, math.random() * 1.2 - 0.6) * M
 				item.AssemblyAngularVelocity = Vector3.new(math.random() * 12 - 6, math.random() * 12 - 6, math.random() * 12 - 6)
 			end
@@ -354,6 +357,7 @@ function BuildBehaviors.start()
 				s.Name = "Bed"
 				s.Transparency = 1
 				s.Size = Vector3.new(0.6, 0.1, 1.6) * M * size
+				Physics.take(s :: any)
 				s.CFrame = m:GetPivot() * CFrame.new(0, 0.55 * M * size, 0) * CFrame.Angles(0, math.rad(90), 0)
 				s.Anchored = true
 				s.CanCollide = false

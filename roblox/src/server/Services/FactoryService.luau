@@ -11,6 +11,7 @@
 --   rotator   (Rotator.gd) spins what's stuck on it (the hammer sticks it on and lets go)
 --   charger   (Charger.gd) charges the battery cells dropped into it
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Physics = require(script.Parent.Physics)
 local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Builds = require(ReplicatedStorage.Shared.Builds)
@@ -96,6 +97,7 @@ local function crate(m: Model, dt: number)
 	if low then
 		m:SetAttribute("Cd", 0.45)
 		local lp = m:GetPivot():PointToObjectSpace(low.Position) / M
+		Physics.take(low :: any)
 		low.AssemblyLinearVelocity = (m:GetPivot().LookVector * 3.4 + Vector3.new(0, 1.1, 0) - m:GetPivot().RightVector * math.clamp(lp.X, -0.3, 0.3) * 2.5) * M
 	end
 end
@@ -154,6 +156,7 @@ local function planter(m: Model, dt: number)
 				return
 			end
 			m:SetAttribute("Cd", 2.0)
+			Physics.take(b :: any)
 			b.AssemblyLinearVelocity = Vector3.zero
 			b.Anchored = true
 			b.CFrame = CFrame.new(spot + Vector3.new(0, 0.04 * M, 0)) * CFrame.Angles(0, 0, math.rad(90))
@@ -181,6 +184,7 @@ local function grabber(m: Model, dt: number)
 		local from = b.Position
 		local to = m:GetPivot():PointToWorldSpace(Vector3.new(0, 0.75, 1.0) * M)
 		local top = m:GetPivot():PointToWorldSpace(Vector3.new(0, 1.6, 0) * M)
+		Physics.take(b)      -- (and the server keeps it once it's put down behind)
 		b.Anchored = true
 		task.spawn(function()
 			local t = 0
@@ -221,6 +225,7 @@ local function piston(m: Model, dt: number, on: boolean)
 	if on then
 		-- what's in front of the plate gets shoved
 		for _, b in within(m, Vector3.new(0, 0.4, -0.6 - ext), Vector3.new(0.8, 0.8, 0.5)) do
+			Physics.take(b :: any)
 			b.AssemblyLinearVelocity = fwd * 5 * M + Vector3.new(0, b.AssemblyLinearVelocity.Y, 0)
 		end
 	end
@@ -250,6 +255,7 @@ local function sorter(m: Model, id: string)
 		table.insert(now, key .. "=" .. (if go then "y" else "n"))
 		if go then
 			local v = b.AssemblyLinearVelocity
+			Physics.take(b :: any)
 			b.AssemblyLinearVelocity = Vector3.new(left.X * 1.8 * M, v.Y, left.Z * 1.8 * M)
 		end
 	end

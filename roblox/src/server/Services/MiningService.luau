@@ -7,6 +7,7 @@
 --   * a chunk is a real thing: carry it, sell it in the truck (stone 0.40, copper ore 3, iron ore 6, by size), or
 --     drop it into a build
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Physics = require(script.Parent.Physics)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Mining = require(ReplicatedStorage.Shared.Mining)
 local W = require(ReplicatedStorage.Shared.GodotWorld) :: any
@@ -365,6 +366,7 @@ function MiningService.explode(m: Model)
 		if not p.Anchored then
 			local d = (p.CFrame.Position - at) / M
 			local push = (d.Unit + Vector3.new(0, 0.6, 0)).Unit * math.clamp(9 - d.Magnitude * 3, 2, 9)
+			Physics.take(p :: any)
 			p.AssemblyLinearVelocity = push * M
 		end
 	end
