@@ -152,7 +152,11 @@ function ShopController.open(fromPhone: boolean?)
 	-- header
 	local header = frame(win, C.header, { Size = UDim2.new(1, 0, 0, 66) })
 	UiKit.label(header, "TimberMart", 30, Color3.fromHex("f5a35c"), UiKit.Title, { Position = UDim2.fromOffset(16, 14) })
-	UiKit.label(header, "Tools & gear for the working lumberjack", 15, Color3.fromHex("cfc5b8"), UiKit.Body, { Position = UDim2.fromOffset(196, 24) })
+	local narrowScreen = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize.X < 1100
+	if not narrowScreen then
+		-- (on a phone the header's buttons need the room)
+		UiKit.label(header, "Tools & gear for the working lumberjack", 15, Color3.fromHex("cfc5b8"), UiKit.Body, { Position = UDim2.fromOffset(196, 24) })
+	end
 	local right = frame(header, C.header, { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 13), Size = UDim2.fromOffset(330, 40) })
 	local row = Instance.new("UIListLayout")
 	row.FillDirection = Enum.FillDirection.Horizontal

@@ -25,7 +25,9 @@ local Hud = {}
 local player = Players.LocalPlayer
 local C = UiKit.Colors
 local M = Config.StudsPerMetre
-local MAX_SLOTS = 9
+-- (on a phone, five: the bar sits between Roblox's thumbstick and the touch buttons; it slides along as you tap)
+local UIS = game:GetService("UserInputService")
+local MAX_SLOTS = if UIS.TouchEnabled and not UIS.KeyboardEnabled then 5 else 9
 
 local function coreOff()
 	for _, t in { Enum.CoreGuiType.PlayerList, Enum.CoreGuiType.Backpack, Enum.CoreGuiType.Health, Enum.CoreGuiType.EmotesMenu } do
@@ -224,7 +226,7 @@ function Hud.start()
 		local owned = ToolController.bar()
 		local first, last = 1, #owned
 		if #owned > MAX_SLOTS then
-			first = math.clamp((table.find(owned, State.tool) or 1) - 4, 1, #owned - MAX_SLOTS + 1)
+			first = math.clamp((table.find(owned, State.tool) or 1) - math.floor(MAX_SLOTS / 2), 1, #owned - MAX_SLOTS + 1)
 			last = first + MAX_SLOTS - 1
 		end
 		for n = first, last do
