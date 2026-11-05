@@ -106,54 +106,14 @@
    "detail": "asset 125866220515499: Completed"
   },
   {
-   "step": "build the screens with the game's scripts",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "step": "Roblox's render of the ui_hud_desktop screen",
-   "ok": true,
-   "detail": "asset 96412716262070: Completed"
-  },
-  {
-   "step": "Roblox's render of the ui_hud_phone screen",
-   "ok": true,
-   "detail": "asset 127244559805946: Completed"
-  },
-  {
-   "step": "Roblox's render of the ui_phone_desktop screen",
-   "ok": true,
-   "detail": "asset 90155820302906: Completed"
-  },
-  {
-   "step": "Roblox's render of the ui_phone_phone screen",
-   "ok": true,
-   "detail": "asset 91880725463429: Completed"
-  },
-  {
-   "step": "Roblox's render of the ui_probe_gui screen",
-   "ok": true,
-   "detail": "asset 113597309576976: Completed"
-  },
-  {
-   "step": "Roblox's render of the ui_title_desktop screen",
-   "ok": true,
-   "detail": "asset 84705290019152: Completed"
-  },
-  {
-   "step": "Roblox's render of the ui_title_phone screen",
-   "ok": true,
-   "detail": "asset 114288950264133: Completed"
-  },
-  {
    "step": "save the built place as a new version (not published)",
    "ok": true,
-   "detail": "version 13"
+   "detail": "version 14"
   },
   {
    "step": "start a Luau execution task on it",
    "ok": true,
-   "detail": "universes/10774584468/places/78431518839981/versions/13/luau-execution-sessions/eef017c1-703d-4abf-8296-3631f5c4c310/tasks/eef017c1-703d-4abf-8296-3631f5c4c310"
+   "detail": "universes/10774584468/places/78431518839981/versions/14/luau-execution-sessions/94ee29a2-5e8d-4725-b80d-c42b3d99c693/tasks/94ee29a2-5e8d-4725-b80d-c42b3d99c693"
   },
   {
    "step": "the task finished",
