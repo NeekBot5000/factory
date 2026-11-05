@@ -67,8 +67,8 @@
    }
   ],
   "physicsRunningAtStart": false,
-  "meshParts": 800,
-  "seconds": 37.03,
+  "meshParts": 309,
+  "seconds": 53.27,
   "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
   "startedPhysics": {
    "ok": false,
@@ -82,15 +82,15 @@
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.08
+    "waited": 0.1
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 7.2,
-    "meshParts": 800
+    "seconds": 18.38,
+    "meshParts": 309
    }
   },
   {
@@ -105,7 +105,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 8.22,
+    "seconds": 21.42,
     "props": 115
    }
   },
@@ -129,6 +129,21 @@
      -247.5,
      -247.5
     ]
+   }
+  },
+  {
+   "ok": false,
+   "name": "Roblox's terrain stays just under Godot's ground mesh (none pokes through)",
+   "detail": {
+    "worstUpStuds": 1.94,
+    "pokesThrough": 1681,
+    "deepUnder": 0,
+    "samples": 1681,
+    "worstAt": [
+     63,
+     -189
+    ],
+    "worstDownStuds": 0
    }
   },
   {
@@ -218,6 +233,16 @@
    "detail": {
     "hasFire": true,
     "metres": 0
+   }
+  },
+  {
+   "ok": true,
+   "name": "the server keeps up (about 60 frames a second, no long stalls)",
+   "detail": {
+    "worstFrameMs": 17.29,
+    "memoryMb": 379.09,
+    "instances": 4150,
+    "fps": 60
    }
   }
  ]
