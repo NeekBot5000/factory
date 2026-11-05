@@ -11,6 +11,7 @@ local DataService = require(script.Parent.DataService)
 local LeaderboardService = {}
 LeaderboardService.REFRESH = 300
 local names: { [number]: string } = {}
+local written: { [number]: number } = {} -- (what each player last sent, so an unchanged total isn't sent again)
 
 local function board(): OrderedDataStore?
 	local ok, s = pcall(function()
@@ -54,7 +55,8 @@ function LeaderboardService.start()
 	table.insert(DataService.beforeSave, function(player, data)
 		local b = board()
 		local earned = math.floor(data.earned or 0)
-		if b and earned > 0 then
+		if b and earned > 0 and written[player.UserId] ~= earned then
+			written[player.UserId] = earned
 			task.spawn(pcall, function()
 				(b :: any):SetAsync(tostring(player.UserId), earned)
 			end)
