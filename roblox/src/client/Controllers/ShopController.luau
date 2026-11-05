@@ -165,14 +165,17 @@ function ShopController.open(fromPhone: boolean?)
 	row.Padding = UDim.new(0, 14)
 	row.Parent = right
 	UiKit.label(right, string.format("$%.2f", money()), 22, C.green, UiKit.Title, { LayoutOrder = 1 })
-	local closeBtn = UiKit.button(right, "Close  [E]", Color3.fromHex("8a3a1c"), C.white, ShopController.close, { Size = UDim2.fromOffset(120, 38), LayoutOrder = 2 })
+	local closeBtn = UiKit.button(right, if narrowScreen then "Close" else "Close  [E]", Color3.fromHex("8a3a1c"), C.white, ShopController.close,
+		{ Size = UDim2.fromOffset(if narrowScreen then 84 else 120, 38), LayoutOrder = 2 })
 	if fromPhone then
 		-- the TimberPhone also sends the log truck off, from anywhere
-		UiKit.button(right, "Send the truck", Color3.fromHex("2f7d4a"), C.white, function()
+		-- (on a phone, shorter labels, so the header's buttons don't run over the title)
+		local btnW = if narrowScreen then 104 else 150
+		UiKit.button(right, if narrowScreen then "Send truck" else "Send the truck", Color3.fromHex("2f7d4a"), C.white, function()
 			(ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PhoneShip") :: RemoteEvent):FireServer()
 			ShopController.close()
-		end, { Size = UDim2.fromOffset(150, 38), LayoutOrder = 0 })
-		right.Size = UDim2.fromOffset(500, 40)
+		end, { Size = UDim2.fromOffset(btnW, 38), LayoutOrder = 0 })
+		right.Size = UDim2.fromOffset(if narrowScreen then 440 else 500, 40)
 		-- and invites friends (Roblox's own invite window), when Roblox lets this player send invites
 		task.spawn(function()
 			local SocialService = game:GetService("SocialService")
@@ -180,12 +183,12 @@ function ShopController.open(fromPhone: boolean?)
 				return SocialService:CanSendGameInviteAsync(player)
 			end)
 			if ok and can and right.Parent then
-				UiKit.button(right, "Invite friends", Color3.fromHex("2e6da4"), C.white, function()
+				UiKit.button(right, if narrowScreen then "Invite" else "Invite friends", Color3.fromHex("2e6da4"), C.white, function()
 					pcall(function()
 						SocialService:PromptGameInvite(player)
 					end)
-				end, { Size = UDim2.fromOffset(150, 38), LayoutOrder = -1 })
-				right.Size = UDim2.fromOffset(664, 40)
+				end, { Size = UDim2.fromOffset(btnW, 38), LayoutOrder = -1 })
+				right.Size = UDim2.fromOffset(if narrowScreen then 560 else 664, 40)
 			end
 		end)
 	end
