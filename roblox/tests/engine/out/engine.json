@@ -1,7 +1,7 @@
 {
  "logs": [],
  "info": {
-  "seconds": 47.15,
+  "seconds": 45.79,
   "terrainCalibration": [
    {
     "occ": 0,
@@ -116,7 +116,7 @@
     ]
    }
   ],
-  "meshParts": 309,
+  "meshParts": 816,
   "terrainColumns": [
    {
     "asked": -0.34,
@@ -370,15 +370,15 @@
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.33
+    "waited": 0.09
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 7.42,
-    "meshParts": 309
+    "seconds": 7.19,
+    "meshParts": 816
    }
   },
   {
@@ -393,7 +393,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 9.45,
+    "seconds": 8.21,
     "props": 115
    }
   },
@@ -505,7 +505,7 @@
    "name": "a minecart rolls along the track",
    "detail": {
     "deckRides": 0.45,
-    "maxStepPerFrame": 0.04,
+    "maxStepPerFrame": 0.03,
     "framesStill": 72,
     "frames": 301,
     "metres": 6
@@ -530,10 +530,10 @@
    "ok": true,
    "name": "the server keeps up (about 60 frames a second, no long stalls)",
    "detail": {
-    "worstFrameMs": 36.23,
-    "memoryMb": 410.1,
+    "worstFrameMs": 17.95,
+    "memoryMb": 420.29,
     "instances": 4156,
-    "fps": 59.67
+    "fps": 60
    }
   },
   {
@@ -541,6 +541,21 @@
    "name": "the all-time leaderboard reads Roblox's OrderedDataStore",
    "detail": {
     "allTime": "[]"
+   }
+  },
+  {
+   "ok": true,
+   "name": "the golden tree picks a standing tree near the cabin, and goes back to normal after",
+   "detail": {
+    "at": "-0.1899999976158142, 1.1640000343322754, -147.72000122070312",
+    "tree": "Tree_oak"
+   }
+  },
+  {
+   "ok": true,
+   "name": "the wood of the day is published for the phones",
+   "detail": {
+    "wood": "birch"
    }
   }
  ]
