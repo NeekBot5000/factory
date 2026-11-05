@@ -63,7 +63,7 @@
   {
    "step": "Roblox's render of the clearing view",
    "ok": true,
-   "detail": "asset 102020356937227: Completed"
+   "detail": "asset 119148694492749: Completed"
   },
   {
    "step": "Roblox's render of the tree view",
@@ -108,12 +108,12 @@
   {
    "step": "save the built place as a new version (not published)",
    "ok": true,
-   "detail": "version 8"
+   "detail": "version 9"
   },
   {
    "step": "start a Luau execution task on it",
    "ok": true,
-   "detail": "universes/10774584468/places/78431518839981/versions/8/luau-execution-sessions/87c48e78-e08e-47ac-97a9-c3059872a20f/tasks/87c48e78-e08e-47ac-97a9-c3059872a20f"
+   "detail": "universes/10774584468/places/78431518839981/versions/9/luau-execution-sessions/748944c9-198b-4095-9713-8d9dfc8aebce/tasks/748944c9-198b-4095-9713-8d9dfc8aebce"
   },
   {
    "step": "the task finished",

@@ -67,9 +67,55 @@
    }
   ],
   "physicsRunningAtStart": false,
-  "meshParts": 309,
-  "seconds": 53.27,
+  "seconds": 48.18,
+  "meshParts": 800,
   "cartNote": "the server moves the cart 20 times a second; maxStepPerFrame over about 0.1 m shows as a stutter",
+  "terrainCalibration": [
+   {
+    "occ": 0,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.1,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.2,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.3,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.4,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.5,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.6,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.7,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.8,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 0.9,
+    "surfaceAboveFullLayer": "none"
+   },
+   {
+    "occ": 1,
+    "surfaceAboveFullLayer": "none"
+   }
+  ],
   "startedPhysics": {
    "ok": false,
    "err": "The current thread cannot call 'Run' (lacking capability Plugin)",
@@ -82,15 +128,15 @@
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.1
+    "waited": 0.09
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 18.38,
-    "meshParts": 309
+    "seconds": 14.3,
+    "meshParts": 800
    }
   },
   {
@@ -105,7 +151,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 21.42,
+    "seconds": 16.33,
     "props": 115
    }
   },
@@ -239,9 +285,9 @@
    "ok": true,
    "name": "the server keeps up (about 60 frames a second, no long stalls)",
    "detail": {
-    "worstFrameMs": 17.29,
-    "memoryMb": 379.09,
-    "instances": 4150,
+    "worstFrameMs": 18.01,
+    "memoryMb": 441.89,
+    "instances": 4151,
     "fps": 60
    }
   }
