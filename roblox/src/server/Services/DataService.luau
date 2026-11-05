@@ -251,10 +251,19 @@ function DataService.start()
 		if RunService:IsStudio() then
 			return
 		end
+		-- (wait for every save to finish, not a fixed time: Roblox allows up to 30 seconds)
+		local pending = 0
 		for player in profiles do
-			task.spawn(save, player, true)
+			pending += 1
+			task.spawn(function()
+				pcall(save, player, true)
+				pending -= 1
+			end)
 		end
-		task.wait(5)
+		local deadline = os.clock() + 25
+		while pending > 0 and os.clock() < deadline do
+			task.wait(0.2)
+		end
 	end)
 end
 
