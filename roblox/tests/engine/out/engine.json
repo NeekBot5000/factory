@@ -1,7 +1,7 @@
 {
  "logs": [],
  "info": {
-  "seconds": 45.74,
+  "seconds": 43.75,
   "terrainCalibration": [
    {
     "occ": 0,
@@ -116,245 +116,245 @@
     ]
    }
   ],
-  "meshParts": 816,
+  "meshParts": 800,
   "terrainColumns": [
    {
     "asked": -0.34,
-    "got": 1.64,
+    "got": -0.36,
     "o": 0.92,
     "cellBottom": -4
    },
    {
     "asked": -1,
-    "got": 1.02,
+    "got": -0.98,
     "o": 0.75,
     "cellBottom": -4
    },
    {
     "asked": 0.03,
-    "got": 2.01,
+    "got": -0.13,
     "o": 0.01,
     "cellBottom": 0
    },
    {
     "asked": 0.63,
-    "got": 2.72,
+    "got": 0.72,
     "o": 0.16,
     "cellBottom": 0
    },
    {
     "asked": 0.94,
-    "got": 3.04,
+    "got": 1.04,
     "o": 0.24,
     "cellBottom": 0
    },
    {
     "asked": 0,
-    "got": 1.94,
+    "got": -0.04,
     "o": 1,
     "cellBottom": -4
    },
    {
     "asked": 0.89,
-    "got": 2.76,
+    "got": 0.76,
     "o": 0.22,
     "cellBottom": 0
    },
    {
     "asked": -1.95,
-    "got": 0.06,
+    "got": -1.98,
     "o": 0.51,
     "cellBottom": -4
    },
    {
     "asked": -0.87,
-    "got": 1.23,
+    "got": -0.77,
     "o": 0.78,
     "cellBottom": -4
    },
    {
     "asked": -1.8,
-    "got": 0.22,
+    "got": -1.83,
     "o": 0.55,
     "cellBottom": -4
    },
    {
     "asked": -3.47,
-    "got": -1.32,
+    "got": -3.32,
     "o": 0.13,
     "cellBottom": -4
    },
    {
     "asked": -1.2,
-    "got": 0.83,
+    "got": -1.17,
     "o": 0.7,
     "cellBottom": -4
    },
    {
     "asked": -1.89,
-    "got": 0.18,
+    "got": -1.95,
     "o": 0.53,
     "cellBottom": -4
    },
    {
     "asked": -0.6,
-    "got": 1.41,
+    "got": -0.59,
     "o": 0.85,
     "cellBottom": -4
    },
    {
     "asked": -0.6,
-    "got": 1.41,
+    "got": -0.59,
     "o": 0.85,
     "cellBottom": -4
    },
    {
     "asked": -0.92,
-    "got": 1.05,
+    "got": -0.95,
     "o": 0.77,
     "cellBottom": -4
    },
    {
     "asked": -2.51,
-    "got": -0.48,
+    "got": -2.48,
     "o": 0.37,
     "cellBottom": -4
    },
    {
     "asked": 0.6,
-    "got": 2.57,
+    "got": 0.57,
     "o": 0.15,
     "cellBottom": 0
    },
    {
     "asked": 0.95,
-    "got": 2.91,
+    "got": 0.99,
     "o": 0.24,
     "cellBottom": 0
    },
    {
     "asked": 3.32,
-    "got": 5.28,
+    "got": 3.28,
     "o": 0.83,
     "cellBottom": 0
    },
    {
     "asked": 4.55,
-    "got": 6.29,
+    "got": 4.28,
     "o": 0.14,
     "cellBottom": 4
    },
    {
     "asked": 3.21,
-    "got": 5.13,
+    "got": 3.07,
     "o": 0.8,
     "cellBottom": 0
    },
    {
     "asked": 1.26,
-    "got": 3.22,
+    "got": 1.22,
     "o": 0.32,
     "cellBottom": 0
    },
    {
     "asked": -1.35,
-    "got": 0.69,
+    "got": -1.31,
     "o": 0.66,
     "cellBottom": -4
    },
    {
     "asked": -2.1,
-    "got": -0.02,
+    "got": -2.16,
     "o": 0.47,
     "cellBottom": -4
    },
    {
     "asked": -0.24,
-    "got": 1.78,
+    "got": -0.22,
     "o": 0.94,
     "cellBottom": -4
    },
    {
     "asked": 2.26,
-    "got": 4.18,
+    "got": 2.1,
     "o": 0.56,
     "cellBottom": 0
    },
    {
     "asked": 0.66,
-    "got": 2.69,
+    "got": 0.69,
     "o": 0.17,
     "cellBottom": 0
    },
    {
     "asked": -2.29,
-    "got": -0.28,
+    "got": -2.3,
     "o": 0.43,
     "cellBottom": -4
    },
    {
     "asked": -4.46,
-    "got": -2.2,
+    "got": -4.13,
     "o": 0.89,
     "cellBottom": -8
    },
    {
     "asked": -2.93,
-    "got": -0.89,
+    "got": -2.89,
     "o": 0.27,
     "cellBottom": -4
    },
    {
     "asked": -4.07,
-    "got": -2.16,
+    "got": -4.08,
     "o": 0.98,
     "cellBottom": -8
    },
    {
     "asked": -5.25,
-    "got": -3.11,
+    "got": -5.11,
     "o": 0.69,
     "cellBottom": -8
    },
    {
     "asked": -2.98,
-    "got": -0.93,
+    "got": -2.93,
     "o": 0.25,
     "cellBottom": -4
    },
    {
     "asked": 9.19,
-    "got": 11.09,
+    "got": 9.14,
     "o": 0.3,
     "cellBottom": 8
    },
    {
     "asked": 10.81,
-    "got": 12.67,
+    "got": 10.66,
     "o": 0.7,
     "cellBottom": 8
    },
    {
     "asked": 8.05,
-    "got": 10.02,
+    "got": 8.2,
     "o": 0.01,
     "cellBottom": 8
    },
    {
     "asked": 8.66,
-    "got": 10.43,
+    "got": 8.65,
     "o": 0.16,
     "cellBottom": 8
    },
    {
     "asked": 9.75,
-    "got": 12.06,
+    "got": 9.78,
     "o": 0.44,
     "cellBottom": 8
    },
    {
     "asked": 14.41,
-    "got": 16.48,
+    "got": 14.23,
     "o": 0.6,
     "cellBottom": 12
    }
@@ -370,15 +370,15 @@
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.09
+    "waited": 0.12
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 7.19,
-    "meshParts": 816
+    "seconds": 5.2,
+    "meshParts": 800
    }
   },
   {
@@ -393,7 +393,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 8.21,
+    "seconds": 6.22,
     "props": 115
    }
   },
@@ -420,18 +420,21 @@
    }
   },
   {
-   "ok": false,
+   "ok": true,
    "name": "Roblox's terrain stays just under Godot's ground mesh (none pokes through)",
    "detail": {
-    "worstUpStuds": 1.94,
-    "pokesThrough": 1681,
+    "p05": -0.82,
     "deepUnder": 0,
     "samples": 1681,
     "worstAt": [
      63,
      -189
     ],
-    "worstDownStuds": 0
+    "worstUpStuds": -0.07,
+    "pokesThrough": 0,
+    "p95": -0.47,
+    "median": -0.61,
+    "worstDownStuds": -1.11
    }
   },
   {
@@ -444,9 +447,9 @@
       30
      ],
      "godotHeight": 0,
-     "restsAt": 30.66,
+     "restsAt": 28.66,
      "speed": 0,
-     "ground": 1.41
+     "ground": -0.59
     },
     {
      "at": [
@@ -454,9 +457,9 @@
       -40
      ],
      "godotHeight": 1.74,
-     "restsAt": 32.38,
+     "restsAt": 30.38,
      "speed": 0,
-     "ground": 3.13
+     "ground": 1.13
     },
     {
      "at": [
@@ -464,9 +467,9 @@
       15
      ],
      "godotHeight": -0.2,
-     "restsAt": 30.45,
+     "restsAt": 28.45,
      "speed": 0,
-     "ground": 1.2
+     "ground": -0.8
     },
     {
      "at": [
@@ -474,9 +477,9 @@
       90
      ],
      "godotHeight": 1.58,
-     "restsAt": 32.14,
+     "restsAt": 30.14,
      "speed": 0,
-     "ground": 2.89
+     "ground": 0.89
     }
    ]
   },
@@ -485,8 +488,8 @@
    "name": "a crate slides down the chute - not tested: Roblox runs no physics in a cloud session",
    "detail": {
     "slid": 0,
-    "fromY": 7.47,
-    "toY": 7.47
+    "fromY": 5.47,
+    "toY": 5.47
    }
   },
   {
@@ -527,8 +530,8 @@
    "ok": true,
    "name": "the server keeps up (about 60 frames a second, no long stalls)",
    "detail": {
-    "worstFrameMs": 17.43,
-    "memoryMb": 442.03,
+    "worstFrameMs": 18.5,
+    "memoryMb": 443,
     "instances": 4151,
     "fps": 60
    }
