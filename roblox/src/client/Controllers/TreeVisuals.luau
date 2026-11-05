@@ -15,7 +15,10 @@ local BarkLook = require(ReplicatedStorage.Shared.BarkLook)
 local TreeVisuals = {}
 local M = Config.StudsPerMetre
 local T = Config.Tree
-local DETAIL_RANGE = 110          -- studs: nearer trees get their panels
+-- studs: nearer trees get their panels (phones and tablets, with less to spare, draw them over a shorter range)
+local UserInputService = game:GetService("UserInputService")
+local MOBILE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local DETAIL_RANGE = if MOBILE then 70 else 110
 local PER_FRAME = 2               -- trees built per frame, so walking into the forest doesn't hitch
 local queue: { Model } = {}
 

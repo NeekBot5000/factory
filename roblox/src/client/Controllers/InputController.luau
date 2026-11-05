@@ -55,6 +55,18 @@ local TOUCH = {
 	{ "Swing", "Swing", UDim2.new(1, -110, 1, -170) },
 	{ "Grab", "Use", UDim2.new(1, -190, 1, -110) },
 	{ "DropTool", "Drop", UDim2.new(1, -190, 1, -190) },
+	{ "Phone", "Phone", UDim2.new(1, -270, 1, -110) },       -- (the shop, shipping and settings are on the phone)
+}
+-- with the hammer in hand: turn the build you're placing, take one down
+local HAMMER_TOUCH = {
+	{ "Turn", "Turn", UDim2.new(1, -110, 1, -250) },
+	{ "TakeDown", "Take down", UDim2.new(1, -270, 1, -190) },
+}
+
+-- what a key is called on a touch screen: the hints say "[E] grab", a phone shows "[Use] grab"
+local TOUCH_NAMES = {
+	{ "%[E%]", "[Use]" }, { "%[Click empty%]", "[Swing at nothing]" }, { "%[Click%]", "[Swing]" }, { "%[Q%]", "[Drop]" },
+	{ "%[R%]", "[Turn]" }, { "%[X%]", "[Take down]" }, { "%[Tab%]", "[Phone]" }, { "%[Scroll%] size [%d%.x]+    ", "" },
 }
 
 function InputController.start()
@@ -89,6 +101,54 @@ function InputController.start()
 			end, true)
 			ContextActionService:SetTitle("Touch" .. name, label)
 			ContextActionService:SetPosition("Touch" .. name, pos)
+		end
+		-- Run: a toggle (a phone's thumbstick has no Shift to hold)
+		local running = false
+		ContextActionService:BindAction("TouchRun", function(_, state)
+			if state == Enum.UserInputState.Begin then
+				running = not running
+				InputController.fire("Sprint", if running then Enum.UserInputState.Begin else Enum.UserInputState.End)
+			end
+			return Enum.ContextActionResult.Sink
+		end, true)
+		ContextActionService:SetTitle("TouchRun", "Run")
+		ContextActionService:SetPosition("TouchRun", UDim2.new(1, -270, 1, -270))
+	end
+end
+
+-- a hint or message, with the keys named the way this player presses them
+function InputController.label(text: string): string
+	if InputController.device() ~= "touch" then
+		return text
+	end
+	for _, r in TOUCH_NAMES do
+		text = string.gsub(text, r[1], r[2])
+	end
+	return text
+end
+
+-- touch buttons that only make sense with the hammer in hand (Turn and Take down)
+local shownHammer = false
+function InputController.toolChanged(tool: string)
+	if not UserInputService.TouchEnabled then
+		return
+	end
+	local want = tool == "hammer"
+	if want == shownHammer then
+		return
+	end
+	shownHammer = want
+	for _, b in HAMMER_TOUCH do
+		local name, label, pos = b[1] :: string, b[2] :: string, b[3] :: UDim2
+		if want then
+			ContextActionService:BindAction("Touch" .. name, function(_, state)
+				InputController.fire(name, state)
+				return Enum.ContextActionResult.Sink
+			end, true)
+			ContextActionService:SetTitle("Touch" .. name, label)
+			ContextActionService:SetPosition("Touch" .. name, pos)
+		else
+			ContextActionService:UnbindAction("Touch" .. name)
 		end
 	end
 end

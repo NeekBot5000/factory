@@ -16,6 +16,7 @@ local StarterGui = game:GetService("StarterGui")
 local Config = require(ReplicatedStorage.Shared.Config)
 local UiKit = require(script.Parent.Parent.Ui.UiKit)
 local State = require(script.Parent.Parent.State)
+local InputController = require(script.Parent.InputController)
 local Sfx = require(script.Parent.Parent.Sfx)
 local ToolController = require(script.Parent.ToolController)
 local InteractController = require(script.Parent.InteractController)
@@ -240,12 +241,24 @@ function Hud.start()
 			else
 				toolIcon(slot, id)
 			end
+			-- tap (or click) a slot to take that tool out: on a phone it's the only way to switch tools
+			slot.Active = true
+			slot.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+					if State.tool ~= id then
+						ToolController.equip(id)
+					end
+				end
+			end)
 			local key = if n <= 9 then tostring(n) elseif n <= 18 then "S+" .. (n - 9) else ""
 			local def = (Config.Tools :: any)[id]
 			UiKit.label(slot, if sel then key .. "  " .. def.name else key, 11, if sel then C.gold else Color3.new(1, 1, 1), UiKit.Bold, { LayoutOrder = 2, TextTransparency = if sel then 0 else 0.2 })
 		end
 	end
 	State.toolChanged:Connect(rebuildBar)
+	State.toolChanged:Connect(function()
+		InputController.toolChanged(State.tool)
+	end)
 	rebuildBar()
 
 	-- frames a second, when the setting's on (Godot: top left, small)
@@ -336,7 +349,7 @@ function Hud.start()
 
 	local remotes = ReplicatedStorage:WaitForChild("Remotes")
 	remotes:WaitForChild("Notify").OnClientEvent:Connect(function(text: string, hex: string?, sound: string?)
-		State.toast(text, if hex then Color3.fromHex(hex) else C.white)
+		State.toast(InputController.label(text), if hex then Color3.fromHex(hex) else C.white)
 		if sound then
 			Sfx.play(sound)
 		end
@@ -447,7 +460,7 @@ function Hud.start()
 			end
 			ringStroke.Color = if onTree then Color3.new(1, 0.85, 0.4) else C.white
 			ringStroke.Transparency = if onTree then 0.2 else 0.65
-			hint.Text = (InteractController.target())
+			hint.Text = InputController.label((InteractController.target()))
 		end
 	end)
 end

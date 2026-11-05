@@ -93,7 +93,7 @@ local function install()
 	end
 	installed = true
 	for _, ev in { "CharacterAdded", "HealthChanged", "Died", "Activated", "MouseEnter", "MouseLeave", "MouseButton1Down",
-		"Changed", "Completed", "ChildAdded", "ChildRemoved", "AncestryChanged", "OnClientEvent", "Event", "Ended", "Touched" } do
+		"Changed", "Completed", "ChildAdded", "ChildRemoved", "AncestryChanged", "OnClientEvent", "Event", "Ended", "Touched", "InputBegan" } do
 		roblox.implementProperty("Instance", ev, function(self)
 			return ClientHarness.signal(self, ev)
 		end)

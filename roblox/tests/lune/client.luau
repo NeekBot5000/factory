@@ -79,6 +79,29 @@ task.wait(0.2)
 C.frames(3)
 check(alice:GetAttribute("Tool") == "hatchet", "E takes the hatchet: it's in your hand")
 check(text(function(t) return string.find(t, "Trusty Hatchet", 1, true) ~= nil end), "and the tool bar shows it, named, in gold")
+-- on a phone, tapping a slot in the tool bar takes that tool out (there are no number keys)
+do
+	local hud = C.gui("Hud")
+	local handsSlot = hud and C.find(hud, function(d)
+		return d:IsA("TextLabel") and d.Text == "1" and d.Parent and d.Parent:IsA("Frame")
+	end)
+	if handsSlot then
+		ClientHarness.signal(handsSlot.Parent, "InputBegan"):Fire({ UserInputType = roblox.Enum.UserInputType.Touch })
+		task.wait(0.2)
+		C.frames(2)
+	end
+	check(handsSlot ~= nil and alice:GetAttribute("Tool") == "hands", "tapping a tool bar slot takes that tool out (phones)")
+	-- and back to the hatchet, by its slot
+	local hatchetSlot = hud and C.find(hud, function(d)
+		return d:IsA("TextLabel") and d.Text == "2" and d.Parent and d.Parent:IsA("Frame")
+	end)
+	if hatchetSlot then
+		ClientHarness.signal(hatchetSlot.Parent, "InputBegan"):Fire({ UserInputType = roblox.Enum.UserInputType.Touch })
+		task.wait(0.2)
+		C.frames(2)
+	end
+	check(alice:GetAttribute("Tool") == "hatchet", "and tapping the hatchet's slot takes the hatchet out again")
+end
 
 -- number keys and Q
 C.press(K.One)
