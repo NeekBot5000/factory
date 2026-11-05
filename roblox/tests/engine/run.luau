@@ -394,6 +394,14 @@ try("performance", function()
 		{ fps = r2(fps), worstFrameMs = r2(worst * 1000), instances = #game:GetDescendants(), memoryMb = r2(mem) })
 end)
 
+-- 8c. the all-time leaderboard: Roblox's OrderedDataStore answers, and the top ten reach the phones
+try("leaderboard", function()
+	local LB = svc("LeaderboardService")
+	LB.refresh()
+	local got = ReplicatedStorage:GetAttribute("AllTime")
+	check("the all-time leaderboard reads Roblox's OrderedDataStore", typeof(got) == "string", { allTime = got })
+end)
+
 -- 9. everything the game printed: warnings and errors are bugs to fix
 for _, l in LogService:GetLogHistory() do
 	if l.messageType == Enum.MessageType.MessageWarning or l.messageType == Enum.MessageType.MessageError then

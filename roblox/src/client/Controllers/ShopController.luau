@@ -190,7 +190,16 @@ function ShopController.open(fromPhone: boolean?)
 		end)
 	end
 	-- sidebar
-	local side = frame(win, C.side, { Position = UDim2.fromOffset(0, 66), Size = UDim2.new(0, 230, 1, -100) })
+	-- (it scrolls: on a phone, the departments, codes and lists don't all fit)
+	local side = Instance.new("ScrollingFrame")
+	side.BackgroundColor3 = C.side
+	side.BorderSizePixel = 0
+	side.Position = UDim2.fromOffset(0, 66)
+	side.Size = UDim2.new(0, 230, 1, -100)
+	side.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	side.CanvasSize = UDim2.new()
+	side.ScrollBarThickness = 6
+	side.Parent = win
 	UiKit.pad(side, 16, 16)
 	local sl = Instance.new("UIListLayout")
 	sl.Padding = UDim.new(0, 8)
@@ -270,6 +279,18 @@ function ShopController.open(fromPhone: boolean?)
 				codeBox.Text = ""
 			end
 		end, { Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 14 })
+		-- the best of all time, across every server (LeaderboardService)
+		local okTop, top = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(ReplicatedStorage:GetAttribute("AllTime") :: string)
+		end)
+		if okTop and typeof(top) == "table" and #top > 0 then
+			UiKit.label(side, "ALL-TIME BEST", 12, C.muted, UiKit.Bold, { LayoutOrder = 40 })
+			for k, e in top do
+				UiKit.label(side, string.format("%d. %s   $%d", k, tostring(e.name), math.floor(tonumber(e.earned) or 0)), 14,
+					if e.name == player.Name then C.price else C.ink, UiKit.Body,
+					{ LayoutOrder = 40 + k, TextTruncate = Enum.TextTruncate.AtEnd, Size = UDim2.new(1, 0, 0, 18), AutomaticSize = Enum.AutomaticSize.None })
+			end
+		end
 		-- who's on this server, by what they've earned at the mill, and the trees they've felled
 		UiKit.label(side, "LUMBERJACKS HERE", 12, C.muted, UiKit.Bold, { LayoutOrder = 20 })
 		local everyone = Players:GetPlayers()
