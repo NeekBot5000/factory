@@ -324,6 +324,8 @@ function EconomyService.daily(player: Player, today: number?): number
 	end
 	local d = data.daily
 	if d.last == day then
+		-- (already paid today, e.g. a second visit: the phone still shows the streak)
+		player:SetAttribute("Streak", d.streak)
 		return 0
 	end
 	d.streak = if d.last == day - 1 then d.streak + 1 else 1
@@ -364,11 +366,15 @@ function EconomyService.redeem(player: Player, code: unknown): (number, string)
 end
 
 function EconomyService.start()
-	-- (the wood of the day, for the phone; checked hourly so a new day shows)
+	-- (the wood of the day, for the phone, and the daily reward for anyone playing through midnight UTC; checked
+	-- once a minute so the phone never shows yesterday's wood while the mill pays today's)
 	task.spawn(function()
 		while true do
 			ReplicatedStorage:SetAttribute("WoodOfTheDay", EconomyService.woodOfTheDay())
-			task.wait(3600)
+			task.wait(60)
+			for _, p in game:GetService("Players"):GetPlayers() do
+				pcall(EconomyService.daily, p)
+			end
 		end
 	end)
 	remotes.PhoneShip.OnServerEvent:Connect(phoneShip)

@@ -267,6 +267,11 @@ function ShopController.open(fromPhone: boolean?)
 			UiKit.label(side, string.format("At the mill today: %s pays 1.5x", woodDef.name), 13, C.price, UiKit.Bold,
 				{ LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 		end
+		-- the daily streak (EconomyService.daily)
+		local streak = player:GetAttribute("Streak")
+		if typeof(streak) == "number" and streak > 1 then
+			UiKit.label(side, string.format("Daily streak: %d days", streak), 13, C.ink, UiKit.Body, { LayoutOrder = 15 })
+		end
 		-- today's jobs (JobsService), with how far along each is
 		local okJobs, jobs = pcall(function()
 			return game:GetService("HttpService"):JSONDecode(player:GetAttribute("Jobs") :: string)

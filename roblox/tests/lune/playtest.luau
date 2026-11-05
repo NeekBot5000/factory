@@ -1437,6 +1437,8 @@ do
 		last = E.daily(alice, day)
 	end
 	check(last == 105, "a week in a row and more: $105 a day (" .. last .. ")")
+	alice:SetAttribute("Streak", nil)
+	check(E.daily(alice, 1015) == 0 and alice:GetAttribute("Streak") == 11, "back again the same day: nothing more, but the phone still shows the streak")
 	-- codes from the phone: each pays once, typed any way
 	local codes0 = d.codes
 	d.codes = nil

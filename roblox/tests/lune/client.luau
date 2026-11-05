@@ -109,6 +109,7 @@ do
 	S.game:GetService("ReplicatedStorage"):SetAttribute("AllTime", '[{"name":"Alice","earned":5000},{"name":"Bob","earned":1200}]')
 	alice:SetAttribute("Earned", 42)
 	alice:SetAttribute("Felled", 3)
+	alice:SetAttribute("Streak", 4)
 	task.wait(0.2)
 	C.frames(2)
 	C.press(K.Tab)
@@ -117,6 +118,7 @@ do
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and d.Text == "LUMBERJACKS HERE" end) ~= nil, "Tab opens the TimberPhone, with the Lumberjacks list")
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "1. Alice", 1, true) ~= nil and string.find(d.Text, "$42", 1, true) ~= nil end) ~= nil,
 		"and you're on it, with what you've earned and felled")
+	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and d.Text == "Daily streak: 4 days" end) ~= nil, "and your daily streak")
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "1. Alice   $5000", 1, true) ~= nil end) ~= nil,
 		"and the all-time best, across every server")
 	C.press(K.Tab)
