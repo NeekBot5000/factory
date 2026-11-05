@@ -34,8 +34,8 @@ The screenshots are from the Godot version, which the Roblox version now matches
 ---
 Peel it. Fell it. Build something bigger.
 
-Timber is a first-person lumberjack game where everything is a real object. There's no inventory: peel the bark
-off a tree in sheets, pick the pieces up, carry them to your truck and send it to the mill.
+A first-person lumberjack game where everything is a real object. No inventory: peel bark off a tree in sheets,
+carry them to your truck and send it to the mill.
 
 Start with bare hands (it hurts). Buy a hatchet, then axes that hit twice, take whole rings or chop six times a
 second. Fell trees, saw logs, build furniture and decorations worth far more than the wood in them.
@@ -43,7 +43,10 @@ second. Fell trees, saw logs, build furniture and decorations worth far more tha
 Then automate it: wire cranks, windmills and generators to belts, sawmills, smelters and assemblers. Mine copper
 and iron, lay rails for carts, send drones, pump oil, and grow a one-person camp into a factory.
 
-Controls: WASD to move, click to swing, E to grab and use, Q to drop, 1-9 or the mouse wheel for tools.
+Every 15 minutes a golden tree appears somewhere near the cabin, with bark worth 5x: race the server for it. Come
+back each day for a growing daily reward, type codes into your TimberPhone, and see who's earned the most.
+
+Controls: WASD, click to swing, E to grab and use, Q to drop, 1-9 for tools. Phones: the buttons, tap the tool bar.
 ---
 
 ## 3b. Badges (optional, recommended)
@@ -58,6 +61,11 @@ trophy, as soon as it knows the badge's id.
 2. Copy each badge's id into `Config.Badges` in `roblox/src/shared/Config.luau` (or tell Claude the ids), then publish
    again. Players who already have the trophy get the badge next time they join.
 
+## 3c. Codes
+`Config.Codes` (in `roblox/src/shared/Config.luau`) holds the codes players can type into the TimberPhone, and what
+each pays (once per player). It starts with TIMBER ($100) and LUMBERJACK ($250). Post codes where your players
+follow the game (the group wall, Discord, X); add a new one for each update and publish.
+
 ## 4. Settings
 - **Configure > Questionnaire** (maturity): Roblox requires it before the game can be public. Answer what the game
   has: no blood, no gore, no romance, no gambling, no realistic weapons. The only harm is to yourself: bare hands
@@ -65,8 +73,10 @@ trophy, as soon as it knows the badge's id.
   Minimal or Mild.
 - **Places > Timber > Server size:** 8 is a good start. Everyone on a server shares the forest; land, builds,
   machines, track and money belong to each player and are saved with them.
-- **Configure > Devices:** **Computer** first. The game has touch buttons for phones and tablets, but they haven't
-  been tried on a real phone yet: try **Studio > Test > Device** (a phone) before ticking Phone and Tablet.
+- **Configure > Devices:** **Computer**, **Phone** and **Tablet**. Phones have touch buttons for everything (Swing,
+  Use, Drop, Phone, Run, and Turn / Take down with the hammer), the tool bar switches tools with a tap, and the hints
+  name the buttons. The engine check draws the HUD and the phone at a phone's size (`roblox/tests/engine/out/ui_*`);
+  still try it once in **Studio > Test > Device** (a phone) to feel the controls.
 - **Configure > Access:** **Public** when you're ready. Until then it stays private and only you (and your
   friends, if you allow) can join.
 

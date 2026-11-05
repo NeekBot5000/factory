@@ -54,6 +54,24 @@ game's own design, piece by piece:
 | Walk 4.2 m/s, sprint 6.8 (Shift), jump 4.6 m/s | 12.6 and 20.4 studs a second (3 studs to the metre), jump height matched |
 | TimberMart on the computer (ShopUI.gd) | The same layout and colours, opened with E on the computer in the cabin |
 
+## What popular Roblox games do, and what Timber does about it (5 Nov 2026)
+The Godot game is the core; these are the Roblox habits added around it, chosen because the research (sources
+below, and the 2026 retention write-ups: daily hooks, timed events, social features and mobile first come up again
+and again) agrees they keep players coming back:
+- **Mobile first:** every action has a touch button (Swing, Use, Drop, Phone, Run; Turn and Take down with the
+  hammer), the tool bar switches tools with a tap, hints name the buttons, phones draw bark over a shorter range,
+  and the engine check draws the HUD and the phone at a phone's size.
+- **A reason to come back tomorrow:** a daily reward that grows each day in a row ($15 up to $105), from the second
+  day, so the first day still starts at $0 as in Godot.
+- **Timed server events:** the golden tree, every 15 minutes, with 5x bark, announced to the server.
+- **Codes:** typed into the TimberPhone, each paying once (`Config.Codes`).
+- **Leaderboards:** who's on this server and the all-time best, on the TimberPhone (Roblox's own player list would
+  cover the money counter and take the phone's Tab key).
+- **Badges** for the trophies and for playing, once they're made on the Creator Dashboard (`Config.Badges`).
+- **Inviting friends** from the TimberPhone.
+Not done, on purpose: game passes and paid items (a decision for you), a floating marker over the next goal (no
+floating 3D text in this game), and anything that changes the Godot game's own loop.
+
 ## The scripted playtest
 `roblox/tests/lune/playtest.luau` plays the game through the real server scripts, with no Studio needed, and CI
 runs it on every push (210 checks). `roblox/tests/lune/client.luau` runs the client scripts the same way (38 checks).
