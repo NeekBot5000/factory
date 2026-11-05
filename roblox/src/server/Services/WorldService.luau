@@ -73,7 +73,9 @@ local function ground()
 			mats[ix][iy], occ[ix][iy] = {}, {}
 		end
 		for iz = 1, nx do
-			local h = WorldService.heightAt(x0 + (ix - 0.5) * res, z0 + (iz - 0.5) * res) - SINK
+			-- (Roblox puts a voxel's surface half a voxel above where its occupancy says: measured by the engine check,
+			-- surface = 2 + 4 x occupancy studs above the full voxel under it - so aim half a voxel lower)
+			local h = WorldService.heightAt(x0 + (ix - 0.5) * res, z0 + (iz - 0.5) * res) - SINK - res / 2
 			for iy = 1, ny do
 				local bottom = y0 + (iy - 1) * res
 				local o = math.clamp((h - bottom) / res, 0, 1)
