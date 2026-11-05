@@ -15,10 +15,10 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
 [x] 5. Leaderboard: the player list shows money and trees felled (leaderstats), so a server sees who's ahead
 [x] 6. Badges: trophies award Roblox badges when their ids are set (badges are made on the Creator Dashboard)
 [x] 7. Social: invite friends from the phone; a one-time "favourite the game" prompt after the first big sale
-[ ] 8. First 90 seconds: a marker over the next goal of the Getting started panel
+[-] 8. First 90 seconds: a marker over the next goal of the Getting started panel (parked, see below)
 [x] 9. Engine check: the new server features run in a real Roblox server
-[ ] 10. Republish the final build (the experience is private; the user said publish)
-[ ] 11. Docs (publish README, roblox-style.md), ledger, morning report
+[x] 10. Republish the final build (the experience is private; the user said publish)
+[x] 11. Docs (publish README, roblox-style.md), ledger, morning report
 
 ## Done
 [x] Publish: the 05:03 run published the place (Publish the place: success) - 05:05
@@ -67,6 +67,7 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
     doesn't lose progress when Roblox closes a server - 08:12
 [x] Reviewed and found sound: the buy handler (types, price, ownership, money, no double orders), touch key names
     (every key hint has a touch name), TrophyService badges, EventService golden tree lifecycle - 08:15
+[x] Republished the final build (roblox-assets.yml run 29, "Publish the place": success, commit bf35de2) - 08:24
 
 ## Parked
 - A marker over the next goal (first 90 seconds): a floating marker in the world goes against the user's "no
@@ -74,3 +75,46 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
 - Checking the screens on a phone from here: impossible (Roblox's preview renderer skips UI); needs Studio's device
   view once.
 - "Favourite this game" prompt: not sure of the exact AvatarEditorService call for experiences; not guessing.
+
+## Morning report
+
+**Outcome:** the Roblox Timber is published again with everything from tonight. CI (Test & build) is green on the
+published commit, and the real-Roblox engine check passes 17 of 17. I finished at 08:35 UTC, about 3.5 hours into
+the 8: the queue and the review list were done, and what's left needs your decisions (below). Timestamps in Done
+before 07:30 are estimates.
+
+**New for players (popular-game features that fit Timber, the Godot game unchanged at its core):**
+- Playable on phones: tap the tool bar, touch buttons for every action, hints name the buttons, lighter bark.
+- Daily reward with a streak ($15 a day in a row, up to $105; the streak shows on the phone).
+- Today's jobs on the TimberPhone (fell trees, earn at the mill, one big truckload; bonuses, new each day).
+- Wood of the day (one species pays 1.5x at the mill).
+- The golden tree: every 15 minutes, a tree near the cabin with 5x bark, announced to the server.
+- Codes on the phone (TIMBER $100, LUMBERJACK $250), once per player.
+- Lumberjacks here and the all-time best (an OrderedDataStore) on the phone.
+- Invite friends, plus a friends boost: +10% at the mill while a Roblox friend is on your server.
+- Badges for the trophies, which come on once you make them (below).
+
+**Bugs fixed:**
+- New game let players redeem the codes again, and wiped their streak and all-time best.
+- A flaky playtest: the midnight checks ran every minute.
+- Wood of the day stale for up to an hour after midnight.
+- Saves on server shutdown waited a fixed 5 s.
+- The leaderboard rewrote unchanged totals.
+- The phone's header ran over its title on narrow screens.
+
+**Tests:** playtest 228, client 44, logic 25, sync, engine check 17/17.
+
+**Decisions for you:**
+1. Badges: make them on the Creator Dashboard (icons in roblox/publish/badges/, steps in roblox/publish/README.md)
+   and put the ids in Config.Badges. Recommended: yes, it's the cheapest way to get onto players' profiles.
+2. Codes: post TIMBER and LUMBERJACK where players will see them (game page, socials), or change them in
+   Config.Codes.
+3. Look at the HUD and the phone once in Studio's device view (iPhone size). Roblox's preview renderer can't draw
+   UI, so I couldn't check the layout from here.
+4. A marker over the next goal for new players: it goes against your "no floating 3D text" rule. Recommended: no,
+   unless you want it.
+5. Game passes or paid items: not done, your call.
+6. Making the experience public, when you're happy with it (the settings are in roblox/publish/README.md).
+
+**Not testable from here:** physics in a real server (cloud sessions run none), and how the screens look on a real
+phone.
