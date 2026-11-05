@@ -1970,6 +1970,7 @@ do
 	bd.earned = 400
 	A.service("EconomyService").redeem(bob, "timber")
 	bd.daily = { last = 1000, streak = 3 }
+	bd.jobs = { day = 1000, felled = 7, earned = 90, best = 0, done = { fell = true } }
 	A.remotes.Settings.OnServerEvent:Fire(bob, { fov = 200, volume = 0.3, music = "loud", bob = false, junk = 1 })
 	task.wait(0.05)
 	bd = Data.get(bob)
@@ -1983,6 +1984,7 @@ do
 	check(bob:GetAttribute("Fresh") == true and bob:GetAttribute("Tool") == "hands", "bare-handed, back at Getting started")
 	check(A.service("EconomyService").redeem(bob, "TIMBER") == 0 and bd.daily and bd.daily.streak == 3 and bd.bestEarned == 400,
 		"but a new game doesn't hand out codes again, or lose the daily streak or the all-time best")
+	check(bd.jobs and bd.jobs.done.fell == true and bd.jobs.felled == 0, "and today's finished jobs stay finished")
 end
 
 -- ---------------------------------------------------------------- saving

@@ -194,6 +194,11 @@ function DataService.reset(player: Player)
 	fresh.codes = data.codes
 	fresh.daily = data.daily
 	fresh.bestEarned = math.max(data.bestEarned or 0, data.earned or 0)
+	-- (and today's jobs stay done; the rest count on from the new start)
+	if data.jobs then
+		fresh.jobs = data.jobs
+		fresh.jobs.felled, fresh.jobs.earned = 0, 0
+	end
 	profiles[player] = fresh
 	DataService.publish(player)
 end

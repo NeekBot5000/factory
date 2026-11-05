@@ -82,12 +82,17 @@ function JobsService.start()
 	table.insert(DataService.onLoaded, function(player)
 		JobsService.check(player)
 	end)
-	-- (once a minute for everyone: a new day's jobs show up even if you play through midnight UTC)
+	-- (when the UTC day changes, for everyone: a new day's jobs show up even if you play through midnight)
 	task.spawn(function()
+		local seen = math.floor(os.time() / 86400)
 		while true do
 			task.wait(60)
-			for _, p in game:GetService("Players"):GetPlayers() do
-				pcall(JobsService.check, p)
+			local day = math.floor(os.time() / 86400)
+			if day ~= seen then
+				seen = day
+				for _, p in game:GetService("Players"):GetPlayers() do
+					pcall(JobsService.check, p)
+				end
 			end
 		end
 	end)

@@ -404,14 +404,19 @@ function EconomyService.redeem(player: Player, code: unknown): (number, string)
 end
 
 function EconomyService.start()
-	-- (the wood of the day, for the phone, and the daily reward for anyone playing through midnight UTC; checked
-	-- once a minute so the phone never shows yesterday's wood while the mill pays today's)
+	-- (the wood of the day, for the phone, refreshed once a minute so it never shows yesterday's wood while the mill
+	-- pays today's; and when the UTC day changes, the daily reward for anyone playing through midnight)
 	task.spawn(function()
+		local seen = math.floor(os.time() / 86400)
 		while true do
 			ReplicatedStorage:SetAttribute("WoodOfTheDay", EconomyService.woodOfTheDay())
 			task.wait(60)
-			for _, p in game:GetService("Players"):GetPlayers() do
-				pcall(EconomyService.daily, p)
+			local day = math.floor(os.time() / 86400)
+			if day ~= seen then
+				seen = day
+				for _, p in Players:GetPlayers() do
+					pcall(EconomyService.daily, p)
+				end
 			end
 		end
 	end)

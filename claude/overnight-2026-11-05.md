@@ -57,6 +57,11 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
 [x] Friends boost: +10% at the mill while a Roblox friend is on your server (Player:IsFriendsWith looked up on
     join, toast to both) - EconomyService.friendBoost; playtest 226 - 07:45
 [x] Store text and roblox-style.md mention jobs, wood of the day and the friends boost (description 938 chars) - 07:48
+[x] Exploit fix: "New game" rebuilt the save from scratch, so codes could be redeemed again, the daily streak
+    reset and the all-time leaderboard total was overwritten lower. Codes used, streak, best-ever earned and
+    today's finished jobs now carry over - DataService.reset, LeaderboardService; playtest - 07:50
+[x] Flake fix: the midnight loops (daily reward, jobs) ran every minute and could fire mid-test; they now act only
+    when the UTC day actually changes (cheaper too). Playtest 228, three clean runs in a row - 08:05
 
 ## Parked
 - A marker over the next goal (first 90 seconds): a floating marker in the world goes against the user's "no
