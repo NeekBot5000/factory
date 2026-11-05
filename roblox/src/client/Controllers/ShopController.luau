@@ -285,8 +285,8 @@ function ShopController.open(fromPhone: boolean?)
 					{ LayoutOrder = 16 + k, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 			end
 		end
-		-- codes (type one in, the server checks it)
-		UiKit.label(side, "CODES", 12, C.muted, UiKit.Bold, { LayoutOrder = 12 })
+		-- codes (type one in, the server checks it), below the jobs and who's here
+		UiKit.label(side, "CODES", 12, C.muted, UiKit.Bold, { LayoutOrder = 30 })
 		local codeBox = Instance.new("TextBox")
 		codeBox.Name = "CodeBox"
 		codeBox.PlaceholderText = "Type a code"
@@ -298,7 +298,7 @@ function ShopController.open(fromPhone: boolean?)
 		codeBox.BackgroundColor3 = Color3.fromHex("f6f1e9")
 		codeBox.BorderSizePixel = 0
 		codeBox.Size = UDim2.new(1, 0, 0, 34)
-		codeBox.LayoutOrder = 13
+		codeBox.LayoutOrder = 31
 		UiKit.corner(codeBox, 8)
 		codeBox.Parent = side
 		UiKit.button(side, "Redeem", C.orange, C.white, function()
@@ -306,7 +306,7 @@ function ShopController.open(fromPhone: boolean?)
 				(ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Redeem") :: RemoteEvent):FireServer(codeBox.Text)
 				codeBox.Text = ""
 			end
-		end, { Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 14 })
+		end, { Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 32 })
 		-- the best of all time, across every server (LeaderboardService)
 		local okTop, top = pcall(function()
 			return game:GetService("HttpService"):JSONDecode(ReplicatedStorage:GetAttribute("AllTime") :: string)
