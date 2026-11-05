@@ -161,36 +161,8 @@ def scenes():
                 im.save(os.path.join(OUT, f"pair_{v['name']}.jpg"), quality=85)
     except Exception as e:  # noqa: BLE001
         print("pairs:", e, flush=True)
-    # the screens (tests/engine/ui.luau): the HUD, the title and the TimberPhone at a phone's size and a desktop's,
-    # drawn by Roblox on a SurfaceGui: out/ui_<screen>_<phone|desktop>.png
-    r = subprocess.run([os.environ.get("LUNE", "./luau/lune"), "run", "roblox/tests/engine/ui.luau", PLACE_FILE, "build/ui"],
-                       env=env, capture_output=True, text=True, timeout=900)
-    if r.returncode != 0:
-        step("build the screens with the game's scripts", False, (r.stderr or r.stdout)[-600:])
-    else:
-        step("build the screens with the game's scripts", True)
-        for f in sorted(os.listdir("build/ui")):
-            name = "ui_" + f[:-5]
-            path = os.path.join("build/ui", f)
-            req = {"assetType": "Model", "displayName": f"Timber {name}", "description": "Timber: a screen of the game for the visual check",
-                   "creationContext": {"creator": {"userId": str(user)}}}
-            try:
-                aid = None
-                if name in slock:
-                    try:
-                        body, btype = ra.multipart({**req, "assetId": slock[name]}, path, "model/x-rbxm")
-                        aid = ra.wait(ra.call("PATCH", f"{ra.API}/assets/{slock[name]}", KEY, body, btype), KEY)
-                    except RuntimeError as e:
-                        print(f"{name}: couldn't update ({e}), uploading anew", flush=True)
-                if aid is None:
-                    body, btype = ra.multipart(req, path, "model/x-rbxm")
-                    aid = ra.wait(ra.call("POST", f"{ra.API}/assets", KEY, body, btype), KEY)
-                slock[name] = aid
-                state = thumbnail(aid, os.path.join(OUT, f"{name}.png"))
-                step(f"Roblox's render of the {name} screen", state == "Completed", f"asset {aid}: {state}")
-            except Exception as e:  # noqa: BLE001
-                step(f"Roblox's render of the {name} screen", False, err_text(e))
-        json.dump(slock, open(slock_path, "w"), indent=2, sort_keys=True)
+    # (the screens, tests/engine/ui.luau, aren't drawn: Roblox's thumbnail renderer doesn't draw SurfaceGuis - checked
+    # with a plain red box on 5 Nov 2026 - so there's nothing to see; the HUD on a phone needs Studio's device view)
 
 
 # ------------------------------------------------------------------ 2. the game in a real Roblox server

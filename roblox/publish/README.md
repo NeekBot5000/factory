@@ -75,8 +75,8 @@ follow the game (the group wall, Discord, X); add a new one for each update and 
   machines, track and money belong to each player and are saved with them.
 - **Configure > Devices:** **Computer**, **Phone** and **Tablet**. Phones have touch buttons for everything (Swing,
   Use, Drop, Phone, Run, and Turn / Take down with the hammer), the tool bar switches tools with a tap, and the hints
-  name the buttons. The engine check draws the HUD and the phone at a phone's size (`roblox/tests/engine/out/ui_*`);
-  still try it once in **Studio > Test > Device** (a phone) to feel the controls.
+  name the buttons. Nothing here can draw the game's screens (Roblox's preview renderer skips UI), so try it once in
+  **Studio > Test > Device** (a phone) to check the HUD and the phone's screens fit, and to feel the controls.
 - **Configure > Access:** **Public** when you're ready. Until then it stays private and only you (and your
   friends, if you allow) can join.
 

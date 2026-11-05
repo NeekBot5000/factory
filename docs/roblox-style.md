@@ -59,8 +59,8 @@ The Godot game is the core; these are the Roblox habits added around it, chosen 
 below, and the 2026 retention write-ups: daily hooks, timed events, social features and mobile first come up again
 and again) agrees they keep players coming back:
 - **Mobile first:** every action has a touch button (Swing, Use, Drop, Phone, Run; Turn and Take down with the
-  hammer), the tool bar switches tools with a tap, hints name the buttons, phones draw bark over a shorter range,
-  and the engine check draws the HUD and the phone at a phone's size.
+  hammer), the tool bar switches tools with a tap, hints name the buttons, and phones draw bark over a shorter range.
+  How the screens look on a phone needs Studio's device view (Roblox's preview renderer can't draw UI).
 - **A reason to come back tomorrow:** a daily reward that grows each day in a row ($15 up to $105), from the second
   day, so the first day still starts at $0 as in Godot.
 - **Timed server events:** the golden tree, every 15 minutes, with 5x bark, announced to the server.

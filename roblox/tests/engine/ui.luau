@@ -1,3 +1,5 @@
+-- NOT USED: Roblox's thumbnail renderer doesn't draw SurfaceGuis (a probe with a plain red box came out blank, 5 Nov
+-- 2026), so these screens can't be checked this way. Kept for if that changes.
 -- The game's screens drawn by Roblox, at a phone's size and a desktop's (tools/roblox_engine.py): the client
 -- scripts build their ScreenGuis in the Lune harness; each one is copied onto a SurfaceGui (Roblox's own layout,
 -- fonts and text) on a flat panel the size of the screen, with a ThumbnailCamera looking straight at it. Roblox's

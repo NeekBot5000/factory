@@ -34,8 +34,23 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
 [x] Badges: trophies (and playing) award Roblox badges once ids are in Config.Badges; 10 badge icons in
     roblox/publish/badges/, steps in roblox/publish/README.md - 05:43
 [x] Invite friends button on the phone (SocialService) - 05:45
+[x] Codes on the TimberPhone (Config.Codes: TIMBER $100, LUMBERJACK $250; once per player, checked on the server)
+    - EconomyService.redeem, playtest - 05:52
+[x] Golden tree event: every 15 min a tree near the cabin turns gold for 10 min, 5x bark, sparkles, announced with
+    a direction - EventService, BarkLook, TreeVisuals, TreeService; playtest (exactly 5x a panel); its logs keep
+    the gold (fix at 06:41) - 06:05
+[x] All-time leaderboard (OrderedDataStore, top 10 on the phone; the phone's sidebar now scrolls); the real
+    server reads the store (engine check 15/15) - LeaderboardService - 06:10
+[x] Store text and roblox-style.md notes for tonight's features (description 967 characters) - 06:33
+[x] Today's jobs on the phone (the user's growth ideas #7 and #10): fell trees, earn at the mill, one big
+    truckload, bonuses, varying daily - JobsService; playtest - 06:51
+[-] Drawing the screens with Roblox's renderer at phone size: built (tests/engine/ui.luau), but Roblox's thumbnail
+    renderer doesn't draw SurfaceGuis (a red-box probe came out blank). Step removed from the engine check; the
+    publish README now says to check the HUD in Studio's device view - 06:55
 
 ## Parked
 - A marker over the next goal (first 90 seconds): a floating marker in the world goes against the user's "no
   floating 3D text" rule and Godot has none; needs the user's say.
+- Checking the screens on a phone from here: impossible (Roblox's preview renderer skips UI); needs Studio's device
+  view once.
 - "Favourite this game" prompt: not sure of the exact AvatarEditorService call for experiences; not guessing.
