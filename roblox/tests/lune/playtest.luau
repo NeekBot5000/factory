@@ -325,6 +325,21 @@ do
 	end
 	check(#made == 1 and gone == 16, "the ringing axe takes a whole ring of bark, all the way round (" .. gone .. " of 16)")
 	-- the robo-axe: a 3x3 patch through both layers
+	-- the golden tree event: its outer bark is gold, and worth 5x
+	do
+		local ES = A.service("EventService")
+		local tg, bg, rg = freshTree(10)
+		A.stand(alice, bg + V3(rg + 3, 5, 0))
+		local plain = hitWith("hatchet", tg, bg + V3(rg, 6, 0))
+		local plainValue = plain[1] and plain[1]:GetAttribute("Value") / (plain[1]:GetAttribute("Panels") or 1) or 0
+		ES.startGolden(tg)
+		local gold = hitWith("hatchet", tg, bg + V3(rg, 9, 0))
+		local goldValue = gold[1] and gold[1]:GetAttribute("Value") / (gold[1]:GetAttribute("Panels") or 1) or 0
+		check(tg:GetAttribute("Golden") == true and math.abs(goldValue / math.max(plainValue, 0.001) - 5) < 0.3,
+			string.format("a golden tree's bark is worth 5x a panel ($%.2f against $%.2f)", goldValue, plainValue))
+		ES.endGolden()
+		check(tg:GetAttribute("Golden") == nil, "and when the event ends it's an ordinary tree again")
+	end
 	t, b, rr = freshTree(2)
 	A.stand(alice, b + V3(rr + 3, 5, 0))
 	made = hitWith("robo", t, b + V3(rr, 6, 0))

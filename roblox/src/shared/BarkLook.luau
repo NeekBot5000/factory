@@ -22,9 +22,13 @@ local function hash01(i: number, j: number, seed: number): number
 end
 
 -- the colour of one panel: layer 0 is the outer bark, 1 the inner
-function BarkLook.panelColor(species: string, layer: number, i: number, j: number, seed: number): Color3
+-- golden: the golden tree event's tree (EventService): its outer bark is gold
+function BarkLook.panelColor(species: string, layer: number, i: number, j: number, seed: number, golden: boolean?): Color3
 	local sp = (Config.Species :: any)[species] or Config.Species.oak
 	local h = hash01(i, j, seed + layer * 7)
+	if golden and layer == 0 then
+		return shade(Color3.fromHex("e8b53a"), (h - 0.5) * 0.3)
+	end
 	if layer == 0 then
 		local bark = Color3.fromHex(sp.bark)
 		if species == "birch" then

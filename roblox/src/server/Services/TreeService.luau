@@ -82,7 +82,7 @@ local function spawnSheet(player: Player, tree: Model, strip: any, mult: number)
 		local face = Instance.new("Part")
 		face.Size = Vector3.new(size.X, size.Y, size.Z * 0.6)
 		face.CFrame = cf * CFrame.new(0, 0, -size.Z * 0.2)
-		face.Color = BarkLook.panelColor(species, strip.layer, ij[1], ij[2] + (tree:GetAttribute("J0") :: number? or 0), seed)
+		face.Color = BarkLook.panelColor(species, strip.layer, ij[1], ij[2] + (tree:GetAttribute("J0") :: number? or 0), seed, tree:GetAttribute("Golden") == true)
 		face.Material = Enum.Material.SmoothPlastic
 		face.TopSurface = Enum.SurfaceType.Smooth
 		face.BottomSurface = Enum.SurfaceType.Smooth
@@ -110,7 +110,9 @@ local function spawnSheet(player: Player, tree: Model, strip: any, mult: number)
 		end
 	end
 	local sheet = root :: Part
-	sheet:SetAttribute("Value", math.floor(Economy.barkValue(Config, species, strip.layer, #strip.panels) * mult * 100 + 0.5) / 100)
+	-- (the golden tree's outer bark is worth Config.GoldenTree.value times as much)
+	local gold = if tree:GetAttribute("Golden") == true and strip.layer == 0 then Config.GoldenTree.value else 1
+	sheet:SetAttribute("Value", math.floor(Economy.barkValue(Config, species, strip.layer, #strip.panels) * mult * gold * 100 + 0.5) / 100)
 	sheet:SetAttribute("Owner", player.UserId)
 	sheet:SetAttribute("Kind", "bark")
 	sheet:SetAttribute("Panels", #strip.panels)       -- (what it counts for in a build: Godot's Chip.panels)

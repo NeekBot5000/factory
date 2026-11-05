@@ -343,6 +343,10 @@ Config.StudsPerMetre = 3
 -- much higher so their feet are on the ground you see, as in Godot (WorldService, Health)
 Config.GroundSink = 0.6
 
+-- The golden tree (a timed server event, as popular Roblox games have): every `every` seconds with someone on the
+-- server, a standing tree near the cabin turns gold for `lasts` seconds; its outer bark is worth `value` times as much.
+Config.GoldenTree = { every = 900, lasts = 600, value = 5, within = 120 }    -- (within: metres of the cabin)
+
 -- Codes to type into the TimberPhone (a Roblox staple: post them where players follow the game). Each pays once per
 -- player. Add or retire codes here and publish; codes are matched without regard to case.
 Config.Codes = {

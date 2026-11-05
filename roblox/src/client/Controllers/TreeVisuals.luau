@@ -104,7 +104,7 @@ function TreeVisuals.build(tree: Model)
 	for j = 0, bands - 1 do
 		for i = 0, sectors - 1 do
 			if BarkGrid.has(g, BarkGrid.OUTER, i, j) then
-				panel(folder, base, sectors, i, j, R, T.outerT * M, BarkLook.panelColor(species, BarkGrid.OUTER, i, j + j0, seed))
+				panel(folder, base, sectors, i, j, R, T.outerT * M, BarkLook.panelColor(species, BarkGrid.OUTER, i, j + j0, seed, tree:GetAttribute("Golden") == true))
 			elseif BarkGrid.has(g, BarkGrid.INNER, i, j) then
 				panel(folder, base, sectors, i, j, rMid, T.innerT * M, BarkLook.panelColor(species, BarkGrid.INNER, i, j + j0, seed))
 			end
@@ -139,6 +139,12 @@ function TreeVisuals.start()
 	local function watch(inst: Instance)
 		local tree = inst :: Model
 		tree:GetAttributeChangedSignal("Bark"):Connect(function()
+			if tree:FindFirstChild("BarkPanels") then
+				TreeVisuals.build(tree)
+			end
+		end)
+		-- (the golden tree event turns a tree gold, and back)
+		tree:GetAttributeChangedSignal("Golden"):Connect(function()
 			if tree:FindFirstChild("BarkPanels") then
 				TreeVisuals.build(tree)
 			end
