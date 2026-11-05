@@ -73,7 +73,7 @@ local function makeLog(src: Model, g: BarkGrid.Grid, j0: number, j1: number, bas
 	log.PrimaryPart = trunk
 	-- the pivot is the log's bottom end, +Y along it (like a standing tree's), so the bark grid fits it the same way
 	trunk.PivotOffset = CFrame.Angles(0, 0, math.rad(-90)) * CFrame.new(0, -L / 2, 0)
-	for _, k in { "Species", "Sectors", "Radius", "Seed", "Clean" } do
+	for _, k in { "Species", "Sectors", "Radius", "Seed", "Clean", "Golden" } do      -- (a golden tree's logs keep their gold)
 		log:SetAttribute(k, src:GetAttribute(k))
 	end
 	log:SetAttribute("Bands", bands)
