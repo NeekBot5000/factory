@@ -1,7 +1,7 @@
 {
  "logs": [],
  "info": {
-  "seconds": 46.92,
+  "seconds": 45.88,
   "terrainCalibration": [
    {
     "occ": 0,
@@ -116,7 +116,7 @@
     ]
    }
   ],
-  "meshParts": 816,
+  "meshParts": 800,
   "terrainColumns": [
    {
     "asked": -0.34,
@@ -370,15 +370,15 @@
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.15
+    "waited": 0.16
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 8.26,
-    "meshParts": 816
+    "seconds": 7.26,
+    "meshParts": 800
    }
   },
   {
@@ -393,7 +393,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 9.28,
+    "seconds": 8.27,
     "props": 115
    }
   },
@@ -505,7 +505,7 @@
    "name": "a minecart rolls along the track",
    "detail": {
     "deckRides": 0.45,
-    "maxStepPerFrame": 0.03,
+    "maxStepPerFrame": 0.05,
     "framesStill": 72,
     "frames": 301,
     "metres": 6
@@ -530,8 +530,8 @@
    "ok": true,
    "name": "the server keeps up (about 60 frames a second, no long stalls)",
    "detail": {
-    "worstFrameMs": 18.33,
-    "memoryMb": 440.23,
+    "worstFrameMs": 18.41,
+    "memoryMb": 413.09,
     "instances": 4155,
     "fps": 60
    }
