@@ -62,6 +62,11 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
     today's finished jobs now carry over - DataService.reset, LeaderboardService; playtest - 07:50
 [x] Flake fix: the midnight loops (daily reward, jobs) ran every minute and could fire mid-test; they now act only
     when the UTC day actually changes (cheaper too). Playtest 228, three clean runs in a row - 08:05
+[x] Phone sidebar: today's jobs now come before the code box (on a phone you scrolled past codes to see jobs) - 08:06
+[x] Shutdown: BindToClose waits for every save to finish (up to 25 s) instead of a fixed 5 s, so a slow DataStore
+    doesn't lose progress when Roblox closes a server - 08:12
+[x] Reviewed and found sound: the buy handler (types, price, ownership, money, no double orders), touch key names
+    (every key hint has a touch name), TrophyService badges, EventService golden tree lifecycle - 08:15
 
 ## Parked
 - A marker over the next goal (first 90 seconds): a floating marker in the world goes against the user's "no
