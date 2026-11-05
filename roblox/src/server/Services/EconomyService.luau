@@ -190,6 +190,10 @@ function EconomyService.ship(player: Player, force: boolean?): boolean
 				data.earned = (data.earned or 0) + amount
 				who:SetAttribute("Earned", data.earned)
 				remotes.Sold:FireClient(who, amount)
+				-- (today's jobs: the truckload, and what's been earned)
+				local JobsService = require(script.Parent.JobsService) :: any
+				JobsService.load(who, amount)
+				JobsService.check(who)
 				TutorialService.check(who)
 			end
 		end

@@ -1439,6 +1439,26 @@ do
 	local paidC = E.redeem(alice, "free-money")
 	check(paidA == 100 and paidB == 0 and string.find(why, "already") ~= nil and paidC == 0, "a code pays once, typed any way; a made-up one pays nothing")
 	d.codes = codes0
+	-- today's jobs: counted from the day's start; each pays once when done
+	local J = A.service("JobsService")
+	local jobs0, felled0, earned0 = d.jobs, d.felled, d.earned
+	d.jobs = nil
+	local day = 3000                       -- (day % 3 == 0: fell 2 trees for $20, earn $40 for $20, a $20 load for $16)
+	J.check(alice, day)
+	d.felled = (d.felled or 0) + 1
+	local none = J.check(alice, day)
+	d.felled += 1
+	local fell = J.check(alice, day)
+	local again = J.check(alice, day)
+	J.load(alice, 25, day)
+	local load = J.check(alice, day)
+	local shown = require("@lune/serde").decode("json", alice:GetAttribute("Jobs"))
+	check(none == 0 and fell == 20 and again == 0 and load == 16 and shown[1].done and not shown[2].done and shown[3].done,
+		string.format("today's jobs: felling 2 trees pays $20 once, a $25 truckload pays $16 (%d %d %d %d)", none, fell, again, load))
+	J.check(alice, day + 1)
+	local fresh = require("@lune/serde").decode("json", alice:GetAttribute("Jobs"))
+	check(not fresh[1].done and fresh[1].need == 3 and fresh[1].have == 0, "a new day, new jobs, counted from zero")
+	d.jobs, d.felled, d.earned = jobs0, felled0, earned0
 	d.money, d.daily = money0, daily0
 	alice:SetAttribute("Money", money0)
 end

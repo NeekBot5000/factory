@@ -148,6 +148,7 @@ function LogService.fell(tree: Model, cutJ: number, away: Vector3, player: Playe
 		if data then
 			data.felled = (data.felled or 0) + 1
 			player:SetAttribute("Felled", data.felled)
+			;(require(script.Parent.JobsService) :: any).check(player)
 		end
 	end
 	local bands = tree:GetAttribute("Bands") :: number

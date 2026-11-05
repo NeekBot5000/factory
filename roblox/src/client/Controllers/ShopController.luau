@@ -257,7 +257,20 @@ function ShopController.open(fromPhone: boolean?)
 	UiKit.label(side, "YOUR CABIN", 12, C.muted, UiKit.Bold, { LayoutOrder = 10 })
 	UiKit.label(side, string.format("Owned: %d of %d items", have, n), 14, C.ink, UiKit.Body, { LayoutOrder = 11 })
 	if fromPhone then
-		-- the TimberPhone: codes (type one in, the server checks it)
+		-- the TimberPhone: today's jobs (JobsService), with how far along each is
+		local okJobs, jobs = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(player:GetAttribute("Jobs") :: string)
+		end)
+		if okJobs and typeof(jobs) == "table" and #jobs > 0 then
+			UiKit.label(side, "TODAY'S JOBS", 12, C.muted, UiKit.Bold, { LayoutOrder = 2 })
+			for k, j in jobs do
+				local text = if j.done then string.format("Done: %s", tostring(j.text))
+					else string.format("%s  %d/%d  +$%d", tostring(j.text), tonumber(j.have) or 0, tonumber(j.need) or 0, tonumber(j.pay) or 0)
+				UiKit.label(side, text, 13, if j.done then C.green else C.ink, if j.done then UiKit.Bold else UiKit.Body,
+					{ LayoutOrder = 2 + k, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
+			end
+		end
+		-- codes (type one in, the server checks it)
 		UiKit.label(side, "CODES", 12, C.muted, UiKit.Bold, { LayoutOrder = 12 })
 		local codeBox = Instance.new("TextBox")
 		codeBox.Name = "CodeBox"
