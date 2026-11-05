@@ -12,6 +12,7 @@ on:
     paths:
       - "roblox/tests/engine/run.luau"
       - "roblox/tests/engine/scenes.luau"
+      - "roblox/tests/engine/ui.luau"
       - "roblox/tests/engine/views.json"
       - "tools/roblox_engine.py"
       - ".github/workflows/roblox-engine.yml"

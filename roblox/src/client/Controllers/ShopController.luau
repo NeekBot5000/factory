@@ -264,7 +264,7 @@ function ShopController.open(fromPhone: boolean?)
 		codeBox.PlaceholderText = "Type a code"
 		codeBox.Text = ""
 		codeBox.ClearTextOnFocus = false
-		codeBox.Font = Enum.Font.GothamMedium
+		codeBox.FontFace = UiKit.Body
 		codeBox.TextSize = 15
 		codeBox.TextColor3 = C.ink
 		codeBox.BackgroundColor3 = Color3.fromHex("f6f1e9")
