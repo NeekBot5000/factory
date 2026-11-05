@@ -16,7 +16,7 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
 [x] 6. Badges: trophies award Roblox badges when their ids are set (badges are made on the Creator Dashboard)
 [x] 7. Social: invite friends from the phone; a one-time "favourite the game" prompt after the first big sale
 [ ] 8. First 90 seconds: a marker over the next goal of the Getting started panel
-[ ] 9. Engine check: the new server features run in a real Roblox server
+[x] 9. Engine check: the new server features run in a real Roblox server
 [ ] 10. Republish the final build (the experience is private; the user said publish)
 [ ] 11. Docs (publish README, roblox-style.md), ledger, morning report
 
@@ -47,6 +47,16 @@ STARTED: 05:04 UTC   ENDS: 13:04 UTC (8 hours)
 [-] Drawing the screens with Roblox's renderer at phone size: built (tests/engine/ui.luau), but Roblox's thumbnail
     renderer doesn't draw SurfaceGuis (a red-box probe came out blank). Step removed from the engine check; the
     publish README now says to check the HUD in Studio's device view - 06:55
+
+[x] Review pass, part 1 (07:05-07:45): the phone's header fits narrow screens (shorter button labels); the phone
+    shows your daily streak (and still does on a second visit the same day); the wood of the day and the daily
+    reward roll over at midnight for players still online (checked every minute, was hourly - the phone could show
+    yesterday's wood while the mill paid today's); the leaderboard only writes a total that changed (DataStore
+    budget). Playtest 224, client 44 - 07:23
+[x] Engine check now covers the golden tree and the wood of the day in a real server: 17 of 17 pass - 07:40
+[x] Friends boost: +10% at the mill while a Roblox friend is on your server (Player:IsFriendsWith looked up on
+    join, toast to both) - EconomyService.friendBoost; playtest 226 - 07:45
+[x] Store text and roblox-style.md mention jobs, wood of the day and the friends boost (description 938 chars) - 07:48
 
 ## Parked
 - A marker over the next goal (first 90 seconds): a floating marker in the world goes against the user's "no

@@ -43,8 +43,8 @@ second. Fell trees, saw logs, build furniture and decorations worth far more tha
 Then automate it: wire cranks, windmills and generators to belts, sawmills, smelters and assemblers. Mine copper
 and iron, lay rails for carts, send drones, pump oil, and grow a one-person camp into a factory.
 
-Every 15 minutes a golden tree appears somewhere near the cabin, with bark worth 5x: race the server for it. Come
-back each day for a growing daily reward, type codes into your TimberPhone, and see who's earned the most.
+Every 15 minutes a golden tree with 5x bark appears near the cabin: race the server for it. Daily jobs and
+rewards, codes on your TimberPhone, and +10% at the mill when you play with friends.
 
 Controls: WASD, click to swing, E to grab and use, Q to drop, 1-9 for tools. Phones: the buttons, tap the tool bar.
 ---

@@ -68,7 +68,10 @@ and again) agrees they keep players coming back:
 - **Leaderboards:** who's on this server and the all-time best, on the TimberPhone (Roblox's own player list would
   cover the money counter and take the phone's Tab key).
 - **Badges** for the trophies and for playing, once they're made on the Creator Dashboard (`Config.Badges`).
-- **Inviting friends** from the TimberPhone.
+- **Inviting friends** from the TimberPhone, and a **friends boost**: the mill pays 10% more while a Roblox friend
+  is on your server.
+- **Daily jobs** on the TimberPhone (fell some trees, earn some money, send one big truckload), each paying a
+  bonus, different every day; and a **wood of the day** that pays 1.5x at the mill.
 Not done, on purpose: game passes and paid items (a decision for you), a floating marker over the next goal (no
 floating 3D text in this game), and anything that changes the Godot game's own loop.
 
