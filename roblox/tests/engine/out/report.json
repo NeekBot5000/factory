@@ -131,6 +131,11 @@
    "detail": "asset 91880725463429: Completed"
   },
   {
+   "step": "Roblox's render of the ui_probe_gui screen",
+   "ok": true,
+   "detail": "asset 113597309576976: Completed"
+  },
+  {
    "step": "Roblox's render of the ui_title_desktop screen",
    "ok": true,
    "detail": "asset 84705290019152: Completed"
@@ -148,7 +153,7 @@
   {
    "step": "start a Luau execution task on it",
    "ok": true,
-   "detail": "universes/10774584468/places/78431518839981/versions/13/luau-execution-sessions/5fd045c2-c4c0-467d-b3a8-132856b1a11c/tasks/5fd045c2-c4c0-467d-b3a8-132856b1a11c"
+   "detail": "universes/10774584468/places/78431518839981/versions/13/luau-execution-sessions/eef017c1-703d-4abf-8296-3631f5c4c310/tasks/eef017c1-703d-4abf-8296-3631f5c4c310"
   },
   {
    "step": "the task finished",
