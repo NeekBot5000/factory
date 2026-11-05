@@ -46,6 +46,18 @@ and iron, lay rails for carts, send drones, pump oil, and grow a one-person camp
 Controls: WASD to move, click to swing, E to grab and use, Q to drop, 1-9 or the mouse wheel for tools.
 ---
 
+## 3b. Badges (optional, recommended)
+Badges show on players' profiles, which brings their friends. The game awards one for playing and one for each
+trophy, as soon as it knows the badge's id.
+1. Creator Dashboard > Creations > Timber > **Engagement > Badges** > **Create a Badge**, once for each icon in
+   `badges/` (the file name is the trophy). Roblox lets you make a few free each day.
+   Names and descriptions: welcome "Welcome to Timber" (you played!), first_tree "Timber!" (your first tree felled),
+   first_machine "Machinist", thousand "$1,000 earned", first_plank "Sawyer", first_iron "Smelter",
+   first_furniture "Carpenter", giant "Giant" (an ancient giant felled), legend "Legend" (the Legendary Tree
+   felled), first_oil "Oil!" (your first barrel of oil).
+2. Copy each badge's id into `Config.Badges` in `roblox/src/shared/Config.luau` (or tell Claude the ids), then publish
+   again. Players who already have the trophy get the badge next time they join.
+
 ## 4. Settings
 - **Configure > Questionnaire** (maturity): Roblox requires it before the game can be public. Answer what the game
   has: no blood, no gore, no romance, no gambling, no realistic weapons. The only harm is to yourself: bare hands

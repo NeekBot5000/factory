@@ -59,3 +59,26 @@ for n, name in enumerate(shots, 1):
     path = f'{OUT}/thumbnail_{n}_{name.split("_", 1)[1]}.jpg'
     im.save(path, quality=92)
     print(path, im.size)
+
+# badge icons: 512x512 (Roblox shows them in a circle), one per trophy, for roblox/publish/badges/
+BADGES = [
+    ('welcome', 'Welcome', 'to Timber'), ('first_tree', 'Timber!', 'first tree felled'),
+    ('first_machine', 'Machinist', 'first machine'), ('thousand', '$1,000', 'earned'),
+    ('first_plank', 'Sawyer', 'first planks'), ('first_iron', 'Smelter', 'first iron bar'),
+    ('first_furniture', 'Carpenter', 'first furniture'), ('giant', 'Giant', 'an ancient giant felled'),
+    ('legend', 'Legend', 'the Legendary Tree'), ('first_oil', 'Oil!', 'first barrel of oil'),
+]
+os.makedirs(f'{OUT}/badges', exist_ok=True)
+bg = Image.open('docs/itch/01_peel.png').convert('RGB').crop((320, 0, 960, 640)).resize((512, 512), Image.LANCZOS)
+for key, big, small in BADGES:
+    im = bg.copy()
+    d = ImageDraw.Draw(im, 'RGBA')
+    d.ellipse((36, 36, 476, 476), fill=(40, 26, 12, 190), outline=(255, 207, 106, 255), width=14)
+    size = 112 if len(big) <= 7 else 92
+    bf = font('assets/fonts/Fredoka.ttf', size, 650)
+    d.text(((512 - d.textlength(big, font=bf)) / 2, 170), big, font=bf, fill=(255, 207, 106), stroke_width=6, stroke_fill=(40, 26, 12))
+    sf = font('assets/fonts/Nunito.ttf', 34, 800)
+    d.text(((512 - d.textlength(small, font=sf)) / 2, 318), small, font=sf, fill=(255, 255, 255), stroke_width=3, stroke_fill=(30, 20, 10))
+    path = f'{OUT}/badges/{key}.png'
+    im.save(path)
+print(f'{OUT}/badges/: {len(BADGES)} badge icons')

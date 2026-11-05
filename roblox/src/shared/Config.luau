@@ -343,6 +343,14 @@ Config.StudsPerMetre = 3
 -- much higher so their feet are on the ground you see, as in Godot (WorldService, Health)
 Config.GroundSink = 0.6
 
+-- Roblox badges for the trophies (and one for playing at all): make each badge on the Creator Dashboard
+-- (Creations > Timber > Engagement > Badges), then put its id here. 0 = no badge yet (nothing is awarded).
+Config.Badges = {
+	welcome = 0,
+	first_tree = 0, first_machine = 0, thousand = 0, first_plank = 0, first_iron = 0, first_furniture = 0,
+	giant = 0, legend = 0, first_oil = 0,
+} :: { [string]: number }
+
 -- the truck (Godot's Truck.gd): drives to the mill, waits, pays, comes back
 Config.Truck = { speed = 10, awaySeconds = 4 }
 
