@@ -82,6 +82,15 @@ function JobsService.start()
 	table.insert(DataService.onLoaded, function(player)
 		JobsService.check(player)
 	end)
+	-- (once a minute for everyone: a new day's jobs show up even if you play through midnight UTC)
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			for _, p in game:GetService("Players"):GetPlayers() do
+				pcall(JobsService.check, p)
+			end
+		end
+	end)
 end
 
 return JobsService
