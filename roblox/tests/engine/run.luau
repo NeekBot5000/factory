@@ -157,6 +157,38 @@ local function box(at: Vector3, size: number, kind: string?): Part
 	return p
 end
 
+-- 2b. the ground you walk on (Roblox terrain) stays under the ground you see (Godot's mesh): where it pokes up
+-- through it, Roblox's own grass shows instead of Godot's; where it's far below, you sink into the ground
+try("terrain", function()
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { workspace.Terrain }
+	local above, below, n, worstUp, worstDown, worstAt = 0, 0, 0, 0, 0, nil
+	local W = require(ReplicatedStorage.Shared.GodotWorld) :: any
+	local half = (W.ground.n - 1) * W.ground.step * 0.5 * 0.8
+	for ix = -20, 20 do
+		for iz = -20, 20 do
+			local x, z = ix / 20 * half, iz / 20 * half
+			local hit = workspace:Raycast(Vector3.new(x, 200, z), Vector3.new(0, -400, 0), params)
+			if hit then
+				n += 1
+				local d = hit.Position.Y - WorldService.heightAt(x, z)
+				if d > 0.05 then
+					above += 1
+				elseif d < -1.2 then
+					below += 1
+				end
+				if d > worstUp then
+					worstUp, worstAt = d, { r2(x), r2(z) }
+				end
+				worstDown = math.min(worstDown, d)
+			end
+		end
+	end
+	check("Roblox's terrain stays just under Godot's ground mesh (none pokes through)", n > 1000 and above == 0,
+		{ samples = n, pokesThrough = above, deepUnder = below, worstUpStuds = r2(worstUp), worstAt = worstAt, worstDownStuds = r2(worstDown) })
+end)
+
 -- 3. the ground is solid where Godot's is: a crate dropped from 10 m comes to rest on it
 try("ground", function()
 	local spots = { { 0, 30 }, { 40, -40 }, { -60, 15 }, { 90, 90 } }
@@ -277,6 +309,28 @@ try("catapult", function()
 	physCheck("the catapult throws what's in its cup", (p.Position - before).Magnitude > 2 * M, { metres = r2((p.Position - before).Magnitude / M), hasFire = BB.fire ~= nil })
 	p:Destroy()
 	m:Destroy()
+end)
+
+-- 8b. the server keeps up: frames over 3 s with everything running (carts, drones, trees, machines, the circuit)
+try("performance", function()
+	local times = {}
+	local conn = RunService.Heartbeat:Connect(function(dt)
+		table.insert(times, dt)
+	end)
+	task.wait(3)
+	conn:Disconnect()
+	local worst, total = 0, 0
+	for _, dt in times do
+		worst = math.max(worst, dt)
+		total += dt
+	end
+	local fps = #times / math.max(total, 0.001)
+	local mem = 0
+	pcall(function()
+		mem = game:GetService("Stats"):GetTotalMemoryUsageMb()
+	end)
+	check("the server keeps up (about 60 frames a second, no long stalls)", fps > 50 and worst < 0.1,
+		{ fps = r2(fps), worstFrameMs = r2(worst * 1000), instances = #game:GetDescendants(), memoryMb = r2(mem) })
 end)
 
 -- 9. everything the game printed: warnings and errors are bugs to fix
