@@ -189,6 +189,38 @@ try("terrain", function()
 		{ samples = n, pokesThrough = above, deepUnder = below, worstUpStuds = r2(worstUp), worstAt = worstAt, worstDownStuds = r2(worstDown) })
 end)
 
+-- 2c. how Roblox turns voxel occupancy into a surface: flat test columns outside the map, one full voxel layer
+-- and a top voxel of known occupancy (so WorldService can aim the terrain exactly under Godot's mesh)
+try("terrain calibration", function()
+	local res = 4
+	local occs = { 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1 }
+	local x0, y0, z0 = 2000, 0, 2000
+	local out2 = {}
+	for k, o in occs do
+		-- a 3x3 patch of columns, 2 voxels high (full below, o on top), so the middle column isn't rounded off
+		local mats, occ = {}, {}
+		for ix = 1, 3 do
+			mats[ix], occ[ix] = {}, {}
+			for iy = 1, 3 do
+				mats[ix][iy], occ[ix][iy] = {}, {}
+				for iz = 1, 3 do
+					local v = if iy == 1 then 1 elseif iy == 2 then o else 0
+					mats[ix][iy][iz] = if v > 0 then Enum.Material.Grass else Enum.Material.Air
+					occ[ix][iy][iz] = v
+				end
+			end
+		end
+		local bx = x0 + k * 40
+		workspace.Terrain:WriteVoxels(Region3.new(Vector3.new(bx, y0, z0), Vector3.new(bx + 3 * res, y0 + 3 * res, z0 + 3 * res)), res, mats, occ)
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = { workspace.Terrain }
+		local hit = workspace:Raycast(Vector3.new(bx + 1.5 * res, 50, z0 + 1.5 * res), Vector3.new(0, -100, 0), params)
+		table.insert(out2, { occ = o, surfaceAboveFullLayer = if hit then r2(hit.Position.Y - (y0 + res)) else "none" })
+	end
+	info("terrainCalibration", out2)
+end)
+
 -- 3. the ground is solid where Godot's is: a crate dropped from 10 m comes to rest on it
 try("ground", function()
 	local spots = { { 0, 30 }, { 40, -40 }, { -60, 15 }, { 90, 90 } }
