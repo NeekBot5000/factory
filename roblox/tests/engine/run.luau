@@ -212,6 +212,7 @@ try("terrain calibration", function()
 		end
 		local bx = x0 + k * 40
 		workspace.Terrain:WriteVoxels(Region3.new(Vector3.new(bx, y0, z0), Vector3.new(bx + 3 * res, y0 + 3 * res, z0 + 3 * res)), res, mats, occ)
+		task.wait(0.5)
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Include
 		params.FilterDescendantsInstances = { workspace.Terrain }
@@ -219,6 +220,26 @@ try("terrain calibration", function()
 		table.insert(out2, { occ = o, surfaceAboveFullLayer = if hit then r2(hit.Position.Y - (y0 + res)) else "none" })
 	end
 	info("terrainCalibration", out2)
+	-- and on the map itself, at the centres of the terrain columns WorldService writes (res 4, from y -24, 0.6 below):
+	-- what it asked for (the top voxel's occupancy) against where the surface came out
+	local W = require(ReplicatedStorage.Shared.GodotWorld) :: any
+	local g = W.ground
+	local gx0 = math.floor(g.origin / res) * res
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { workspace.Terrain }
+	local samples = {}
+	for k = 1, 40 do
+		local ix, iz = 30 + k * 3, 40 + (k * 7) % 60
+		local cx, cz = gx0 + (ix - 0.5) * res, gx0 + (iz - 0.5) * res
+		local h = WorldService.heightAt(cx, cz) - 0.6
+		local iy = math.floor((h - -24) / res)
+		local bottom = -24 + iy * res
+		local o = math.clamp((h - bottom) / res, 0, 1)
+		local hit = workspace:Raycast(Vector3.new(cx, 200, cz), Vector3.new(0, -400, 0), params)
+		table.insert(samples, { o = r2(o), asked = r2(h), got = if hit then r2(hit.Position.Y) else "none", cellBottom = bottom })
+	end
+	info("terrainColumns", samples)
 end)
 
 -- 3. the ground is solid where Godot's is: a crate dropped from 10 m comes to rest on it
