@@ -62,6 +62,9 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] The phone's rush hour and golden tree lines update every second while it's open (they were drawn once). Client
     49 - 16:50
 [x] Engine check on the latest code (run 22): 19 of 19, no warnings - 16:50
+[x] CI went red on the report commit in a Godot test nothing tonight touched ("nothing falls through the basket's
+    floor"): it scatters its chips with unseeded random numbers, so a rare layout can slip one through. Seeded it
+    (tests/BuildTest.gd); 8 + 6 local runs pass - 17:10
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;

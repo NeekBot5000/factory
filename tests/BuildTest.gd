@@ -410,6 +410,7 @@ func holding() -> void:
 
 
 func carry_full_basket() -> void:
+	seed(4242)      # (the same scatter of chips every run, so a rare unlucky layout can't make CI flaky)
 	var bk := Builds.finish("basket", main, spot(Vector3(-1.5, 0, -1.5)), 0.0, [], 1.0) as RigidBody3D
 	await frames(20)
 	var tr := nearest_tree()
