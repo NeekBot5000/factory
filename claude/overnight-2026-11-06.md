@@ -54,6 +54,9 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
     raw value, so it left out the wood of the day (since yesterday) and rush hour, and promised less than the mill
     paid. It now counts both, as the server does (Config.WoodBonus shared). Client check: $2, $3 with the wood, $6
     in rush hour. Playtest 237, client 47 - 16:20
+[x] Bug: logs in the truck weren't counted in its price at all (the client only added up loose pieces), and the
+    client's log value left out the 1.2x for a clean log, so the "worth $..." hint on a clean log was low too.
+    Both match the mill now. Client 48 - 16:30
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;

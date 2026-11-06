@@ -434,6 +434,50 @@ do
 		p:Destroy()
 		check(math.abs(wood - plain - 1) < 0.01 and math.abs(both - 2 * wood) < 0.01,
 			string.format("the truck's price counts the wood of the day and rush hour ($%.2f, $%.2f, $%.2f)", plain, wood, both))
+		-- and a log in the bed (the mill pays for logs too), its bark data from a real tree
+		local src
+		for _, tr in ws.Forest:GetChildren() do
+			if typeof(tr:GetAttribute("Bark")) == "string" and tr:GetAttribute("Sectors") and tr:GetAttribute("Bands") then
+				src = tr
+				break
+			end
+		end
+		local logsFolder = ws:FindFirstChild("Logs")
+		local madeFolder = false
+		if not logsFolder then
+			logsFolder = roblox.Instance.new("Folder")
+			logsFolder.Name = "Logs"
+			logsFolder.Parent = ws
+			madeFolder = true
+		end
+		if src then
+			local log = roblox.Instance.new("Model")
+			for _, k in { "Bark", "Sectors", "Bands", "Radius", "Species" } do
+				log:SetAttribute(k, src:GetAttribute(k))
+			end
+			log:SetAttribute("Kind", "log")
+			local trunk = roblox.Instance.new("Part")
+			trunk.Name = "Trunk"
+			trunk.CFrame = bed.CFrame + V3(0, 1, 0)
+			trunk.Position = bed.CFrame.Position + V3(0, 1, 0)
+			trunk.Parent = log
+			RS:SetAttribute("WoodOfTheDay", "none")
+			RS:SetAttribute("Rush", false)
+			local before = IC.truckValue()
+			log.Parent = logsFolder
+			local withLog = IC.truckValue()
+			local logWorth = IC.logValue(log)
+			log:Destroy()
+			RS:SetAttribute("WoodOfTheDay", wood0)
+			RS:SetAttribute("Rush", rush0)
+			check(logWorth > 0 and math.abs(withLog - before - logWorth) < 0.01,
+				string.format("and logs in the bed count too (+$%.2f)", logWorth))
+		else
+			check(false, "a tree with bark data to test the truck's price with logs")
+		end
+		if madeFolder then
+			logsFolder:Destroy()
+		end
 	else
 		check(false, "the truck's price: the truck is parked")
 	end

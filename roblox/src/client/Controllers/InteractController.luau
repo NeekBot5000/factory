@@ -54,7 +54,9 @@ function InteractController.logValue(log: Instance): number
 	if not g then
 		return 0
 	end
-	return BarkGrid.logValue(g, bands * Config.Tree.bandH, (log:GetAttribute("Radius") :: number or 1.2) / M)
+	-- (as LogService.value: a clean log, all its bark off, pays 1.2x)
+	local clean = if log:GetAttribute("Clean") then 1.2 else 1
+	return BarkGrid.logValue(g, bands * Config.Tree.bandH, (log:GetAttribute("Radius") :: number or 1.2) / M) * clean
 end
 InteractController.held = held
 
@@ -100,6 +102,18 @@ function InteractController.truckValue(): number
 			local lp = bed.CFrame:PointToObjectSpace(p.Position)
 			if math.abs(lp.X) <= bed.Size.X / 2 and math.abs(lp.Z) <= bed.Size.Z / 2 and lp.Y > -1 and lp.Y < 5.5 then
 				v += if wood ~= nil and p:GetAttribute("Species") == wood then value * Config.WoodBonus else value
+			end
+		end
+	end
+	-- logs lying in the bed (the server counts a log whose trunk is in it)
+	local logs = workspace:FindFirstChild("Logs")
+	for _, log in if logs then logs:GetChildren() else {} do
+		local trunk = log:FindFirstChild("Trunk") :: BasePart?
+		if trunk and log:GetAttribute("Kind") == "log" then
+			local lp = bed.CFrame:PointToObjectSpace(trunk.Position)
+			if math.abs(lp.X) <= bed.Size.X / 2 + 1 and math.abs(lp.Z) <= bed.Size.Z / 2 + 1 and lp.Y > -1 and lp.Y < 5.5 then
+				local value = InteractController.logValue(log)
+				v += if wood ~= nil and log:GetAttribute("Species") == wood then value * Config.WoodBonus else value
 			end
 		end
 	end
