@@ -60,6 +60,19 @@ for n, name in enumerate(shots, 1):
     im.save(path, quality=92)
     print(path, im.size)
 
+# "what's new": the truck screenshot with tonight's features on it (text on thumbnails is what players click for)
+im = Image.open('docs/itch/02_truck.png').convert('RGB').resize((1920, 1080), Image.LANCZOS)
+im = shade_bottom(im, 0.25, 215)
+d = ImageDraw.Draw(im)
+hf = font('assets/fonts/Fredoka.ttf', 120, 650)
+d.text((110, 430), 'NEW in Timber', font=hf, fill=(255, 207, 106), stroke_width=8, stroke_fill=(40, 26, 12))
+lf = font('assets/fonts/Nunito.ttf', 62, 800)
+for k, line in enumerate(['Golden tree every 15 minutes: 5x bark', 'Daily jobs and rewards on your phone',
+                          'Play with a friend: +10% at the mill', 'Codes: TIMBER and LUMBERJACK']):
+    d.text((120, 600 + k * 92), '- ' + line, font=lf, fill=(255, 255, 255), stroke_width=4, stroke_fill=(30, 20, 10))
+im.save(f'{OUT}/thumbnail_0_new.jpg', quality=92)
+print(f'{OUT}/thumbnail_0_new.jpg', im.size)
+
 # badge icons: 512x512 (Roblox shows them in a circle), one per trophy, for roblox/publish/badges/
 BADGES = [
     ('welcome', 'Welcome', 'to Timber'), ('first_tree', 'Timber!', 'first tree felled'),

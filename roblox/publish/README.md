@@ -16,6 +16,8 @@ draws it with Roblox's renderer next to the Godot game (`roblox/tests/engine/out
 All in this folder; made by `python3 tools/make_roblox_art.py` from the game's own screenshots (`docs/itch/`).
 - **Icon:** `icon_512.png` (512x512, the half-peeled birch and the title)
 - **Thumbnails**, in this order:
+  0. `thumbnail_0_new.jpg` - what's new (golden tree, daily jobs, friends boost, codes); put it first while the
+     update is new, and change its lines when the codes change (`tools/make_roblox_art.py`)
   1. `thumbnail_1_peel.jpg` - peeling bark off a birch, with the title
   2. `thumbnail_2_truck.jpg` - the log truck loaded with bark
   3. `thumbnail_3_factory.jpg` - windmill, belts, sawmill, smelter and wires

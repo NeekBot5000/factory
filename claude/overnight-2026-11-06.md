@@ -16,6 +16,9 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] 6. All three jobs done in a day: a bonus and a toast
 [x] 7. Engine check: analytics and the new pieces run in a real Roblox server without warnings
 [x] 8. Docs: publish README (badges, analytics), roblox-style.md, the description
+[x] 11. Community: a one-time "like and favourite" ask after the first sale; a group reward (off until there's a
+        group)
+[x] 12. A "what's new" thumbnail for the game page (the features players click for: golden tree, daily jobs)
 [ ] 9. Republish the final build
 [ ] 10. Review and polish pass, morning report
 
@@ -37,6 +40,10 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] Lint pass (luau-analyze): EconomyService read `upgrading` as a global before its local was declared (the
     flag was dead; the level check covered it), plus an unused colour, a shadowed variable and an unused
     variable. All fixed; CI now fails on any lint warning (type errors left out: Roblox's types) - 15:35
+[x] CommunityService: like-and-favourite toast once after the first truckload; Config.Group reward ($200 once for
+    members, id 0 = off); both kept on New game; README 3b3 says how to make the group. Playtest 236 - 15:33
+[x] What's-new thumbnail: roblox/publish/thumbnail_0_new.jpg (the truck screenshot with the four new things on it;
+    no faked golden-tree picture) - tools/make_roblox_art.py, README - 15:38
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;
