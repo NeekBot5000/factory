@@ -364,6 +364,9 @@ Config.Badges = {
 	golden = 0, week = 0, jobs = 0,
 } :: { [string]: number }
 
+-- today's jobs (JobsService): the bonus for finishing all three in a day
+Config.JobsAllBonus = 50
+
 -- the truck (Godot's Truck.gd): drives to the mill, waits, pays, comes back
 Config.Truck = { speed = 10, awaySeconds = 4 }
 

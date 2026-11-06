@@ -89,7 +89,12 @@ function EventService.start()
 		while true do
 			-- (the phone counts down to the next one)
 			ReplicatedStorage:SetAttribute("GoldenNext", os.time() + Config.GoldenTree.every)
-			task.wait(Config.GoldenTree.every)
+			-- (a minute before, everyone's told to get ready)
+			task.wait(math.max(0, Config.GoldenTree.every - 60))
+			if #Players:GetPlayers() > 0 then
+				remotes.Notify:FireAllClients("A golden tree appears in one minute!", "ffd27a")
+			end
+			task.wait(math.min(60, Config.GoldenTree.every))
 			if #Players:GetPlayers() > 0 then
 				local t = EventService.startGolden()
 				local until_ = os.clock() + Config.GoldenTree.lasts

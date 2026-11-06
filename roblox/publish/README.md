@@ -48,6 +48,13 @@ trophy, as soon as it knows the badge's id.
 2. Copy each badge's id into `Config.Badges` in `roblox/src/shared/Config.luau` (or tell Claude the ids), then publish
    again. Players who already have the trophy get the badge next time they join.
 
+## 3b2. Analytics (nothing to set up)
+The game reports to Roblox's analytics on its own: Creator Dashboard > Creations > Timber > **Analytics**.
+- **Onboarding funnel:** one step per Getting started step (take the hatchet, peel, load the truck ...): where
+  new players stop.
+- **Economy:** money in (the mill, daily rewards, jobs, codes, take-downs) and out (the shop, land).
+The charts fill in a day or so after players come.
+
 ## 3c. Codes
 `Config.Codes` (in `roblox/src/shared/Config.luau`) holds the codes players can type into the TimberPhone, and what
 each pays (once per player). It starts with TIMBER ($100) and LUMBERJACK ($250). Post codes where your players

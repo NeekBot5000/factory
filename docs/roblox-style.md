@@ -63,15 +63,19 @@ and again) agrees they keep players coming back:
   How the screens look on a phone needs Studio's device view (Roblox's preview renderer can't draw UI).
 - **A reason to come back tomorrow:** a daily reward that grows each day in a row ($15 up to $105), from the second
   day, so the first day still starts at $0 as in Godot.
-- **Timed server events:** the golden tree, every 15 minutes, with 5x bark, announced to the server.
+- **Timed server events:** the golden tree, every 15 minutes, with 5x bark: a heads-up a minute before, the phone
+  counts down to it and then says where it is, and the server hears who felled it.
 - **Codes:** typed into the TimberPhone, each paying once (`Config.Codes`).
 - **Leaderboards:** who's on this server and the all-time best, on the TimberPhone (Roblox's own player list would
   cover the money counter and take the phone's Tab key).
-- **Badges** for the trophies and for playing, once they're made on the Creator Dashboard (`Config.Badges`).
+- **Badges** for the trophies and for playing, plus the golden tree, a week's daily streak and all of a day's
+  jobs, once they're made on the Creator Dashboard (`Config.Badges`).
+- **Analytics:** Getting started is an onboarding funnel and money in and out are economy events (Roblox's
+  AnalyticsService), so the Creator Dashboard shows where new players stop and where money comes from.
 - **Inviting friends** from the TimberPhone, and a **friends boost**: the mill pays 10% more while a Roblox friend
   is on your server.
 - **Daily jobs** on the TimberPhone (fell some trees, earn some money, send one big truckload), each paying a
-  bonus, different every day; and a **wood of the day** that pays 1.5x at the mill.
+  bonus, different every day, and $50 more for all three; and a **wood of the day** that pays 1.5x at the mill.
 Not done, on purpose: game passes and paid items (a decision for you), a floating marker over the next goal (no
 floating 3D text in this game), and anything that changes the Godot game's own loop.
 

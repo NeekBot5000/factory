@@ -287,7 +287,7 @@ function ShopController.open(fromPhone: boolean?)
 			return game:GetService("HttpService"):JSONDecode(player:GetAttribute("Jobs") :: string)
 		end)
 		if okJobs and typeof(jobs) == "table" and #jobs > 0 then
-			UiKit.label(side, "TODAY'S JOBS", 12, C.muted, UiKit.Bold, { LayoutOrder = 16 })
+			UiKit.label(side, string.format("TODAY'S JOBS  (all three: +$%d more)", Config.JobsAllBonus), 12, C.muted, UiKit.Bold, { LayoutOrder = 16 })
 			for k, j in jobs do
 				local text = if j.done then string.format("Done: %s", tostring(j.text))
 					else string.format("%s  %d/%d  +$%d", tostring(j.text), tonumber(j.have) or 0, tonumber(j.need) or 0, tonumber(j.pay) or 0)

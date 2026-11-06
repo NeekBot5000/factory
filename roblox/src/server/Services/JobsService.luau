@@ -10,7 +10,7 @@ local HttpService = game:GetService("HttpService")
 local DataService = require(script.Parent.DataService)
 
 local JobsService = {}
-JobsService.ALL_BONUS = 50
+JobsService.ALL_BONUS = (require(ReplicatedStorage.Shared.Config) :: any).JobsAllBonus
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 -- the day's three jobs (what each asks, and its bonus), varying with the day
