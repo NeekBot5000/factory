@@ -15,7 +15,7 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] 5. More badges for tonight's features: golden tree felled, a week's streak, all of a day's jobs done (icons too)
 [x] 6. All three jobs done in a day: a bonus and a toast
 [x] 7. Engine check: analytics and the new pieces run in a real Roblox server without warnings
-[ ] 8. Docs: publish README (badges, analytics), roblox-style.md, the description
+[x] 8. Docs: publish README (badges, analytics), roblox-style.md, the description
 [ ] 9. Republish the final build
 [ ] 10. Review and polish pass, morning report
 
@@ -31,6 +31,12 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] Roblox analytics: Getting started steps as an onboarding funnel; money in (mill, daily, jobs, codes,
     take-downs) and out (shop, land) as economy events - Analytics.luau; harness records; 2 playtest checks - 15:08
 [x] Engine check: analytics enum names and the golden countdown in a real server - 15:11
+[x] Golden tree heads-up a minute before; the phone's jobs header says what all three pay (Config.JobsAllBonus);
+    docs: roblox-style.md, publish README (analytics, new badges) - 15:20
+[x] Engine check: 19 of 19, no warnings (analytics names, golden countdown) - 15:21
+[x] Lint pass (luau-analyze): EconomyService read `upgrading` as a global before its local was declared (the
+    flag was dead; the level check covered it), plus an unused colour, a shadowed variable and an unused
+    variable. All fixed; CI now fails on any lint warning (type errors left out: Roblox's types) - 15:35
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;

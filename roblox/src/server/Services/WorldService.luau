@@ -314,7 +314,6 @@ function WorldService.start()
 		local made = forest:GetChildren()
 		made[#made]:SetAttribute("Index", k - 1)        -- (the exporter counts from 0)
 		if t.giant then
-			local made = forest:GetChildren()
 			local tree = made[#made]
 			tree:SetAttribute("Giant", true)
 			tree:SetAttribute("Legendary", t.bands >= 90)

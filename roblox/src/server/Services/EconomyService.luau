@@ -13,7 +13,6 @@ local TutorialService = require(script.Parent.TutorialService)
 
 local EconomyService = {}
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
-local GREEN = "7aff9a"
 local STUDS = Config.StudsPerMetre
 
 -- The friends boost (a common Roblox trend that makes inviting friends worth it): while a Roblox friend of yours is
@@ -204,6 +203,8 @@ local function route(list: { { number } }): { Vector3 }
 	return out
 end
 
+-- (a bigger truck was bought: the one driving off comes back as it; EconomyService.upgradeTruck sets it)
+local upgrading = false
 function EconomyService.ship(player: Player, force: boolean?): boolean
 	local t = truck()
 	if not t or t:GetAttribute("State") ~= "parked" then
@@ -335,7 +336,6 @@ function EconomyService.truckLevel(): number
 	return best
 end
 
-local upgrading = false
 function EconomyService.upgradeTruck(player: Player)
 	local t = workspace:FindFirstChild("Truck") :: Model?
 	if not t then

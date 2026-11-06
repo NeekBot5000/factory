@@ -447,7 +447,6 @@ function Hud.start()
 			end
 		else
 			-- the ring: the tool's bark circle as it would look where you're aiming (Godot's aim_ring_px)
-			local def = (Config.Tools :: any)[State.tool] or Config.Tools.hands
 			local onTree, dist = ToolController.aimingAtTree()
 			local cam = workspace.CurrentCamera
 			local vh = cam.ViewportSize.Y

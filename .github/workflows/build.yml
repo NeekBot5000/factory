@@ -143,6 +143,10 @@ jobs:
           # (the pure-logic modules: BarkLook uses Roblox types, which plain Luau does not know)
           ./luau/luau-analyze roblox/src/shared/Config.luau roblox/src/shared/BarkGrid.luau roblox/src/shared/Economy.luau roblox/src/shared/OilField.luau roblox/src/shared/PowerGrid.luau roblox/src/shared/GodotWorld.luau roblox/tests/run.luau
           for f in $(find roblox/src -name '*.luau'); do ./luau/luau-compile --text "$f" > /dev/null; done
+          # lint every script (an unused variable, a global where a local was meant, a shadowed name ...); the type
+          # errors are left out: they're only Roblox's own types, which plain Luau doesn't know
+          lint=$(find roblox/src -name '*.luau' | xargs ./luau/luau-analyze 2>&1 | grep -E '\([0-9]+,[0-9]+\): [A-Za-z]+: ' | grep -vE '\): (TypeError|UnknownType): ' || true)
+          if [ -n "$lint" ]; then echo "$lint"; exit 1; fi
 
       - name: Roblox version - build the place with Rojo and check it with Lune
         run: |
