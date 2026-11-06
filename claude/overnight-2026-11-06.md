@@ -21,7 +21,7 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] 12. A "what's new" thumbnail for the game page (the features players click for: golden tree, daily jobs)
 [x] 13. Rush hour: double pay at the mill for the first 5 minutes of every hour (UTC)
 [x] 9. Republish the final build (16:36, after CI green on 6dd0e84)
-[ ] 10. Review and polish pass, morning report
+[x] 10. Review and polish pass, morning report
 
 ## Done
 [x] Description: roblox/publish/description.txt (885 chars: what's new, CODES with amounts, controls). The Roblox
@@ -61,9 +61,45 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
     write (key permission) and only warns - 16:36
 [x] The phone's rush hour and golden tree lines update every second while it's open (they were drawn once). Client
     49 - 16:50
+[x] Engine check on the latest code (run 22): 19 of 19, no warnings - 16:50
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;
   experiences are mentioned only on the DevForum. Not guessing.
 - The description on the game page: needs the API key's universe.place Write permission (your Creator Dashboard),
   then run "Roblox assets and publishing" with "description" ticked - or paste roblox/publish/description.txt.
+
+## Morning report
+
+**Outcome:** the game page text is written (codes and what's new) but can't go on Roblox until the API key gets one
+more permission; everything else is published. Worked 14:23-16:55 UTC; the queue and the review were done, and
+what's left needs you (below).
+
+**For players (published, run 31 on 6dd0e84):**
+- Golden tree: a heads-up a minute before, the phone counts down and then says where it is, the server hears who
+  felled it.
+- Rush hour: the first 5 minutes of every hour (UTC) the mill pays double; announced, on the phone.
+- Jobs: $50 more for all three in a day; the phone says so.
+- A one-time "like and favourite" ask after the first sale; a group reward ready for when there's a group.
+- Badges ready for the golden tree, a week's streak and all of a day's jobs.
+
+**Bugs fixed:**
+- The truck's price didn't match the mill: it left out the wood of the day, rush hour, logs, and a clean log's
+  1.2x.
+- The phone's countdowns froze while it was open.
+- A dead flag in the truck code (a global read before its local). CI now lints every script.
+
+**For you:**
+- Roblox analytics (Creator Dashboard > Analytics): Getting started is an onboarding funnel, and money in and out
+  are economy events.
+- A "what's new" thumbnail: roblox/publish/thumbnail_0_new.jpg.
+
+**Tests:** playtest 237, client 49, engine 19/19, lint clean; CI green on the published commit.
+
+**Decisions and actions for you:**
+1. The description: Creator Dashboard > Open Cloud > API Keys > your key > add universe.place (Write) for Timber,
+   then run "Roblox assets and publishing" with "description" ticked (or paste roblox/publish/description.txt).
+2. Badges (13 icons in roblox/publish/badges/): make them on the dashboard and put the ids in Config.Badges.
+3. A Roblox group, if you want one: its id in Config.Group.id turns on the $200 member reward.
+4. Upload thumbnail_0_new.jpg as the first thumbnail.
+5. Still parked: the "favourite" prompt (the API is only documented for avatar items), game passes, going public.
