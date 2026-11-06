@@ -267,6 +267,16 @@ function ShopController.open(fromPhone: boolean?)
 			UiKit.label(side, string.format("At the mill today: %s pays 1.5x", woodDef.name), 13, C.price, UiKit.Bold,
 				{ LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 		end
+		-- the golden tree (EventService): where it is now, or how long until the next one
+		local where = ReplicatedStorage:GetAttribute("GoldenWhere")
+		local nextAt = ReplicatedStorage:GetAttribute("GoldenNext")
+		local goldText = if typeof(where) == "string" then string.format("Golden tree now: %s of the cabin!", where)
+			elseif typeof(nextAt) == "number" then string.format("Next golden tree in %d min", math.max(1, math.ceil((nextAt - os.time()) / 60)))
+			else nil
+		if goldText then
+			UiKit.label(side, goldText, 13, if typeof(where) == "string" then C.price else C.ink, if typeof(where) == "string" then UiKit.Bold else UiKit.Body,
+				{ LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
+		end
 		-- the daily streak (EconomyService.daily)
 		local streak = player:GetAttribute("Streak")
 		if typeof(streak) == "number" and streak > 1 then

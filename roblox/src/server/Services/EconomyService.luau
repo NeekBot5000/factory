@@ -32,6 +32,12 @@ function EconomyService.friendBoost(player: Player): number
 	end
 	return 1
 end
+local function shownName(p: Player): string
+	local ok, display = pcall(function()
+		return p.DisplayName
+	end)
+	return if ok and typeof(display) == "string" and display ~= "" then display else p.Name
+end
 local function lookUpFriends(newcomer: Player)
 	for _, p in Players:GetPlayers() do
 		if p ~= newcomer then
@@ -46,8 +52,8 @@ local function lookUpFriends(newcomer: Player)
 					f[newcomer.UserId][p.UserId] = true
 					f[p.UserId][newcomer.UserId] = true
 					local pct = math.floor((EconomyService.FRIEND_BOOST - 1) * 100 + 0.5)
-					remotes.Notify:FireClient(newcomer, string.format("Your friend %s is here: +%d%% at the mill", p.DisplayName, pct), "8fd0ff", "reveal")
-					remotes.Notify:FireClient(p, string.format("Your friend %s is here: +%d%% at the mill", newcomer.DisplayName, pct), "8fd0ff", "reveal")
+					remotes.Notify:FireClient(newcomer, string.format("Your friend %s is here: +%d%% at the mill", shownName(p), pct), "8fd0ff", "reveal")
+					remotes.Notify:FireClient(p, string.format("Your friend %s is here: +%d%% at the mill", shownName(newcomer), pct), "8fd0ff", "reveal")
 				end
 			end)
 		end
@@ -371,6 +377,9 @@ function EconomyService.daily(player: Player, today: number?): number
 	local amount = EconomyService.DAILY.per * math.min(d.streak, EconomyService.DAILY.maxDays)
 	EconomyService.addMoney(player, amount)
 	player:SetAttribute("Streak", d.streak)
+	if d.streak >= EconomyService.DAILY.maxDays then
+		(require(script.Parent.TrophyService) :: any).badge(player, "week")
+	end
 	local nextAmount = EconomyService.DAILY.per * math.min(d.streak + 1, EconomyService.DAILY.maxDays)
 	local text = if d.streak == 1 then string.format("Daily reward: +$%d    come back tomorrow for $%d", amount, nextAmount)
 		else string.format("Day %d in a row: +$%d    come back tomorrow for $%d", d.streak, amount, nextAmount)

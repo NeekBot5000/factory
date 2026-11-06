@@ -142,6 +142,14 @@ function LogService.fell(tree: Model, cutJ: number, away: Vector3, player: Playe
 			TrophyService.award(player, "giant")
 		end
 		TrophyService.award(player, "first_tree")
+		-- (the golden tree: the whole server hears who got it, and there's a badge for it)
+		if tree:GetAttribute("Golden") == true then
+			local ok, display = pcall(function()
+				return player.DisplayName
+			end)
+			remotes.Notify:FireAllClients(string.format("%s felled the golden tree!", if ok and display ~= "" then display else player.Name), "ffd27a", "reveal")
+			TrophyService.badge(player, "golden")
+		end
 		-- (trees felled: the phone's Lumberjacks list shows everyone's)
 		local DataService = require(script.Parent.DataService) :: any
 		local data = DataService.get(player)

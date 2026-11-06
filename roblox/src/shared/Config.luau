@@ -360,6 +360,8 @@ Config.Badges = {
 	welcome = 0,
 	first_tree = 0, first_machine = 0, thousand = 0, first_plank = 0, first_iron = 0, first_furniture = 0,
 	giant = 0, legend = 0, first_oil = 0,
+	-- (and for the Roblox features: the golden tree felled, a week's daily streak, all of a day's jobs done)
+	golden = 0, week = 0, jobs = 0,
 } :: { [string]: number }
 
 -- the truck (Godot's Truck.gd): drives to the mill, waits, pays, comes back

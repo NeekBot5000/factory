@@ -28,6 +28,7 @@ end
 function EventService.endGolden()
 	local t = EventService.golden
 	EventService.golden = nil
+	ReplicatedStorage:SetAttribute("GoldenWhere", nil)
 	if not t then
 		return
 	end
@@ -77,6 +78,8 @@ function EventService.startGolden(tree: Model?): Model?
 		sp.Parent = trunk
 	end
 	local at = t:GetPivot().Position
+	-- (the phone says where it is while it lasts)
+	ReplicatedStorage:SetAttribute("GoldenWhere", direction(at))
 	remotes.Notify:FireAllClients(string.format("A golden tree has appeared %s of the cabin! Its bark is worth %dx", direction(at), Config.GoldenTree.value), "ffd27a", "reveal")
 	return t
 end
@@ -84,6 +87,8 @@ end
 function EventService.start()
 	task.spawn(function()
 		while true do
+			-- (the phone counts down to the next one)
+			ReplicatedStorage:SetAttribute("GoldenNext", os.time() + Config.GoldenTree.every)
 			task.wait(Config.GoldenTree.every)
 			if #Players:GetPlayers() > 0 then
 				local t = EventService.startGolden()

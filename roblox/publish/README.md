@@ -43,7 +43,8 @@ trophy, as soon as it knows the badge's id.
    Names and descriptions: welcome "Welcome to Timber" (you played!), first_tree "Timber!" (your first tree felled),
    first_machine "Machinist", thousand "$1,000 earned", first_plank "Sawyer", first_iron "Smelter",
    first_furniture "Carpenter", giant "Giant" (an ancient giant felled), legend "Legend" (the Legendary Tree
-   felled), first_oil "Oil!" (your first barrel of oil).
+   felled), first_oil "Oil!" (your first barrel of oil), golden "Golden!" (felled the golden tree), week "7 Days"
+   (a week of daily rewards in a row), jobs "Hired!" (all of a day's jobs done).
 2. Copy each badge's id into `Config.Badges` in `roblox/src/shared/Config.luau` (or tell Claude the ids), then publish
    again. Players who already have the trophy get the badge next time they join.
 

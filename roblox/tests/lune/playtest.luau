@@ -343,8 +343,21 @@ do
 		local goldValue = gold[1] and gold[1]:GetAttribute("Value") / (gold[1]:GetAttribute("Panels") or 1) or 0
 		check(tg:GetAttribute("Golden") == true and math.abs(goldValue / math.max(plainValue, 0.001) - 5) < 0.3,
 			string.format("a golden tree's bark is worth 5x a panel ($%.2f against $%.2f)", goldValue, plainValue))
+		local RS = A.game:GetService("ReplicatedStorage")
+		check(typeof(RS:GetAttribute("GoldenWhere")) == "string" and typeof(RS:GetAttribute("GoldenNext")) == "number",
+			"the phone can say where the golden tree is, and when the next one comes")
 		ES.endGolden()
-		check(tg:GetAttribute("Golden") == nil, "and when the event ends it's an ordinary tree again")
+		check(tg:GetAttribute("Golden") == nil and RS:GetAttribute("GoldenWhere") == nil, "and when the event ends it's an ordinary tree again")
+		-- felling it: the whole server hears who got it
+		local tg2 = freshTree(11)
+		ES.startGolden(tg2)
+		local heard0 = count("Notify", alice, "felled the golden tree")
+		local goldLog = A.service("LogService").fell(tg2, 2, V3(1, 0, 0), alice)
+		check(count("Notify", alice, "felled the golden tree") == heard0 + 1, "felling the golden tree: the whole server hears who got it")
+		ES.endGolden()
+		if goldLog then
+			goldLog:Destroy()          -- (out of the way of the saw checks further on)
+		end
 	end
 	t, b, rr = freshTree(2)
 	A.stand(alice, b + V3(rr + 3, 5, 0))
@@ -1470,6 +1483,9 @@ do
 	local shown = require("@lune/serde").decode("json", alice:GetAttribute("Jobs"))
 	check(none == 0 and fell == 20 and again == 0 and load == 16 and shown[1].done and not shown[2].done and shown[3].done,
 		string.format("today's jobs: felling 2 trees pays $20 once, a $25 truckload pays $16 (%d %d %d %d)", none, fell, again, load))
+	d.earned = (d.earned or 0) + 40
+	local all = J.check(alice, day)
+	check(all == 20 + J.ALL_BONUS and J.check(alice, day) == 0, string.format("all three jobs done: their pay and a $%d bonus, once (%d)", J.ALL_BONUS, all))
 	J.check(alice, day + 1)
 	local fresh = require("@lune/serde").decode("json", alice:GetAttribute("Jobs"))
 	check(not fresh[1].done and fresh[1].need == 3 and fresh[1].have == 0, "a new day, new jobs, counted from zero")

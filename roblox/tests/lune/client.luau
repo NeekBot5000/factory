@@ -119,6 +119,8 @@ do
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "1. Alice", 1, true) ~= nil and string.find(d.Text, "$42", 1, true) ~= nil end) ~= nil,
 		"and you're on it, with what you've earned and felled")
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and d.Text == "Daily streak: 4 days" end) ~= nil, "and your daily streak")
+	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "golden tree", 1, true) ~= nil end) ~= nil,
+		"and when the next golden tree comes")
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "1. Alice   $5000", 1, true) ~= nil end) ~= nil,
 		"and the all-time best, across every server")
 	C.press(K.Tab)

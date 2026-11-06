@@ -10,6 +10,7 @@ local HttpService = game:GetService("HttpService")
 local DataService = require(script.Parent.DataService)
 
 local JobsService = {}
+JobsService.ALL_BONUS = 50
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 -- the day's three jobs (what each asks, and its bonus), varying with the day
@@ -63,6 +64,15 @@ function JobsService.check(player: Player, today: number?): number
 			remotes.Notify:FireClient(player, string.format("Job done: %s  +$%d", job.text, job.pay), "7aff9a", "buy")
 		end
 		table.insert(shown, { text = job.text, have = math.floor(have), need = job.need, pay = job.pay, done = j.done[job.id] == true })
+	end
+	-- all three done: a bonus on top, once a day, and a badge
+	if not j.allDone and j.done.fell and j.done.earn and j.done.load then
+		j.allDone = true
+		paid += JobsService.ALL_BONUS
+		local EconomyService = require(script.Parent.EconomyService) :: any
+		EconomyService.addMoney(player, JobsService.ALL_BONUS)
+		remotes.Notify:FireClient(player, string.format("All of today's jobs done!  +$%d", JobsService.ALL_BONUS), "ffd27a", "reveal")
+		;(require(script.Parent.TrophyService) :: any).badge(player, "jobs")
 	end
 	player:SetAttribute("Jobs", HttpService:JSONEncode(shown))
 	return paid

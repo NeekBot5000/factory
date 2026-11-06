@@ -67,6 +67,8 @@ BADGES = [
     ('first_plank', 'Sawyer', 'first planks'), ('first_iron', 'Smelter', 'first iron bar'),
     ('first_furniture', 'Carpenter', 'first furniture'), ('giant', 'Giant', 'an ancient giant felled'),
     ('legend', 'Legend', 'the Legendary Tree'), ('first_oil', 'Oil!', 'first barrel of oil'),
+    ('golden', 'Golden!', 'felled the golden tree'), ('week', '7 Days', 'a week in a row'),
+    ('jobs', 'Hired!', "all of a day's jobs"),
 ]
 os.makedirs(f'{OUT}/badges', exist_ok=True)
 bg = Image.open('docs/itch/01_peel.png').convert('RGB').crop((320, 0, 960, 640)).resize((512, 512), Image.LANCZOS)
