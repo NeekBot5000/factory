@@ -68,6 +68,8 @@ function TutorialService.check(player: Player)
 	data.tutorial = data.tutorial or 1
 	local moved = false
 	while Config.Tutorial[data.tutorial] and done(player, data, Config.Tutorial[data.tutorial]) do
+		-- (Roblox's onboarding funnel: which steps new players get through)
+		(require(script.Parent.Analytics) :: any).onboarding(player, data.tutorial, Config.Tutorial[data.tutorial].check)
 		data.tutorial += 1
 		moved = true
 	end

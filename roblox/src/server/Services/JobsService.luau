@@ -60,7 +60,7 @@ function JobsService.check(player: Player, today: number?): number
 			j.done[job.id] = true
 			paid += job.pay
 			local EconomyService = require(script.Parent.EconomyService) :: any
-			EconomyService.addMoney(player, job.pay)
+			EconomyService.addMoney(player, job.pay, "Gameplay", "job_" .. job.id)
 			remotes.Notify:FireClient(player, string.format("Job done: %s  +$%d", job.text, job.pay), "7aff9a", "buy")
 		end
 		table.insert(shown, { text = job.text, have = math.floor(have), need = job.need, pay = job.pay, done = j.done[job.id] == true })
@@ -70,7 +70,7 @@ function JobsService.check(player: Player, today: number?): number
 		j.allDone = true
 		paid += JobsService.ALL_BONUS
 		local EconomyService = require(script.Parent.EconomyService) :: any
-		EconomyService.addMoney(player, JobsService.ALL_BONUS)
+		EconomyService.addMoney(player, JobsService.ALL_BONUS, "Gameplay", "job_all")
 		remotes.Notify:FireClient(player, string.format("All of today's jobs done!  +$%d", JobsService.ALL_BONUS), "ffd27a", "reveal")
 		;(require(script.Parent.TrophyService) :: any).badge(player, "jobs")
 	end

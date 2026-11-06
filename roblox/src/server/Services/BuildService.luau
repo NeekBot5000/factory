@@ -366,7 +366,7 @@ function BuildService.takeDown(player: Player, build: Model): boolean
 	build:Destroy()
 	local ok, EconomyService = pcall(require, script.Parent.EconomyService)
 	if ok and value > 0 then
-		(EconomyService :: any).addMoney(player, value)
+		(EconomyService :: any).addMoney(player, value, "Gameplay", "takedown")
 	end
 	remotes.Fx:FireAllClients("drop", at, 0.7)
 	return true

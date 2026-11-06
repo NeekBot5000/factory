@@ -31,6 +31,7 @@ function LandService.buy(player: Player, key: string): boolean
 	end
 	data.money -= price
 	table.insert(data.land, key)
+	;(require(script.Parent.Analytics) :: any).money(player, -price, data.money, "Shop", "land")
 	DataService.publish(player)
 	remotes.Notify:FireClient(player, "Bought a new plot of land", "7aff9a", "buy")
 	return true

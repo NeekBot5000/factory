@@ -111,6 +111,18 @@ function Harness.boot(placePath: string, jobId: string)
 	end
 	server.stores = stores
 
+	-- AnalyticsService: what the game reports to Roblox's analytics, recorded for the checks
+	local analytics = {}
+	local AnalyticsService = {}
+	function AnalyticsService:LogOnboardingFunnelStepEvent(player, step, name)
+		table.insert(analytics, { kind = "onboarding", player = player, step = step, name = name })
+	end
+	function AnalyticsService:LogEconomyEvent(player, flow, currency, amount, balance, transactionType, sku)
+		table.insert(analytics, { kind = "economy", player = player, flow = tostring(flow), currency = currency, amount = amount,
+			balance = balance, type = transactionType, sku = sku })
+	end
+	server.analytics = analytics
+
 	local ProximityPromptService = { PromptTriggered = signal() }
 	server.ProximityPromptService = ProximityPromptService
 	local RunService = { Heartbeat = signal() }
@@ -166,6 +178,7 @@ function Harness.boot(placePath: string, jobId: string)
 				return function(_, name)
 					if name == "Players" then return Players end
 					if name == "DataStoreService" then return DataStoreService end
+					if name == "AnalyticsService" then return AnalyticsService end
 					if name == "ProximityPromptService" then return ProximityPromptService end
 					if name == "RunService" then return RunService end
 					if name == "CollectionService" then return CollectionService end

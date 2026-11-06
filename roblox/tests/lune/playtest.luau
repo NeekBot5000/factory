@@ -256,6 +256,23 @@ end
 check(data.owned.double_bit and alice:GetAttribute("Tool") == "double_bit", "E takes it: it's yours, in your hand")
 check(count("Notify", alice, "Double-Bit Axe  [4]") == 1, "with Godot's toast: its name and its key")
 check(data.tutorial == -1 and count("Notify", alice, "basics") == 1, "Getting started is done (and says so once)")
+-- what Roblox's analytics heard: every Getting started step in order, money in from the mill, out at the shop
+do
+	local steps, inOrder = 0, true
+	local mill, shop = false, false
+	for _, e in A.analytics do
+		if e.player == alice and e.kind == "onboarding" then
+			steps += 1
+			inOrder = inOrder and e.step == steps
+		elseif e.player == alice and e.kind == "economy" then
+			mill = mill or (e.sku == "mill" and e.amount > 0 and string.find(e.flow, "Source", 1, true) ~= nil)
+			shop = shop or (e.sku == "double_bit" and string.find(e.flow, "Sink", 1, true) ~= nil and e.balance == data.money)
+		end
+	end
+	local total = #require("../../src/shared/Config").Tutorial
+	check(steps == total and inOrder, string.format("Roblox's onboarding funnel hears each Getting started step in order (%d of %d)", steps, total))
+	check(mill and shop, "and its economy charts hear money in from the mill and out at the shop")
+end
 for _, o in data.orders do
 	check(o.status == "delivered", "and the order is marked delivered")
 end

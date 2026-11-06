@@ -63,13 +63,17 @@ end
 -- the CarryService lets go of anything that drives off in the truck (set by CarryService)
 EconomyService.release = function(_part: BasePart) end
 
-function EconomyService.addMoney(player: Player, amount: number)
+-- kind (optional): what it was, for Roblox's analytics ("Gameplay", "Shop", "TimedReward"), and sku what for
+function EconomyService.addMoney(player: Player, amount: number, kind: string?, sku: string?)
 	local data = DataService.get(player)
 	if not data then
 		return
 	end
 	data.money = math.floor((data.money + amount) * 100 + 0.5) / 100
 	player:SetAttribute("Money", data.money)
+	if kind then
+		(require(script.Parent.Analytics) :: any).money(player, amount, data.money, kind, sku)
+	end
 end
 
 local function truck(): Model?
@@ -252,7 +256,7 @@ function EconomyService.ship(player: Player, force: boolean?): boolean
 			local data = who and DataService.get(who)
 			if who and data then
 				amount = math.floor(amount * EconomyService.friendBoost(who) * 100 + 0.5) / 100
-				EconomyService.addMoney(who, amount)
+				EconomyService.addMoney(who, amount, "Gameplay", "mill")
 				data.earned = (data.earned or 0) + amount
 				who:SetAttribute("Earned", data.earned)
 				remotes.Sold:FireClient(who, amount)
@@ -305,14 +309,14 @@ local function buy(player: Player, item: unknown)
 	end
 	if def.vehicle then
 		-- trucks don't come in a box: the old one drives off (selling what's on it) and the new one comes back
-		EconomyService.addMoney(player, -def.price)
+		EconomyService.addMoney(player, -def.price, "Shop", item)
 		data.owned[item] = true
 		DataService.publish(player)
 		remotes.Notify:FireClient(player, "Bought the " .. def.name, "8fd0ff")
 		EconomyService.upgradeTruck(player)
 		return
 	end
-	EconomyService.addMoney(player, -def.price)
+	EconomyService.addMoney(player, -def.price, "Shop", item)
 	table.insert(data.orders, { item = item, status = "processing" })
 	DataService.publish(player)
 	remotes.Notify:FireClient(player, "Ordered " .. def.name, "8fd0ff")
@@ -375,7 +379,7 @@ function EconomyService.daily(player: Player, today: number?): number
 	d.streak = if d.last == day - 1 then d.streak + 1 else 1
 	d.last = day
 	local amount = EconomyService.DAILY.per * math.min(d.streak, EconomyService.DAILY.maxDays)
-	EconomyService.addMoney(player, amount)
+	EconomyService.addMoney(player, amount, "TimedReward", "daily")
 	player:SetAttribute("Streak", d.streak)
 	if d.streak >= EconomyService.DAILY.maxDays then
 		(require(script.Parent.TrophyService) :: any).badge(player, "week")
@@ -408,7 +412,7 @@ function EconomyService.redeem(player: Player, code: unknown): (number, string)
 		return 0, "You've already used that code"
 	end
 	data.codes[key] = true
-	EconomyService.addMoney(player, amount)
+	EconomyService.addMoney(player, amount, "Gameplay", "code")
 	return amount, string.format("Code %s: +$%d", key, amount)
 end
 
