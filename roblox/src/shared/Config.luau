@@ -368,6 +368,9 @@ Config.Badges = {
 -- reward once. 0 = no group yet (nothing happens).
 Config.Group = { id = 0, reward = 200 }
 
+-- the wood of the day (EconomyService): one species a day pays this many times as much at the mill
+Config.WoodBonus = 1.5
+
 -- rush hour at the mill (EconomyService): the first `minutes` of every hour (UTC) it pays `mult` times as much
 Config.RushHour = { minutes = 5, mult = 2 }
 

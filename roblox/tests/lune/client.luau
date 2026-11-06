@@ -406,5 +406,38 @@ do
 	check(placed and C.camera:FindFirstChild("Hologram") == nil, "a click sets the plan down")
 end
 
+-- the truck's price (the sign over the bed and "[E] ship $..."): what the mill will pay, the wood of the day and rush
+-- hour counted, as the server counts them
+do
+	local IC = C.require(C.folder.Controllers.InteractController)
+	local RS = S.game:GetService("ReplicatedStorage")
+	local t = ws:FindFirstChild("Truck")
+	local bed = t and t:FindFirstChild("Bed")
+	if bed and t:GetAttribute("State") == "parked" then
+		local p = roblox.Instance.new("Part")
+		p.Size = V3(1, 0.1, 1)
+		p.CFrame = bed.CFrame + V3(0, 1, 0)
+		p.Position = bed.CFrame.Position + V3(0, 1, 0)       -- (Lune keeps Position apart from CFrame)
+		p:SetAttribute("Value", 2)
+		p:SetAttribute("Species", "testwood")
+		p.Parent = ws.Loose
+		local wood0, rush0 = RS:GetAttribute("WoodOfTheDay"), RS:GetAttribute("Rush")
+		RS:SetAttribute("WoodOfTheDay", "none")
+		RS:SetAttribute("Rush", false)
+		local plain = IC.truckValue()
+		RS:SetAttribute("WoodOfTheDay", "testwood")
+		local wood = IC.truckValue()
+		RS:SetAttribute("Rush", true)
+		local both = IC.truckValue()
+		RS:SetAttribute("WoodOfTheDay", wood0)
+		RS:SetAttribute("Rush", rush0)
+		p:Destroy()
+		check(math.abs(wood - plain - 1) < 0.01 and math.abs(both - 2 * wood) < 0.01,
+			string.format("the truck's price counts the wood of the day and rush hour ($%.2f, $%.2f, $%.2f)", plain, wood, both))
+	else
+		check(false, "the truck's price: the truck is parked")
+	end
+end
+
 print(string.format("\nCLIENT RESULT: %s (%d passed, %d failed)", if fails == 0 then "PASS" else "FAIL", passes, fails))
 process.exit(if fails == 0 then 0 else 1)

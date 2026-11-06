@@ -91,15 +91,20 @@ function InteractController.truckValue(): number
 	if not t or not bed or not loose or t:GetAttribute("State") ~= "parked" then
 		return 0
 	end
+	-- (what the mill will pay, as the server works it out: the wood of the day and rush hour count too)
+	local wood = ReplicatedStorage:GetAttribute("WoodOfTheDay")
 	local v = 0
 	for _, p in loose:GetChildren() do
 		local value = p:GetAttribute("Value")
 		if p:IsA("BasePart") and typeof(value) == "number" then
 			local lp = bed.CFrame:PointToObjectSpace(p.Position)
 			if math.abs(lp.X) <= bed.Size.X / 2 and math.abs(lp.Z) <= bed.Size.Z / 2 and lp.Y > -1 and lp.Y < 5.5 then
-				v += value
+				v += if wood ~= nil and p:GetAttribute("Species") == wood then value * Config.WoodBonus else value
 			end
 		end
+	end
+	if ReplicatedStorage:GetAttribute("Rush") == true then
+		v *= Config.RushHour.mult
 	end
 	return v
 end

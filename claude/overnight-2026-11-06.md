@@ -50,6 +50,10 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] Rush hour: Config.RushHour (5 min, 2x), EconomyService.rushActive in worth(), announced at the start and 5
     minutes before, phone line; playtest pins it off like the wood of the day; description and roblox-style.md
     mention it (description 959 chars). Playtest 237, client 46 - 16:00
+[x] Bug: the truck's price (the sign over the bed and "[E] ship $...") is worked out on the client from each piece's
+    raw value, so it left out the wood of the day (since yesterday) and rush hour, and promised less than the mill
+    paid. It now counts both, as the server does (Config.WoodBonus shared). Client check: $2, $3 with the wood, $6
+    in rush hour. Playtest 237, client 47 - 16:20
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;

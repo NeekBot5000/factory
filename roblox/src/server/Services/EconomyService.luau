@@ -113,7 +113,7 @@ end
 -- what one thing in the bed is worth
 -- Wood of the day (the user's growth idea #9, prices that move; a daily boosted item, as many Roblox games have):
 -- each UTC day one species pays WOOD_BONUS times as much at the mill, bark and logs alike. The phone says which.
-EconomyService.WOOD_BONUS = 1.5
+EconomyService.WOOD_BONUS = Config.WoodBonus
 function EconomyService.woodOfTheDay(today: number?): string
 	local names = {}
 	for id in Config.Species :: any do

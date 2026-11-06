@@ -264,7 +264,7 @@ function ShopController.open(fromPhone: boolean?)
 		local wood = ReplicatedStorage:GetAttribute("WoodOfTheDay")
 		local woodDef = typeof(wood) == "string" and (Config.Species :: any)[wood]
 		if woodDef then
-			UiKit.label(side, string.format("At the mill today: %s pays 1.5x", woodDef.name), 13, C.price, UiKit.Bold,
+			UiKit.label(side, string.format("At the mill today: %s pays %gx", woodDef.name, Config.WoodBonus), 13, C.price, UiKit.Bold,
 				{ LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 		end
 		-- rush hour (EconomyService): on now, or when the next starts
