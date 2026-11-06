@@ -31,6 +31,11 @@ local woodOfTheDay = A.service("EconomyService").woodOfTheDay
 A.service("EconomyService").woodOfTheDay = function()
 	return "none"
 end
+-- (and rush hour, which depends on the time)
+local rushActive = A.service("EconomyService").rushActive
+A.service("EconomyService").rushActive = function()
+	return false
+end
 local Data = A.service("DataService")
 local bob = nil
 local Carry = A.service("CarryService")
@@ -1554,6 +1559,18 @@ do
 	E2.woodOfTheDay = function()
 		return "none"
 	end
+	-- rush hour: the first 5 minutes of every hour, the mill pays double
+	E2.rushActive = rushActive
+	local clock = { E2.rushActive(7200), E2.rushActive(7200 + 299), E2.rushActive(7200 + 300), E2.rushActive(7200 + 3599) }
+	E2.rushActive = function()
+		return true
+	end
+	local inRush = E2.worth(sheet)
+	E2.rushActive = function()
+		return false
+	end
+	check(clock[1] and clock[2] and not clock[3] and not clock[4] and math.abs(inRush - 4) < 0.01,
+		string.format("rush hour: the first 5 minutes of every hour, and the mill pays double ($%.2f)", inRush))
 	sheet:Destroy()
 	check(math.abs(onDay - 3) < 0.01 and math.abs(offDay - 2) < 0.01, string.format("birch bark on birch day is worth 1.5x ($%.2f, other days $%.2f)", onDay, offDay))
 	-- the friends boost: a Roblox friend on your server, +10% at the mill

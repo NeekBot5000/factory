@@ -124,6 +124,12 @@ function EconomyService.woodOfTheDay(today: number?): string
 	return names[day % #names + 1]
 end
 
+-- Rush hour (a timed double-money window, as popular Roblox games have, and on the clock so players learn when to
+-- come): the first Config.RushHour.minutes of every hour, UTC, the mill pays Config.RushHour.mult times as much.
+function EconomyService.rushActive(now: number?): boolean
+	return ((now or os.time()) % 3600) < Config.RushHour.minutes * 60
+end
+
 local function worth(p: BasePart): number
 	local species, v
 	if p.Name == "Trunk" and p.Parent and p.Parent:GetAttribute("Kind") == "log" then
@@ -136,6 +142,9 @@ local function worth(p: BasePart): number
 	end
 	if species ~= nil and species == EconomyService.woodOfTheDay() then
 		v *= EconomyService.WOOD_BONUS
+	end
+	if EconomyService.rushActive() then
+		v *= Config.RushHour.mult
 	end
 	return v
 end
@@ -422,8 +431,18 @@ function EconomyService.start()
 	-- pays today's; and when the UTC day changes, the daily reward for anyone playing through midnight)
 	task.spawn(function()
 		local seen = math.floor(os.time() / 86400)
+		local wasRush = false
 		while true do
 			ReplicatedStorage:SetAttribute("WoodOfTheDay", EconomyService.woodOfTheDay())
+			-- rush hour: told when it starts, and five minutes before; the phone shows it
+			local rush = EconomyService.rushActive()
+			ReplicatedStorage:SetAttribute("Rush", rush)
+			if rush and not wasRush and #Players:GetPlayers() > 0 then
+				remotes.Notify:FireAllClients(string.format("Rush hour at the mill: %dx pay for %d minutes!", Config.RushHour.mult, Config.RushHour.minutes), "ffd27a", "reveal")
+			elseif not rush and os.time() % 3600 >= 3300 and os.time() % 3600 < 3360 and #Players:GetPlayers() > 0 then
+				remotes.Notify:FireAllClients("Rush hour at the mill in 5 minutes!", "ffd27a")
+			end
+			wasRush = rush
 			task.wait(60)
 			local day = math.floor(os.time() / 86400)
 			if day ~= seen then

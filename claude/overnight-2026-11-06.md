@@ -19,6 +19,7 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] 11. Community: a one-time "like and favourite" ask after the first sale; a group reward (off until there's a
         group)
 [x] 12. A "what's new" thumbnail for the game page (the features players click for: golden tree, daily jobs)
+[x] 13. Rush hour: double pay at the mill for the first 5 minutes of every hour (UTC)
 [ ] 9. Republish the final build
 [ ] 10. Review and polish pass, morning report
 
@@ -44,6 +45,11 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
     members, id 0 = off); both kept on New game; README 3b3 says how to make the group. Playtest 236 - 15:33
 [x] What's-new thumbnail: roblox/publish/thumbnail_0_new.jpg (the truck screenshot with the four new things on it;
     no faked golden-tree picture) - tools/make_roblox_art.py, README - 15:38
+[x] CI with the lint gate: green steps through the Roblox tests on 77d7aab - 15:42
+[x] Review of today's server diff (jobs bonus, golden loop, funnel, community): nothing wrong found - 15:45
+[x] Rush hour: Config.RushHour (5 min, 2x), EconomyService.rushActive in worth(), announced at the start and 5
+    minutes before, phone line; playtest pins it off like the wood of the day; description and roblox-style.md
+    mention it (description 959 chars). Playtest 237, client 46 - 16:00
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;

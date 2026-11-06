@@ -65,6 +65,8 @@ and again) agrees they keep players coming back:
   day, so the first day still starts at $0 as in Godot.
 - **Timed server events:** the golden tree, every 15 minutes, with 5x bark: a heads-up a minute before, the phone
   counts down to it and then says where it is, and the server hears who felled it.
+- **Rush hour:** the first 5 minutes of every hour (UTC) the mill pays double (`Config.RushHour`), announced and
+  shown on the phone; on the clock, so players learn to come back on the hour.
 - **Codes:** typed into the TimberPhone, each paying once (`Config.Codes`).
 - **Leaderboards:** who's on this server and the all-time best, on the TimberPhone (Roblox's own player list would
   cover the money counter and take the phone's Tab key).

@@ -8,6 +8,7 @@ NEW
 - Golden tree every 15 minutes: 5x bark, race the server for it
 - Daily jobs on your TimberPhone, with bonuses
 - Daily reward: more each day in a row, up to $105
+- Rush hour: double pay at the mill for the first 5 minutes of every hour
 - Wood of the day pays 1.5x at the mill
 - Play with a friend: +10% at the mill
 - Leaderboards and badges

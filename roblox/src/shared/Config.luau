@@ -368,6 +368,9 @@ Config.Badges = {
 -- reward once. 0 = no group yet (nothing happens).
 Config.Group = { id = 0, reward = 200 }
 
+-- rush hour at the mill (EconomyService): the first `minutes` of every hour (UTC) it pays `mult` times as much
+Config.RushHour = { minutes = 5, mult = 2 }
+
 -- today's jobs (JobsService): the bonus for finishing all three in a day
 Config.JobsAllBonus = 50
 
