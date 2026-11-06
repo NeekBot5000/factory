@@ -108,12 +108,12 @@
   {
    "step": "save the built place as a new version (not published)",
    "ok": true,
-   "detail": "version 17"
+   "detail": "version 18"
   },
   {
    "step": "start a Luau execution task on it",
    "ok": true,
-   "detail": "universes/10774584468/places/78431518839981/versions/17/luau-execution-sessions/0629a61f-aad1-4f0b-8c59-63b09be41747/tasks/0629a61f-aad1-4f0b-8c59-63b09be41747"
+   "detail": "universes/10774584468/places/78431518839981/versions/18/luau-execution-sessions/56555ac9-d970-432b-a0e7-9566dac81f35/tasks/56555ac9-d970-432b-a0e7-9566dac81f35"
   },
   {
    "step": "the task finished",

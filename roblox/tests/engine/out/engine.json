@@ -1,7 +1,7 @@
 {
  "logs": [],
  "info": {
-  "seconds": 46.81,
+  "seconds": 45.78,
   "terrainCalibration": [
    {
     "occ": 0,
@@ -377,7 +377,7 @@
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 8.19,
+    "seconds": 7.18,
     "meshParts": 816
    }
   },
@@ -393,7 +393,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 9.21,
+    "seconds": 8.2,
     "props": 115
    }
   },
@@ -530,9 +530,9 @@
    "ok": true,
    "name": "the server keeps up (about 60 frames a second, no long stalls)",
    "detail": {
-    "worstFrameMs": 17.42,
-    "memoryMb": 445.33,
-    "instances": 4157,
+    "worstFrameMs": 17.4,
+    "memoryMb": 436.49,
+    "instances": 4158,
     "fps": 60
    }
   },
@@ -547,15 +547,15 @@
    "ok": true,
    "name": "the golden tree picks a standing tree near the cabin, and goes back to normal after",
    "detail": {
-    "at": "-251.4499969482422, 10.722000122070312, -65.13300323486328",
-    "tree": "Tree_birch"
+    "at": "-142.34500122070312, -2.950000047683716, 87.44599914550781",
+    "tree": "Tree_cedar"
    }
   },
   {
    "ok": true,
    "name": "the phone's golden tree countdown is published",
    "detail": {
-    "goldenNext": 1793979154
+    "goldenNext": 1793984217
    }
   },
   {
