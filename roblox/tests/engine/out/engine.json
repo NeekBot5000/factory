@@ -1,7 +1,7 @@
 {
  "logs": [],
  "info": {
-  "seconds": 45.79,
+  "seconds": 46.81,
   "terrainCalibration": [
    {
     "occ": 0,
@@ -370,14 +370,14 @@
    "ok": true,
    "name": "the game's server starts in a real Roblox server",
    "detail": {
-    "waited": 0.09
+    "waited": 0.08
    }
   },
   {
    "ok": true,
    "name": "the Godot meshes load into the world (InsertService, the uploaded models)",
    "detail": {
-    "seconds": 7.19,
+    "seconds": 8.19,
     "meshParts": 816
    }
   },
@@ -393,7 +393,7 @@
    "ok": true,
    "name": "the build and product meshes are ready (ReplicatedStorage.Props)",
    "detail": {
-    "seconds": 8.21,
+    "seconds": 9.21,
     "props": 115
    }
   },
@@ -530,9 +530,9 @@
    "ok": true,
    "name": "the server keeps up (about 60 frames a second, no long stalls)",
    "detail": {
-    "worstFrameMs": 17.95,
-    "memoryMb": 420.29,
-    "instances": 4156,
+    "worstFrameMs": 17.42,
+    "memoryMb": 445.33,
+    "instances": 4157,
     "fps": 60
    }
   },
@@ -547,15 +547,31 @@
    "ok": true,
    "name": "the golden tree picks a standing tree near the cabin, and goes back to normal after",
    "detail": {
-    "at": "-0.1899999976158142, 1.1640000343322754, -147.72000122070312",
-    "tree": "Tree_oak"
+    "at": "-251.4499969482422, 10.722000122070312, -65.13300323486328",
+    "tree": "Tree_birch"
+   }
+  },
+  {
+   "ok": true,
+   "name": "the phone's golden tree countdown is published",
+   "detail": {
+    "goldenNext": 1793979154
    }
   },
   {
    "ok": true,
    "name": "the wood of the day is published for the phones",
    "detail": {
-    "wood": "birch"
+    "wood": "cedar"
+   }
+  },
+  {
+   "ok": true,
+   "name": "Roblox analytics is there, and knows the game's kinds of money (mill, shop, daily)",
+   "detail": {
+    "TimedReward": true,
+    "Gameplay": true,
+    "Shop": true
    }
   }
  ]
