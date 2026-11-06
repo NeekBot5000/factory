@@ -6,7 +6,7 @@ the core; publish-ready, CI green, pushed to claude/roblox-islands-factory-game-
 STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 
 ## Queue (most wanted first)
-[x] 1. The game page's description: codes and what's new, set from GitHub (Open Cloud), checked it landed
+[-] 1. The game page's description: codes and what's new, set from GitHub (Open Cloud) - written; landing it needs a key permission (Parked)
 [x] 2. Golden tree: the phone shows when the next one comes ("in 6 min") or where it is now; the server hears who
        felled it
 [x] 3. Analytics (Roblox AnalyticsService): the Getting started steps as an onboarding funnel, and money in and
@@ -14,7 +14,7 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [-] 4. "Favourite Timber?" prompt once, after the first truckload sold - only if the API is confirmed
 [x] 5. More badges for tonight's features: golden tree felled, a week's streak, all of a day's jobs done (icons too)
 [x] 6. All three jobs done in a day: a bonus and a toast
-[ ] 7. Engine check: analytics and the new pieces run in a real Roblox server without warnings
+[x] 7. Engine check: analytics and the new pieces run in a real Roblox server without warnings
 [ ] 8. Docs: publish README (badges, analytics), roblox-style.md, the description
 [ ] 9. Republish the final build
 [ ] 10. Review and polish pass, morning report
@@ -29,8 +29,8 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] All three of a day's jobs done: +$50 once - JobsService.ALL_BONUS - 15:05
 [x] Badges golden, week, jobs (Config.Badges, icons by tools/make_roblox_art.py, README list) - 15:05
 [x] Roblox analytics: Getting started steps as an onboarding funnel; money in (mill, daily, jobs, codes,
-    take-downs) and out (shop, land) as economy events - Analytics.luau; harness records; 2 playtest checks - 15:25
-[x] Engine check: analytics enum names and the golden countdown in a real server - 15:30
+    take-downs) and out (shop, land) as economy events - Analytics.luau; harness records; 2 playtest checks - 15:08
+[x] Engine check: analytics enum names and the golden countdown in a real server - 15:11
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;
