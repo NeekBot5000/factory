@@ -57,6 +57,10 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
 [x] Bug: logs in the truck weren't counted in its price at all (the client only added up loose pieces), and the
     client's log value left out the 1.2x for a clean log, so the "worth $..." hint on a clean log was low too.
     Both match the mill now. Client 48 - 16:30
+[x] Republished (roblox-assets run 31, "Publish the place": success on 6dd0e84). The description step still can't
+    write (key permission) and only warns - 16:36
+[x] The phone's rush hour and golden tree lines update every second while it's open (they were drawn once). Client
+    49 - 16:50
 
 ## Parked
 - "Favourite Timber?" prompt: AvatarEditorService:PromptSetFavorite is documented for assets and bundles only;

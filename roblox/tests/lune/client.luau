@@ -123,6 +123,15 @@ do
 		"and when the next golden tree comes")
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "ush hour", 1, true) ~= nil end) ~= nil,
 		"and rush hour at the mill")
+	-- (kept up to date while it's open: rush hour starting shows within a second)
+	local RSr = S.game:GetService("ReplicatedStorage")
+	local rush0 = RSr:GetAttribute("Rush")
+	RSr:SetAttribute("Rush", true)
+	task.wait(1.3)
+	C.frames(2)
+	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "RUSH HOUR", 1, true) ~= nil end) ~= nil,
+		"and the phone keeps it up to date while it's open")
+	RSr:SetAttribute("Rush", rush0)
 	check(shop ~= nil and C.find(shop, function(d) return d:IsA("TextLabel") and string.find(d.Text, "1. Alice   $5000", 1, true) ~= nil end) ~= nil,
 		"and the all-time best, across every server")
 	C.press(K.Tab)

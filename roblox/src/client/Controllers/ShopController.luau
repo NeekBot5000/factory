@@ -267,22 +267,41 @@ function ShopController.open(fromPhone: boolean?)
 			UiKit.label(side, string.format("At the mill today: %s pays %gx", woodDef.name, Config.WoodBonus), 13, C.price, UiKit.Bold,
 				{ LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
 		end
-		-- rush hour (EconomyService): on now, or when the next starts
-		local rushLine = if ReplicatedStorage:GetAttribute("Rush") == true then string.format("RUSH HOUR: the mill pays %dx!", Config.RushHour.mult)
-			else string.format("Rush hour at the mill in %d min", math.max(1, math.ceil((3600 - os.time() % 3600) / 60)))
-		UiKit.label(side, rushLine, 13, if ReplicatedStorage:GetAttribute("Rush") == true then C.price else C.ink,
-			if ReplicatedStorage:GetAttribute("Rush") == true then UiKit.Bold else UiKit.Body,
-			{ LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
-		-- the golden tree (EventService): where it is now, or how long until the next one
-		local where = ReplicatedStorage:GetAttribute("GoldenWhere")
-		local nextAt = ReplicatedStorage:GetAttribute("GoldenNext")
-		local goldText = if typeof(where) == "string" then string.format("Golden tree now: %s of the cabin!", where)
-			elseif typeof(nextAt) == "number" then string.format("Next golden tree in %d min", math.max(1, math.ceil((nextAt - os.time()) / 60)))
-			else nil
-		if goldText then
-			UiKit.label(side, goldText, 13, if typeof(where) == "string" then C.price else C.ink, if typeof(where) == "string" then UiKit.Bold else UiKit.Body,
-				{ LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y })
+		-- rush hour (EconomyService) and the golden tree (EventService): on now, or how long until the next; kept up
+		-- to date every second while the phone is open
+		local function timers(): (string, boolean, string?, boolean)
+			local rush = ReplicatedStorage:GetAttribute("Rush") == true
+			local rushText = if rush then string.format("RUSH HOUR: the mill pays %dx!", Config.RushHour.mult)
+				else string.format("Rush hour at the mill in %d min", math.max(1, math.ceil((3600 - os.time() % 3600) / 60)))
+			local where = ReplicatedStorage:GetAttribute("GoldenWhere")
+			local nextAt = ReplicatedStorage:GetAttribute("GoldenNext")
+			local goldText = if typeof(where) == "string" then string.format("Golden tree now: %s of the cabin!", where)
+				elseif typeof(nextAt) == "number" then string.format("Next golden tree in %d min", math.max(1, math.ceil((nextAt - os.time()) / 60)))
+				else nil
+			return rushText, rush, goldText, typeof(where) == "string"
 		end
+		local timerProps = { LayoutOrder = 15, TextWrapped = true, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y }
+		local rushLabel = UiKit.label(side, "", 13, C.ink, UiKit.Body, timerProps)
+		local goldLabel = UiKit.label(side, "", 13, C.ink, UiKit.Body, table.clone(timerProps))
+		local function showTimers()
+			local rushText, rush, goldText, gold = timers()
+			rushLabel.Text = rushText
+			rushLabel.TextColor3 = if rush then C.price else C.ink
+			rushLabel.FontFace = if rush then UiKit.Bold else UiKit.Body
+			goldLabel.Visible = goldText ~= nil
+			goldLabel.Text = goldText or ""
+			goldLabel.TextColor3 = if gold then C.price else C.ink
+			goldLabel.FontFace = if gold then UiKit.Bold else UiKit.Body
+		end
+		showTimers()
+		task.spawn(function()
+			while rushLabel.Parent do
+				task.wait(1)
+				if rushLabel.Parent then
+					showTimers()
+				end
+			end
+		end)
 		-- the daily streak (EconomyService.daily)
 		local streak = player:GetAttribute("Streak")
 		if typeof(streak) == "number" and streak > 1 then
