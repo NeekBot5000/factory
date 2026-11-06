@@ -32,6 +32,8 @@ The screenshots are from the Godot version, which the Roblox version now matches
 - **Description:** `description.txt` in this folder (under Roblox's 1000 characters, with the codes). The
   "Roblox assets and publishing" workflow puts it on the game page when you run it with **description** ticked
   (or with **publish** ticked); or paste it by hand. When you change `Config.Codes`, change the CODES lines too.
+  The API key needs one more permission for this: Creator Dashboard > Open Cloud > API Keys > your key > Access
+  Permissions > add **universe.place** (Write) for Timber > Save. Without it Roblox answers "Scope not authorized".
 
 ## 3b. Badges (optional, recommended)
 Badges show on players' profiles, which brings their friends. The game awards one for playing and one for each

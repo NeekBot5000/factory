@@ -93,6 +93,8 @@ jobs:
 
       - name: Put the description on the game page
         if: ${{ inputs.publish || inputs.description }}
+        # (only a warning when it rides along with a publish: the place is published either way)
+        continue-on-error: ${{ !inputs.description }}
         env:
           UNIVERSE: ${{ vars.ROBLOX_UNIVERSE_ID }}
           PLACE: ${{ vars.ROBLOX_PLACE_ID }}
