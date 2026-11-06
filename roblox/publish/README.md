@@ -29,25 +29,9 @@ The screenshots are from the Godot version, which the Roblox version now matches
 ## 3. The text (Configure > Basic Info)
 - **Name:** Timber
 - **Genre:** Simulation
-- **Description** (paste; it fits Roblox's 1000 characters):
-
----
-Peel it. Fell it. Build something bigger.
-
-A first-person lumberjack game where everything is a real object. No inventory: peel bark off a tree in sheets,
-carry them to your truck and send it to the mill.
-
-Start with bare hands (it hurts). Buy a hatchet, then axes that hit twice, take whole rings or chop six times a
-second. Fell trees, saw logs, build furniture and decorations worth far more than the wood in them.
-
-Then automate it: wire cranks, windmills and generators to belts, sawmills, smelters and assemblers. Mine copper
-and iron, lay rails for carts, send drones, pump oil, and grow a one-person camp into a factory.
-
-Every 15 minutes a golden tree with 5x bark appears near the cabin: race the server for it. Daily jobs and
-rewards, codes on your TimberPhone, and +10% at the mill when you play with friends.
-
-Controls: WASD, click to swing, E to grab and use, Q to drop, 1-9 for tools. Phones: the buttons, tap the tool bar.
----
+- **Description:** `description.txt` in this folder (under Roblox's 1000 characters, with the codes). The
+  "Roblox assets and publishing" workflow puts it on the game page when you run it with **description** ticked
+  (or with **publish** ticked); or paste it by hand. When you change `Config.Codes`, change the CODES lines too.
 
 ## 3b. Badges (optional, recommended)
 Badges show on players' profiles, which brings their friends. The game awards one for playing and one for each

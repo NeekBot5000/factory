@@ -19,6 +19,10 @@ on:
         description: "Also publish the place to Roblox (replaces the published version)"
         type: boolean
         default: false
+      description:
+        description: "Put roblox/publish/description.txt on the game page (publishing does this too)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -86,3 +90,22 @@ jobs:
             "https://apis.roblox.com/universes/v1/$UNIVERSE/places/$PLACE/versions?versionType=Published" \
             -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/octet-stream" \
             --data-binary @Timber.rbxl
+
+      - name: Put the description on the game page
+        if: ${{ inputs.publish || inputs.description }}
+        env:
+          UNIVERSE: ${{ vars.ROBLOX_UNIVERSE_ID }}
+          PLACE: ${{ vars.ROBLOX_PLACE_ID }}
+        run: |
+          # Open Cloud's Place resource (the game page shows the start place's description). The API key needs
+          # the universe.place:write scope; without it this step says so and the publish above still stands.
+          python3 -c 'import json,sys; t=open("roblox/publish/description.txt").read().strip(); assert len(t) <= 1000, len(t); json.dump({"description": t}, open("desc.json","w"))'
+          code=$(curl -sS -o resp.json -w '%{http_code}' -X PATCH \
+            "https://apis.roblox.com/cloud/v2/universes/$UNIVERSE/places/$PLACE?updateMask=description" \
+            -H "x-api-key: $ROBLOX_API_KEY" -H "Content-Type: application/json" --data-binary @desc.json)
+          echo "Roblox answered $code"
+          if [ "$code" != "200" ]; then
+            head -c 600 resp.json; echo
+            echo "::warning::The description wasn't updated (HTTP $code). If it's 401/403, add the universe.place:write scope (for this experience) to the API key on the Creator Dashboard, or paste roblox/publish/description.txt by hand."
+            exit 1
+          fi

@@ -1,0 +1,19 @@
+Peel it. Fell it. Build something bigger.
+
+A first-person lumberjack game where everything is a real object. Peel bark off trees in sheets, carry it to your truck and send it to the mill.
+
+Start with bare hands. Buy axes, saws and drills, fell trees, build furniture worth more than the wood. Then automate: windmills, belts, sawmills, smelters, rails, drones and oil, from one cabin to a factory.
+
+NEW
+- Golden tree every 15 minutes: 5x bark, race the server for it
+- Daily jobs on your TimberPhone, with bonuses
+- Daily reward: more each day in a row, up to $105
+- Wood of the day pays 1.5x at the mill
+- Play with a friend: +10% at the mill
+- Leaderboards and badges
+
+CODES (type them into your TimberPhone)
+TIMBER - $100
+LUMBERJACK - $250
+
+Controls: WASD, click to swing, E to grab and use, Q to drop, 1-9 for tools, Tab for the phone. Phones: on-screen buttons, tap the tool bar.

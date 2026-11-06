@@ -1447,6 +1447,13 @@ do
 	local paidC = E.redeem(alice, "free-money")
 	check(paidA == 100 and paidB == 0 and string.find(why, "already") ~= nil and paidC == 0, "a code pays once, typed any way; a made-up one pays nothing")
 	d.codes = codes0
+	-- the game page lists the same codes, with what they pay, and fits Roblox's 1000 characters
+	local page = require("@lune/fs").readFile("roblox/publish/description.txt")
+	local listed = true
+	for code, amount in Cfg.Codes do
+		listed = listed and string.find(page, string.format("%s - $%d", code, amount), 1, true) ~= nil
+	end
+	check(listed and #page <= 1000, string.format("the game page's description lists every code and what it pays (%d characters)", #page))
 	-- today's jobs: counted from the day's start; each pays once when done
 	local J = A.service("JobsService")
 	local jobs0, felled0, earned0 = d.jobs, d.felled, d.earned
