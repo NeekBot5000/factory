@@ -413,8 +413,26 @@ try("events", function()
 	local back = t ~= nil and t:GetAttribute("Golden") == nil and trunk ~= nil and trunk:FindFirstChild("GoldenSparkles") == nil
 	check("the golden tree picks a standing tree near the cabin, and goes back to normal after", ok and back,
 		{ tree = t and t.Name, at = t and tostring(t:GetPivot().Position) })
+	check("the phone's golden tree countdown is published", typeof(ReplicatedStorage:GetAttribute("GoldenNext")) == "number",
+		{ goldenNext = ReplicatedStorage:GetAttribute("GoldenNext") })
 	local wood = ReplicatedStorage:GetAttribute("WoodOfTheDay")
 	check("the wood of the day is published for the phones", typeof(wood) == "string" and wood ~= "", { wood = wood })
+end)
+
+-- 8e. Roblox analytics: the service is there, and the kinds of money the game reports are Roblox's own (its charts
+-- know those); a kind Roblox doesn't have would still be sent, under its own name
+try("analytics", function()
+	local okService = pcall(function()
+		return game:GetService("AnalyticsService")
+	end)
+	local known = {}
+	for _, kind in { "Gameplay", "Shop", "TimedReward" } do
+		local ok = pcall(function()
+			return (Enum.AnalyticsEconomyTransactionType :: any)[kind].Name
+		end)
+		known[kind] = ok
+	end
+	check("Roblox analytics is there, and knows the game's kinds of money (mill, shop, daily)", okService and known.Gameplay and known.Shop and known.TimedReward, known)
 end)
 
 -- 9. everything the game printed: warnings and errors are bugs to fix
