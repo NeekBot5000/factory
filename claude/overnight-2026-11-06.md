@@ -20,7 +20,7 @@ STARTED: 14:23 UTC   ENDS: 22:23 UTC (8 hours)
         group)
 [x] 12. A "what's new" thumbnail for the game page (the features players click for: golden tree, daily jobs)
 [x] 13. Rush hour: double pay at the mill for the first 5 minutes of every hour (UTC)
-[ ] 9. Republish the final build
+[x] 9. Republish the final build (16:36, after CI green on 6dd0e84)
 [ ] 10. Review and polish pass, morning report
 
 ## Done
