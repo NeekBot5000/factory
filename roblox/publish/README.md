@@ -55,6 +55,12 @@ The game reports to Roblox's analytics on its own: Creator Dashboard > Creations
 - **Economy:** money in (the mill, daily rewards, jobs, codes, take-downs) and out (the shop, land).
 The charts fill in a day or so after players come.
 
+## 3b3. A Roblox group (optional, recommended)
+Popular games have a group: members hear about updates and the group shows on the game page. Make one
+(roblox.com > Communities > Create, about 100 Robux), add Timber to it if you like, and put its id (the number in
+its address) in `Config.Group.id` in `roblox/src/shared/Config.luau`. Members then get $200 once, the first time
+they play after joining (`Config.Group.reward`). With the id at 0 nothing happens.
+
 ## 3c. Codes
 `Config.Codes` (in `roblox/src/shared/Config.luau`) holds the codes players can type into the TimberPhone, and what
 each pays (once per player). It starts with TIMBER ($100) and LUMBERJACK ($250). Post codes where your players

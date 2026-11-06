@@ -193,6 +193,7 @@ function DataService.reset(player: Player)
 	-- used again; the daily streak; and the best they've ever earned, for the all-time leaderboard)
 	fresh.codes = data.codes
 	fresh.daily = data.daily
+	fresh.askedLike, fresh.groupPaid = data.askedLike, data.groupPaid
 	fresh.bestEarned = math.max(data.bestEarned or 0, data.earned or 0)
 	-- (and today's jobs stay done; the rest count on from the new start)
 	if data.jobs then

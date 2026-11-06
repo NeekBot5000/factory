@@ -197,6 +197,14 @@ local sold = A.last(alice, "Sold")
 check(sold and math.abs(sold - load) < 0.02 and math.abs(data.money - (before + load)) < 0.02, string.format("paid at the mill: +$%.2f", sold or 0))
 check(ws.Truck:GetAttribute("State") == "parked" and (ws.Truck.WorldPivot.Position - wv(W.truck.at)).Magnitude < 0.01, "and the truck comes back and parks in its spot")
 check(alice:GetAttribute("Money") == data.money, "the money counter has the new total")
+do
+	local w = 0
+	while count("Notify", alice, "A like and a favourite") == 0 and w < 8 do
+		task.wait(0.25)
+		w += 0.25
+	end
+	check(count("Notify", alice, "A like and a favourite") == 1, "after the first truckload, a one-time ask for a like and a favourite")
+end
 tut = A.last(alice, "Tutorial")
 check(tut and tut.i == 5 and string.find(tut.text, "/ $160", 1, true), "step 5: save up for the Double-Bit Axe (with the count)")
 
@@ -1477,6 +1485,19 @@ do
 	local paidC = E.redeem(alice, "free-money")
 	check(paidA == 100 and paidB == 0 and string.find(why, "already") ~= nil and paidC == 0, "a code pays once, typed any way; a made-up one pays nothing")
 	d.codes = codes0
+	-- the group reward: nothing without a group; once for a member
+	local CS = A.service("CommunityService")
+	local noGroup = CS.groupReward(alice)
+	local group0, member0 = CS.group, CS.isMember
+	CS.group = { id = 12345, reward = 200 }
+	CS.isMember = function(_, id)
+		return id == 12345
+	end
+	local paidGroup = CS.groupReward(alice)
+	local again = CS.groupReward(alice)
+	CS.group, CS.isMember = group0, member0
+	d.groupPaid = nil
+	check(noGroup == 0 and paidGroup == 200 and again == 0, "the group reward: nothing until there's a group, then $200 once for a member")
 	-- the game page lists the same codes, with what they pay, and fits Roblox's 1000 characters
 	local page = require("@lune/fs").readFile("roblox/publish/description.txt")
 	local listed = true

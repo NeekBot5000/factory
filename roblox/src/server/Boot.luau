@@ -23,7 +23,7 @@ function Boot.start()
 	remotes.Parent = ReplicatedStorage
 
 	local services = script.Parent:WaitForChild("Services")
-	local order = { "DataService", "ToolService", "TutorialService", "EconomyService", "InteractService", "TreeService", "LogService", "CarryService", "MachineService", "OilService", "WorldService", "SaplingService", "VacuumService", "SignService", "LandService", "BuildService", "BuildBehaviors", "CircuitService", "ProductionService", "FactoryService", "RailService", "DroneService", "MiningService", "HelperService", "TrophyService", "EventService", "LeaderboardService", "JobsService", "DeliveryService", "WorldMeshes" }
+	local order = { "DataService", "ToolService", "TutorialService", "EconomyService", "InteractService", "TreeService", "LogService", "CarryService", "MachineService", "OilService", "WorldService", "SaplingService", "VacuumService", "SignService", "LandService", "BuildService", "BuildBehaviors", "CircuitService", "ProductionService", "FactoryService", "RailService", "DroneService", "MiningService", "HelperService", "TrophyService", "EventService", "LeaderboardService", "JobsService", "CommunityService", "DeliveryService", "WorldMeshes" }
 	for _, name in order do
 		local svc = require(services:WaitForChild(name)) :: any
 		svc.start()

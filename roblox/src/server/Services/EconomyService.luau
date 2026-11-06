@@ -266,6 +266,7 @@ function EconomyService.ship(player: Player, force: boolean?): boolean
 				JobsService.load(who, amount)
 				JobsService.check(who)
 				TutorialService.check(who)
+				;(require(script.Parent.CommunityService) :: any).sold(who)
 			end
 		end
 		-- back it comes, round the clearing and into its spot (a bigger one, if one's been bought)

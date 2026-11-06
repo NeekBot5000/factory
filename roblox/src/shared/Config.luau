@@ -364,6 +364,10 @@ Config.Badges = {
 	golden = 0, week = 0, jobs = 0,
 } :: { [string]: number }
 
+-- the game's Roblox group (CommunityService): make one on the Creator Dashboard, put its id here, and members get the
+-- reward once. 0 = no group yet (nothing happens).
+Config.Group = { id = 0, reward = 200 }
+
 -- today's jobs (JobsService): the bonus for finishing all three in a day
 Config.JobsAllBonus = 50
 
